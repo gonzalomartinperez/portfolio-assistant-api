@@ -1,5 +1,9 @@
 # Implementation status · 2026-09-26
 
+## V2 quality pass in progress
+
+On `feat/quality-retrieval-streaming`, 20 tests passed with real PostgreSQL/Neo4j, Ruff passed, migration and OpenAPI drift checks passed, and a production API image built. The observed baseline was 10 tests passing but three direct public questions (Rampy, education, portfolio implementation) returning no usable answer; one Filomena technology question returned an unrelated excerpt. A direct recheck now selects the reviewed English or Spanish source for all five questions in `tests/test_quality.py`, while an unknown question returns no source. Fixture output remains literal source snippets, not model quality. The graph now forwards simulated provider deltas before generation completes, with no real OpenAI call. Production config rejects local defaults, and app migrations are tracked by checksum. This section describes the task branch; CI and merged `develop` integration remain pending.
+
 Both new repositories were bootstrapped private, then changed to public at the owner's explicit request. `main` contains only the one-time bootstrap. Feature PRs #1 and #2 are merged into `develop`; the paired web PR #1 and portfolio PR #72 are also merged into their `develop` branches.
 
 ## Gates

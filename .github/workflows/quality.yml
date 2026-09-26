@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: pgvector/pgvector:0.8.1-pg17
+        image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
         env:
           POSTGRES_USER: assistant
           POSTGRES_PASSWORD: assistant
@@ -20,7 +20,7 @@ jobs:
           --health-cmd "pg_isready -U assistant"
           --health-interval 5s --health-timeout 5s --health-retries 10
       neo4j:
-        image: neo4j:5.26.17-community
+        image: neo4j:5.26.17-community@sha256:d31525aa50da9215d692e5e824696c63583636398f5f5b60260bb92f94095c70
         env:
           NEO4J_AUTH: neo4j/change-me
         ports: ['7688:7687']

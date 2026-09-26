@@ -12,8 +12,9 @@ from app.config import settings
 from app.db import connect
 from app.knowledge import embed
 from app.ledger import BudgetExhausted, reserve, settle
-from app.main import app, retrieve
+from app.main import app
 from app.migrate import main as migrate
+from app.retrieval import retrieve
 
 pytestmark = pytest.mark.skipif(os.getenv('TEST_INTEGRATION') != '1', reason='requires real PostgreSQL and Neo4j')
 
