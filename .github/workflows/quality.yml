@@ -1,0 +1,47 @@
+name: Quality
+on:
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17
+        env:
+          POSTGRES_USER: assistant
+          POSTGRES_PASSWORD: assistant
+          POSTGRES_DB: assistant
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U assistant"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      neo4j:
+        image: neo4j:5.26.17-community
+        env:
+          NEO4J_AUTH: neo4j/change-me
+        ports: ['7688:7687']
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'"
+          --health-interval 10s --health-timeout 10s --health-retries 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: gonzalomartinperez/portfolio
+          ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+          path: public-portfolio
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests contracts
+      - run: uv run python -m app.migrate
+      - run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+      - run: uv run pytest -q
+        env:
+          TEST_INTEGRATION: '1'
+      - run: uv run python -m contracts.export && git diff --exit-code contracts/openapi.json
+      - run: docker build -t portfolio-assistant-api:ci .
