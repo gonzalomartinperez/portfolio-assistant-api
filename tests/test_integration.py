@@ -66,6 +66,12 @@ def test_sessions_stream_idempotency_and_ownership():
     saved = first.get(f'/api/v1/conversations/{cid}/messages').json()['items']
     assert len(saved) == 2
     assert saved[0]['citations'][0]['url'].startswith('https://github.com/gonzalomartinperez/portfolio/blob/')
+    unsupported = first.post(f'/api/v1/conversations/{cid}/messages/stream',
+                             headers={**headers('http://localhost:3000', a), 'Idempotency-Key': str(uuid4())},
+                             json={'content': 'quasar xylophone', 'locale': 'en'})
+    assert unsupported.status_code == 200
+    assert 'not find enough public evidence' in unsupported.text
+    assert '"citations":[]' in unsupported.text
     assert first.delete('/api/v1/session', headers=headers('http://localhost:3000', a)).status_code == 204
     assert first.get(f'/api/v1/conversations/{cid}/messages').status_code == 401
     second.delete('/api/v1/session', headers=headers('http://localhost:3001', b))
@@ -77,6 +83,8 @@ def test_real_vector_and_graph():
     assert count > 0
     rows, commits = retrieve('What is Filomena?')
     assert len(rows) > 0 and len(commits[0]) == 40
+    unsupported, _ = retrieve('quasar xylophone')
+    assert unsupported == []
     driver = GraphDatabase.driver(settings().neo4j_uri, auth=(settings().neo4j_user, settings().neo4j_password))
     try:
         with driver.session() as session:

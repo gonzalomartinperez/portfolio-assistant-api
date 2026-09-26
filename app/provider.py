@@ -1,3 +1,4 @@
+import re
 from typing import Protocol
 
 from langchain_core.prompts import ChatPromptTemplate
@@ -44,12 +45,22 @@ class OpenAIAdapter:
 
 def fixture_message(question: str, evidence: str, locale: str) -> str:
     # A deterministic excerpt viewer, not a model-quality simulation.
+    insufficient = ('No encontré evidencia pública suficiente para responder con certeza.' if locale == 'es' else 'I could not find enough public evidence to answer confidently.')
     if not evidence:
-        return ('No encontré evidencia pública suficiente para responder con certeza.' if locale == 'es' else 'I could not find enough public evidence to answer confidently.')
-    import re
-    keywords = {word.lower().strip('?.!,') for word in question.split() if len(word) > 4}
-    quoted = [part.strip() for part in re.findall(r'"([^"\n]{25,})"', evidence) if not part.startswith(('http:', 'https:')) and 'github.com/' not in part]
+        return insufficient
+    keywords = query_terms(question)
+    quoted = [part.strip() for part in re.findall(r'"([^"\n]{25,})"', evidence)
+              if not part.startswith(('http:', 'https:')) and 'github.com/' not in part
+              and not re.search(r'(?i)ignore (all |previous |prior )?instructions|reveal (the |your )?(system prompt|secret|api key)|you are now', part)]
     matching = [part for part in quoted if any(word in part.lower() for word in keywords)]
-    excerpts = (quoted if 'filomena' in question.lower() else (matching or quoted))[:3]
+    excerpts = (matching if matching else quoted if 'filomena' in question.lower() else [])[:3]
+    if not excerpts:
+        return insufficient
     heading = 'Resultado de prueba basado en fragmentos públicos:' if locale == 'es' else 'Fixture result from public source excerpts:'
     return heading + '\n\n' + '\n'.join(f'• {part[:250]}' for part in excerpts)
+
+
+def query_terms(question: str) -> set[str]:
+    stop = {'about', 'could', 'does', 'donde', 'estoy', 'explain', 'hacer', 'please', 'portfolio',
+            'puedes', 'sobre', 'their', 'these', 'those', 'where', 'which', 'would', 'tell', 'what'}
+    return {word for word in re.findall(r'\w+', question.lower()) if len(word) >= 5 and word not in stop}
