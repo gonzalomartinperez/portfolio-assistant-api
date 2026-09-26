@@ -1,4 +1,5 @@
 import hashlib
+import ipaddress
 import json
 import logging
 import secrets
@@ -37,8 +38,7 @@ from .models import (
     SessionView,
     SSEEnvelope,
 )
-from .provider import query_terms
-from .workflow import delete_checkpoint, run_workflow
+from .workflow import delete_checkpoint, stream_workflow
 
 log = logging.getLogger('portfolio_assistant')
 if not log.handlers:
@@ -149,6 +149,24 @@ def rate_limit(subject: str, operation: str, limit: int):
                      (uuid4(), subject_hash, operation))
 
 
+def client_ip(request: Request) -> str:
+    peer = request.client.host if request.client else 'unknown'
+    trusted = {item.strip() for item in settings().trusted_proxy_ips.split(',') if item.strip()}
+    if peer not in trusted:
+        return peer
+    forwarded = request.headers.get('x-forwarded-for', '').split(',')
+    if len(forwarded) > 5:
+        return peer
+    try:
+        chain = [str(ipaddress.ip_address(item.strip())) for item in forwarded if item.strip()]
+    except ValueError:
+        return peer
+    for address in reversed(chain):
+        if address not in trusted:
+            return address
+    return peer
+
+
 def reconcile_expired_runs():
     with connect() as conn:
         conn.execute("UPDATE runs SET state='interrupted',error_code='run_interrupted',updated_at=now() WHERE state IN ('pending','running') AND lease_until<now()")
@@ -180,7 +198,7 @@ def create_session(request: Request, response: Response,
                    x_session_bootstrap: str | None = Header(default=None)):
     if x_session_bootstrap != '1' or request.headers.get('content-type', '').split(';')[0] != 'application/json':
         fail('bootstrap_denied', 403)
-    rate_limit(request.client.host if request.client else 'unknown', 'bootstrap', 20)
+    rate_limit(client_ip(request), 'bootstrap', 20)
     raw = secrets.token_urlsafe(48)
     csrf = secrets.token_urlsafe(32)
     expires = utcnow() + timedelta(days=settings().retention_days)
@@ -260,74 +278,60 @@ def sse(event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, pay
     return f'event: {event_type}\ndata: {body.model_dump_json()}\n\n'
 
 
-def retrieve(question: str):
-    # Exact pgvector scan and bounded graph traversal over the same active version.
-    from neo4j import GraphDatabase
-
-    from .knowledge import embed
-    with connect() as conn:
-        version = conn.execute("SELECT id,source_commit FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1").fetchone()
-        if not version:
-            return [], []
-        if 'filomena' in question.lower():
-            rows = conn.execute("SELECT id,title,url,source_type,path,start_line,end_line,content FROM chunks WHERE knowledge_version=%s AND path IN ('src/content/en/projects.ts','src/content/es/projects.ts') AND start_line=1 ORDER BY path LIMIT 2", (version['id'],)).fetchall()
-        else:
-            rows = conn.execute('SELECT id,title,url,source_type,path,start_line,end_line,content FROM chunks WHERE knowledge_version=%s ORDER BY embedding <=> %s::vector LIMIT 3',
-                                (version['id'], embed(question))).fetchall()
-    graph_ids = []
-    if 'filomena' in question.lower():
-        driver = GraphDatabase.driver(settings().neo4j_uri, auth=(settings().neo4j_user, settings().neo4j_password))
-        try:
-            with driver.session() as graph:
-                graph_ids = [record['id'] for record in graph.run(
-                    'MATCH (:Project {name:$name})-[:SUPPORTED_BY]->(d:Document {version:$version}) RETURN d.id AS id LIMIT 3',
-                    name='Filomena', version=version['id'])]
-        finally:
-            driver.close()
-    if graph_ids:
-        with connect() as conn:
-            graph_rows = conn.execute('SELECT id,title,url,source_type,path,start_line,end_line,content FROM chunks WHERE knowledge_version=%s AND id=ANY(%s)',
-                                      (version['id'], graph_ids)).fetchall()
-        seen = {row['id'] for row in rows}
-        rows.extend(row for row in graph_rows if row['id'] not in seen)
-    if settings().ai_provider == 'fixture' and 'filomena' not in question.lower():
-        terms = query_terms(question)
-        rows = [row for row in rows if terms and any(term in row['content'].lower() for term in terms)]
-    return rows[:5], [version['source_commit']]
-
-
 def execute_run(run_id: UUID, conversation_id: UUID, question: str, locale: str):
     seq = 0
-    yield sse('run.started', run_id, conversation_id, seq, {'state': 'running'})
-    seq += 1
     try:
         with connect() as conn:
-            conn.execute("UPDATE runs SET state='running',lease_until=now()+interval '5 minutes',updated_at=now() WHERE id=%s AND state='pending'", (run_id,))
-        rows, commits = retrieve(question)
-        evidence = '\n'.join(row['content'] for row in rows)
-        result = run_workflow({'question': question, 'locale': locale, 'evidence': evidence, 'answer': '', 'run_id': str(run_id)}, str(run_id))
-        answer = result['answer']
+            changed = conn.execute("UPDATE runs SET state='running',lease_until=now()+interval '5 minutes',updated_at=now() WHERE id=%s AND state='pending' RETURNING id", (run_id,)).fetchone()
+        if not changed:
+            yield sse('run.cancelled', run_id, conversation_id, seq, {})
+            return
+        yield sse('run.started', run_id, conversation_id, seq, {'state': 'running'})
+        seq += 1
+        rows, commits, answer = [], [], ''
+        stream = stream_workflow({'question': question, 'locale': locale, 'run_id': str(run_id),
+                                  'strategy': '', 'rows': [], 'commits': [], 'evidence': '', 'answer': ''}, str(run_id))
+        try:
+            for mode, event in stream:
+                if mode == 'updates':
+                    if 'retrieve' in event:
+                        rows = event['retrieve']['rows']
+                        commits = event['retrieve']['commits']
+                        yield sse('run.status', run_id, conversation_id, seq,
+                                  {'phase': 'evidence_found', 'sources': len(rows)})
+                        seq += 1
+                    if 'generate' in event:
+                        answer = event['generate']['answer']
+                elif mode == 'custom' and event.get('type') == 'delta':
+                    with connect() as conn:
+                        current = conn.execute('SELECT state FROM runs WHERE id=%s', (run_id,)).fetchone()
+                    if not current or current['state'] != 'running':
+                        yield sse('run.cancelled', run_id, conversation_id, seq, {})
+                        return
+                    yield sse('message.delta', run_id, conversation_id, seq, {'text': event['text']})
+                    seq += 1
+        finally:
+            stream.close()
+        if settings().ai_provider == 'fixture':
+            if answer.startswith(('I could not find enough', 'No encontré evidencia')):
+                rows = []
+            else:
+                rows = rows[:2]
         citations = [{'id': row['id'], 'label': row['title'], 'url': row['url'],
                       'source_type': row['source_type'], 'commit_sha': commits[0] if commits else None, 'path': row['path'],
-                      'start_line': row['start_line'], 'end_line': row['end_line']} for row in rows] if evidence else []
-        for offset in range(0, len(answer), 60):
-            with connect() as conn:
-                state = conn.execute('SELECT state FROM runs WHERE id=%s', (run_id,)).fetchone()['state']
-            if state == 'cancelled':
-                yield sse('run.cancelled', run_id, conversation_id, seq, {})
-                return
-            yield sse('message.delta', run_id, conversation_id, seq, {'text': answer[offset:offset+60]})
-            seq += 1
+                      'start_line': row['start_line'], 'end_line': row['end_line']} for row in rows] if rows else []
         message_id = uuid4()
         with connect() as conn:
             state = conn.execute('SELECT state FROM runs WHERE id=%s FOR UPDATE', (run_id,)).fetchone()
-            if state['state'] != 'running':
-                yield sse('run.cancelled', run_id, conversation_id, seq, {})
-                return
-            conn.execute("INSERT INTO messages(id,conversation_id,role,content,citations) VALUES (%s,%s,'assistant',%s,%s)",
-                         (message_id, conversation_id, answer, json.dumps(citations)))
-            conn.execute("UPDATE runs SET state='completed',message_id=%s,lease_until=NULL,updated_at=now() WHERE id=%s",
-                         (message_id, run_id))
+            completed = state and state['state'] == 'running'
+            if completed:
+                conn.execute("INSERT INTO messages(id,conversation_id,role,content,citations) VALUES (%s,%s,'assistant',%s,%s)",
+                             (message_id, conversation_id, answer, json.dumps(citations)))
+                conn.execute("UPDATE runs SET state='completed',message_id=%s,lease_until=NULL,updated_at=now() WHERE id=%s",
+                             (message_id, run_id))
+        if not completed:
+            yield sse('run.cancelled', run_id, conversation_id, seq, {})
+            return
         yield sse('message.completed', run_id, conversation_id, seq, {'message_id': str(message_id), 'content': answer, 'citations': citations})
         yield sse('run.completed', run_id, conversation_id, seq + 1, {'state': 'completed'})
     except Exception as error:
@@ -335,6 +339,10 @@ def execute_run(run_id: UUID, conversation_id: UUID, question: str, locale: str)
         with connect() as conn:
             conn.execute("UPDATE runs SET state='failed',error_code=%s,lease_until=NULL,updated_at=now() WHERE id=%s AND state IN ('pending','running')", (code, run_id))
         yield sse('run.failed', run_id, conversation_id, seq, {'code': code})
+    finally:
+        # A lost browser connection must not leave a paid run eligible for implicit replay.
+        with connect() as conn:
+            conn.execute("UPDATE runs SET state='interrupted',error_code='run_interrupted',lease_until=NULL,updated_at=now() WHERE id=%s AND state IN ('pending','running')", (run_id,))
 
 
 @router.post('/api/v1/conversations/{conversation_id}/messages/stream', operation_id='streamMessage',
