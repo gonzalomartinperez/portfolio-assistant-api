@@ -37,6 +37,7 @@ from .models import (
     SessionView,
     SSEEnvelope,
 )
+from .provider import query_terms
 from .workflow import delete_checkpoint, run_workflow
 
 log = logging.getLogger('portfolio_assistant')
@@ -289,6 +290,9 @@ def retrieve(question: str):
                                       (version['id'], graph_ids)).fetchall()
         seen = {row['id'] for row in rows}
         rows.extend(row for row in graph_rows if row['id'] not in seen)
+    if settings().ai_provider == 'fixture' and 'filomena' not in question.lower():
+        terms = query_terms(question)
+        rows = [row for row in rows if terms and any(term in row['content'].lower() for term in terms)]
     return rows[:5], [version['source_commit']]
 
 
