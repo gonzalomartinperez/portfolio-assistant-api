@@ -1,6 +1,8 @@
 import hashlib
 import json
+import logging
 import secrets
+import time
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
@@ -37,6 +39,14 @@ from .models import (
 )
 from .workflow import delete_checkpoint, run_workflow
 
+log = logging.getLogger('portfolio_assistant')
+if not log.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(message)s'))
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+log.propagate = False
+
 app = FastAPI(title='Portfolio Assistant API', version='1.0.0')
 router = APIRouter(responses={code: {'model': ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)})
 app.add_middleware(CORSMiddleware, allow_origins=settings().origins, allow_credentials=True,
@@ -72,13 +82,22 @@ def validation_error(request: Request, exc: RequestValidationError):
 
 @app.middleware('http')
 async def guard_origin(request: Request, call_next):
+    started = time.perf_counter()
     request.state.request_id = uuid4().hex
     if request.method in ('POST', 'PATCH', 'DELETE') and request.headers.get('origin') not in settings().origins:
-        return JSONResponse(status_code=403, content=ErrorBody(
+        response = JSONResponse(status_code=403, content=ErrorBody(
             code='origin_denied', message='Origin denied', request_id=request.state.request_id).model_dump())
-    response = await call_next(request)
+    else:
+        response = await call_next(request)
     response.headers['X-Request-ID'] = request.state.request_id
     response.headers['Vary'] = 'Origin'
+    route = request.scope.get('route')
+    log.info(json.dumps({
+        'request_id': request.state.request_id,
+        'operation': route.name if route else 'unmatched',
+        'status': response.status_code,
+        'duration_ms': round((time.perf_counter() - started) * 1000, 1),
+    }))
     return response
 
 

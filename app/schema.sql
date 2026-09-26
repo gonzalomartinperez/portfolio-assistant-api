@@ -54,3 +54,9 @@ CREATE INDEX IF NOT EXISTS rate_events_lookup ON rate_events(subject_hash,operat
 
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS lease_until timestamptz;
 UPDATE runs SET lease_until=now()-interval '1 second' WHERE state IN ('pending','running') AND lease_until IS NULL;
+
+CREATE TABLE IF NOT EXISTS source_files (
+  knowledge_version text NOT NULL REFERENCES knowledge_versions(id),
+  path text NOT NULL, blob_sha text NOT NULL, sha256 text NOT NULL, bytes integer NOT NULL,
+  parser_quality text NOT NULL, PRIMARY KEY (knowledge_version,path)
+);

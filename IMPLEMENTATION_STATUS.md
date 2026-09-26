@@ -5,14 +5,14 @@ Both new repositories were bootstrapped private, then changed to public at the o
 ## Gates
 
 - A · PASS locally: Python lockfile, offline OpenAPI and SSE schema, Compose and Dockerfile. Production image built.
-- B · PARTIAL: PostgreSQL sessions, ownership, CSRF, deletion and LangGraph Postgres checkpointer pass real integration. Lease recovery and backup restore still need verification.
+- B · PASS locally: PostgreSQL sessions, ownership, CSRF, deletion, seven-day pruning, lease interruption and LangGraph Postgres checkpointer pass real integration. A separate development database restored from pg_dump with session, knowledge and checkpoint rows verified.
 - C · PARTIAL: fixture HTTP → LangGraph/LangChain → pgvector and Neo4j → SSE terminal with citations passes real integration. Fixture text is deterministic source excerpts, not model quality.
-- D · PARTIAL: local and GitHub public-source adapters, allowlist, hashes, provenance and same-commit no-op pass. Cross-commit incremental reuse and rollback test remain.
+- D · PASS locally: local and GitHub public-source adapters, allowlist, hashes, line provenance, Markdown sections and TS text fallback pass. Real two-commit sync reused 10 of 12 files; a second same-commit sync was a no-op. A simulated graph failure kept the prior PostgreSQL knowledge version active.
 - E · PARTIAL: both localhost browser origins work. Mobile Spanish and isolated context ownership were exercised. Broader accessibility and error QA remain.
-- F · PARTIAL: Origin, CSRF, per-session rate and global concurrency checks exist; paid ledger reservation exists but is not connected to a real provider. Restart, prompt-injection and budget tests remain.
-- G · IN PROGRESS: API and web images built; production API/web smoke reached 200 after startup. CI/PR integration and restore remain.
+- F · PARTIAL: Origin, CSRF, rate, concurrency, idempotency, cancellation, lease interruption, retention and budget reservation/settlement pass local tests. A simulated Responses client passes; paid account and prompt-injection evaluation remain NOT RUN.
+- G · PASS locally: API and web images built; production API/web smoke reached 200 after startup. A PostgreSQL development backup restored into a separate database, including sessions, knowledge versions and checkpoints. Idle containers used about 874 MiB combined before the OS, proxy or Coolify. Representative VPS load testing remains NOT RUN.
 - H · DEFERRED: real OpenAI calls, VPS, DNS and main promotion require separate authorization.
 
 ## Evidence
 
-`uv run pytest -q`: 4 passed, 2 integration tests skipped without `TEST_INTEGRATION=1`. `TEST_INTEGRATION=1 uv run pytest -q tests/test_integration.py`: 2 passed against local PostgreSQL and Neo4j. `uv run ruff check app tests contracts`: pass. Browser checks used Chromium at localhost ports 3000 and 3001, English and Spanish, mobile 390×844, two isolated contexts; cross-session read returned 404. No physical devices tested. Steady resource measurements and restore are pending.
+`TEST_INTEGRATION=1 uv run pytest -q`: 8 passed against local PostgreSQL and Neo4j. `uv run ruff check app tests contracts`: pass. Browser checks used Chromium at localhost ports 3000 and 3001, English and Spanish, mobile 390×844, two isolated contexts; cross-session read returned 404. No physical devices tested. The paid-model smoke test, full cross-browser accessibility audit and representative VPS load test remain NOT RUN.
