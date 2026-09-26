@@ -5,6 +5,7 @@ import json
 import re
 import subprocess
 import tempfile
+from itertools import pairwise
 from pathlib import Path
 from urllib.parse import quote
 
@@ -22,43 +23,65 @@ ROOT_PATTERNS = (
 SECRET_PATTERN = re.compile(r'(?i)(api[_-]?key\s*[=:]|password\s*[=:]|secret\s*[=:]|BEGIN [A-Z ]+PRIVATE KEY)')
 MAX_FILES = 80
 MAX_BYTES = 60_000
+CHUNKER_VERSION = 'sections35-v5'
 
 
 def git(repo: Path, *args: str) -> bytes:
     return subprocess.check_output(['git', '-C', str(repo), *args])
 
 
-def files_at_commit(repo: Path, commit: str):
-    listed = git(repo, 'ls-tree', '-r', '--name-only', commit).decode().splitlines()
-    allowed = [path for path in listed if any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS)]
+def manifest_at_commit(repo: Path, commit: str):
+    listed = git(repo, 'ls-tree', '-r', commit).decode().splitlines()
+    allowed = []
+    for line in listed:
+        metadata, path = line.split('\t', 1)
+        mode, kind, blob_sha = metadata.split()
+        if any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS):
+            if kind != 'blob' or mode not in ('100644', '100755'):
+                raise ValueError(f'unsupported file type: {path}')
+            allowed.append((path, blob_sha))
     if len(allowed) > MAX_FILES:
         raise ValueError('file limit exceeded')
-    for path in allowed:
-        data = git(repo, 'show', f'{commit}:{path}')
-        if len(data) > MAX_BYTES:
-            continue
-        content = data.decode('utf-8')
-        if SECRET_PATTERN.search(content):
-            raise ValueError(f'possible secret in {path}')
-        yield path, data, content
+    return allowed
+
+
+def citation_url(commit: str, path: str, start: int, end: int):
+    return f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{quote(path, safe="/")}#L{start}-L{end}'
+
+
+def chunk_id(commit: str, path: str, start: int, content_hash: str):
+    return hashlib.sha256(f'{CHUNKER_VERSION}:{commit}:{path}:{start}:{content_hash}'.encode()).hexdigest()
 
 
 def chunks(path: str, content: str, commit: str):
     lines = content.splitlines()
-    for start in range(0, len(lines), 35):
-        block = '\n'.join(lines[start:start+35]).strip()
-        if len(block) < 30:
-            continue
-        end = min(start + 35, len(lines))
-        url = f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{quote(path, safe="/")}#L{start+1}-L{end}'
-        content_hash = hashlib.sha256(block.encode()).hexdigest()
-        yield {
-            'id': hashlib.sha256(f'{commit}:{path}:{start+1}:{content_hash}'.encode()).hexdigest(),
-            'content': block, 'title': path, 'url': url,
-            'source_type': 'code' if path.endswith(('.ts', '.tsx')) else 'page',
-            'path': path, 'start_line': start + 1, 'end_line': end,
-            'content_hash': content_hash, 'embedding': embed(block),
-        }
+    boundaries = [0]
+    if path.endswith('.md'):
+        boundaries.extend(index for index, line in enumerate(lines) if index > 0 and re.match(r'^#{1,6} ', line))
+    boundaries.append(len(lines))
+    for section_start, section_end in pairwise(boundaries):
+        for start in range(section_start, section_end, 35):
+            end = min(start + 35, section_end)
+            block = '\n'.join(lines[start:end]).strip()
+            if len(block) < 30:
+                continue
+            content_hash = hashlib.sha256(block.encode()).hexdigest()
+            yield {
+                'id': chunk_id(commit, path, start + 1, content_hash),
+                'content': block, 'title': path, 'url': citation_url(commit, path, start + 1, end),
+                'source_type': 'code' if path.endswith(('.ts', '.tsx')) else 'page',
+                'path': path, 'start_line': start + 1, 'end_line': end,
+                'content_hash': content_hash, 'embedding': embed(block),
+            }
+
+
+def reused_record(old: dict, commit: str):
+    path = old['path']
+    return {
+        **old,
+        'id': chunk_id(commit, path, old['start_line'], old['content_hash']),
+        'url': citation_url(commit, path, old['start_line'], old['end_line']),
+    }
 
 
 def sync(repo: Path, ref: str = 'HEAD'):
@@ -69,19 +92,46 @@ def sync(repo: Path, ref: str = 'HEAD'):
     commit = git(repo, 'rev-parse', ref).decode().strip()
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('invalid commit')
-    version = commit[:16] + '-v2'
-    manifest = []
-    records = []
-    for path, data, content in files_at_commit(repo, commit):
-        manifest.append({'path': path, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)})
-        records.extend(chunks(path, content, commit))
+    version = commit[:16] + '-v5'
+    files = manifest_at_commit(repo, commit)
     with connect() as conn:
         existing = conn.execute('SELECT status FROM knowledge_versions WHERE id=%s', (version,)).fetchone()
         if existing and existing['status'] == 'active':
-            return {'knowledge_version': version, 'changed': False, 'files': len(manifest), 'chunks': len(records)}
-        conn.execute("INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'",
-                     (version, commit))
+            return {'knowledge_version': version, 'changed': False, 'files': len(files)}
+        previous = conn.execute("SELECT id FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1").fetchone()
+        previous_version = previous['id'] if previous else None
+        old_files = {row['path']: row for row in conn.execute('SELECT * FROM source_files WHERE knowledge_version=%s', (previous_version,)).fetchall()} if previous_version else {}
+    file_manifest = []
+    records = []
+    embedded_chunks = 0
+    reused_files = 0
+    for path, blob_sha in files:
+        old_file = old_files.get(path)
+        quality = f"{'markdown_sections' if path.endswith('.md') else 'text_fallback'}:{CHUNKER_VERSION}"
+        if old_file and old_file['blob_sha'] == blob_sha and old_file['parser_quality'] == quality:
+            with connect() as conn:
+                old_chunks = conn.execute('SELECT * FROM chunks WHERE knowledge_version=%s AND path=%s ORDER BY start_line', (previous_version, path)).fetchall()
+            records.extend(reused_record(row, commit) for row in old_chunks)
+            file_manifest.append({'path': path, 'blob_sha': blob_sha, 'sha256': old_file['sha256'], 'bytes': old_file['bytes']})
+            reused_files += 1
+            continue
+        data = git(repo, 'show', f'{commit}:{path}')
+        if len(data) > MAX_BYTES:
+            continue
+        content = data.decode('utf-8')
+        if SECRET_PATTERN.search(content):
+            raise ValueError(f'possible secret in {path}')
+        fresh = list(chunks(path, content, commit))
+        records.extend(fresh)
+        embedded_chunks += len(fresh)
+        file_manifest.append({'path': path, 'blob_sha': blob_sha, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)})
+    with connect() as conn:
+        conn.execute("INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'", (version, commit))
         conn.execute('DELETE FROM chunks WHERE knowledge_version=%s', (version,))
+        conn.execute('DELETE FROM source_files WHERE knowledge_version=%s', (version,))
+        for item in file_manifest:
+            conn.execute('INSERT INTO source_files(knowledge_version,path,blob_sha,sha256,bytes,parser_quality) VALUES (%s,%s,%s,%s,%s,%s)',
+                         (version, item['path'], item['blob_sha'], item['sha256'], item['bytes'], f"{'markdown_sections' if item['path'].endswith('.md') else 'text_fallback'}:{CHUNKER_VERSION}"))
         for record in records:
             conn.execute('INSERT INTO chunks(id,knowledge_version,content,title,url,source_type,path,start_line,end_line,content_hash,embedding_provider,embedding_model,embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector)',
                          (record['id'], version, record['content'], record['title'], record['url'], record['source_type'],
@@ -95,9 +145,11 @@ def sync(repo: Path, ref: str = 'HEAD'):
             for record in records:
                 session.run('MERGE (d:Document {id:$id}) SET d.version=$version,d.title=$title,d.url=$url',
                             id=record['id'], version=version, title=record['title'], url=record['url']).consume()
-                if 'projects.ts' in record['path'] or 'filomena' in record['path'].lower():
-                    session.run('MERGE (p:Project {name:"Filomena"}) WITH p MATCH (d:Document {id:$id}) MERGE (p)-[:SUPPORTED_BY]->(d)',
-                                id=record['id']).consume()
+                if 'filomena' in record['content'].lower() and record['path'].endswith('projects.ts'):
+                    session.run('MERGE (p:Project {name:"Filomena"}) WITH p MATCH (d:Document {id:$id}) MERGE (p)-[:SUPPORTED_BY]->(d)', id=record['id']).consume()
+            graph_count = session.run('MATCH (d:Document {version:$version}) RETURN count(d) AS n', version=version).single()['n']
+            if graph_count != len(records):
+                raise RuntimeError('graph projection incomplete')
     finally:
         driver.close()
     with connect() as conn:
@@ -106,9 +158,9 @@ def sync(repo: Path, ref: str = 'HEAD'):
             raise RuntimeError('vector projection incomplete')
         conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
         conn.execute("UPDATE knowledge_versions SET status='active' WHERE id=%s", (version,))
-    output = {'knowledge_version': version, 'source_commit': commit, 'changed': True,
-              'files': len(manifest), 'chunks': len(records), 'manifest': manifest}
-    return output
+    return {'knowledge_version': version, 'source_commit': commit, 'changed': True,
+            'files': len(file_manifest), 'chunks': len(records), 'embedded_chunks': embedded_chunks,
+            'reused_files': reused_files, 'manifest': file_manifest}
 
 
 def main():

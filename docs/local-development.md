@@ -13,7 +13,7 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 In another terminal run `cd ~/projects/github/gonzalomartinperez/portfolio-assistant-web && nvm use && npm ci && npm run dev`. Open `http://localhost:3001`. To preview the native panel, use the portfolio task worktree or merged `develop`, `nvm use && npm ci && npm run dev -- --webpack --port 3000`, then open `http://localhost:3000` and choose **Ask AI**. Both frontends call the API directly. The dev session cookie is for `localhost`; use the same hostname on all three ports.
 
-Public source sync is explicit. `uv run python -m app.knowledge_sync --source github` fetches only `gonzalomartinperez/portfolio` from GitHub and activates a new version after both projections finish. Running the same commit again returns `changed: false`. No chat request triggers sync. Use `uv run python -m app.retention` on a daily schedule to purge expired anonymous sessions and LangGraph checkpoints. Never use `docker compose down -v` in routine development.
+Public source sync is explicit. `uv run python -m app.knowledge_sync --source github` fetches only `gonzalomartinperez/portfolio` from GitHub and activates a new version after both projections finish. Running the same commit again returns `changed: false`; across commits, unchanged blobs reuse stored chunks and embeddings. The CLI reports `embedded_chunks` and `reused_files`. No chat request triggers sync. Use `uv run python -m app.retention` on a daily schedule to purge expired anonymous sessions and LangGraph checkpoints. Never use `docker compose down -v` in routine development.
 
 ## Verification
 
