@@ -54,6 +54,8 @@ def lexical_score(row: dict, terms: set[str], locale: str) -> float:
             score *= 5
     if terms & {'study', 'studied', 'estudio', 'estudios'} and row['path'].endswith('/education.ts') and row['start_line'] == 1:
         score *= 5
+    if row['path'].endswith('/experience.ts') and 'contributions:' in row['content'] and terms & content:
+        score *= 3
     if row['path'].endswith('/projects.ts') and terms & content:
         tech = bool(terms & {'technologies', 'technology', 'tecnologias', 'stack'})
         if (tech and 'stack: technologyNames' in row['content']) or (not tech and 'summary:' in row['content']):
