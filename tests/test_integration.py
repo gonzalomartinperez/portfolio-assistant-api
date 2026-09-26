@@ -1,5 +1,7 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
+from threading import Barrier
 from uuid import uuid4
 
 import pytest
@@ -158,3 +160,35 @@ def test_expired_session_prunes_history_and_checkpoints():
     with PostgresSaver.from_conn_string(settings().database_url) as saver:
         assert saver.get_tuple({'configurable': {'thread_id': run_id}}) is None
     assert client.get(f"/api/v1/conversations/{conversation['id']}/messages").status_code == 401
+
+
+def test_concurrent_reservations_respect_one_remaining_budget_slot(monkeypatch):
+    session_id, conversation_id = uuid4(), uuid4()
+    run_ids = [uuid4(), uuid4()]
+    with connect() as conn:
+        spent = conn.execute("SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())").fetchone()['amount']
+        conn.execute("INSERT INTO sessions(id,secret_digest,csrf_token,expires_at) VALUES (%s,%s,%s,now()+interval '1 hour')",
+                     (session_id, str(uuid4()), str(uuid4())))
+        conn.execute("INSERT INTO conversations(id,session_id,title) VALUES (%s,%s,'Budget fixture')", (conversation_id, session_id))
+        for run_id in run_ids:
+            conn.execute("INSERT INTO runs(id,conversation_id,idempotency_key,payload_hash,state) VALUES (%s,%s,%s,'fixture','completed')",
+                         (run_id, conversation_id, str(uuid4())))
+    monkeypatch.setattr('app.ledger.settings', lambda: type('BudgetSettings', (), {'reserve_cutoff_usd': str(spent + Decimal('0.05'))})())
+    barrier = Barrier(2)
+
+    def attempt(run_id):
+        barrier.wait()
+        try:
+            reserve(str(run_id), Decimal('0.05'))
+            return 'allowed'
+        except BudgetExhausted:
+            return 'blocked'
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(attempt, run_ids))
+        assert sorted(outcomes) == ['allowed', 'blocked']
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE run_id=ANY(%s)', (run_ids,))
+            conn.execute('DELETE FROM sessions WHERE id=%s', (session_id,))
