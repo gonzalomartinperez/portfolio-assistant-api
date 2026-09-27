@@ -33,3 +33,20 @@ def connect():
         options='-c statement_timeout=10000 -c lock_timeout=5000',
     ) as conn:
         yield conn
+
+
+def translated(connection):
+    """Wrap a connection capability with a safe, application-owned failure type."""
+    from psycopg_pool import PoolTimeout, TooManyRequests
+
+    from app.domain.errors import DependencyUnavailableError
+
+    @contextmanager
+    def operation():
+        try:
+            with connection() as conn:
+                yield conn
+        except (psycopg.Error, PoolTimeout, TooManyRequests):
+            raise DependencyUnavailableError('storage_unavailable') from None
+
+    return operation

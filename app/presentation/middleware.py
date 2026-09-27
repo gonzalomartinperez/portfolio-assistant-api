@@ -9,7 +9,8 @@ from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.domain.errors import Rejected
+from app.application.telemetry import request_id
+from app.domain.errors import RejectedError
 
 log = logging.getLogger('portfolio_assistant')
 
@@ -26,7 +27,7 @@ def error(request: Request, code: str, status: int, message: str | None = None):
 
 
 def install(app, origins):
-    @app.exception_handler(Rejected)
+    @app.exception_handler(RejectedError)
     async def rejected(request, exc):
         return error(request, exc.code, exc.status)
 
@@ -41,6 +42,7 @@ def install(app, origins):
     @app.middleware('http')
     async def guard(request: Request, call_next):
         request.state.request_id = uuid4().hex
+        request_id.set(request.state.request_id)
         started = time.perf_counter()
         if (
             request.method in ('POST', 'PATCH', 'DELETE')
@@ -50,7 +52,7 @@ def install(app, origins):
         else:
             try:
                 response = await call_next(request)
-            except Exception:
+            except Exception:  # noqa: BLE001 - Public HTTP fault boundary: translate unexpected failures without leaking details.
                 response = error(request, 'dependency_unavailable', 503)
         response.headers['X-Request-ID'] = request.state.request_id
         vary = response.headers.get('Vary', '')

@@ -2,9 +2,8 @@
 
 import asyncio
 from collections.abc import AsyncGenerator
-from decimal import Decimal
 
-from app.application.contracts import GenerationFailed, Usage
+from app.application.contracts import GenerationFailedError, Usage
 from app.domain.fixture import fixture_message
 
 
@@ -16,21 +15,6 @@ class FixtureProvider:
         for offset in range(0, len(answer), 48):
             yield answer[offset : offset + 48]
             await asyncio.sleep(0)
-
-
-class PostgresAccounting:
-    def __init__(self, reservation: Decimal):
-        self.reservation = reservation
-
-    async def reserve(self, run_id: str) -> None:
-        from app.infrastructure.ledger import reserve
-
-        await asyncio.to_thread(reserve, run_id, self.reservation)
-
-    async def settle(self, run_id: str, usage: Usage) -> None:
-        from app.infrastructure.ledger import settle
-
-        await asyncio.to_thread(settle, run_id, usage.input_tokens, usage.output_tokens)
 
 
 class ResponsesProvider:
@@ -73,8 +57,8 @@ class ResponsesProvider:
                     if usage is not None:
                         yield Usage(usage.input_tokens, usage.output_tokens)
                 elif event.type in ('response.failed', 'response.incomplete', 'error'):
-                    raise GenerationFailed('provider_failed')
+                    raise GenerationFailedError('provider_failed')
             if not completed:
-                raise GenerationFailed('provider_interrupted')
+                raise GenerationFailedError('provider_interrupted')
         finally:
             await events.close()

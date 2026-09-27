@@ -9,7 +9,7 @@ from typing import Protocol
 from uuid import UUID, uuid4
 
 from app.domain.conversations import Conversation, Message, Run, Session
-from app.domain.errors import Rejected
+from app.domain.errors import RejectedError
 
 
 def digest(value: str) -> str:
@@ -17,27 +17,56 @@ def digest(value: str) -> str:
 
 
 class ConversationStore(Protocol):
-    def session(self, secret_digest: str) -> Session | None: ...
+    """Storage operations that enforce ownership in each mutation transaction."""
+
+    def session(self, secret_digest: str) -> Session | None:
+        """Resolve an unexpired session by its secret digest."""
+        ...
+
     def create_session(
         self, session_id: UUID, secret_digest: str, csrf: str, expires: datetime
-    ) -> None: ...
-    def delete_session(self, session_id: UUID) -> None: ...
-    def rate_limit(self, subject_hash: str, operation: str, limit: int) -> None: ...
-    def create(self, session_id: UUID, title: str) -> Conversation: ...
+    ) -> None:
+        """Persist a generated anonymous credential digest and expiration."""
+        ...
+
+    def delete_session(self, session_id: UUID) -> None:
+        """Delete owned data and enqueue checkpoint cleanup in the same transaction."""
+        ...
+
+    def rate_limit(self, subject_hash: str, operation: str, limit: int) -> None:
+        """Atomically consume an hourly allowance or reject the operation."""
+        ...
+
+    def create(self, session_id: UUID, title: str) -> Conversation:
+        """Create a conversation within the session storage limit."""
+        ...
+
     def list_conversations(
         self, session_id: UUID, limit: int, cursor: datetime | None
-    ) -> list[Conversation]: ...
+    ) -> list[Conversation]:
+        """Return a bounded page belonging to the requesting session."""
+        ...
+
     def rename(
         self, session_id: UUID, conversation_id: UUID, title: str
-    ) -> Conversation: ...
-    def delete(self, session_id: UUID, conversation_id: UUID) -> None: ...
+    ) -> Conversation:
+        """Rename an owned conversation or raise not_found."""
+        ...
+
+    def delete(self, session_id: UUID, conversation_id: UUID) -> None:
+        """Delete an owned conversation and enqueue its checkpoint cleanup."""
+        ...
+
     def messages(
         self,
         session_id: UUID,
         conversation_id: UUID,
         limit: int,
         cursor: datetime | None,
-    ) -> list[Message]: ...
+    ) -> list[Message]:
+        """Return a bounded history page after checking conversation ownership."""
+        ...
+
     def prepare_run(
         self,
         session_id: UUID,
@@ -45,12 +74,22 @@ class ConversationStore(Protocol):
         content: str,
         payload_hash: str,
         key: str,
-    ) -> UUID: ...
-    def run(self, session_id: UUID, run_id: UUID, cancel: bool = False) -> Run: ...
-    def feedback(self, session_id: UUID, message_id: UUID, rating: str) -> None: ...
+    ) -> UUID:
+        """Atomically enforce ownership, idempotency and run/history limits."""
+        ...
+
+    def run(self, session_id: UUID, run_id: UUID, cancel: bool = False) -> Run:
+        """Read or cancel a run only when the requesting session owns it."""
+        ...
+
+    def feedback(self, session_id: UUID, message_id: UUID, rating: str) -> None:
+        """Record feedback only for an owned assistant message."""
+        ...
 
 
 class Conversations:
+    """Anonymous-session policies composed with an authorized persistence capability."""
+
     def __init__(
         self, store: ConversationStore, retention_days: int, rate_hash_key: str
     ):
@@ -61,12 +100,12 @@ class Conversations:
     def authenticate(self, raw: str | None) -> Session:
         session = self.store.session(digest(raw)) if raw else None
         if session is None:
-            raise Rejected('session_required', 401)
+            raise RejectedError('session_required', 401)
         return session
 
     def authorize_mutation(self, session: Session, token: str) -> Session:
         if not secrets.compare_digest(token, session.csrf_token):
-            raise Rejected('csrf_denied', 403)
+            raise RejectedError('csrf_denied', 403)
         return session
 
     def bootstrap(self, subject: str) -> tuple[str, Session]:
@@ -88,7 +127,7 @@ class Conversations:
         self, session: Session, limit: int, cursor: datetime | None
     ) -> list[Conversation]:
         if not 1 <= limit <= 50:
-            raise Rejected('invalid_limit')
+            raise RejectedError('invalid_limit')
         return self.store.list_conversations(session.id, limit + 1, cursor)
 
     def rename(
@@ -107,7 +146,7 @@ class Conversations:
         cursor: datetime | None,
     ) -> list[Message]:
         if not 1 <= limit <= 100:
-            raise Rejected('invalid_limit')
+            raise RejectedError('invalid_limit')
         return self.store.messages(session.id, conversation_id, limit + 1, cursor)
 
     def prepare_run(

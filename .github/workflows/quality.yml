@@ -45,5 +45,6 @@ jobs:
       - run: uv run pytest -q
         env:
           TEST_INTEGRATION: '1'
-      - run: uv run python -m contracts.export && git diff --exit-code contracts/openapi.json
+      - run: uv run python -m contracts.export && git diff --exit-code contracts/openapi.json contracts/sse.schema.json contracts/manifest.json
       - run: docker build -t portfolio-assistant-api:ci .
+      - run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci

@@ -94,3 +94,28 @@ def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
     )
     with pytest.raises(ValueError, match='only the public'):
         _sync(repo, '--help')
+
+
+def test_github_indexing_honors_immutable_revision(monkeypatch, capsys):
+    from app.infrastructure import indexing
+
+    revision = 'a' * 40
+    commands = []
+    monkeypatch.setattr('sys.argv', ['index', '--source', 'github', '--ref', revision])
+    monkeypatch.setattr(indexing, 'git', lambda repo, *args: commands.append(args))
+    monkeypatch.setattr(indexing, 'sync', lambda repo, ref: {'ref': ref})
+    indexing.main()
+    assert commands[-1][-1] == revision
+    assert 'http.followRedirects=false' in commands[-1]
+    assert 'FETCH_HEAD' in capsys.readouterr().out
+
+
+def test_github_indexing_rejects_arbitrary_ref(monkeypatch):
+    from app.infrastructure import indexing
+
+    monkeypatch.setattr(
+        'sys.argv',
+        ['index', '--source', 'github', '--ref', 'https://evil.invalid/repo'],
+    )
+    with pytest.raises(SystemExit):
+        indexing.main()

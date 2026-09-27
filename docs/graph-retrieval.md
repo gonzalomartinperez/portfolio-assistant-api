@@ -67,6 +67,6 @@ we report weaker individual strategies rather than weakening the test cases.
 
 | Strategy | Evidence checks passed | Median retrieval ms |
 | --- | ---: | ---: |
-| vector | 4/8 | 126.8 |
-| graph | 7/8 | 253.1 |
-| hybrid | 8/8 | 110.7 |
+| vector | 5/9 | 40.2 |
+| graph | 8/9 | 48.1 |
+| hybrid | 9/9 | 39.7 |

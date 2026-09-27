@@ -23,13 +23,20 @@ dev = [
 ]
 
 [tool.ruff.lint]
-ignore = ["B008", "BLE001"]
+extend-select = ["I", "N", "UP", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's immutable dependency markers are intentionally evaluated in signatures.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
 [tool.mypy]
-files = ["app/domain", "app/application"]
+files = ["app/domain", "app/application", "app/ai"]
 strict = true
 
 [tool.ruff.format]

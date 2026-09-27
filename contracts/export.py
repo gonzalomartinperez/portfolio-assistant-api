@@ -1,8 +1,40 @@
+"""Deterministic offline public contract export; no lifespan or service connections."""
+
+import hashlib
 import json
 from pathlib import Path
 
 from app.main import app
+from app.presentation.events import events
 
-Path(__file__).with_name('openapi.json').write_text(
-    json.dumps(app.openapi(), indent=2, sort_keys=True) + '\n'
-)
+
+def artifacts():
+    return {
+        'openapi.json': app.openapi(),
+        'sse.schema.json': {
+            '$schema': 'https://json-schema.org/draft/2020-12/schema',
+            'title': 'Portfolio assistant SSE v1',
+            **events.json_schema(),
+        },
+    }
+
+
+def main():
+    schemas = artifacts()
+    schemas['manifest.json'] = {
+        'contract_version': '1',
+        'artifacts': {
+            name: hashlib.sha256(
+                (json.dumps(schema, indent=2, sort_keys=True) + '\n').encode()
+            ).hexdigest()
+            for name, schema in schemas.items()
+        },
+    }
+    for name, schema in schemas.items():
+        Path(__file__).with_name(name).write_text(
+            json.dumps(schema, indent=2, sort_keys=True) + '\n'
+        )
+
+
+if __name__ == '__main__':
+    main()

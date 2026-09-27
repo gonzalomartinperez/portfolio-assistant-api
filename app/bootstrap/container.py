@@ -15,25 +15,34 @@ from psycopg_pool import AsyncConnectionPool
 
 from app.ai.retrieval import PublicRetrieval
 from app.ai.workflow import LangGraphWorkflow
+from app.application.contracts import Provider
 from app.application.conversations import Conversations
 from app.application.runs import RunService
 from app.bootstrap.config import Settings, settings
+from app.bootstrap.logging import configure
+from app.domain.budget import Budget
 from app.infrastructure.answer import (
     FixtureProvider,
-    PostgresAccounting,
     ResponsesProvider,
 )
 from app.infrastructure.checkpoints import drain_cleanup
 from app.infrastructure.conversations import PostgresConversations
-from app.infrastructure.db import pool
+from app.infrastructure.db import pool, translated
 from app.infrastructure.knowledge import KnowledgeIndex
+from app.infrastructure.ledger import PostgresAccounting
 from app.infrastructure.runs import PostgresRuns
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 
 
-def create_app(config: Settings | None = None) -> FastAPI:
+def create_app(
+    config: Settings | None = None, *, provider_override: Provider | None = None
+) -> FastAPI:
+    """Compose one API lifespan; a fixture-only provider override supports safe tests."""
     config = config or settings()
+    configure()
+    if provider_override is not None and config.ai_provider != 'fixture':
+        raise ValueError('provider overrides require fixture mode')
 
     @asynccontextmanager
     async def lifespan(app):
@@ -63,7 +72,8 @@ def create_app(config: Settings | None = None) -> FastAPI:
         try:
             await asyncio.to_thread(database.open, wait=True, timeout=10)
             await checkpoints.open(wait=True, timeout=10)
-            provider = FixtureProvider()
+            connection = translated(database.connection)
+            provider = provider_override or FixtureProvider()
             accounting = None
             if config.ai_provider == 'openai':
                 # Paid authorization was validated by Settings. Never retry a possibly billed run.
@@ -71,21 +81,35 @@ def create_app(config: Settings | None = None) -> FastAPI:
                     api_key=config.openai_api_key, timeout=45, max_retries=0
                 )
                 provider = ResponsesProvider(client, config.openai_model)
-                accounting = PostgresAccounting(Decimal(config.reservation_usd))
+                accounting = PostgresAccounting(
+                    connection,
+                    Budget(
+                        *(
+                            Decimal(value)
+                            for value in (
+                                config.monthly_budget_usd,
+                                config.reserve_cutoff_usd,
+                                config.reservation_usd,
+                                config.input_usd_per_million,
+                                config.output_usd_per_million,
+                            )
+                        )
+                    ),
+                )
             saver = AsyncPostgresSaver(checkpoints)
             workflow = LangGraphWorkflow(
-                PublicRetrieval(KnowledgeIndex(database.connection, graph)),
+                PublicRetrieval(KnowledgeIndex(connection, graph)),
                 provider,
                 accounting,
                 saver,
             )
             app.state.conversations = Conversations(
-                PostgresConversations(database.connection),
+                PostgresConversations(connection),
                 config.retention_days,
                 config.rate_hash_key,
             )
             app.state.runs = RunService(
-                PostgresRuns(database.connection),
+                PostgresRuns(connection),
                 workflow,
                 fixture=config.ai_provider == 'fixture',
                 timeout_seconds=config.run_timeout_seconds,
@@ -104,8 +128,10 @@ def create_app(config: Settings | None = None) -> FastAPI:
 
             def cleanup():
                 try:
-                    drain_cleanup()
-                except Exception:
+                    drain_cleanup(
+                        connection=connection, database_url=config.database_url, limit=1
+                    )
+                except Exception:  # noqa: BLE001 - Deletion is committed; durable cleanup records must survive any adapter failure.
                     logging.getLogger('portfolio_assistant').warning(
                         '{"operation":"checkpoint_cleanup","status":"retry_pending"}'
                     )

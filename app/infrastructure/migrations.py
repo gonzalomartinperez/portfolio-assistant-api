@@ -7,6 +7,22 @@ from app.bootstrap.config import settings
 from app.infrastructure.db import connect
 
 
+def validate_history(migrations: list[Path], applied: dict[str, str]) -> None:
+    names = [path.name for path in migrations]
+    if names != sorted(set(names)) or len({name[:3] for name in names}) != len(names):
+        raise RuntimeError('migration order or version collision')
+    if any(name not in names for name in applied):
+        raise RuntimeError('applied migration is missing from checkout')
+    if set(names[: len(applied)]) != set(applied):
+        raise RuntimeError('applied migrations are not an ordered prefix')
+    for path in migrations:
+        if (
+            path.name in applied
+            and hashlib.sha256(path.read_bytes()).hexdigest() != applied[path.name]
+        ):
+            raise RuntimeError(f'migration checksum changed: {path.name}')
+
+
 def main():
     migrations = sorted(
         (Path(__file__).parents[2] / 'migrations').glob('[0-9][0-9][0-9]_*.sql')
@@ -20,6 +36,7 @@ def main():
             row['version']: row['sha256']
             for row in conn.execute('SELECT version,sha256 FROM schema_migrations')
         }
+        validate_history(migrations, applied)
         for path in migrations:
             script = path.read_text()
             checksum = hashlib.sha256(script.encode()).hexdigest()

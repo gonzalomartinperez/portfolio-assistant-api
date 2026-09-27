@@ -3,8 +3,9 @@
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
-from typing import TypedDict
+from typing import Any, TypedDict
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 
@@ -23,7 +24,7 @@ class State(TypedDict):
     question: str
     locale: str
     run_id: str
-    sources: list[dict]
+    sources: list[dict[str, Any]]
     answer: str
 
 
@@ -33,13 +34,13 @@ class LangGraphWorkflow:
         retrieval: Retrieval,
         provider: Provider,
         accounting: Accounting | None = None,
-        checkpointer=None,
-    ):
-        async def retrieve(state: State):
+        checkpointer: BaseCheckpointSaver[Any] | None = None,
+    ) -> None:
+        async def retrieve(state: State) -> dict[str, Any]:
             sources = await retrieval.search(state['question'], state['locale'])
             return {'sources': [asdict(s) for s in sources[:5]]}
 
-        async def answer(state: State):
+        async def answer(state: State) -> dict[str, str]:
             writer = get_stream_writer()
             command = AnswerCommand(state['run_id'], state['question'], state['locale'])
             sources = tuple(Evidence(**s) for s in state['sources'])
@@ -69,16 +70,17 @@ class LangGraphWorkflow:
             'answer': '',
         }
         sources: tuple[Evidence, ...] = ()
-        async with aclosing(
-            self.graph.astream(
-                state,
-                config={
-                    'configurable': {'thread_id': command.run_id},
-                    'recursion_limit': 4,
-                },
-                stream_mode=['custom', 'updates'],
-            )
-        ) as events:
+        raw = self.graph.astream(
+            state,
+            config={
+                'configurable': {'thread_id': command.run_id},
+                'recursion_limit': 4,
+            },
+            stream_mode=['custom', 'updates'],
+        )
+        if not isinstance(raw, AsyncGenerator):
+            raise TypeError('workflow stream must support explicit closure')
+        async with aclosing(raw) as events:
             async for mode, event in events:
                 if mode == 'custom':
                     yield WorkflowEvent('delta', text=event)

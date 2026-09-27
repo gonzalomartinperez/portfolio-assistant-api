@@ -5,7 +5,12 @@ import pytest
 
 from app.ai.workflow import LangGraphWorkflow
 from app.application.answer import generate
-from app.application.contracts import AnswerCommand, Evidence, GenerationFailed, Usage
+from app.application.contracts import (
+    AnswerCommand,
+    Evidence,
+    GenerationFailedError,
+    Usage,
+)
 from app.application.runs import RunService
 from app.infrastructure.answer import ResponsesProvider
 
@@ -145,7 +150,7 @@ def test_output_limit_closes_provider_and_unknown_usage_is_not_refunded():
                 self.settled = True
 
         provider, accounting = Provider(), Accounting()
-        with pytest.raises(GenerationFailed):
+        with pytest.raises(GenerationFailedError):
             async for _ in generate(
                 AnswerCommand('id', 'q', 'en'), (SOURCE,), provider, accounting, 3
             ):
@@ -197,6 +202,111 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
             assert await anext(stream) == Usage(10, 1)
             with pytest.raises(StopAsyncIteration):
                 await anext(stream)
+        assert events.closed
+
+    asyncio.run(run())
+
+
+def test_http_send_failure_closes_stream_before_returning():
+    from starlette.requests import ClientDisconnect
+
+    from app.presentation.streaming import ClosingStreamingResponse
+
+    async def run():
+        closed = asyncio.Event()
+
+        async def body():
+            try:
+                yield 'first'
+                await asyncio.Event().wait()
+            finally:
+                closed.set()
+
+        async def receive():
+            await asyncio.Event().wait()
+
+        async def send(message):
+            if message['type'] == 'http.response.body':
+                raise OSError('disconnected')
+
+        response = ClosingStreamingResponse(body())
+        with pytest.raises(ClientDisconnect):
+            await response(
+                {'type': 'http', 'asgi': {'spec_version': '2.4'}}, receive, send
+            )
+        assert closed.is_set()
+
+    asyncio.run(run())
+
+
+def test_storage_outage_after_partial_output_still_delivers_safe_terminal():
+    from uuid import uuid4
+
+    from app.application.contracts import WorkflowEvent
+    from app.domain.errors import DependencyUnavailableError
+
+    class Workflow:
+        async def stream(self, command):
+            yield WorkflowEvent('delta', text='partial')
+            yield WorkflowEvent('answer', text='partial')
+
+    class UnavailableStore(Store):
+        async def complete(self, *args):
+            raise DependencyUnavailableError('storage_unavailable')
+
+        async def fail(self, *args):
+            raise DependencyUnavailableError('storage_unavailable')
+
+        async def interrupt(self, *args):
+            raise DependencyUnavailableError('storage_unavailable')
+
+    async def run():
+        service = RunService(UnavailableStore(), Workflow(), fixture=True)
+        events = [event async for event in service.execute(uuid4(), uuid4(), 'q', 'en')]
+        assert [e.name for e in events] == [
+            'run.started',
+            'message.delta',
+            'run.failed',
+        ]
+        assert events[-1].payload == {'code': 'generation_failed'}
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('terminal', ['response.failed', 'response.incomplete', None])
+def test_provider_failure_after_delta_is_not_completion(terminal):
+    from types import SimpleNamespace
+
+    async def run():
+        class Events:
+            closed = False
+
+            def __aiter__(self):
+                return self.items()
+
+            async def items(self):
+                yield SimpleNamespace(
+                    type='response.output_text.delta', delta='partial'
+                )
+                if terminal:
+                    yield SimpleNamespace(type=terminal)
+
+            async def close(self):
+                self.closed = True
+
+        events = Events()
+
+        class Responses:
+            async def create(self, **kwargs):
+                return events
+
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=Responses()), 'fixture-model'
+        )
+        stream = provider.stream('question', 'public evidence', 'en')
+        assert await anext(stream) == 'partial'
+        with pytest.raises(GenerationFailedError):
+            await anext(stream)
         assert events.closed
 
     asyncio.run(run())

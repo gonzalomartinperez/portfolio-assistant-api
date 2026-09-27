@@ -82,21 +82,3 @@ class RunView(BaseModel):
 
 class FeedbackCreate(BaseModel):
     rating: Literal['up', 'down']
-
-
-class SSEEnvelope(BaseModel):
-    type: Literal[
-        'run.started',
-        'run.status',
-        'message.delta',
-        'message.completed',
-        'run.completed',
-        'run.failed',
-        'run.cancelled',
-    ]
-    schema_version: Literal['1'] = '1'
-    run_id: UUID
-    conversation_id: UUID
-    sequence: int
-    timestamp: datetime
-    payload: dict

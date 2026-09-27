@@ -7,6 +7,8 @@ from typing import Literal, Protocol
 
 @dataclass(frozen=True)
 class Evidence:
+    """Verified public span with an immutable revision and stable citation target."""
+
     id: str
     title: str
     url: str
@@ -20,6 +22,8 @@ class Evidence:
 
 @dataclass(frozen=True)
 class AnswerCommand:
+    """Server-authorized input for one bounded answer run."""
+
     run_id: str
     question: str
     locale: str
@@ -27,6 +31,8 @@ class AnswerCommand:
 
 @dataclass(frozen=True)
 class WorkflowEvent:
+    """Intentionally public workflow progress, excluding framework state and prompts."""
+
     kind: Literal['evidence', 'delta', 'answer']
     text: str = ''
     sources: tuple[Evidence, ...] = ()
@@ -34,28 +40,49 @@ class WorkflowEvent:
 
 @dataclass(frozen=True)
 class Usage:
+    """Provider-reported token counts; absence never implies a refund."""
+
     input_tokens: int
     output_tokens: int
 
 
 class Retrieval(Protocol):
-    async def search(self, question: str, locale: str) -> tuple[Evidence, ...]: ...
+    """Read-only access to bounded, verified public evidence."""
+
+    async def search(self, question: str, locale: str) -> tuple[Evidence, ...]:
+        """Return at most five evidence spans for the requested language."""
+        ...
 
 
 class Provider(Protocol):
+    """Incremental answer generation without assistant tools or authorization decisions."""
+
     def stream(
         self, question: str, evidence: str, locale: str
-    ) -> AsyncGenerator[str | Usage]: ...
+    ) -> AsyncGenerator[str | Usage]:
+        """Yield incremental text and final usage; closing cancels upstream work."""
+        ...
 
 
 class Accounting(Protocol):
-    async def reserve(self, run_id: str) -> None: ...
-    async def settle(self, run_id: str, usage: Usage) -> None: ...
+    """Atomic reservation and settlement of potentially incurred model costs."""
+
+    async def reserve(self, run_id: str) -> None:
+        """Reserve the maximum permitted cost atomically before calling the provider."""
+        ...
+
+    async def settle(self, run_id: str, usage: Usage) -> None:
+        """Record known token usage without refunding an unknown or interrupted call."""
+        ...
 
 
 class Workflow(Protocol):
-    def stream(self, command: AnswerCommand) -> AsyncGenerator[WorkflowEvent]: ...
+    """Framework-independent boundary for evidence, text deltas and completed answers."""
+
+    def stream(self, command: AnswerCommand) -> AsyncGenerator[WorkflowEvent]:
+        """Yield public progress and answer events; propagate cancellation upstream."""
+        ...
 
 
-class GenerationFailed(Exception):
+class GenerationFailedError(Exception):
     """A provider failed or exceeded the permitted output."""
