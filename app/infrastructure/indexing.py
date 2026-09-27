@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -15,6 +16,7 @@ from neo4j import GraphDatabase
 from app.bootstrap.config import settings
 from app.infrastructure.db import connect
 from app.infrastructure.embedding import embed
+from app.infrastructure.graph import project
 
 ROOT_PATTERNS = (
     re.compile(r'^src/content/(en|es)/(profile|experience|projects|education)\.ts$'),
@@ -26,11 +28,20 @@ SECRET_PATTERN = re.compile(
 )
 MAX_FILES = 80
 MAX_BYTES = 60_000
-CHUNKER_VERSION = 'sections35-v5'
+CHUNKER_VERSION = 'sections35-v6'
 
 
 def git(repo: Path, *args: str) -> bytes:
-    return subprocess.check_output(['git', '-C', str(repo), *args])
+    return subprocess.check_output(
+        ['git', '-C', str(repo), *args],
+        timeout=30,
+        env={
+            'PATH': os.defpath,
+            'GIT_CONFIG_GLOBAL': '/dev/null',
+            'GIT_CONFIG_NOSYSTEM': '1',
+            'GIT_TERMINAL_PROMPT': '0',
+        },
+    )
 
 
 def manifest_at_commit(repo: Path, commit: str):
@@ -99,6 +110,13 @@ def reused_record(old: dict, commit: str):
 
 
 def sync(repo: Path, ref: str = 'HEAD'):
+    # The lock spans both projections; only activation changes the authoritative pointer.
+    with connect() as lock:
+        lock.execute('SELECT pg_advisory_xact_lock(472022)')
+        return _sync(repo, ref)
+
+
+def _sync(repo: Path, ref: str):
     repo = repo.resolve(strict=True)
     remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
     if remote not in (
@@ -107,10 +125,14 @@ def sync(repo: Path, ref: str = 'HEAD'):
         'git@github.com:gonzalomartinperez/portfolio.git',
     ):
         raise ValueError('only the public portfolio repository is allowed')
-    commit = git(repo, 'rev-parse', ref).decode().strip()
+    commit = (
+        git(repo, 'rev-parse', '--verify', '--end-of-options', ref + '^{commit}')
+        .decode()
+        .strip()
+    )
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('invalid commit')
-    version = commit[:16] + '-v5'
+    version = commit + '-v6'
     files = manifest_at_commit(repo, commit)
     with connect() as conn:
         existing = conn.execute(
@@ -135,9 +157,18 @@ def sync(repo: Path, ref: str = 'HEAD'):
         )
     file_manifest = []
     records = []
+    documents = {}
     embedded_chunks = 0
     reused_files = 0
     for path, blob_sha in files:
+        size = int(git(repo, 'cat-file', '-s', blob_sha))
+        if size > MAX_BYTES:
+            raise ValueError('source size limit exceeded')
+        data = git(repo, 'cat-file', 'blob', blob_sha)
+        content = data.decode('utf-8')
+        if SECRET_PATTERN.search(content):
+            raise ValueError(f'possible secret in {path}')
+        documents[path] = content
         old_file = old_files.get(path)
         quality = f'{"markdown_sections" if path.endswith(".md") else "text_fallback"}:{CHUNKER_VERSION}'
         if (
@@ -161,12 +192,6 @@ def sync(repo: Path, ref: str = 'HEAD'):
             )
             reused_files += 1
             continue
-        data = git(repo, 'show', f'{commit}:{path}')
-        if len(data) > MAX_BYTES:
-            continue
-        content = data.decode('utf-8')
-        if SECRET_PATTERN.search(content):
-            raise ValueError(f'possible secret in {path}')
         fresh = list(chunks(path, content, commit))
         records.extend(fresh)
         embedded_chunks += len(fresh)
@@ -178,6 +203,8 @@ def sync(repo: Path, ref: str = 'HEAD'):
                 'bytes': len(data),
             }
         )
+    if not records or len(records) > 500:
+        raise ValueError('corpus must contain between 1 and 500 chunks')
     with connect() as conn:
         conn.execute(
             "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'",
@@ -217,35 +244,16 @@ def sync(repo: Path, ref: str = 'HEAD'):
                 ),
             )
     driver = GraphDatabase.driver(
-        settings().neo4j_uri, auth=(settings().neo4j_user, settings().neo4j_password)
+        settings().neo4j_uri,
+        auth=(settings().neo4j_user, settings().neo4j_password),
+        connection_timeout=3,
+        connection_acquisition_timeout=5,
+        max_transaction_retry_time=0,
     )
     try:
         driver.verify_connectivity()
         with driver.session() as session:
-            session.run(
-                'MATCH (n:Document {version:$version}) DETACH DELETE n', version=version
-            ).consume()
-            for record in records:
-                session.run(
-                    'MERGE (d:Document {id:$id}) SET d.version=$version,d.title=$title,d.url=$url',
-                    id=record['id'],
-                    version=version,
-                    title=record['title'],
-                    url=record['url'],
-                ).consume()
-                if 'filomena' in record['content'].lower() and record['path'].endswith(
-                    'projects.ts'
-                ):
-                    session.run(
-                        'MERGE (p:Project {name:"Filomena"}) WITH p MATCH (d:Document {id:$id}) MERGE (p)-[:SUPPORTED_BY]->(d)',
-                        id=record['id'],
-                    ).consume()
-            graph_count = session.run(
-                'MATCH (d:Document {version:$version}) RETURN count(d) AS n',
-                version=version,
-            ).single()['n']
-            if graph_count != len(records):
-                raise RuntimeError('graph projection incomplete')
+            facts_count = project(session, version, records, documents)
     finally:
         driver.close()
     with connect() as conn:
@@ -269,6 +277,7 @@ def sync(repo: Path, ref: str = 'HEAD'):
         'embedded_chunks': embedded_chunks,
         'reused_files': reused_files,
         'manifest': file_manifest,
+        'graph_facts': facts_count,
     }
 
 
@@ -286,29 +295,27 @@ def main():
         with tempfile.TemporaryDirectory(prefix='portfolio-public-sync-') as temp:
             repo = Path(temp) / 'gonzalomartinperez' / 'portfolio'
             repo.mkdir(parents=True)
-            subprocess.check_call(['git', '-C', str(repo), 'init', '-q'])
-            subprocess.check_call(
-                [
-                    'git',
-                    '-C',
-                    str(repo),
-                    'remote',
-                    'add',
-                    'origin',
-                    'https://github.com/gonzalomartinperez/portfolio.git',
-                ]
+            git(repo, 'init', '-q')
+            git(
+                repo,
+                'remote',
+                'add',
+                'origin',
+                'https://github.com/gonzalomartinperez/portfolio.git',
             )
-            subprocess.check_call(
-                [
-                    'git',
-                    '-C',
-                    str(repo),
-                    'fetch',
-                    '-q',
-                    '--depth=1',
-                    'origin',
-                    'develop',
-                ]
+            git(
+                repo,
+                '-c',
+                'http.followRedirects=false',
+                '-c',
+                'protocol.allow=never',
+                '-c',
+                'protocol.https.allow=always',
+                'fetch',
+                '-q',
+                '--depth=1',
+                'origin',
+                'develop',
             )
             result = sync(repo, 'FETCH_HEAD')
     print(json.dumps(result, indent=2))

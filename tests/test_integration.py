@@ -165,7 +165,7 @@ def test_real_vector_and_graph():
     try:
         with driver.session() as session:
             result = session.run(
-                'MATCH (:Project {name:$name})-[:SUPPORTED_BY]->(d:Document) RETURN count(d) AS n',
+                "MATCH (:Entity {name:$name,kind:'Project'})-[:SUPPORTED_BY]->(d:Document) RETURN count(d) AS n",
                 name='Filomena',
             ).single()
             assert result['n'] > 0
