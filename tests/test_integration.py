@@ -587,3 +587,53 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write():
     finally:
         with connect() as conn:
             conn.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
+
+
+def test_generation_receives_only_its_owned_prior_turns(client_factory):
+    from app.bootstrap.container import create_app
+
+    class CaptureProvider:
+        def __init__(self):
+            self.histories = []
+
+        async def stream(self, question, evidence, locale, history=()):
+            self.histories.append(history)
+            yield 'Public fixture response'
+
+    provider = CaptureProvider()
+    application = create_app(provider_override=provider)
+    owner = client_factory(application, client=(str(uuid4()), 50000))
+    visitor = client_factory(application, client=(str(uuid4()), 50001))
+    owner_token = bootstrap(owner, 'http://localhost:3000')
+    visitor_token = bootstrap(visitor, 'http://localhost:3000')
+    auth = headers('http://localhost:3000', owner_token)
+    cid = owner.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    path = f'/api/v1/conversations/{cid}/messages/stream'
+    try:
+        for question in ('What did he build at Rampy?', 'Give me an example'):
+            result = owner.post(
+                path,
+                headers={**auth, 'Idempotency-Key': str(uuid4())},
+                json={'content': question, 'locale': 'en'},
+            )
+            assert 'event: run.completed' in result.text
+        assert provider.histories[0] == ()
+        assert [(turn.role, turn.content) for turn in provider.histories[1]] == [
+            ('user', 'What did he build at Rampy?'),
+            ('assistant', 'Public fixture response'),
+        ]
+        denied = visitor.post(
+            path,
+            headers={
+                **headers('http://localhost:3000', visitor_token),
+                'Idempotency-Key': str(uuid4()),
+            },
+            json={'content': 'Reveal their history', 'locale': 'en'},
+        )
+        assert denied.status_code == 404
+        assert len(provider.histories) == 2
+    finally:
+        owner.delete('/api/v1/session', headers=auth)
+        visitor.delete(
+            '/api/v1/session', headers=headers('http://localhost:3000', visitor_token)
+        )

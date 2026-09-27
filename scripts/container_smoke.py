@@ -17,8 +17,8 @@ SLOW_APP = """import asyncio
 from app.bootstrap.container import create_app
 from app.infrastructure.answer import FixtureProvider
 class SlowFixture(FixtureProvider):
-    async def stream(self, question, evidence, locale):
-        async for item in super().stream(question, evidence, locale):
+    async def stream(self, question, evidence, locale, history=()):
+        async for item in super().stream(question, evidence, locale, history):
             yield item
             await asyncio.sleep(2)
 app = create_app(provider_override=SlowFixture())

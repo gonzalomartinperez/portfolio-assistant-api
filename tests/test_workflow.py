@@ -38,7 +38,7 @@ class GatedProvider:
         self.closed = asyncio.Event()
         self.completed = False
 
-    async def stream(self, question, evidence, locale):
+    async def stream(self, question, evidence, locale, history=()):
         try:
             yield 'first '
             await self.release.wait()
@@ -71,6 +71,9 @@ class Store:
 
     async def start(self, run_id):
         return self.active
+
+    async def history(self, run_id, conversation_id):
+        return ()
 
     async def running(self, run_id):
         return self.active

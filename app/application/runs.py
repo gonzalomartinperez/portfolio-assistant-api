@@ -9,7 +9,9 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
+from app.application.conversation_context import Turn, bounded_history
 from app.domain.errors import BudgetExhaustedError, DependencyUnavailableError
+from app.domain.fixture import fixture_supports
 
 
 @dataclass(frozen=True)
@@ -25,6 +27,10 @@ class RunStore(Protocol):
 
     async def start(self, run_id: UUID) -> bool:
         """Claim a pending run without reviving terminal states."""
+        ...
+
+    async def history(self, run_id: UUID, conversation_id: UUID) -> tuple[Turn, ...]:
+        """Load bounded earlier turns only for this claimed run's conversation."""
         ...
 
     async def running(self, run_id: UUID) -> bool:
@@ -54,11 +60,15 @@ def citations(
     sources: tuple[Evidence, ...], answer: str, fixture: bool
 ) -> list[dict[str, object]]:
     if fixture:
-        sources = (
-            ()
-            if answer.startswith(('I could not find enough', 'No encontré evidencia'))
-            else sources[:2]
-        )
+        if answer.startswith(('I could not find enough', 'No encontré evidencia')):
+            sources = ()
+        else:
+            # Fixture quotes identify actual excerpt support, not every retrieved candidate.
+            sources = tuple(
+                source
+                for source in sources[:2]
+                if fixture_supports(source.content, answer, source.path)
+            )
     result: list[dict[str, object]] = []
     for source in sources:
         record = asdict(source)
@@ -98,7 +108,16 @@ class RunService:
             yield RunEvent('run.started', {'state': 'running'})
             async with asyncio.timeout(self.timeout_seconds):
                 async with aclosing(
-                    self.workflow.stream(AnswerCommand(str(run_id), question, locale))
+                    self.workflow.stream(
+                        AnswerCommand(
+                            str(run_id),
+                            question,
+                            locale,
+                            bounded_history(
+                                await self.store.history(run_id, conversation_id)
+                            ),
+                        )
+                    )
                 ) as stream:
                     while True:
                         pending = asyncio.create_task(anext(stream))
