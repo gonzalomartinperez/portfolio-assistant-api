@@ -8,14 +8,17 @@ the required gate. New commits cancel stale runs for the same PR/ref.
 
 | Job | Purpose | Dependencies |
 | --- | --- | --- |
-| Static and offline | Frozen install, Ruff format/lint, strict mypy, pure tests, redacted history scan, deterministic contract drift | None |
+| Static and offline | Pinned actionlint, frozen install, Ruff format/lint, strict mypy, pure tests, redacted history scan, deterministic contract drift | None |
 | Real services and container | Real PostgreSQL/Neo4j migrations/indexing/integration tests; build image once, test non-root SSE/shutdown and actual Nginx routing | None |
 | checks | Required aggregate; fails unless both jobs succeed, including cancelled/skipped failures | Both, with `always()` |
 
 Tests are explicitly marked `integration`. Offline and real-service jobs run
 disjoint selections, retaining all coverage. The container is built once with
 BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the
-lockfile with platform/Python-aware setup-uv behavior. BuildKit's content-addressed
+lockfile and `.python-version`, with platform-aware setup-uv behavior. uv itself
+is pinned to 0.9.13, matching the production image. Only the static job saves this
+shared dependency cache; integration restores it and installs the same frozen lock
+without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
 cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
 `api-linux-amd64`. Cache entries never replace checks. Failure/success diagnostic
 artifacts retain JUnit and redacted JSON summaries for seven days. A tested image
@@ -70,3 +73,46 @@ for both Quality jobs and the aggregate `checks` on that PR’s current head; do
 reuse a check from an earlier head or bypass reviews. The same workflow runs without
 path filters on both target branches. This promotes the verified fixture candidate;
 production/live-model limitations in the release checklist remain in force.
+
+## Dependency maintenance and job audit
+
+The two independent verification jobs deliberately remain parallel. Splitting lint,
+formatting and typing into separate runners would repeat checkout/install overhead;
+the expensive real-service/image work already overlaps all offline checks. We keep
+one image build and disjoint test selections. No path filters, skipped required
+checks, reduced test coverage or automatic major-version merge is introduced.
+Every operative check has a descriptive step name. The aggregate gate and manual
+publisher input-validation job have no GitHub token permissions; the latter no
+longer checks out source just to validate two strings. Deployment remains disabled.
+
+`scripts/check_workflows.sh` validates active workflows and the disabled deployment
+template in CI using actionlint 1.7.12 with a reviewed archive SHA-256. Updating
+that tool requires reviewing both version and checksum. Third-party action updates
+remain immutable SHA references, checked against the upstream release tag. Checkout
+7.0.1 and Buildx setup 4.4.1 use Node 24 on compatible GitHub-hosted runners; no unsafe
+fork-checkout override or persisted credentials are enabled.
+
+Dependabot groups routine minor/patch version updates by ecosystem to reduce
+repeated PR pipelines. Major updates remain individual reviewable PRs; grouping
+never grants automatic merge. Python minor/major image changes are excluded from
+routine updates because changing Python requires an explicit project decision.
+Security alerts and default-branch security PRs must still be reviewed separately
+from the scheduled version updates targeting develop. Before merging any update,
+review its diff/upstream notes, run the full gate on the current head and honor
+strict base freshness. Promotion to main receives its own complete check.
+
+Sources: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
+[checkout release](https://github.com/actions/checkout/releases/tag/v7.0.1),
+[Buildx setup release](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1).
+
+Repository security settings were verified on 2026-09-27: Dependabot vulnerability
+alerts and automatic **creation** of security-fix PRs are enabled. Automatic merging
+is not enabled by this configuration. Initial alert queries returned no open alerts;
+that is not a guarantee that future scans will find none. Security fixes targeting
+the default branch also run the full Quality gate.
+
+Both `develop` and `main` now require the aggregate `checks` with strict base
+freshness. Main previously had PR protection but no required status check; this
+gap was closed without changing its review count, administrator enforcement,
+conversation-resolution or force-push/deletion restrictions. Merges cannot rely
+only on an operator remembering to wait for CI.

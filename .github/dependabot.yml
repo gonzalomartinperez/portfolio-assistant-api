@@ -6,15 +6,31 @@ updates:
     schedule:
       interval: monthly
     open-pull-requests-limit: 3
+    groups:
+      python-compatible:
+        patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 2
+    groups:
+      actions-compatible:
+        patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
     target-branch: develop
     schedule:
       interval: monthly
     open-pull-requests-limit: 2
+    groups:
+      images-compatible:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # Python minor/major changes need an explicit project decision.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
