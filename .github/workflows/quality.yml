@@ -45,6 +45,8 @@ jobs:
         run: bash scripts/check_workflows.sh
       - name: Install locked dependencies
         run: uv sync --frozen
+      - name: Validate portable repository skills
+        run: uv run python -m scripts.validate_skills
       - name: Lint Python
         run: uv run ruff check app tests contracts scripts
       - name: Check Python formatting

@@ -1,0 +1,20 @@
+{
+  "environment": "Linux/WSL; repository-local configuration; no paid model calls",
+  "codex": {
+    "version": "0.157.1",
+    "discovery": "app-server skills/list returned all five api- skills enabled once each through relative directory symlinks",
+    "model_invocation": "not run; requires separate authorization"
+  },
+  "claude_code": {
+    "version": "2.1.283",
+    "discovery": "all five api- skills in actual CLI init slash_commands",
+    "explicit_invocation": "/api-verify-release expanded its canonical body into a request to a loopback-only Anthropic transport fixture",
+    "isolation": "temporary CLAUDE_CONFIG_DIR; project settings only; hooks disabled; tools disabled; empty strict MCP configuration; fake credential; no external model provider",
+    "negative_probe": "--bare intentionally bypassed skill discovery; ordinary project mode was required",
+    "model_behavior": "not evaluated: canned transport output does not demonstrate reasoning or authority adherence"
+  },
+  "structural_tests": "12 passed: catalog relocation, symlink and metadata integrity, missing references/resources, private paths, scaffolding and redacted known-secret detection",
+  "behavioral_scenarios": "20 authored scenarios reviewed for scope and overlapping triggers; natural-language model selection and autonomous behavior remain unverified",
+  "fixture_workflow": "isolated assistant-ux PostgreSQL/Neo4j started, migrated and indexed the approved immutable public commit; functional integration tests run separately",
+  "manual_verification": "docs/agent-skills.md"
+}
