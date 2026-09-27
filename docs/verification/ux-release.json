@@ -1,0 +1,64 @@
+{
+  "source_commit": "6b1e65f2406ba5ddf21d15c56c34ccf672d90bbb",
+  "local_tests": {
+    "command": "TEST_INTEGRATION=1 uv run pytest -q --junitxml=artifacts/ux-tests.xml",
+    "passed": 83,
+    "failed": 0,
+    "skipped": 0
+  },
+  "clean_checkout": {
+    "commit": "4aadfc5",
+    "frozen_install": true,
+    "offline_passed": 65,
+    "integration_deselected": 18,
+    "skills_validator": true,
+    "codex_actual_discovery_count": 5,
+    "ruff_mypy_contract_drift": true
+  },
+  "container": {
+    "image": "portfolio-assistant-api:ux",
+    "checks": [
+      {
+        "mode": "normal SSE",
+        "uid": "65532",
+        "events": 11,
+        "passed": true
+      },
+      {
+        "mode": "active-stream SIGTERM",
+        "uid": "65532",
+        "events": 3,
+        "passed": true
+      }
+    ]
+  },
+  "proxy": {
+    "passed": true,
+    "frontend": "committed image",
+    "paths_preserved": true,
+    "portfolio_cors": true,
+    "delta_gap_ms": 165.9,
+    "disconnect_state": "interrupted"
+  },
+  "image_health": {
+    "image_id": "sha256:b47099c462513c8bba4de5eed2b49334b56d83b7343ad795cda4b6c48217c7ba",
+    "default_command_health": "healthy",
+    "public_ports": "",
+    "runtime": "read-only; UID65532; private fixture network; no provider calls"
+  },
+  "actions": {
+    "run": 36331286574,
+    "head": "4aadfc5",
+    "status": "success",
+    "static_seconds": 32,
+    "integration_seconds": 102,
+    "gate_seconds": 3
+  },
+  "independent_review": "Four concrete findings fixed; reviewer reran seven context regressions successfully. Full 83-test suite run by owner agent.",
+  "limitations": [
+    "No live-model calls or behavioral skill-model evaluations",
+    "No published registry digest; local image ID is not a registry digest",
+    "No Coolify/VPS deployment or production recovery verification",
+    "Proxy smoke uses an existing committed frontend image, not new frontend-owner work or a full browser UX audit"
+  ]
+}

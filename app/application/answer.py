@@ -17,7 +17,7 @@ def context(sources: tuple[Evidence, ...]) -> str:
     return '\n'.join(
         f'PUBLIC SOURCE {s.path} lines {s.start_line}-{s.end_line}:\n{s.content[:6000]}'
         for s in sources[:5]
-    )[:22000]
+    )[:19000]
 
 
 async def generate(
@@ -31,7 +31,9 @@ async def generate(
         await accounting.reserve(command.run_id)
     count = 0
     async with aclosing(
-        provider.stream(command.question, context(sources), command.locale)
+        provider.stream(
+            command.question, context(sources), command.locale, command.history
+        )
     ) as stream:
         async for item in stream:
             if isinstance(item, Usage):

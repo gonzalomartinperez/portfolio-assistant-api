@@ -12,4 +12,7 @@ COPY contracts ./contracts
 ENV PATH=/app/.venv/bin:$PATH
 ENV LANGSMITH_TRACING=false LANGCHAIN_TRACING_V2=false
 USER 65532:65532
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--timeout-graceful-shutdown", "15"]
+EXPOSE 8000
+HEALTHCHECK --interval=20s --timeout=8s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--no-proxy-headers", "--timeout-graceful-shutdown", "15"]

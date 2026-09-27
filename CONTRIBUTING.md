@@ -65,3 +65,9 @@ Public visibility is not an open-source license. No source license has been
 selected; the owner must decide before granting reuse rights. See
 [third-party notices](THIRD_PARTY_NOTICES.md) for dependency attribution and
 [SECURITY.md](SECURITY.md) for private vulnerability reporting.
+
+## Agent skills
+
+See [repository skills](docs/agent-skills.md) for Codex/Claude discovery, invocation,
+authority boundaries, maintenance and compatibility evidence. Validate catalog
+changes with `uv run python -m scripts.validate_skills`; CI uses the same command.

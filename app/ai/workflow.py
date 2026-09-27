@@ -18,10 +18,16 @@ from app.application.contracts import (
     Retrieval,
     WorkflowEvent,
 )
+from app.application.conversation_context import (
+    Turn,
+    bounded_history,
+    retrieval_question,
+)
 
 
 class State(TypedDict):
     question: str
+    history: tuple[Turn, ...]
     locale: str
     run_id: str
     sources: list[dict[str, Any]]
@@ -37,12 +43,16 @@ class LangGraphWorkflow:
         checkpointer: BaseCheckpointSaver[Any] | None = None,
     ) -> None:
         async def retrieve(state: State) -> dict[str, Any]:
-            sources = await retrieval.search(state['question'], state['locale'])
+            sources = await retrieval.search(
+                retrieval_question(state['question'], state['history']), state['locale']
+            )
             return {'sources': [asdict(s) for s in sources[:5]]}
 
         async def answer(state: State) -> dict[str, str]:
             writer = get_stream_writer()
-            command = AnswerCommand(state['run_id'], state['question'], state['locale'])
+            command = AnswerCommand(
+                state['run_id'], state['question'], state['locale'], state['history']
+            )
             sources = tuple(Evidence(**s) for s in state['sources'])
             parts = []
             async with aclosing(
@@ -64,6 +74,7 @@ class LangGraphWorkflow:
     async def stream(self, command: AnswerCommand) -> AsyncGenerator[WorkflowEvent]:
         state: State = {
             'question': command.question,
+            'history': bounded_history(command.history),
             'locale': command.locale,
             'run_id': command.run_id,
             'sources': [],

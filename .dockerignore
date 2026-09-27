@@ -1,13 +1,14 @@
-.venv
-.git
-.env
-.env.local
-.pytest_cache
-__pycache__
-*.pyc
-public-portfolio
-
-artifacts
-.env.*
-deploy/*.private.env
-frontend-contract
+# Only runtime sources and locked build inputs belong in the production context.
+*
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!app/
+!app/**
+!migrations/
+!migrations/**
+!contracts/
+!contracts/**
+**/__pycache__/
+**/*.pyc
+**/.env*

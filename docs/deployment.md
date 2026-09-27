@@ -1,6 +1,7 @@
 # Operations and future VPS deployment
 
-No production deployment or `main` promotion is performed by this project work.
+Production deployment remains unauthorized. Main promotion requires explicit owner
+approval and passing checks on its own PR.
 The target is Hostinger VPS KVM 4, shared with the assistant frontend and other projects; the existing portfolio remains on Hostinger Business. The shared proxy routes / to Next.js and preserves /api/* for FastAPI. PostgreSQL/pgvector and Neo4j remain private. No additional managed Node.js slot is used.
 No queue service, Kubernetes or heavyweight telemetry platform is required.
 
@@ -89,47 +90,19 @@ repository's web measurement and is not a current VPS claim. Current backend-onl
 observations are recorded in implementation status. Representative load, proxy
 behavior, TLS and actual Hostinger capacity remain release gates.
 
-## Shared stack and server preparation
+## Production ownership
 
-The canonical deployment specification is [`deploy/compose.yaml`](../deploy/compose.yaml).
-Use a unique `COMPOSE_PROJECT_NAME=portfolio-assistant` on this shared VPS; no fixed
-container names or host database ports are used. Only the optional `edge` profile
-binds public ports. If an existing shared proxy or Coolify manages ingress, omit
-that profile and attach its single proxy to the project's `app` network. Adapt
-our reviewed routing/timeouts there; do not install a competing proxy.
+The private **vps-ops** repository is the sole production authority. Coolify is
+selected to manage both assistant applications on the future KVM 4 VPS. This
+repository supplies tested API images and the [runtime contract](deployment-contract.md).
+It does not install Coolify, manage shared resources, or execute production releases.
+The portfolio remains on Hostinger Business.
 
-Before an authorized deployment:
-
-1. Inventory the VPS's actual CPU/RAM/disk and existing projects. Patch the OS,
-   enable a firewall allowing only required public HTTP/HTTPS, and restrict SSH to
-   an administrative allowlist/VPN with keys. Keep Docker socket access restricted:
-   membership in its group grants host-level control. Do not expose database ports.
-2. Configure the proposed DNS and TLS only after owner authorization. Mount a
-   protected certificate directory containing `fullchain.pem` and `privkey.pem`;
-   arrange renewal and an Nginx reload. The unprivileged proxy UID must be able to
-   read the key without making it world-readable. Test TLS renewals separately.
-3. Copy the examples under `deploy/` into private files outside the checkout,
-   mode 0600. Provision strong distinct DB credentials and a random rate-hash key.
-   Model credentials remain absent in fixture mode. Register exact assistant and
-   portfolio origins, secure host-scoped cookies, and actual proxy peer addresses.
-   Do not render `docker compose config` with real secrets into logs.
-4. Authenticate to the image registry with a minimally scoped pull credential.
-   Select a reviewed manifest containing both full source SHAs and image digests.
-   The frontend owner must supply its committed production image handoff first.
-5. From the repository root, set the private Compose environment file and run
-   `docker compose --env-file /private/compose.env -f deploy/compose.yaml up -d postgres neo4j`.
-   Run the maintenance image once with `python -m app.migrate`, then
-   `python -m app.knowledge_sync --source github --ref <approved-full-public-SHA>`.
-   The private API environment must point at Compose service names, not localhost.
-6. Start API/web with `up -d --wait api web`, then enable the single edge proxy with
-   `--profile edge up -d proxy` (or configure the approved existing ingress).
-   Run `python3 -m scripts.deployment_smoke https://assistant.gonzalomartinperez.com`.
-   This creates/deletes a temporary anonymous session and checks deterministic stop-word-only
-   SSE without paid model use. Also verify a grounded fixture chat and browser UI.
-
-The API image writes only `/tmp`; PostgreSQL and Neo4j persist in their named data
-volumes. The frontend owner’s committed handoff specifies a 32 MiB tmpfs at
-`/app/.next/cache`, UID/GID 1000, mode 0700; the shared stack includes it. Never use `down -v` for upgrades.
+Existing files under `deploy/` and the disabled workflow template are retained as
+**transfer references**, not a second canonical production stack. See the asset
+inventory in the runtime contract. The vps-ops owner must confirm adoption before
+obsolete references are retired. Application-owned local proxy tests continue to
+exercise routing and streaming requirements; they do not validate Coolify itself.
 
 ## Routing, streams and browser integration
 
@@ -163,18 +136,17 @@ plus a reviewed original-client-IP policy. It is not enabled or verified here.
 
 ## Upgrade, rollback and deployment gates
 
-Active CI never deploys. The disabled workflow template, required environment
-review, and immutable publishing are described in [CI](ci.md). An authorized
-operator can run `deploy/apply-release.sh --approved release.json /private/compose.env`
-only after recording a backup/restore receipt and reviewing migration compatibility.
-Serialize deployments; preserve the preceding manifest and images. Reload the
-single proxy after container replacement so it resolves new upstream addresses.
-For externally managed ingress, its reload belongs to the approved transport.
-Run readiness and actual public SSE after the rollout. If code is incompatible,
-stop and use the previous schema-compatible image pair; do not blindly roll back
-schema. A single VPS is not highly available; active streams may be interrupted
-and upgrades can cause downtime. SIGTERM permits 15 seconds before cancellation;
-the container stop allowance is 25 seconds.
+Application CI validates source and images. Authorized publication provides an
+immutable digest and source revision; it does not authorize deployment. vps-ops
+selects compatible frontend/backend artifacts, schedules reviewed migrations,
+requires production approval and uses Coolify for deployment and verification.
+No application webhook, SSH workflow or automatic deployment trigger is enabled.
+
+Use the previous **schema-compatible** image for application rollback. Current
+readiness rejects migrations unknown to that image, so a prior image is not
+necessarily compatible after a schema upgrade. Database restore is a separately
+reviewed procedure. A single VPS is not highly available and active streams may be
+interrupted. Allow at least 25 seconds before container kill; Uvicorn drains for 15.
 
 ## Backups, monitoring and resource budget
 
@@ -202,16 +174,15 @@ usage reservations, budget cutoff, cleanup backlog and storage nearing capacity.
 
 ## Deployment roadmap
 
-1. **Implemented:** shared Compose/proxy, immutable manifest validation, non-root
-   API build, local proxy/stream checks and parallel repository CI.
-2. **Frontend coordination:** registry image digest and final release manifest. Committed relative browser URLs,
-   cache paths and standalone image build/HTTP smoke are verified locally; run the
-   combined browser journey before accepting a paired candidate.
-3. **Owner decisions:** license, backup destination/retention/key custody, shared
-   ingress management (plain Compose or optional Coolify), registry policy.
-4. **Authorized VPS verification:** provision/harden, DNS/TLS, encrypted restore,
-   Cloudflare if selected, representative multi-project load and active-stream
-   upgrade/rollback. Only then approve a production environment and activate CD.
+1. **Application verified locally/CI:** non-root image, real-service integration,
+   migrations and fixture SSE/proxy/shutdown checks. See verification records.
+2. **Application handoff:** publish only after separate authorization and package
+   visibility confirmation; supply digest, source SHA and runtime contract.
+3. **vps-ops:** adopt transfer assets, verify Coolify digest pinning, private service
+   networks, proxy routing/health checks and serialized migration execution.
+4. **Owner/vps-ops gates:** registry visibility, backup retention/key custody,
+   DNS/TLS authorization, encrypted restore, representative shared-VPS load and
+   stream interruption/rollback tests. No production execution is authorized.
 
 ### Database role separation
 

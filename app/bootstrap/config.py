@@ -10,7 +10,9 @@ from app.domain.budget import Budget
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='.env.local', extra='ignore')
+    model_config = SettingsConfigDict(
+        env_file='.env.local', extra='ignore', hide_input_in_errors=True
+    )
     environment: Literal['development', 'production'] = 'development'
     database_url: str = 'postgresql://assistant:assistant@127.0.0.1:5433/assistant'
     neo4j_uri: str = 'bolt://127.0.0.1:7688'

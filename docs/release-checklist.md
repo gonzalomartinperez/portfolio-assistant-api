@@ -1,30 +1,17 @@
-# Bounded release-candidate acceptance
+# Release acceptance entry point
 
-Scope: fixture-backed public engineering release on `develop`. No production
-promotion, paid model calls or frontend edits. Stop when these gates pass; further
-visual/style changes do not extend the task.
+The single prioritized, three-deliverable checklist is
+[Active delivery acceptance](work-checklist.md). Keep status and priorities there.
+Architecture, security, coding, migrations, contracts and CI remain cross-cutting
+gates, with evidence linked from that checklist and IMPLEMENTATION_STATUS.md.
 
-| Priority | Acceptance | Evidence |
-| --- | --- | --- |
-| Correctness | Complete session → retrieval → incremental answer → citations → persistence journey; unchanged v1 semantics | Real-service integration and event-schema tests |
-| Correctness | Silent provider cancellation, disconnect, partial output, timeout, storage failure and shutdown release resources | Gated async provider, ASGI and production smoke tests |
-| Security | Ownership, CSRF, origins/cookies, byte/history/concurrency/rate/cost bounds enforced outside model | Security and transaction tests |
-| Security | Public source allowlist, blob/mode limits, fixed remote, bounded graph queries, redacted errors/logs | Ingest tests, threat model, redacted history scan |
-| Integration | Deterministic committed OpenAPI/SSE and immutable frontend handoff | Artifact drift check and handoff document |
-| Knowledge | Bilingual direct/relationship/multi-hop/ambiguous/no-answer evaluation; failed index preserves active corpus | Real pgvector/Neo4j evaluation and recovery tests |
-| Maintainability | Six layers, import direction, no SQL in HTTP/application, typed inner and AI contracts | Architecture tests, strict mypy |
-| Maintainability | Reproducible migrations, checksum/order checks, safe cleanup and local transactions | Migration and checkpoint tests |
-| Presentation | README demo works from clean checkout; focused guides; Google-derived conventions and verified security channel | Clean-checkout run and documentation audit |
-| Integration | Required CI, non-root container, health/SSE/shutdown smoke; PR-only integration | GitHub checks and smoke artifacts |
+The earlier fixture release evidence remains in
+[backend-rc.json](verification/backend-rc.json); current conversational/client/image
+verification is in [ux-release.json](verification/ux-release.json). Historical runs
+are not a substitute for required checks on the current PR head.
 
-## Final audit boundaries
-
-Live model quality/injection testing, a future semantic embedding adapter, TLS/browser
-integration, VPS load, encrypted off-site restore and production operations need
-separate authorized verification. There is no chosen source license. These must
-remain visible rather than being described as completed release gates.
-
-All ten backend gates above have local evidence; prior slice checks and PR #10
-Actions passed. Shared HTTP proxy/full-stack evidence is recorded in
-[the diagnostic summary](verification/backend-rc.json). Combined browser release and
-production gates remain separate; no production-ready claim follows from this table.
+Main promotion requires current explicit authorization and its own PR gate.
+Production deployment and image publication require separate authorization; Coolify
+execution belongs to private vps-ops. Live-model quality, model-driven skill routing,
+VPS capacity and encrypted off-server recovery remain unverified. No source license
+has been selected. Never infer production readiness from fixture test success.

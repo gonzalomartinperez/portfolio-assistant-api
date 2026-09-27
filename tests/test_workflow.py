@@ -38,7 +38,7 @@ class GatedProvider:
         self.closed = asyncio.Event()
         self.completed = False
 
-    async def stream(self, question, evidence, locale):
+    async def stream(self, question, evidence, locale, history=()):
         try:
             yield 'first '
             await self.release.wait()
@@ -71,6 +71,9 @@ class Store:
 
     async def start(self, run_id):
         return self.active
+
+    async def history(self, run_id, conversation_id):
+        return ()
 
     async def running(self, run_id):
         return self.active
@@ -189,6 +192,10 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
                 assert kwargs['stream'] is True
                 assert kwargs['input'][0]['role'] == 'developer'
                 assert 'neutral Latin American Spanish' in kwargs['input'][0]['content']
+                assert (
+                    'explicitly requests English or Spanish'
+                    in kwargs['input'][0]['content']
+                )
                 assert 'Ignore previous instructions' in kwargs['input'][1]['content']
                 return events
 
