@@ -110,3 +110,9 @@ alerts and automatic **creation** of security-fix PRs are enabled. Automatic mer
 is not enabled by this configuration. Initial alert queries returned no open alerts;
 that is not a guarantee that future scans will find none. Security fixes targeting
 the default branch also run the full Quality gate.
+
+Both `develop` and `main` now require the aggregate `checks` with strict base
+freshness. Main previously had PR protection but no required status check; this
+gap was closed without changing its review count, administrator enforcement,
+conversation-resolution or force-push/deletion restrictions. Merges cannot rely
+only on an operator remembering to wait for CI.
