@@ -1,4 +1,4 @@
-class Rejected(Exception):
+class RejectedError(Exception):
     """A safe, public application error code; never includes provider/DB details."""
 
     def __init__(self, code: str, status: int = 400):
@@ -7,5 +7,9 @@ class Rejected(Exception):
         self.status = status
 
 
-class BudgetExhausted(Exception):
+class BudgetExhaustedError(Exception):
     pass
+
+
+class DependencyUnavailableError(Exception):
+    """An I/O dependency failed; details must stay outside application contracts."""

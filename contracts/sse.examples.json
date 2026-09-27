@@ -1,0 +1,83 @@
+{
+  "contract_version": "1",
+  "success_abstention": [
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.started",
+      "sequence": 0,
+      "payload": {
+        "state": "running"
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.status",
+      "sequence": 1,
+      "payload": {
+        "phase": "evidence_found",
+        "sources": 0
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "message.delta",
+      "sequence": 2,
+      "payload": {
+        "text": "I could not find enough public evidence to answer confidently."
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "message.completed",
+      "sequence": 3,
+      "payload": {
+        "message_id": "00000000-0000-0000-0000-000000000003",
+        "content": "I could not find enough public evidence to answer confidently.",
+        "citations": []
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.completed",
+      "sequence": 4,
+      "payload": {
+        "state": "completed"
+      }
+    }
+  ],
+  "failure": {
+    "schema_version": "1",
+    "run_id": "00000000-0000-0000-0000-000000000001",
+    "conversation_id": "00000000-0000-0000-0000-000000000002",
+    "timestamp": "2026-09-27T12:00:00Z",
+    "type": "run.failed",
+    "sequence": 3,
+    "payload": {
+      "code": "generation_failed"
+    }
+  },
+  "cancelled": {
+    "schema_version": "1",
+    "run_id": "00000000-0000-0000-0000-000000000001",
+    "conversation_id": "00000000-0000-0000-0000-000000000002",
+    "timestamp": "2026-09-27T12:00:00Z",
+    "type": "run.cancelled",
+    "sequence": 3,
+    "payload": {}
+  }
+}

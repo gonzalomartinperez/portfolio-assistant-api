@@ -4,6 +4,8 @@ from typing import Protocol
 
 @dataclass(frozen=True)
 class Chunk:
+    """A stored public span whose provenance must be verified before generation."""
+
     id: str
     title: str
     url: str
@@ -17,6 +19,8 @@ class Chunk:
 
 @dataclass(frozen=True)
 class Corpus:
+    """One active revision and its bounded lexical/vector candidates."""
+
     version: str
     commit: str
     chunks: tuple[Chunk, ...]
@@ -25,7 +29,14 @@ class Corpus:
 
 
 class KnowledgeIndex(Protocol):
-    async def candidates(self, question: str) -> Corpus | None: ...
+    """Read immutable corpus candidates and provenance-bearing relationships."""
+
+    async def candidates(self, question: str) -> Corpus | None:
+        """Read at most 500 chunks and 12 exact vector neighbors from one revision."""
+        ...
+
     async def relationships(
         self, version: str, terms: set[str], locale: str = 'en', expand: bool = False
-    ) -> tuple[str, ...]: ...
+    ) -> tuple[str, ...]:
+        """Return bounded source IDs reached through reviewed versioned graph edges."""
+        ...

@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from app.config import Settings
+from app.bootstrap.config import Settings
 from app.domain.evidence import verified
 from app.domain.fixture import fixture_message
 from tests.support import retrieve

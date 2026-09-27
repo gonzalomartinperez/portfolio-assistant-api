@@ -8,10 +8,10 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 
-from app.config import settings
-from app.db import connect
-from app.infrastructure.ledger import BudgetExhausted, reserve, settle
-from app.knowledge import embed
+from app.bootstrap.config import settings
+from app.infrastructure.db import connect
+from app.infrastructure.embedding import embed
+from app.infrastructure.ledger import BudgetExhaustedError, reserve, settle
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
@@ -95,7 +95,7 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     assert 'access-control-allow-origin' not in denied_preflight.headers
     reserve(sent.headers['x-run-id'], Decimal('0.05'))
     settle(sent.headers['x-run-id'], 1000, 500)
-    with pytest.raises(BudgetExhausted):
+    with pytest.raises(BudgetExhaustedError):
         reserve(str(uuid4()), Decimal('9.01'))
     pending_id = str(uuid4())
     with connect() as conn:
@@ -314,7 +314,7 @@ def test_concurrent_reservations_respect_one_remaining_budget_slot(monkeypatch):
         try:
             reserve(str(run_id), Decimal('0.05'))
             return 'allowed'
-        except BudgetExhausted:
+        except BudgetExhaustedError:
             return 'blocked'
 
     try:
@@ -340,3 +340,186 @@ def client_factory():
     yield create
     for client in reversed(clients):
         client.__exit__(None, None, None)
+
+
+def test_every_owned_mutation_and_stream_wire_contract(client_factory):
+    import json
+
+    from app.presentation.events import events
+
+    first, second = (
+        client_factory(app, client=(str(uuid4()), 50000)),
+        client_factory(app, client=(str(uuid4()), 50000)),
+    )
+    a, b = (
+        bootstrap(first, 'http://localhost:3000'),
+        bootstrap(second, 'http://localhost:3000'),
+    )
+    ha, hb = headers('http://localhost:3000', a), headers('http://localhost:3000', b)
+    cid = first.post('/api/v1/conversations', headers=ha, json={}).json()['id']
+    sent = first.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**ha, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'What is Filomena?', 'locale': 'en'},
+    )
+    wire = [
+        json.loads(line[6:])
+        for line in sent.text.splitlines()
+        if line.startswith('data: ')
+    ]
+    assert [e['sequence'] for e in wire] == list(range(len(wire)))
+    assert wire[0]['type'] == 'run.started'
+    assert [e['type'] for e in wire[-2:]] == ['message.completed', 'run.completed']
+    assert (
+        len(
+            [
+                e
+                for e in wire
+                if e['type'] in ('run.completed', 'run.failed', 'run.cancelled')
+            ]
+        )
+        == 1
+    )
+    assert all(
+        e['run_id'] == sent.headers['x-run-id'] and e['conversation_id'] == cid
+        for e in wire
+    )
+    for event in wire:
+        events.validate_python(event)
+    message = wire[-2]['payload']
+    assert (
+        ''.join(e['payload']['text'] for e in wire if e['type'] == 'message.delta')
+        == message['content']
+    )
+    attempts = [
+        ('patch', f'/api/v1/conversations/{cid}', {'title': 'stolen'}),
+        ('delete', f'/api/v1/conversations/{cid}', None),
+        ('post', f'/api/v1/conversations/{cid}/messages/stream', {'content': 'stolen'}),
+        ('post', f'/api/v1/runs/{sent.headers["x-run-id"]}/cancel', None),
+        (
+            'post',
+            f'/api/v1/messages/{message["message_id"]}/feedback',
+            {'rating': 'up'},
+        ),
+    ]
+    for method, path, body in attempts:
+        response = second.request(
+            method, path, headers={**hb, 'Idempotency-Key': str(uuid4())}, json=body
+        )
+        assert response.status_code == 404, (path, response.text)
+    assert (
+        first.post(
+            '/api/v1/conversations',
+            headers={'Origin': 'http://localhost:3000', 'X-CSRF-Token': b},
+            json={},
+        ).status_code
+        == 403
+    )
+    assert (
+        first.post(
+            '/api/v1/conversations', headers=ha, content=b'x' * 33000
+        ).status_code
+        == 422
+    )
+    first.delete('/api/v1/session', headers=ha)
+    second.delete('/api/v1/session', headers=hb)
+
+
+def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
+    from app.infrastructure.checkpoints import drain_cleanup
+
+    client = client_factory(app, client=(str(uuid4()), 50000))
+    csrf = bootstrap(client, 'http://localhost:3000')
+    auth = headers('http://localhost:3000', csrf)
+    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    sent = client.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**auth, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'quasar xylophone'},
+    )
+    run_id = sent.headers['x-run-id']
+    with monkeypatch.context() as patch:
+
+        def fail(*args):
+            raise RuntimeError('simulated checkpoint outage')
+
+        patch.setattr('app.infrastructure.checkpoints.delete_checkpoint', fail)
+        assert client.delete('/api/v1/session', headers=auth).status_code == 204
+    with connect() as conn:
+        assert conn.execute(
+            'SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s', (run_id,)
+        ).fetchone()
+        conn.execute(
+            "UPDATE checkpoint_cleanup SET created_at=now()-interval '11 minutes' WHERE thread_id=%s",
+            (run_id,),
+        )
+    drain_cleanup()
+    with connect() as conn:
+        assert (
+            conn.execute(
+                'SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s', (run_id,)
+            ).fetchone()
+            is None
+        )
+
+
+def test_atomic_run_slot_and_abuse_limits(client_factory):
+    from app.application.conversations import digest
+    from app.domain.errors import RejectedError
+    from app.infrastructure.conversations import PostgresConversations
+
+    client = client_factory(app, client=(str(uuid4()), 50000))
+    csrf = bootstrap(client, 'http://localhost:3000')
+    auth = headers('http://localhost:3000', csrf)
+    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    with connect() as conn:
+        session_id = conn.execute(
+            'SELECT session_id FROM conversations WHERE id=%s', (cid,)
+        ).fetchone()['session_id']
+    store = PostgresConversations(connect)
+    barrier = Barrier(2)
+
+    def create_run(index):
+        barrier.wait()
+        try:
+            return store.prepare_run(session_id, cid, 'question', 'hash', str(uuid4()))
+        except RejectedError as error:
+            return error.code
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(create_run, range(2)))
+    assert results.count('run_in_progress') == 1
+    with connect() as conn:
+        assert (
+            conn.execute(
+                'SELECT count(*) AS n FROM messages WHERE conversation_id=%s', (cid,)
+            ).fetchone()['n']
+            == 1
+        )
+    for result in results:
+        if result != 'run_in_progress':
+            client.post(f'/api/v1/runs/{result}/cancel', headers=auth)
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO messages(id,conversation_id,role,content) SELECT gen_random_uuid(),%s,'user','fixture' FROM generate_series(1,199)",
+            (cid,),
+        )
+    limited = client.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**auth, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'test'},
+    )
+    assert limited.status_code == 429 and limited.json()['code'] == 'history_limit'
+    other = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO rate_events(id,subject_hash,operation) SELECT gen_random_uuid(),%s,'message' FROM generate_series(1,30)",
+            (digest(settings().rate_hash_key + str(session_id)),),
+        )
+    limited = client.post(
+        f'/api/v1/conversations/{other}/messages/stream',
+        headers={**auth, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'test'},
+    )
+    assert limited.status_code == 429 and limited.json()['code'] == 'rate_limited'
+    assert client.delete('/api/v1/session', headers=auth).status_code == 204

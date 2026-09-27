@@ -1,6 +1,7 @@
 """Run lifecycle, cancellation, output and public event policy."""
 
 import asyncio
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
@@ -8,27 +9,45 @@ from typing import Protocol
 from uuid import UUID
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
-from app.domain.errors import BudgetExhausted
+from app.domain.errors import BudgetExhaustedError, DependencyUnavailableError
 
 
 @dataclass(frozen=True)
 class RunEvent:
+    """A public v1 event name and payload, before HTTP encoding."""
+
     name: str
     payload: dict[str, object]
 
 
 class RunStore(Protocol):
-    async def start(self, run_id: UUID) -> bool: ...
-    async def running(self, run_id: UUID) -> bool: ...
+    """Atomic persisted transitions; unavailable storage raises DependencyUnavailableError."""
+
+    async def start(self, run_id: UUID) -> bool:
+        """Claim a pending run without reviving terminal states."""
+        ...
+
+    async def running(self, run_id: UUID) -> bool:
+        """Check persisted cancellation while the provider may be silent."""
+        ...
+
     async def complete(
         self,
         run_id: UUID,
         conversation_id: UUID,
         answer: str,
         citations: list[dict[str, object]],
-    ) -> UUID | None: ...
-    async def fail(self, run_id: UUID, code: str) -> bool: ...
-    async def interrupt(self, run_id: UUID) -> None: ...
+    ) -> UUID | None:
+        """Save the answer and terminal state atomically, unless already cancelled."""
+        ...
+
+    async def fail(self, run_id: UUID, code: str) -> bool:
+        """Mark a live run failed; return false if it is already terminal or deleted."""
+        ...
+
+    async def interrupt(self, run_id: UUID) -> None:
+        """Interrupt a still-live run after a lost stream; never overwrite terminal state."""
+        ...
 
 
 def citations(
@@ -50,6 +69,8 @@ def citations(
 
 
 class RunService:
+    """Deliver bounded runs and reconcile cancellation with persisted state."""
+
     def __init__(
         self,
         store: RunStore,
@@ -66,6 +87,7 @@ class RunService:
     async def execute(
         self, run_id: UUID, conversation_id: UUID, question: str, locale: str
     ) -> AsyncGenerator[RunEvent]:
+        """Yield v1 events; cancel silent providers and never save partial answers."""
         answer = ''
         sources: tuple[Evidence, ...] = ()
         pending: asyncio.Task[WorkflowEvent] | None = None
@@ -121,13 +143,17 @@ class RunService:
                 {'message_id': str(message_id), 'content': answer, 'citations': refs},
             )
             yield RunEvent('run.completed', {'state': 'completed'})
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - Public stream fault boundary: preserve a terminal event without exposing internals.
             code = (
                 'budget_exhausted'
-                if isinstance(error, BudgetExhausted)
+                if isinstance(error, BudgetExhaustedError)
                 else 'generation_failed'
             )
-            changed = await self.store.fail(run_id, code)
+            try:
+                changed = await self.store.fail(run_id, code)
+            except DependencyUnavailableError:
+                # The persisted lease reconciles this run when storage recovers.
+                changed = True
             yield (
                 RunEvent('run.failed', {'code': code})
                 if changed
@@ -137,4 +163,22 @@ class RunService:
             if pending and not pending.done():
                 pending.cancel()
                 await asyncio.gather(pending, return_exceptions=True)
-            await self.store.interrupt(run_id)
+
+            # The cleanup task survives cancellation from an ASGI task-group scope.
+            async def interrupt() -> None:
+                try:
+                    await self.store.interrupt(run_id)
+                except DependencyUnavailableError:
+                    logging.getLogger('portfolio_assistant').warning(
+                        '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
+                    )
+
+            cleanup = asyncio.create_task(interrupt())
+            try:
+                await asyncio.shield(cleanup)
+            except asyncio.CancelledError:
+                # Keep a strong reference until completion; SQL has its own timeout.
+                cleanup.add_done_callback(
+                    lambda task: task.exception() if not task.cancelled() else None
+                )
+                raise

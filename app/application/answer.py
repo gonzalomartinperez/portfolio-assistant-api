@@ -7,7 +7,7 @@ from app.application.contracts import (
     Accounting,
     AnswerCommand,
     Evidence,
-    GenerationFailed,
+    GenerationFailedError,
     Provider,
     Usage,
 )
@@ -40,5 +40,5 @@ async def generate(
                 continue
             count += len(item)
             if count > max_characters:
-                raise GenerationFailed('output_limit')
+                raise GenerationFailedError('output_limit')
             yield item

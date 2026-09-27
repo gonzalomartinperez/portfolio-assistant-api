@@ -1,6 +1,8 @@
-"""Compatibility entry point; implementation lives in app.infrastructure.indexing."""
+"""Compatibility CLI; new code imports app.infrastructure.indexing."""
 
-from app.infrastructure.indexing import *
+from app.infrastructure.indexing import main, sync
+
+__all__ = ['main', 'sync']
 
 if __name__ == '__main__':
     main()

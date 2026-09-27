@@ -7,7 +7,7 @@ from uuid import uuid4
 from psycopg.errors import UniqueViolation
 
 from app.domain.conversations import Conversation, Message, Run, Session
-from app.domain.errors import Rejected
+from app.domain.errors import RejectedError
 
 
 def record(model, row):
@@ -26,7 +26,7 @@ class PostgresConversations:
                 (conversation_id, session_id),
             ).fetchone()
             if not row:
-                raise Rejected('not_found', 404)
+                raise RejectedError('not_found', 404)
             yield conn
 
     def session(self, secret_digest):
@@ -60,7 +60,7 @@ class PostgresConversations:
                 (subject_hash, operation),
             ).fetchone()['n']
             if count >= limit:
-                raise Rejected('rate_limited', 429)
+                raise RejectedError('rate_limited', 429)
             conn.execute(
                 'INSERT INTO rate_events(id,subject_hash,operation) VALUES (%s,%s,%s)',
                 (uuid4(), subject_hash, operation),
@@ -77,7 +77,7 @@ class PostgresConversations:
                 (session_id,),
             ).fetchone()['n']
             if count >= 100:
-                raise Rejected('conversation_limit', 429)
+                raise RejectedError('conversation_limit', 429)
             row = conn.execute(
                 'INSERT INTO conversations(id,session_id,title) VALUES (%s,%s,%s) RETURNING *',
                 (uuid4(), session_id, title),
@@ -126,7 +126,7 @@ class PostgresConversations:
                 (conversation_id, key),
             ).fetchone()
             if existing:
-                raise Rejected(
+                raise RejectedError(
                     'idempotency_conflict'
                     if existing['payload_hash'] != payload_hash
                     else 'run_already_exists',
@@ -137,13 +137,13 @@ class PostgresConversations:
                 "SELECT count(*) AS n FROM runs WHERE state IN ('pending','running')"
             ).fetchone()['n']
             if count >= 4:
-                raise Rejected('busy', 429)
+                raise RejectedError('busy', 429)
             history = conn.execute(
                 'SELECT count(*) AS n FROM messages WHERE conversation_id=%s',
                 (conversation_id,),
             ).fetchone()['n']
             if history >= 200:
-                raise Rejected('history_limit', 429)
+                raise RejectedError('history_limit', 429)
             run_id = uuid4()
             try:
                 conn.execute(
@@ -159,7 +159,7 @@ class PostgresConversations:
                     (conversation_id,),
                 )
             except UniqueViolation:
-                raise Rejected('run_in_progress', 409) from None
+                raise RejectedError('run_in_progress', 409) from None
         return run_id
 
     def run(self, session_id, run_id, cancel=False):
@@ -177,7 +177,7 @@ class PostgresConversations:
                 (run_id, session_id),
             ).fetchone()
         if not row:
-            raise Rejected('not_found', 404)
+            raise RejectedError('not_found', 404)
         return record(Run, row)
 
     def feedback(self, session_id, message_id, rating):
@@ -187,7 +187,7 @@ class PostgresConversations:
                 (message_id, session_id),
             ).fetchone()
             if not found:
-                raise Rejected('not_found', 404)
+                raise RejectedError('not_found', 404)
             conn.execute(
                 'INSERT INTO feedback(message_id,session_id,rating) VALUES (%s,%s,%s) ON CONFLICT(message_id) DO UPDATE SET rating=excluded.rating',
                 (message_id, session_id, rating),

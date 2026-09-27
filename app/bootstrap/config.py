@@ -1,9 +1,12 @@
+from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.domain.budget import Budget
 
 
 class Settings(BaseSettings):
@@ -20,8 +23,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = 'gpt-6-luna'
     secure_cookies: bool = False
-    retention_days: int = 7
-    run_timeout_seconds: float = 60
+    retention_days: int = Field(default=7, ge=1, le=30)
+    run_timeout_seconds: float = Field(default=60, gt=0, le=120)
     rate_hash_key: str = 'local-fixture-only'
     trusted_proxy_ips: str = ''
     monthly_budget_usd: str = '10.00'
@@ -32,6 +35,20 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def safe_configuration(self):
+        Budget(
+            *(
+                Decimal(value)
+                for value in (
+                    self.monthly_budget_usd,
+                    self.reserve_cutoff_usd,
+                    self.reservation_usd,
+                    self.input_usd_per_million,
+                    self.output_usd_per_million,
+                )
+            )
+        )
+        if self.embeddings_provider != 'fixture':
+            raise ValueError('only fixture embeddings are implemented')
         if self.ai_provider != 'fixture' and (
             self.ai_provider != 'openai'
             or not self.allow_paid_ai

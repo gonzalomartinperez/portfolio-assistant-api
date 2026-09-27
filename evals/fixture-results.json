@@ -6,7 +6,7 @@
       "case": "project",
       "kind": "direct",
       "passed": false,
-      "elapsed_ms": 156.7,
+      "elapsed_ms": 45.5,
       "sources": 2,
       "paths": [
         "README.md",
@@ -18,7 +18,7 @@
       "case": "education-es",
       "kind": "direct",
       "passed": false,
-      "elapsed_ms": 121.9,
+      "elapsed_ms": 37.0,
       "sources": 1,
       "paths": [
         "src/content/es/education.ts"
@@ -29,7 +29,7 @@
       "case": "stack",
       "kind": "relationship",
       "passed": true,
-      "elapsed_ms": 109.0,
+      "elapsed_ms": 41.2,
       "sources": 2,
       "paths": [
         "src/content/en/experience.ts",
@@ -41,7 +41,7 @@
       "case": "role",
       "kind": "direct",
       "passed": false,
-      "elapsed_ms": 188.3,
+      "elapsed_ms": 51.7,
       "sources": 0,
       "paths": []
     },
@@ -50,7 +50,7 @@
       "case": "shared",
       "kind": "multi-hop",
       "passed": false,
-      "elapsed_ms": 178.4,
+      "elapsed_ms": 40.2,
       "sources": 5,
       "paths": [
         "src/content/en/education.ts",
@@ -62,7 +62,7 @@
       "case": "shared-es",
       "kind": "multi-hop",
       "passed": true,
-      "elapsed_ms": 85.5,
+      "elapsed_ms": 39.4,
       "sources": 5,
       "paths": [
         "README.md",
@@ -84,7 +84,16 @@
       "case": "unknown",
       "kind": "no-answer",
       "passed": true,
-      "elapsed_ms": 131.7,
+      "elapsed_ms": 42.5,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "vector",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 37.9,
       "sources": 0,
       "paths": []
     },
@@ -93,7 +102,7 @@
       "case": "project",
       "kind": "direct",
       "passed": true,
-      "elapsed_ms": 447.1,
+      "elapsed_ms": 48.0,
       "sources": 2,
       "paths": [
         "src/content/en/projects.ts"
@@ -104,7 +113,7 @@
       "case": "education-es",
       "kind": "direct",
       "passed": false,
-      "elapsed_ms": 202.0,
+      "elapsed_ms": 47.1,
       "sources": 0,
       "paths": []
     },
@@ -113,7 +122,7 @@
       "case": "stack",
       "kind": "relationship",
       "passed": true,
-      "elapsed_ms": 269.9,
+      "elapsed_ms": 48.1,
       "sources": 2,
       "paths": [
         "src/content/en/projects.ts"
@@ -124,7 +133,7 @@
       "case": "role",
       "kind": "direct",
       "passed": true,
-      "elapsed_ms": 196.2,
+      "elapsed_ms": 74.5,
       "sources": 2,
       "paths": [
         "src/content/en/experience.ts"
@@ -135,7 +144,7 @@
       "case": "shared",
       "kind": "multi-hop",
       "passed": true,
-      "elapsed_ms": 288.4,
+      "elapsed_ms": 75.8,
       "sources": 5,
       "paths": [
         "src/content/en/experience.ts",
@@ -147,7 +156,7 @@
       "case": "shared-es",
       "kind": "multi-hop",
       "passed": true,
-      "elapsed_ms": 290.7,
+      "elapsed_ms": 70.4,
       "sources": 5,
       "paths": [
         "src/content/es/experience.ts",
@@ -159,7 +168,7 @@
       "case": "ambiguous",
       "kind": "ambiguity",
       "passed": true,
-      "elapsed_ms": 0.7,
+      "elapsed_ms": 0.5,
       "sources": 0,
       "paths": []
     },
@@ -168,7 +177,16 @@
       "case": "unknown",
       "kind": "no-answer",
       "passed": true,
-      "elapsed_ms": 236.3,
+      "elapsed_ms": 70.1,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "graph",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 43.6,
       "sources": 0,
       "paths": []
     },
@@ -177,7 +195,7 @@
       "case": "project",
       "kind": "direct",
       "passed": true,
-      "elapsed_ms": 87.4,
+      "elapsed_ms": 43.1,
       "sources": 5,
       "paths": [
         "README.md",
@@ -189,7 +207,7 @@
       "case": "education-es",
       "kind": "direct",
       "passed": true,
-      "elapsed_ms": 221.6,
+      "elapsed_ms": 39.7,
       "sources": 4,
       "paths": [
         "src/content/es/education.ts"
@@ -200,7 +218,7 @@
       "case": "stack",
       "kind": "relationship",
       "passed": true,
-      "elapsed_ms": 101.0,
+      "elapsed_ms": 36.3,
       "sources": 5,
       "paths": [
         "src/content/en/experience.ts",
@@ -212,7 +230,7 @@
       "case": "role",
       "kind": "direct",
       "passed": true,
-      "elapsed_ms": 91.4,
+      "elapsed_ms": 51.8,
       "sources": 2,
       "paths": [
         "src/content/en/experience.ts",
@@ -224,7 +242,7 @@
       "case": "shared",
       "kind": "multi-hop",
       "passed": true,
-      "elapsed_ms": 336.2,
+      "elapsed_ms": 64.0,
       "sources": 5,
       "paths": [
         "src/content/en/experience.ts",
@@ -236,7 +254,7 @@
       "case": "shared-es",
       "kind": "multi-hop",
       "passed": true,
-      "elapsed_ms": 233.5,
+      "elapsed_ms": 75.5,
       "sources": 5,
       "paths": [
         "src/content/es/experience.ts",
@@ -248,7 +266,7 @@
       "case": "ambiguous",
       "kind": "ambiguity",
       "passed": true,
-      "elapsed_ms": 0.5,
+      "elapsed_ms": 0.9,
       "sources": 0,
       "paths": []
     },
@@ -257,7 +275,16 @@
       "case": "unknown",
       "kind": "no-answer",
       "passed": true,
-      "elapsed_ms": 120.3,
+      "elapsed_ms": 37.9,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "hybrid",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 33.9,
       "sources": 0,
       "paths": []
     }

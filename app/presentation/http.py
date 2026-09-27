@@ -8,9 +8,9 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
-from fastapi.responses import StreamingResponse
 
 from app.application.conversations import digest
+from app.presentation.events import events
 from app.presentation.models import (
     ConversationCreate,
     ConversationUpdate,
@@ -22,8 +22,8 @@ from app.presentation.models import (
     RunView,
     SendMessage,
     SessionView,
-    SSEEnvelope,
 )
+from app.presentation.streaming import ClosingStreamingResponse
 
 log = logging.getLogger('portfolio_assistant')
 router = APIRouter(
@@ -89,7 +89,7 @@ def ready(request: Request):
     try:
         request.app.state.ready()
         return {'status': 'ok'}
-    except Exception:
+    except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
         fail('dependency_unavailable', 503)
 
 
@@ -226,13 +226,15 @@ def list_messages(
 def sse(
     event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict
 ):
-    body = SSEEnvelope(
-        type=event_type,
-        run_id=run_id,
-        conversation_id=conversation_id,
-        sequence=sequence,
-        timestamp=utcnow(),
-        payload=payload,
+    body = events.validate_python(
+        {
+            'type': event_type,
+            'run_id': run_id,
+            'conversation_id': conversation_id,
+            'sequence': sequence,
+            'timestamp': utcnow(),
+            'payload': payload,
+        }
     )
     return f'event: {event_type}\ndata: {body.model_dump_json()}\n\n'
 
@@ -243,11 +245,14 @@ async def execute_run(
     sequence = 0
     started = time.perf_counter()
     terminal = 'interrupted'
+    first_delta_ms = None
     try:
         async with aclosing(
             request.app.state.runs.execute(run_id, conversation_id, question, locale)
         ) as stream:
             async for event in stream:
+                if event.name == 'message.delta' and first_delta_ms is None:
+                    first_delta_ms = round((time.perf_counter() - started) * 1000, 1)
                 if event.name in ('run.completed', 'run.failed', 'run.cancelled'):
                     terminal = event.name
                 yield sse(event.name, run_id, conversation_id, sequence, event.payload)
@@ -260,6 +265,7 @@ async def execute_run(
                     'request_id': request.state.request_id,
                     'terminal': terminal,
                     'events': sequence,
+                    'first_delta_ms': first_delta_ms,
                     'duration_ms': round((time.perf_counter() - started) * 1000, 1),
                 }
             )
@@ -285,7 +291,7 @@ def stream_message(
         digest(body.model_dump_json()),
         idempotency_key,
     )
-    return StreamingResponse(
+    return ClosingStreamingResponse(
         execute_run(request, run_id, conversation_id, body.content, body.locale),
         media_type='text/event-stream',
         headers={

@@ -7,5 +7,6 @@ COPY app ./app
 COPY migrations ./migrations
 COPY contracts ./contracts
 ENV PATH=/app/.venv/bin:$PATH
+ENV LANGSMITH_TRACING=false LANGCHAIN_TRACING_V2=false
 USER 65532:65532
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--timeout-graceful-shutdown", "15"]

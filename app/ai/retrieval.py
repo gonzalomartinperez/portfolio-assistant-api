@@ -1,11 +1,14 @@
 """Deterministic retrieval orchestration over injected indexes."""
 
+import json
+import logging
 import re
+import time
 from dataclasses import asdict
 
 from app.application.contracts import Evidence
 from app.application.knowledge import KnowledgeIndex
-from app.domain.evidence import lexical_score, tokens, verified
+from app.domain.evidence import EvidenceRecord, lexical_score, tokens, verified
 
 
 class PublicRetrieval:
@@ -16,12 +19,23 @@ class PublicRetrieval:
         self.strategy = strategy
 
     async def search(self, question: str, locale: str) -> tuple[Evidence, ...]:
+        started = time.perf_counter()
         terms = tokens(question)
         if not terms:
             return ()
         corpus = await self.index.candidates(question)
         if corpus is None:
             return ()
+        # Do not answer an explicit employer/project premise with unrelated evidence.
+        affiliation = re.search(
+            r'\b(?:at|for|en)\s+([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})', question
+        )
+        if affiliation:
+            known_terms = set().union(
+                *(tokens(chunk.content) for chunk in corpus.chunks)
+            )
+            if not tokens(affiliation[1]) <= known_terms:
+                return ()
         relationship = bool(
             terms
             & {
@@ -51,7 +65,14 @@ class PublicRetrieval:
         eligible = {}
         scores = {}
         for chunk in corpus.chunks:
-            row = asdict(chunk)
+            row: EvidenceRecord = {
+                'path': chunk.path,
+                'content': chunk.content,
+                'start_line': chunk.start_line,
+                'end_line': chunk.end_line,
+                'url': chunk.url,
+                'content_hash': chunk.content_hash,
+            }
             score = lexical_score(row, terms, locale)
             if chunk.path in entity_paths:
                 score *= 2
@@ -90,6 +111,17 @@ class PublicRetrieval:
                 for index, key in enumerate(ids):
                     ranks[key] = ranks.get(key, 0) + weight / (10 + index)
             ranked = sorted(ranks, key=lambda key: (-ranks[key], -scores[key], key))
+        logging.getLogger('portfolio_assistant').info(
+            json.dumps(
+                {
+                    'operation': 'retrieval',
+                    'strategy': self.strategy,
+                    'graph_expansion': relationship,
+                    'sources': min(5, len(ranked)),
+                    'duration_ms': round((time.perf_counter() - started) * 1000, 1),
+                }
+            )
+        )
         return tuple(
             Evidence(
                 **{

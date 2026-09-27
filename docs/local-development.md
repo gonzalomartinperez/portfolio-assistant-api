@@ -1,32 +1,69 @@
-# Local fixture setup
+# Deterministic local demo
 
-Source and Git worktrees live under `~/projects/github/gonzalomartinperez/`. Node 24 LTS, Python 3.13, uv and Docker Compose are required. Fixture mode never calls OpenAI even if an API key exists on the machine.
+Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv and Python 3.13
+(`uv` installs the pinned interpreter when needed). No model key is needed.
+All commands run from this repository root. The frontend is independently owned;
+these instructions do not modify its checkout or services.
 
 ```sh
-cd ~/projects/github/gonzalomartinperez/portfolio-assistant-api
-docker compose up -d
 uv sync --frozen
+source scripts/fixture-env.sh
+docker compose up -d --wait
 uv run python -m app.migrate
-uv run python -m app.knowledge_sync --repo ../portfolio --ref origin/develop
+uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
-In another terminal run `cd ~/projects/github/gonzalomartinperez/portfolio-assistant-web && nvm use && npm ci && npm run dev`. Open `http://localhost:3001`. To preview the native panel, use the portfolio task worktree or merged `develop`, `nvm use && npm ci && npm run dev -- --webpack --port 3000`, then open `http://localhost:3000` and choose **Ask AI**. Both frontends call the API directly. The dev session cookie is for `localhost`; use the same hostname on all three ports.
+The fixture script uses project `assistant-fixture` and loopback ports
+55433 (PostgreSQL), 57688 (Bolt), 57475 (Neo4j HTTP). Override `ASSISTANT_PROJECT`,
+`POSTGRES_PORT`, `NEO4J_PORT`, `NEO4J_HTTP_PORT` **before** sourcing it if occupied.
+Each project gets separate volumes. Never stop another project's services or run
+`down -v`. `docker compose stop` stops only the selected project and preserves data.
+The CLI's GitHub source fetches the exact approved public revision above; a local
+approved checkout can use `--repo ../portfolio --ref <full SHA>` instead.
 
-Public source sync is explicit. `uv run python -m app.knowledge_sync --source github` fetches only `gonzalomartinperez/portfolio` from GitHub and activates a new version after both projections finish. Running the same commit again returns `changed: false`; across commits, unchanged blobs reuse stored chunks and embeddings. The CLI reports `embedded_chunks` and `reused_files`. No chat request triggers sync. Use `uv run python -m app.retention` on a daily schedule to purge expired anonymous sessions and LangGraph checkpoints. Never use `docker compose down -v` in routine development.
+`GET http://localhost:8000/health/live` is dependency-free. `/health/ready` requires
+migrations, an active public corpus and graph connectivity. Browser origins
+`http://localhost:3000` and `http://localhost:3001` are trusted by default. Use
+`localhost` consistently for browser cookies. See [API examples](api-contract.md).
+
+For a terminal demo while the server runs:
+
+```sh
+uv run python -m scripts.demo
+```
+
+The demo creates a session, streams a bilingual public question, prints public
+answer text and deletes its session. It does not print credentials.
 
 ## Verification
 
 ```sh
-uv run ruff check app tests contracts
-uv run pytest -q
-TEST_INTEGRATION=1 uv run pytest -q tests/test_integration.py
-uv run python -m contracts.export && git diff --exit-code contracts/openapi.json
+uv run ruff check app tests contracts scripts
+uv run ruff format --check app tests contracts scripts
+uv run mypy
+uv run pytest -q                         # Pure/contract tests; real-service tests skip.
+TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.
+uv run python -m contracts.export
+git diff --exit-code contracts/openapi.json contracts/sse.schema.json
+uv run python -m scripts.evaluate_retrieval
+uv run python -m scripts.benchmark_fixture
+uv run python -m scripts.scan_secrets
 docker build -t portfolio-assistant-api:fixture .
+uv run python -m scripts.container_smoke --image portfolio-assistant-api:fixture
 ```
 
-The web uses `npm test && npm run build && docker build -t portfolio-assistant-web:fixture .`. The portfolio uses its `npm run check` gate. Browser checks require API, both databases and both web servers running.
+Real-service tests create and delete their own anonymous sessions and temporary
+index versions. The indexing test restores the original active version. Run them
+only against an isolated test corpus, never production. Container smoke uses Linux
+host networking and a dedicated loopback API port; it removes only its own
+containers. Fixture timing is local evidence, not a production capacity guarantee.
 
-## Local backup and restore
+## Dependencies and maintenance
 
-PostgreSQL contains sessions, history, checkpoints and active version. Create a private backup with `docker compose exec -T postgres pg_dump -U assistant -Fc assistant > /path/with/restricted/permissions/assistant.dump`. Restore only to a separate development database with `pg_restore --clean --if-exists`; never overwrite the current database during a smoke test. Neo4j is a rebuildable projection from the approved public source. For future production backups, Neo4j Community needs an offline database dump; see the deployment guide.
+`uv.lock` and image digests pin reproducible installs. The Python minor version is
+unchanged. Mypy is the only new development dependency in this migration; it checks
+inner contracts and AI orchestration strictly. No ORM/queue/new service was added.
+Run `uv run python -m app.retention` every minute to prune expired data and retry
+checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
+[operations](deployment.md). Configuration is documented in [environment](environment.md).
