@@ -61,6 +61,12 @@ jobs:
         run: uv run python -m scripts.scan_secrets > artifacts/secret-scan.json
       - name: Verify public contract drift
         run: uv run python -m contracts.export && git diff --exit-code contracts
+      - name: Audit live dependency controls without mutations
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

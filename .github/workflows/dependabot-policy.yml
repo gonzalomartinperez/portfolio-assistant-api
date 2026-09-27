@@ -1,0 +1,46 @@
+name: Dependabot policy
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft, labeled, unlabeled]
+  workflow_run:
+    workflows: [Quality]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      number:
+        description: Pull request number
+        required: true
+        type: string
+      head:
+        description: Exact reviewed head SHA (40 characters)
+        required: true
+        type: string
+      mode:
+        description: Reevaluate eligibility or explicitly choose manual merging
+        type: choice
+        options: [reevaluate, manual]
+        required: true
+permissions: {}
+concurrency:
+  group: dependency-policy-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || inputs.head }}
+  cancel-in-progress: false
+jobs:
+  policy:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      # workflow_sha is trusted base/default workflow code, never the PR head or merge ref.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Evaluate authenticated metadata and native merge gates
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPENDABOT_AUTOMERGE_ENABLED: ${{ vars.DEPENDABOT_AUTOMERGE_ENABLED }}
+        run: python3 -m scripts.dependabot_automation

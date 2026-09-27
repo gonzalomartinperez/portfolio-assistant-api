@@ -71,3 +71,7 @@ selected; the owner must decide before granting reuse rights. See
 See [repository skills](docs/agent-skills.md) for Codex/Claude discovery, invocation,
 authority boundaries, maintenance and compatibility evidence. Validate catalog
 changes with `uv run python -m scripts.validate_skills`; CI uses the same command.
+
+Dependency maintenance follows [the conservative Dependabot policy](docs/dependency-updates.md).
+Passing CI alone does not qualify a dependency update. Review scope, transitive
+changes and activation/required-check state before enabling any automated path.

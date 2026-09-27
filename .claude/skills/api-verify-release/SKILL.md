@@ -50,3 +50,10 @@ The frontend's primary `/embed` and demo `/` call same-origin `/api`. Actual
 portfolio integration is deferred. Read only committed sibling handoffs; do not
 broaden API CORS or cookie scope for the iframe parent. Frontend/vps-ops own framing
 permissions and paired browser verification. Keep pending coordination explicit.
+
+For dependency automation, use [the maintenance policy](../../../docs/dependency-updates.md)
+and `uv run pytest -q tests/test_dependabot_policy.py`. Read-only audits use
+`uv run python -m scripts.dependabot_automation --audit-pr <number>`; they never
+enable merging. Check actual protections and activation state, not labels/titles.
+Default-branch activation and repository-setting changes require current authority;
+this skill does not grant it or permit main promotion. Preserve manual opt-outs.
