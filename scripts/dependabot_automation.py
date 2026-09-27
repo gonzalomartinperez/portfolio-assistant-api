@@ -39,6 +39,10 @@ CONTROL_QUERY = """query {
 }"""
 
 
+class GitHubRequestError(RuntimeError):
+    """An API failure containing only fixed endpoint/category diagnostics."""
+
+
 class GitHub:
     """Use gh's existing scoped authentication; never extract or print its token."""
 
@@ -50,11 +54,16 @@ class GitHub:
             command,
             input=json.dumps(data) if data is not None else None,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            check=True,
+            capture_output=True,
+            check=False,
             timeout=30,
         )
+        if result.returncode:
+            status = re.search(r'HTTP (\d{3})', result.stderr)
+            endpoint = 'graphql' if path == 'graphql' else 'rest'
+            raise GitHubRequestError(
+                f'{endpoint}; HTTP {status[1] if status else "unknown"}'
+            )
         value = json.loads(result.stdout)
         if isinstance(value, dict) and value.get('errors'):
             raise ValueError('github_graphql_error')
@@ -353,6 +362,8 @@ def main() -> None:
 if __name__ == '__main__':
     try:
         main()
+    except GitHubRequestError as error:
+        raise SystemExit(f'Dependency policy failed closed ({error}).') from None
     except (
         subprocess.SubprocessError,
         KeyError,

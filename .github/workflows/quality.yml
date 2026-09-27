@@ -27,6 +27,9 @@ env:
 jobs:
   static:
     name: Static and offline
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
