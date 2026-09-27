@@ -2,7 +2,7 @@
 
 ## Active workflows
 
-`Quality` runs on every PR into `develop`, manual dispatch, and trusted reusable
+`Quality` runs on every PR into `develop` or `main`, manual dispatch, and trusted reusable
 calls. There are **no path filters**: documentation/contract-only PRs still finish
 the required gate. New commits cancel stale runs for the same PR/ref.
 
@@ -34,9 +34,9 @@ then publishes the **tested image archive** without rebuilding it. The artifact
 `release-candidate-manifest` records both image digests, both commits and contract
 version, with `production_authorized: false`. Manual publishing is prepared but
 has not been executed with a frontend release image. GitHub discovers dispatchable
-workflows on the default branch, currently `main`; this workflow remains on
-`develop` until an explicitly approved release promotion. No default-branch change
-or main promotion was performed.
+workflows on the default branch, `main`. The owner has authorized promoting the
+fixture-backed candidate from `develop` after successful CI. Once merged, manual
+publishing becomes discoverable; merging alone neither publishes images nor deploys.
 
 ## Deployment remains disabled
 
@@ -62,3 +62,11 @@ smoke). The first parallel run (#10, run 36320177528) passed with static/offline
 real services/container 109 seconds and aggregate 3 seconds; diagnostic artifacts
 were verified via the Actions API. These runs have different test scope/cache state;
 they are not a controlled claim of a fixed percentage speedup.
+
+## Main promotion gate
+
+Promote through a `develop` → `main` PR after explicit owner authorization. Wait
+for both Quality jobs and the aggregate `checks` on that PR’s current head; do not
+reuse a check from an earlier head or bypass reviews. The same workflow runs without
+path filters on both target branches. This promotes the verified fixture candidate;
+production/live-model limitations in the release checklist remain in force.
