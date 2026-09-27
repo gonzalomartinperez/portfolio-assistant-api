@@ -4,17 +4,30 @@ updates:
     directory: /
     target-branch: develop
     schedule:
-      interval: monthly
+      interval: weekly
+    rebase-strategy: auto
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 3
+    allow:
+      - dependency-type: all
     groups:
-      python-compatible:
+      test-runner-patches:
+        patterns: ["pytest"]
+        update-types: [patch]
+      ini-parser-compatible:
+        patterns: ["iniconfig"]
+        update-types: [minor, patch]
+      python-review:
         patterns: ["*"]
+        exclude-patterns: ["pytest", "iniconfig"]
         update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     target-branch: develop
     schedule:
       interval: monthly
+    rebase-strategy: auto
     open-pull-requests-limit: 2
     groups:
       actions-compatible:
@@ -25,6 +38,7 @@ updates:
     target-branch: develop
     schedule:
       interval: monthly
+    rebase-strategy: auto
     open-pull-requests-limit: 2
     groups:
       images-compatible:
