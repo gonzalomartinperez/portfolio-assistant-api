@@ -104,3 +104,9 @@ strict base freshness. Promotion to main receives its own complete check.
 Sources: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
 [checkout release](https://github.com/actions/checkout/releases/tag/v7.0.1),
 [Buildx setup release](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1).
+
+Repository security settings were verified on 2026-09-27: Dependabot vulnerability
+alerts and automatic **creation** of security-fix PRs are enabled. Automatic merging
+is not enabled by this configuration. Initial alert queries returned no open alerts;
+that is not a guarantee that future scans will find none. Security fixes targeting
+the default branch also run the full Quality gate.
