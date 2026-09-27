@@ -1,0 +1,158 @@
+name: Quality
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      export_image:
+        type: boolean
+        default: false
+      frontend_image:
+        type: string
+        default: ''
+      frontend_commit:
+        type: string
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+env:
+  AI_PROVIDER: fixture
+  ALLOW_PAID_AI: 'false'
+  LANGSMITH_TRACING: 'false'
+  DOCKER_BUILD_RECORD_RETENTION_DAYS: '7'
+jobs:
+  static:
+    name: Static and offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --frozen
+      - run: uv run ruff check app tests contracts scripts
+      - run: uv run ruff format --check app tests contracts scripts
+      - run: uv run mypy
+      - run: |
+          mkdir -p artifacts
+          uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+      - run: uv run python -m scripts.scan_secrets > artifacts/secret-scan.json
+      - run: uv run python -m contracts.export && git diff --exit-code contracts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-diagnostics
+          path: artifacts/
+          retention-days: 7
+  integration:
+    name: Real services and container
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+        env:
+          POSTGRES_USER: assistant
+          POSTGRES_PASSWORD: assistant
+          POSTGRES_DB: assistant
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U assistant"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      neo4j:
+        image: neo4j:5.26.17-community@sha256:d31525aa50da9215d692e5e824696c63583636398f5f5b60260bb92f94095c70
+        env:
+          NEO4J_AUTH: neo4j/change-me
+        ports: ['7688:7687']
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'"
+          --health-interval 10s --health-timeout 10s --health-retries 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: gonzalomartinperez/portfolio
+          ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+          path: public-portfolio
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --frozen
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: inputs.frontend_commit != ''
+        with:
+          repository: gonzalomartinperez/portfolio-assistant-web
+          ref: ${{ inputs.frontend_commit }}
+          path: frontend-contract
+          sparse-checkout: contracts
+          persist-credentials: false
+      - name: Verify the paired frontend contract bytes
+        if: inputs.frontend_commit != ''
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ('openapi.json', 'sse.schema.json', 'sse.examples.json'):
+              assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
+          PY
+      - run: uv run python -m scripts.validate_compose
+      - run: uv run python -m app.migrate
+      - run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+      - run: |
+          mkdir -p artifacts
+          uv run pytest -q -m integration --junitxml=artifacts/integration.xml
+        env:
+          TEST_INTEGRATION: '1'
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          load: true
+          tags: portfolio-assistant-api:ci
+          cache-from: type=gha,scope=api-linux-amd64
+          cache-to: type=gha,mode=max,scope=api-linux-amd64
+      - run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
+      - run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
+        env:
+          FRONTEND_IMAGE: ${{ inputs.frontend_image }}
+      - name: Export the tested image for manual publishing
+        if: inputs.export_image && github.event_name == 'workflow_dispatch'
+        run: docker save portfolio-assistant-api:ci -o artifacts/tested-image.tar
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: inputs.export_image && github.event_name == 'workflow_dispatch'
+        with:
+          name: tested-api-image
+          path: artifacts/tested-image.tar
+          retention-days: 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: integration-diagnostics
+          path: |
+            artifacts/*.xml
+            artifacts/*.json
+          retention-days: 7
+  checks:
+    name: checks
+    if: always()
+    needs: [static, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Preserve the required aggregate gate
+        env:
+          STATIC_RESULT: ${{ needs.static.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+        run: test "$STATIC_RESULT" = success && test "$INTEGRATION_RESULT" = success
