@@ -3,6 +3,9 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+MAX_INPUT_TOKENS = 110000
+MAX_OUTPUT_TOKENS = 500
+
 
 @dataclass(frozen=True)
 class Budget:
@@ -25,7 +28,7 @@ class Budget:
         if not self.reservation <= self.cutoff <= self.monthly:
             raise ValueError('reservation must fit cutoff and monthly budget')
         # UTF-8 bytes conservatively bound input tokens for the bounded prompt.
-        maximum = self.cost(110000, 500)
+        maximum = self.cost(MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS)
         if self.reservation < maximum:
             raise ValueError('reservation must cover the bounded maximum model request')
 
