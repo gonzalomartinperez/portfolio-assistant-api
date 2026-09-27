@@ -54,3 +54,21 @@ reconcile its earlier 16 KiB/no-heartbeat proxy notes with this API-owned stack.
 and hash embeddings are deterministic development behavior, not live-model quality.
 
 Local HTTP full-stack verification passed against frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf`: root, API/docs, CORS/CSRF, incremental deltas and disconnect interruption. Its imported contract bytes match this API snapshot. Browser/TLS and registry digest release checks remain separate. See [diagnostic summary](verification/backend-rc.json).
+
+## Conversational increment · source revision 6b1e65f2406ba5ddf21d15c56c34ccf672d90bbb
+
+The v1 HTTP/OpenAPI and seven SSE event schemas remain byte-compatible; no frontend
+type regeneration is required for a wire change in this increment. Continue using
+the committed artifact paths and examples above. Server-side history now supplies
+bounded context from the same owned conversation. Send follow-ups to the existing
+conversation ID; do not resend full history or place visitor statements in citations.
+
+Existing validated citation references remain the optional presentation enhancement;
+no arbitrary action/HTML/URL schema was added. Text is complete without navigation.
+Fixture output is readable quoted source prose, not a live-model quality claim.
+Shortening is deterministic; nuanced role-fit/depth/personality need separately
+authorized live evaluation. Full partial-stream/cancel/failure semantics are unchanged.
+
+Production is coordinated exclusively by private vps-ops using Coolify. The API
+[deployment contract](deployment-contract.md) preserves `/api/v1` paths with empty
+root_path. This revision does not authorize image publication or deployment.

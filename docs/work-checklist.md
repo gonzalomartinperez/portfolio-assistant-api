@@ -8,14 +8,14 @@ execution are authorized.
 
 | Priority | Acceptance criterion | Status / evidence |
 | --- | --- | --- |
-| 1 Experience | Audit representative English/Spanish conversations; answer-first evidence, contribution detail, role-fit distinctions, bounded follow-ups and unknowns | In progress: current fixture exposes raw source excerpts; workflow has no prior-turn input. Actual baseline/after run records pending. |
-| 1 Compatibility | Preserve HTTP/SSE, real incremental provider cancellation, committed contract and frontend handoff; optional actions only if useful and safe | Existing v1 contract tested; conversational changes pending. No frontend edits. |
+| 1 Experience | Audit representative English/Spanish conversations; answer-first evidence, contribution detail, role-fit distinctions, bounded follow-ups and unknowns | Implemented bounded history, follow-up resolution, evidence selection and readable attributed fixture prose. Twenty-turn before/after records; live-model reasoning/personality remain unverified. |
+| 1 Compatibility | Preserve HTTP/SSE, real incremental provider cancellation, committed contract and frontend handoff; optional actions only if useful and safe | v1 generated artifacts unchanged; committed handoff pins 6b1e65f. Cancellation/provider and real ownership/history regressions pass. No frontend edits. |
 | 2 Security | Ownership, CSRF, isolation, budgets, limits, untrusted job descriptions and retrieved text; safe errors and cleanup | Existing controls tested in earlier CI; rerun and add context-specific regressions with functional changes. |
-| 3 Verification | Behavior tests, real PostgreSQL/Neo4j, migrations/recovery, retrieval comparisons, image and proxy smoke; before/after evidence | Last completed baseline: 63 tests in CI. Current offline run: 58 passed, 17 integration deselected (includes 12 new skill-validator tests). |
+| 3 Verification | Behavior tests, real PostgreSQL/Neo4j, migrations/recovery, retrieval comparisons, image and proxy smoke; before/after evidence | Baseline 63 tests in prior CI; current local complete suite 83 passed with real services. Current image/PR checks pending. |
 | 4 Presentation | Natural bilingual answers, useful grounded next steps, no unsupported biography or hiring commitments | In progress; fixture improvements will remain explicitly simulated. |
 | 5 CI | Secure pinned parallel jobs, deterministic artifacts, required gate, review dependency updates | Existing pipeline implemented and previously verified; current changes need actual PR runs. Dependabot #17/#18 await focused review. |
 | 6 Deployment contract | API image/runtime/migration handoff to vps-ops; Coolify selected; no application deployment controller | In progress documentation only; existing shared templates retained for transfer. No Coolify/VPS execution. |
-| 7 Skills/docs | Small canonical task catalog, Codex/Claude discovery, structural/behavioral evidence and accurate instructions | Five skills drafted; validator and 12 tests pass. Codex discovery verified; Claude bare probe did not discover skills and needs correction. Not yet integrated. |
+| 7 Skills/docs | Small canonical task catalog, Codex/Claude discovery, structural/behavioral evidence and accurate instructions | Five skills drafted; validator and 12 tests pass. Codex discovery verified; Claude project-mode discovery and explicit expansion verified using loopback transport; bare mode intentionally excludes skills. Natural-language model routing remains unverified. Not yet integrated. |
 | Final | All applicable checks pass on current PR heads; merge develop; exact commits, handoff and limitations reported | Pending. Main promotion waits for all three deliverables and its own required checks. |
 
 ## Deliverable mapping
