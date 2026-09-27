@@ -10,3 +10,4 @@ public-portfolio
 artifacts
 .env.*
 deploy/*.private.env
+frontend-contract

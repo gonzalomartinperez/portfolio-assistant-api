@@ -11,6 +11,9 @@ on:
       frontend_image:
         type: string
         default: ''
+      frontend_commit:
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -87,6 +90,22 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
       - run: uv sync --frozen
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: inputs.frontend_commit != ''
+        with:
+          repository: gonzalomartinperez/portfolio-assistant-web
+          ref: ${{ inputs.frontend_commit }}
+          path: frontend-contract
+          sparse-checkout: contracts
+          persist-credentials: false
+      - name: Verify the paired frontend contract bytes
+        if: inputs.frontend_commit != ''
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in ('openapi.json', 'sse.schema.json', 'sse.examples.json'):
+              assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
+          PY
       - run: uv run python -m scripts.validate_compose
       - run: uv run python -m app.migrate
       - run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD

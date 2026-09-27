@@ -39,6 +39,7 @@ jobs:
     with:
       export_image: true
       frontend_image: ${{ inputs.frontend_image }}
+      frontend_commit: ${{ inputs.frontend_commit }}
   publish:
     needs: verify
     runs-on: ubuntu-latest
