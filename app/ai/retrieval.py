@@ -8,7 +8,13 @@ from dataclasses import asdict
 
 from app.application.contracts import Evidence
 from app.application.knowledge import KnowledgeIndex
-from app.domain.evidence import EvidenceRecord, lexical_score, tokens, verified
+from app.domain.evidence import (
+    EvidenceRecord,
+    lexical_score,
+    requested_affiliation,
+    tokens,
+    verified,
+)
 
 
 class PublicRetrieval:
@@ -52,14 +58,12 @@ class PublicRetrieval:
         if corpus is None:
             return ()
         # Do not answer an explicit employer/project premise with unrelated evidence.
-        affiliation = re.search(
-            r'\b(?:at|for|en)\s+([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})', question
-        )
+        affiliation = requested_affiliation(question)
         if affiliation:
             known_terms = set().union(
                 *(tokens(chunk.content) for chunk in corpus.chunks)
             )
-            if not tokens(affiliation[1]) <= known_terms:
+            if not tokens(affiliation) <= known_terms:
                 return ()
         relationship = bool(
             terms
@@ -173,12 +177,12 @@ class PublicRetrieval:
                 ranked = [
                     key
                     for key in ranked
-                    if tokens(affiliation[1]) <= tokens(eligible[key].content)
+                    if tokens(affiliation) <= tokens(eligible[key].content)
                 ]
                 ranked.sort(
                     key=lambda key: (
                         not any(
-                            tokens(name) & tokens(affiliation[1])
+                            tokens(name) & tokens(affiliation)
                             for name in re.findall(
                                 r'company:\s*"([^"\n]+)"', eligible[key].content
                             )

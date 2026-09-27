@@ -6,7 +6,9 @@ and education, then streams an answer while keeping anonymous conversations
 isolated. The [portfolio](https://github.com/gonzalomartinperez/portfolio) supplies
 approved public content; the independently owned
 [web client](https://github.com/gonzalomartinperez/portfolio-assistant-web) consumes
-this API's committed contract.
+this API's committed contract. Its primary `/embed` UI and secondary `/` demo use
+same-origin `/api`; actual portfolio integration is deferred. See the
+[committed frontend handoff](docs/frontend-handoff.md).
 
 **Current status:** working fixture-backed engineering release candidate on
 `develop`. PostgreSQL/pgvector persistence, Neo4j relationship retrieval, LangGraph

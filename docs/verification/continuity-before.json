@@ -1,0 +1,159 @@
+{
+  "mode": "fixture; deterministic excerpts, not live-model quality",
+  "suite": "continuity",
+  "samples": [
+    {
+      "scenario": "role-paraphrase",
+      "question": "Would he be a fit for AI Engineer?",
+      "first_delta_ms": 1925.3,
+      "total_ms": 2283.9,
+      "terminal": "run.completed",
+      "answer": "I could not find enough public evidence to answer confidently.",
+      "citations": []
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "What did he build at Rampy?",
+      "first_delta_ms": 996.5,
+      "total_ms": 2136.0,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "Give me an example of his work at Teamcubation",
+      "first_delta_ms": 1293.3,
+      "total_ms": 2673.5,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "Explain that technically",
+      "first_delta_ms": 1637.6,
+      "total_ms": 2301.5,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "What did he build at Rampy?",
+      "first_delta_ms": 1637.6,
+      "total_ms": 2859.9,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "Which technologies did he use there?",
+      "first_delta_ms": 1157.8,
+      "total_ms": 2212.8,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Documented technologies: Python, FastAPI, Agno, RAG.\n\n> Health-sciences exams across five institutions",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "id": "d8fd8d1f6f371033fc5cdbfd11ae0ff16cc3c289c7c77ea41f077487c2967104",
+          "label": "src/content/en/projects.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/projects.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "Give me an example",
+      "first_delta_ms": 949.8,
+      "total_ms": 1156.6,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Documented technologies: Python, FastAPI, Agno, RAG.\n\n> Health-sciences exams across five institutions",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "id": "d8fd8d1f6f371033fc5cdbfd11ae0ff16cc3c289c7c77ea41f077487c2967104",
+          "label": "src/content/en/projects.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/projects.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    }
+  ],
+  "api_source_commit": "7150318dea906a77504b9ef5b49c819c696fd20e",
+  "public_source_commit": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+  "latency_note": "Local fixture observations under different host load; baseline overlapped integration tests. Not a controlled performance comparison.",
+  "runner_note": "Continuity suite added in 5742961; baseline used that runner with application source 7150318 in an isolated worktree."
+}

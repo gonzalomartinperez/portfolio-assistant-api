@@ -10,7 +10,7 @@ requirements are untrusted context, never public knowledge. Deletion and checkpo
 cleanup retain their existing ownership and retention behavior.
 
 LangGraph receives this plain application contract. Deterministic follow-up
-resolution uses the latest substantive visitor topic for retrieval; unrelated new
+resolution uses the latest substantive visitor topic and most recent referential refinement for retrieval; unrelated new
 questions discard that retrieval reference. The current question and labeled history
 reach the provider separately from evidence. Context evidence is capped at 19,000
 characters so history fits the existing conservative input reservation without
@@ -113,3 +113,49 @@ continuity is omitted when a single-turn case cannot measure it.
 The low learning-gap/role-fit completeness scores are deliberate: source excerpts
 do not perform that reasoning. Do not hide these limitations behind aggregate
 scores. An authorized live-provider review is the next quality decision gate.
+
+## Consolidated RC regression evidence
+
+Source `57429618cf487b78842dd460411a72da45728ba0` fixes two retrieval-context bugs
+and one deterministic attribution bug without adding model calls or changing v1.
+The source before these changes is `7150318dea906a77504b9ef5b49c819c696fd20e`.
+Run the additional seven-turn suite with:
+
+```sh
+uv run python -m scripts.evaluate_conversations --suite continuity --output artifacts/continuity.json
+```
+
+Actual records: [before](verification/continuity-before.json),
+[after](verification/continuity-after.json), and the [20-turn core rerun](verification/conversations-rc.json).
+All seven continuity turns and all twenty core turns completed. Source citations
+remain pinned to public revision `1acbe54906c88398652aebb8eae0c217fd0d8821`.
+
+| Actual question/context | Before | After |
+| --- | --- | --- |
+| Would he be a fit for AI Engineer? | Insufficient-evidence response: role words incorrectly constrained employer excerpts | Relevant public AI/product experience excerpts; fixture still does not assess suitability |
+| Rampy → Give me an example of his work at Teamcubation | Continued answering about Rampy | Teamcubation's merchant portal contribution |
+| Then: Explain that technically | Still Rampy | Same Teamcubation topic retained; no claim of novel technical reasoning |
+| Rampy → Which technologies did he use there? → Give me an example | Lost employer anchor and mixed in an unrelated exam-platform excerpt | Keeps employer and technology refinement; no exam-platform excerpt |
+
+A span starting with the previous employer's metric qualification also exposed an
+attribution weakness. Fixture quotation now starts at the requested visible company
+record and stops at the next company, rather than quoting the whole mixed span.
+This is excerpt scoping, not a general claim-level grounding verifier. Raw approved
+source and its provenance remain unchanged.
+
+Seven-turn median first delta/completion: before 1,293.3/2,283.9 ms, after
+247.8/402.2 ms. The baseline overlapped local integration work and host contention
+changed; **these numbers do not establish a speedup**. Core rerun median first delta
+417.2 ms, completion 648.2 ms. No intentional delay or additional model call was added.
+
+Current local verification: 97 tests pass (77 offline, 20 real-service), including
+same-origin Secure host-only cookies with rejected parent-origin mutations and
+missing-CSRF requests. Retrieval evaluation remains hybrid 9/9, graph 8/9, fixture
+vector 5/9. These are deterministic retrieval/contract outcomes, not live intelligence.
+
+The resolver remains a bounded language heuristic: at most six earlier turns,
+3,000 history characters, one latest refinement of at most 1,000 characters plus
+its topic. It cannot resolve arbitrary discourse or recover a topic already outside
+that window. Corrections with explicit new subjects are preferable to guessing.
+Unknown information, nuanced role-fit reasoning, translation and personality retain
+the live-evaluation gate above. Do not describe fixture success as production quality.

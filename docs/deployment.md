@@ -112,12 +112,14 @@ use relative `/api` paths; streaming goes directly to FastAPI. Public Next.js
 configuration may be embedded at build time, so the frontend image must be built
 for this contract; internal server URLs must never enter browser configuration.
 
-The existing portfolio has a native assistant panel making credentialed API calls,
-plus a standalone link; it does not embed an iframe. Allow exactly
-`https://gonzalomartinperez.com` and `https://assistant.gonzalomartinperez.com`.
-Sharing a parent domain does not remove CORS or CSRF requirements. Cookie domain is
-unset (host-only), Secure in production, SameSite=Lax. Mutations require the allowed
-Origin and session CSRF token. Framing is disallowed by `frame-ancestors 'none'`.
+The primary frontend is `/embed`; `/` remains a demo. Both call the API on their
+own origin, so the deployment target needs only the assistant origin in the API
+allowlist. Actual portfolio integration is deferred. The future parent host's
+framing permission belongs to frontend/vps-ops, not API CORS. Cookie Domain stays
+unset, Secure in production, SameSite=Lax; mutations require Origin and CSRF.
+The retained Nginx global `frame-ancestors 'none'` is an obsolete frontend framing
+assumption, not the production `/embed` policy. See [runtime contract](deployment-contract.md)
+and [frontend coordination](frontend-handoff.md#embedded-experience-contract).
 
 The edge disables SSE buffering/cache and forwards disconnects; read/send timeout
 is 135 seconds, longer than the maximum 120-second run bound. SSE comment heartbeats
