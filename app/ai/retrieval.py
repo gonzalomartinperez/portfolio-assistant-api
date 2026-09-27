@@ -64,6 +64,11 @@ class PublicRetrieval:
         relationship = bool(
             terms
             & {
+                'compare',
+                'comparison',
+                'versus',
+                'compara',
+                'comparar',
                 'connect',
                 'connected',
                 'shared',
@@ -164,7 +169,7 @@ class PublicRetrieval:
                         )
                     )
                 )
-            elif affiliation:
+            elif affiliation and not relationship:
                 ranked = [
                     key
                     for key in ranked

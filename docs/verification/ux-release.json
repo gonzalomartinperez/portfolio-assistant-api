@@ -51,7 +51,7 @@
     "head": "4aadfc5",
     "status": "success",
     "static_seconds": 32,
-    "integration_seconds": 99,
+    "integration_seconds": 102,
     "gate_seconds": 3
   },
   "independent_review": "Four concrete findings fixed; reviewer reran seven context regressions successfully. Full 83-test suite run by owner agent.",

@@ -52,6 +52,18 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
         excerpts: list[str] = []
         subject = ''
         concise = bool(terms & {'shorter', 'brief', 'breve'})
+        comparison = bool(
+            terms
+            & {
+                'compare',
+                'comparison',
+                'versus',
+                'compara',
+                'comparar',
+                'between',
+                'entre',
+            }
+        )
         for block in evidence.split('PUBLIC SOURCE ')[1:3]:
             content = re.sub(r'/\*.*?\*/', '', block, flags=re.DOTALL)
             content = re.sub(
@@ -63,6 +75,7 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
             companies = re.findall(r'company:\s*"([^"\n]+)"', content)
             if (
                 affiliation
+                and not comparison
                 and companies
                 and not any(tokens(name) & tokens(affiliation[1]) for name in companies)
             ):
@@ -138,7 +151,7 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
                 enumerate(candidates),
                 key=lambda item: (-len(tokens(item[1]) & expanded), item[0]),
             )
-            selected = [text for _, text in ranked[: 1 if concise else 2]]
+            selected = [text for _, text in ranked[: 1 if concise or comparison else 2]]
             for text in selected:
                 if text not in excerpts:
                     excerpts.append(text)

@@ -115,3 +115,18 @@ def test_short_qualified_metric_keeps_its_source_citation():
     )
     assert 'Latency: 30%. Estimated' in answer
     assert citations((source,), answer, True)[0]['id'] == source.id
+
+
+def test_explicit_comparison_can_include_both_employers():
+    from app.domain.fixture import fixture_message
+
+    evidence = """PUBLIC SOURCE one lines 1-5:
+company: "Rampy",
+contributions: ["Built the public application backend with tested boundaries."],
+PUBLIC SOURCE two lines 1-5:
+company: "OtherEmployer",
+contributions: ["Built another product with different infrastructure constraints."],
+"""
+    answer = fixture_message('Compare work at Rampy with OtherEmployer', evidence, 'en')
+    assert 'public application backend' in answer
+    assert 'different infrastructure constraints' in answer
