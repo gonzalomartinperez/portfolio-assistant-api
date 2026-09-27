@@ -39,6 +39,56 @@ def bootstrap(client: TestClient, origin: str):
     return response.json()['csrf_token']
 
 
+def test_same_origin_embed_contract_needs_no_parent_api_permission(client_factory):
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+
+    origin = 'https://assistant.gonzalomartinperez.com'
+    parent = 'https://gonzalomartinperez.com'
+    application = create_app(Settings(allowed_origins=origin, secure_cookies=True))
+    client = client_factory(application, base_url=origin, client=(str(uuid4()), 50000))
+    response = client.post(
+        '/api/v1/session',
+        headers={'Origin': origin, 'X-Session-Bootstrap': '1'},
+        json={},
+    )
+    assert response.status_code == 200
+    cookie = response.headers['set-cookie']
+    assert cookie.startswith('__Host-assistant_session=')
+    assert 'Secure' in cookie and 'HttpOnly' in cookie and 'SameSite=lax' in cookie
+    assert 'Domain=' not in cookie and 'Path=/' in cookie
+    csrf = response.json()['csrf_token']
+    assert (
+        client.post(
+            '/api/v1/conversations', headers={'Origin': origin}, json={}
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            '/api/v1/conversations', headers=headers(parent, csrf), json={}
+        ).status_code
+        == 403
+    )
+    preflight = client.options(
+        '/api/v1/conversations',
+        headers={'Origin': parent, 'Access-Control-Request-Method': 'POST'},
+    )
+    assert 'access-control-allow-origin' not in preflight.headers
+    created = client.post(
+        '/api/v1/conversations', headers=headers(origin, csrf), json={}
+    )
+    assert created.status_code == 200
+    assert (
+        client.get(f'/api/v1/conversations/{created.json()["id"]}/messages').status_code
+        == 200
+    )
+    assert (
+        client.delete('/api/v1/session', headers=headers(origin, csrf)).status_code
+        == 204
+    )
+
+
 def test_sessions_stream_idempotency_and_ownership(client_factory):
     migrate()
     first = client_factory(app, client=(str(uuid4()), 50000))

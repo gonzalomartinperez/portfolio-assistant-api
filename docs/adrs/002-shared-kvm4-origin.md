@@ -14,13 +14,16 @@ FastAPI `root_path` stays empty. There is no `/api/api`, Next.js API proxy, or
 prefix stripping. `/docs`, `/redoc`, `/openapi.json` and `/health/*` are explicitly
 routed to the API so generated documentation works without changing v1 paths.
 
-The committed portfolio at `e411c0a775b16fd7de962774d875e47191f96b09` has a native
-assistant panel making credentialed API calls, plus a standalone-chat link. It is
-not framed. Allow exactly the assistant origin and `https://gonzalomartinperez.com`;
-add `www` only if a real consumer is verified. Parent-domain sharing does not remove
-CORS or CSRF obligations. The host-only Secure HttpOnly SameSite=Lax cookie lives
-on the assistant hostname; both HTTPS origins are same-site but cross-origin.
-No Domain cookie or wildcard credentialed CORS is permitted.
+The consolidated product mandate supersedes the earlier native portfolio-panel
+integration plan. `/embed` is the primary frontend, `/` the secondary demo; both
+call relative `/api` on the assistant origin. Actual portfolio integration is
+deferred. The future parent iframe host does not require API CORS permission.
+Default the deployment allowlist to the assistant origin alone; existing explicitly
+configured consumers remain supported. Frontend/vps-ops own exact `/embed` framing
+permissions and browser verification. Host-only Secure HttpOnly SameSite=Lax cookies,
+CSRF and explicit Origin checks remain mandatory. No Domain cookie or wildcard
+credentialed CORS is permitted. See the current frontend/runtime handoffs; frozen
+Nginx global anti-framing headers are not a production `/embed` specification.
 
 ## Operations and cost
 

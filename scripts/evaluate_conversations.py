@@ -48,6 +48,20 @@ SCENARIOS = {
     ],
 }
 
+CONTINUITY_SCENARIOS = {
+    'role-paraphrase': ['Would he be a fit for AI Engineer?'],
+    'topic-switch': [
+        'What did he build at Rampy?',
+        'Give me an example of his work at Teamcubation',
+        'Explain that technically',
+    ],
+    'refinement': [
+        'What did he build at Rampy?',
+        'Which technologies did he use there?',
+        'Give me an example',
+    ],
+}
+
 
 @contextmanager
 def fixture_server():
@@ -79,7 +93,9 @@ def fixture_server():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--suite', choices=('core', 'continuity'), default='core')
     args = parser.parse_args()
+    scenarios = SCENARIOS if args.suite == 'core' else CONTINUITY_SCENARIOS
     results = []
     with fixture_server() as url, httpx.Client(base_url=url, timeout=70) as client:
         bootstrap = client.post(
@@ -93,7 +109,7 @@ def main():
             'X-CSRF-Token': bootstrap.json()['csrf_token'],
         }
         try:
-            for name, questions in SCENARIOS.items():
+            for name, questions in scenarios.items():
                 created = client.post('/api/v1/conversations', headers=headers, json={})
                 created.raise_for_status()
                 for question in questions:
@@ -144,6 +160,7 @@ def main():
         json.dumps(
             {
                 'mode': 'fixture; deterministic excerpts, not live-model quality',
+                'suite': args.suite,
                 'samples': results,
             },
             ensure_ascii=False,

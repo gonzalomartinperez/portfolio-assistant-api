@@ -114,3 +114,28 @@ freshness. Main previously had PR protection but no required status check; this
 gap was closed without changing its review count, administrator enforcement,
 conversation-resolution or force-push/deletion restrictions. Merges cannot rely
 only on an operator remembering to wait for CI.
+
+## Conservative dependency automation
+
+See [dependency maintenance](dependency-updates.md) for the allowlist, manual path,
+activation prerequisites and protection evidence. The existing static job now runs
+a read-only GitHub API audit on PRs and retains `dependency-policy-audit.json`; it
+has only contents/pull-request read permissions and does not authorize merging.
+A denied protection query is recorded as `permission_blocked` with eligibility
+and protection readiness false; the privileged controller still fails closed on
+unreadable controls. This diagnostic is not the required authorization gate. Offline policy tests run
+in the existing test suite, without duplicating builds or integration tests.
+
+`dependabot-policy.yml` is a separate trusted-metadata controller. Its single job
+checks out the trusted workflow SHA, installs no PR dependencies, uses no PR cache
+or artifact, and can only manage a required policy check and native auto-merge.
+It does not run the test suite. Completion of Quality triggers revalidation of the
+actual PR/current head, not unconditional merging. Per-head concurrency serializes
+competing decisions; new heads need a new required policy result. No path filter
+can omit the policy on an ordinary PR after activation. Manual/unverifiable updates
+receive an explicit action-required result, not a permanently pending hidden job.
+API failures leave a blocking hold, recoverable through explicit reevaluation.
+
+Current default-branch activation is pending; automation is not live merely because
+its file exists on develop. Do not add its check to branch protection before the
+trusted workflow can emit it. Production workflows remain absent/disabled.

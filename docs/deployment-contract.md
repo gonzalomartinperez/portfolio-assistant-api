@@ -3,15 +3,17 @@
 Status: application contract, not deployment authorization. Coolify is selected
 for the future Hostinger KVM 4 VPS and managed only through private vps-ops.
 The portfolio remains on Business. No Coolify installation or production test has
-been performed here. The commit containing this document identifies its revision.
+been performed here. API source snapshot: `57429618cf487b78842dd460411a72da45728ba0`.
+The commit containing this document identifies the handoff revision.
 
 ## Artifact and runtime
 
 Build locally: `docker build --platform linux/amd64 -t portfolio-assistant-api:local .`.
 CI currently verifies Linux amd64 only. The candidate publisher prepares
 `ghcr.io/gonzalomartinperez/portfolio-assistant-api:<full-source-SHA>` and records
-its immutable `@sha256:` digest. Publication is not yet authorized; confirm package
-visibility separately, and provision pull access in vps-ops if private. Consume
+its immutable registry manifest `@sha256:` digest (not a local image ID).
+Publication is not yet authorized; plan private package visibility unless separately
+authorized and provision pull access through vps-ops. Consume
 tested prebuilt digests, not source builds on the VPS.
 
 The image runs as UID/GID 65532 in `/app`, binding `0.0.0.0:8000` internally:
@@ -69,6 +71,12 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
+Current application schema: exactly `001_initial.sql`, `002_checkpoint_cleanup.sql`,
+then `003_cleanup_attempts.sql`, with the locked LangGraph checkpoint schema created
+by the same image. This increment introduces no migration; the previous 7150318
+and current source use identical schema checksums. There is no declared compatibility
+with future schema versions.
+
 **Rollback limitation:** readiness rejects unknown applied migrations. Older images
 may therefore be incompatible after an upgrade even when tables are additive.
 Review each image/schema pair explicitly; never assume overlapping old/new versions
@@ -84,7 +92,7 @@ a separately tested recovery procedure.
   Initial settings: interval 20s, timeout 8s, retries 3, start period 30s; verify on VPS.
 
 Preserve `/api/v1/...` verbatim. FastAPI `root_path` is empty: never strip/add `/api`.
-Route `/` to frontend; docs `/docs`, `/redoc`, `/openapi.json` and `/health/*` require
+Route `/` and `/embed` to frontend; docs `/docs`, `/redoc`, `/openapi.json` and `/health/*` require
 explicit API routing or restricted administrative access. The API contract artifacts
 remain authoritative. vps-ops must verify the exact Coolify routing configuration.
 
@@ -96,10 +104,20 @@ forwarding headers and configure exact trusted peers. TLS/security headers and a
 Cloudflare layer require separate end-to-end verification.
 
 Host-only Secure HttpOnly SameSite=Lax `__Host-assistant_session` has no Domain
-attribute. Mutations still require allowed Origin and CSRF token. Allow exactly
-`https://assistant.gonzalomartinperez.com` and `https://gonzalomartinperez.com`:
-the existing portfolio panel calls the API cross-origin and is not an iframe.
-No wildcard credentialed CORS. Standalone browser requests should use relative `/api`.
+attribute. Mutations still require allowed Origin and CSRF token. The current target
+needs only `ALLOWED_ORIGINS=https://assistant.gonzalomartinperez.com`: both `/embed`
+(primary UI) and `/` (demo) call relative `/api` from that origin. The future parent
+portfolio embeds the frontend; it does not need permission to call the API. Actual
+portfolio integration is deferred. Existing deployments can retain explicitly
+configured legacy origins; this is a target configuration, not a wire removal.
+
+Frontend/vps-ops own the `/embed` framing policy and exact parent allowlist. Do not
+copy the frozen Nginx template's global `frame-ancestors 'none'` onto that frontend
+route. API routes can retain anti-framing headers. Do not broaden CORS, cookie Domain
+or SameSite merely to support an iframe. The proposed HTTPS parent and assistant
+share a site; unrelated-site embedding is unsupported and requires separate browser
+privacy/security review. No production iframe or browser-cookie verification is claimed.
+See the [frontend handoff](frontend-handoff.md#embedded-experience-contract).
 
 ## Evidence and verification
 

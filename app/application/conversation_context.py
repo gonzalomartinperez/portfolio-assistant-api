@@ -28,19 +28,33 @@ def bounded_history(turns: tuple[Turn, ...]) -> tuple[Turn, ...]:
 
 def is_followup(question: str) -> bool:
     """Recognize explicit reference/reframing cues without a paid routing call."""
+    # An example *of a named subject* is a new topic, not a history reference.
+    if re.search(
+        r'(?i)\b(?:example (?:of|at|for) (?!that\b|this\b|it\b|those\b)|'
+        r'ejemplo (?:de|en|sobre) (?!eso\b|ese\b|esa\b|esto\b))',
+        question,
+    ) or re.match(r'(?i)^\s*(?:instead|en cambio)\b', question):
+        return False
     return bool(
         re.search(
-            r'(?i)\b(example|shorter|brief|technically|translate|rephrase|that|it|those|'
-            r'ejemplo|breve|tecnicamente|técnicamente|traducir|traduce|tradúcelo|traducelo|traducción|eso|ese|hazlo|explícalo|explicalo)\b',
+            r'(?i)\b(example|shorter|brief|technically|translate|rephrase|that|it|those|there|'
+            r'ejemplo|breve|tecnicamente|técnicamente|traducir|traduce|tradúcelo|traducelo|traducción|eso|ese|allí|ahí|hazlo|explícalo|explicalo)\b',
             question,
         )
     )
 
 
 def retrieval_question(question: str, history: tuple[Turn, ...]) -> str:
-    """Resolve explicit follow-ups to the latest substantive visitor topic."""
+    """Keep the visitor topic and its latest refinement; never use assistant claims."""
     if is_followup(question):
+        refinement = ''
         for turn in reversed(history):
-            if turn.role == 'user' and not is_followup(turn.content):
-                return f'{turn.content[:1000]}\n{question}'
+            if turn.role != 'user':
+                continue
+            if not is_followup(turn.content):
+                return '\n'.join(
+                    part for part in (turn.content[:1000], refinement, question) if part
+                )
+            if not refinement:
+                refinement = turn.content[:1000]
     return question

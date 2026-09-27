@@ -92,6 +92,18 @@ ALIASES = {
 }
 
 
+def requested_affiliation(question: str) -> str | None:
+    """Extract an explicit employer/project premise, not a target role after 'for'."""
+    match = re.search(
+        r'\b(?i:at|en|(?:work(?:ed|ing|s)?|built|build(?:ing|s)?|'
+        r'develop(?:ed|ing|s)?|implement(?:ed|ing|s)?|deliver(?:ed|ing|s)?|'
+        r'engineer(?:ed|ing|s)?)\s+for)\s+'
+        r'([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})',
+        question,
+    )
+    return match[1] if match else None
+
+
 def tokens(text: str) -> set[str]:
     normalized = unicodedata.normalize('NFKD', text.lower())
     normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
