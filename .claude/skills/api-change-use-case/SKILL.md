@@ -41,3 +41,6 @@ Conversation context is session-local untrusted data, capped at six earlier turn
 and 3,000 characters. Never promote visitor claims or prior assistant text into
 public evidence. See [conversation evaluation](../../../docs/conversation-evaluation.md)
 and its real ownership/history regression before changing these bounds.
+Test topic switches as well as pronouns: an example of a newly named employer must
+replace the previous topic, while a later reference should retain the visitor's
+latest refinement. Never use assistant-generated claims as retrieval anchors.

@@ -1,0 +1,170 @@
+{
+  "mode": "fixture; deterministic excerpts, not live-model quality",
+  "suite": "continuity",
+  "samples": [
+    {
+      "scenario": "role-paraphrase",
+      "question": "Would he be a fit for AI Engineer?",
+      "first_delta_ms": 365.1,
+      "total_ms": 560.3,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> AI and financial products in a fast-moving startup: turning evolving priorities into production features across conversational agents, web, mobile and backend services, working directly with three founders.\n\n> Built a consolidated portfolio experience for assets, vaults and 24-hour returns; reduced comparable vault, market and perpetual data retrieval from seconds into the millisecond range through prefetching, parallel provider calls and selective caching.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "What did he build at Rampy?",
+      "first_delta_ms": 247.8,
+      "total_ms": 368.7,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "Give me an example of his work at Teamcubation",
+      "first_delta_ms": 222.1,
+      "total_ms": 402.2,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Teamcubation.\n\n> Delivered the promotions experience end to end: a Single-SPA React and TypeScript microfrontend embedded as a native section of the merchant portal, connected through a Spring WebFlux BFF to multiple microservices and providers.\n\n> The promotions platform for Payway, a leading Latin American fintech, serving an ecosystem of 350,000+ merchants, 70+ card issuers and 13 countries.",
+      "citations": [
+        {
+          "id": "ca9ccd8f538a18169f385a71b280eb3e7922a7f54419cf2df5ad47cb229c8bd6",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L71-L105",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 71,
+          "end_line": 105
+        }
+      ]
+    },
+    {
+      "scenario": "topic-switch",
+      "question": "Explain that technically",
+      "first_delta_ms": 406.9,
+      "total_ms": 556.1,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Teamcubation.\n\n> Delivered the promotions experience end to end: a Single-SPA React and TypeScript microfrontend embedded as a native section of the merchant portal, connected through a Spring WebFlux BFF to multiple microservices and providers.\n\n> The promotions platform for Payway, a leading Latin American fintech, serving an ecosystem of 350,000+ merchants, 70+ card issuers and 13 countries.",
+      "citations": [
+        {
+          "id": "ca9ccd8f538a18169f385a71b280eb3e7922a7f54419cf2df5ad47cb229c8bd6",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L71-L105",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 71,
+          "end_line": 105
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "What did he build at Rampy?",
+      "first_delta_ms": 359.4,
+      "total_ms": 556.6,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Shortened the validation, build and deployment pipeline while retaining its checks; optimized application bundles, Docker images and development, staging and production environments on DigitalOcean.\n\n> Standardized spec-driven engineering through an agent skills marketplace and repeatable local setup, connecting requirements, architecture, implementation, automated tests and human UI review.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "Which technologies did he use there?",
+      "first_delta_ms": 209.4,
+      "total_ms": 283.0,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Documented technologies: Python, FastAPI, Agno, RAG.\n\n> I build software that connects products, systems and AI.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "id": "bdd32062b42f0aa09e92a4d6afaaba6bb0ee2f7f97e2dee79002c13636cefdbd",
+          "label": "src/content/en/profile.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/profile.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/profile.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    },
+    {
+      "scenario": "refinement",
+      "question": "Give me an example",
+      "first_delta_ms": 147.4,
+      "total_ms": 198.8,
+      "terminal": "run.completed",
+      "answer": "The public profile describes it this way (fixture excerpts): Rampy.\n\n> Documented technologies: Python, FastAPI, Agno, RAG.\n\n> I build software that connects products, systems and AI.",
+      "citations": [
+        {
+          "id": "cc581648e95aedc874832452918b74bd34f7f75fad25d562300b73a4c9aa261f",
+          "label": "src/content/en/experience.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/experience.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/experience.ts",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "id": "bdd32062b42f0aa09e92a4d6afaaba6bb0ee2f7f97e2dee79002c13636cefdbd",
+          "label": "src/content/en/profile.ts",
+          "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/profile.ts#L1-L35",
+          "source_type": "code",
+          "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+          "path": "src/content/en/profile.ts",
+          "start_line": 1,
+          "end_line": 35
+        }
+      ]
+    }
+  ],
+  "api_source_commit": "57429618cf487b78842dd460411a72da45728ba0",
+  "public_source_commit": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+  "latency_note": "Local fixture observations under different host load; baseline overlapped integration tests. Not a controlled performance comparison.",
+  "runner_note": "Continuity suite added in 5742961; baseline used that runner with application source 7150318 in an isolated worktree."
+}

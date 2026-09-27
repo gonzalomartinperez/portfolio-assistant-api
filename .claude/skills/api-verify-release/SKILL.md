@@ -45,3 +45,8 @@ live evidence, compatible revisions and unresolved gates. Stop when the scoped
 acceptance criteria are met; do not extend verification into cosmetic refactoring.
 
 Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.
+
+The frontend's primary `/embed` and demo `/` call same-origin `/api`. Actual
+portfolio integration is deferred. Read only committed sibling handoffs; do not
+broaden API CORS or cookie scope for the iframe parent. Frontend/vps-ops own framing
+permissions and paired browser verification. Keep pending coordination explicit.

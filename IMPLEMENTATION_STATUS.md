@@ -113,3 +113,26 @@ Claude explicit expansion used a loopback transport fixture. Model-driven routin
 is unverified. Coolify is selected and private vps-ops owns production; the API
 [deployment contract](docs/deployment-contract.md) is the handoff. No deployment,
 registry publication, paid model evaluation or production readiness claim is made.
+
+
+## Consolidated backend RC continuation (2026-09-27)
+
+- Source `57429618cf487b78842dd460411a72da45728ba0`: named-topic follow-ups,
+  retained visitor refinement, target-role versus employer parsing, and fixture
+  source-span attribution fixes. No new framework, schema or HTTP/SSE surface.
+- Local full suite: **97 passed** with isolated PostgreSQL/pgvector and Neo4j;
+  77 offline + 20 integration. Ruff, strict mypy, contract drift and skill catalog
+  validation pass. Redacted scan: 353 historical blobs, no known-pattern findings
+  (not proof of absence). Before/after records and limits are in
+  [conversation evaluation](docs/conversation-evaluation.md).
+- Committed frontend `a9a85bbf33e5ccbf8b81740b0efeb718490bd97e` protocol reviewed;
+  HTTP/SSE snapshots identical. `/embed` does not require parent API CORS permission.
+  Backend origin/cookie/CSRF tests pass; frontend browser validation remains separate.
+- Runtime contract updated for assistant-only target origin, private immutable
+  artifact planning and explicit 001–003 schema compatibility. Coolify execution
+  stays with vps-ops. No production image published, credentials used or deployment.
+- Skills retain one canonical source and tested discovery strategy; task guidance
+  now covers topic changes and embedding ownership. Model-based skill routing and
+  live-model conversational quality remain unverified.
+- Latest mandate permits PR integration into develop only. Historical main merges
+  do not authorize further promotion. Actual portfolio integration is deferred.

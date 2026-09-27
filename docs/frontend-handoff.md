@@ -1,6 +1,6 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`4602abe7c69487b37fab54eed173531011d47b82`**.
+Immutable API snapshot: **`57429618cf487b78842dd460411a72da45728ba0`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
 - `contracts/openapi.json` — unchanged public HTTP surface.
@@ -39,12 +39,9 @@ configuration, writable paths and health endpoint. Private vps-ops owns producti
 composition and Coolify execution. This repository supplies the API runtime contract.
 No DNS/deployment is authorized.
 
-The portfolio's committed integration at `e411c0a775b16fd7de962774d875e47191f96b09`
-contains a native panel that calls the API directly and a link to the standalone
-assistant. It is not an iframe. Its production build needs the assistant HTTPS
-origin for both public URL variables. Keep its exact `https://gonzalomartinperez.com`
-origin allowlisted for credentialed API calls; a shared parent domain does not
-remove CORS/CSRF requirements. No portfolio change is made here.
+Actual portfolio integration is deferred. The consolidated mandate supersedes the
+previous direct-panel integration plan; see the embedded-experience contract below.
+No portfolio or frontend working-tree change is part of this handoff.
 
 Frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf` now publishes its
 standalone image/configuration handoff. The retained transfer template includes its UID 1000
@@ -74,3 +71,46 @@ authorized live evaluation. Full partial-stream/cancel/failure semantics are unc
 Production is coordinated exclusively by private vps-ops using Coolify. The API
 [deployment contract](deployment-contract.md) preserves `/api/v1` paths with empty
 root_path. This revision does not authorize image publication or deployment.
+
+## Embedded-experience contract
+
+The primary UI is frontend `/embed`; `/` is a secondary testing/demo surface.
+Both use same-origin relative `/api/v1/...` through the vps-ops-owned proxy, which
+preserves the prefix. A parent iframe host neither receives the session credential
+nor needs API CORS permission. Keep the assistant origin as the target allowlist;
+legacy direct clients require their own explicit configuration and review.
+
+Minimize/reopen should keep the iframe/controller mounted and reuse the session and
+conversation history. A hidden mounted UI may finish its already authorized stream;
+minimize is not delete, cancel or regenerate. Explicit stop or transport teardown
+still cancels upstream work. Partial text is not durable until `message.completed`.
+After a disconnect, recover existing history and run status, never automatically
+retry generation. Session expiry/deletion keeps
+its v1 semantics. Cross-tab transfer is not a release requirement.
+
+Frontend/vps-ops must set exact allowed frame ancestors for `/embed` and test the
+planned HTTPS parent/assistant combination. API CORS does not authorize framing.
+Host-scoped Secure HttpOnly SameSite=Lax cookies remain unchanged. Unrelated-site
+embedding is unsupported; do not silently switch to Domain cookies or SameSite=None.
+Browser restrictions still require real verification. References: [cookie scope and
+SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)
+and [frame ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/frame-ancestors).
+
+Committed frontend reviewed: `a9a85bbf33e5ccbf8b81740b0efeb718490bd97e`.
+Its contract source pins API `6b1e65f2406ba5ddf21d15c56c34ccf672d90bbb`; all three
+HTTP/SSE artifacts were compared byte-for-byte and remain identical to the snapshot
+above. Its committed embed protocol keeps the frame mounted during minimize and
+uses exact parent-origin/source validation. It requires no API wire change.
+The frontend's protocol handoff still labels browser verification in progress;
+this backend does not claim that its iframe tests passed. Its older deployment
+paragraph about direct portfolio API access also needs reconciliation by its owner
+with the new embed handoff. Mutable sibling files were not integration evidence.
+
+## Continuity increment · source revision 57429618cf487b78842dd460411a72da45728ba0
+
+Named-example questions can switch subjects without inheriting the previous
+employer; subsequent references retain the new topic and latest visitor refinement.
+Role-fit wording no longer becomes an employer filter merely because it contains
+"for". Fixture attribution excludes visible neighboring employer records. These
+are backend behavior changes, not new request fields or SSE events. Existing
+consumers and persisted conversations need no migration or type regeneration.
