@@ -35,8 +35,9 @@ Next.js and **preserves** `/api/*` when routing directly to FastAPI. FastAPI has
 empty `root_path`; do not prepend another `/api` or put SSE through a Next.js proxy.
 The frontend should publish its committed image handoff with relative `/api/v1/...`
 requests (empty public API origin), image digest, frontend commit, build-time public
-configuration, writable paths and health endpoint. The API repository owns the
-shared deployment specification. No DNS/deployment is authorized.
+configuration, writable paths and health endpoint. Private vps-ops owns production
+composition and Coolify execution. This repository supplies the API runtime contract.
+No DNS/deployment is authorized.
 
 The portfolio's committed integration at `e411c0a775b16fd7de962774d875e47191f96b09`
 contains a native panel that calls the API directly and a link to the standalone
@@ -46,11 +47,12 @@ origin allowlisted for credentialed API calls; a shared parent domain does not
 remove CORS/CSRF requirements. No portfolio change is made here.
 
 Frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf` now publishes its
-standalone image/configuration handoff. The shared stack includes its UID 1000
+standalone image/configuration handoff. The retained transfer template includes its UID 1000
 32 MiB cache tmpfs. Its immutable registry digest and combined release remain
-pending. Canonical edge limits here are 32 KiB bodies and 135-second read/send
+pending. Required reference edge limits are 32 KiB bodies and 135-second read/send
 timeouts; API comments provide 15-second heartbeats. The frontend owner should
-reconcile its earlier 16 KiB/no-heartbeat proxy notes with this API-owned stack. Fixture excerpts
+reconcile its earlier 16 KiB/no-heartbeat proxy notes with the runtime contract;
+vps-ops implements and verifies the Coolify proxy. Fixture excerpts
 and hash embeddings are deterministic development behavior, not live-model quality.
 
 Local HTTP full-stack verification passed against frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf`: root, API/docs, CORS/CSRF, incremental deltas and disconnect interruption. Its imported contract bytes match this API snapshot. Browser/TLS and registry digest release checks remain separate. See [diagnostic summary](verification/backend-rc.json).
