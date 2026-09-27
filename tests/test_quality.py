@@ -4,7 +4,7 @@ import os
 import pytest
 
 from app.bootstrap.config import Settings
-from app.domain.evidence import verified
+from app.domain.evidence import requested_affiliation, verified
 from app.domain.fixture import fixture_message
 from tests.support import retrieve
 
@@ -31,6 +31,24 @@ def test_citation_metadata_rejects_spoofed_url_and_hash():
     assert not verified({**row, 'url': 'https://evil.example/'}, commit, {path})
     assert not verified({**row, 'content': 'changed'}, commit, {path})
     assert not verified(row, commit, {'src/content/en/profile.ts'})
+
+
+@pytest.mark.parametrize(
+    ('question', 'expected'),
+    [
+        ('Would he be a fit for AI Engineer?', None),
+        ('Is he ready for Machine Learning roles?', None),
+        ('Did he work for UnknownEmployer?', 'UnknownEmployer'),
+        ('What was he building for UnknownEmployer?', 'UnknownEmployer'),
+        ('What did he implement for UnknownEmployer?', 'UnknownEmployer'),
+        ('What did he build at ExampleCompany?', 'ExampleCompany'),
+        ('¿Qué construyó en ExampleCompany?', 'ExampleCompany'),
+    ],
+)
+def test_affiliation_distinguishes_target_roles_from_employer_claims(
+    question, expected
+):
+    assert requested_affiliation(question) == expected
 
 
 @pytest.mark.integration
@@ -66,6 +84,12 @@ def test_citation_metadata_rejects_spoofed_url_and_hash():
             'Universidad Nacional del Sur',
         ),
         ('How is the portfolio built?', 'en', 'README.md', 'Next.js'),
+        (
+            'Would he be a fit for AI Engineer?',
+            'en',
+            'src/content/en/experience.ts',
+            'retrieval',
+        ),
     ],
 )
 def test_reviewed_direct_questions(question, locale, path, needle):

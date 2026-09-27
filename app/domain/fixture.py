@@ -45,7 +45,7 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
     if not evidence:
         return insufficient
     if 'PUBLIC SOURCE ' in evidence:
-        from .evidence import ALIASES, tokens
+        from .evidence import ALIASES, requested_affiliation, tokens
 
         terms = tokens(question)
         expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
@@ -69,17 +69,28 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
             content = re.sub(
                 r'^\s*(?:availability|seniority):.*$', '', content, flags=re.MULTILINE
             )
-            affiliation = re.search(
-                r'\b(?:at|for|en)\s+([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})', question
-            )
-            companies = re.findall(r'company:\s*"([^"\n]+)"', content)
-            if (
-                affiliation
-                and not comparison
-                and companies
-                and not any(tokens(name) & tokens(affiliation[1]) for name in companies)
-            ):
-                continue
+            affiliation = requested_affiliation(question)
+            companies = list(re.finditer(r'company:\s*"([^"\n]+)"', content))
+            if affiliation and not comparison and companies:
+                selected_company = next(
+                    (
+                        index
+                        for index, company in enumerate(companies)
+                        if tokens(affiliation) <= tokens(company[1])
+                    ),
+                    None,
+                )
+                if selected_company is None:
+                    continue
+                # Fixed source spans can begin with the previous employer's metrics.
+                # Quote only the requested record when its company boundary is visible.
+                start = companies[selected_company].start()
+                end = (
+                    companies[selected_company + 1].start()
+                    if selected_company + 1 < len(companies)
+                    else len(content)
+                )
+                content = content[start:end]
             # Join only literal concatenations; never evaluate source code.
             content = re.sub(r'"\s*\+\s*"', '', content)
             if not excerpts:
