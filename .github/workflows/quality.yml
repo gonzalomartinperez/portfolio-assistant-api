@@ -36,17 +36,29 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
         with:
+          version: '0.9.13'
           enable-cache: true
-          cache-dependency-glob: uv.lock
-      - run: uv sync --frozen
-      - run: uv run ruff check app tests contracts scripts
-      - run: uv run ruff format --check app tests contracts scripts
-      - run: uv run mypy
-      - run: |
+          cache-dependency-glob: |
+            uv.lock
+            .python-version
+      - name: Validate workflow syntax and shell steps
+        run: bash scripts/check_workflows.sh
+      - name: Install locked dependencies
+        run: uv sync --frozen
+      - name: Lint Python
+        run: uv run ruff check app tests contracts scripts
+      - name: Check Python formatting
+        run: uv run ruff format --check app tests contracts scripts
+      - name: Type-check application boundaries
+        run: uv run mypy
+      - name: Run offline and contract tests
+        run: |
           mkdir -p artifacts
           uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
-      - run: uv run python -m scripts.scan_secrets > artifacts/secret-scan.json
-      - run: uv run python -m contracts.export && git diff --exit-code contracts
+      - name: Scan tracked content and history without exposing secrets
+        run: uv run python -m scripts.scan_secrets > artifacts/secret-scan.json
+      - name: Verify public contract drift
+        run: uv run python -m contracts.export && git diff --exit-code contracts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -88,9 +100,14 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
         with:
+          version: '0.9.13'
+          save-cache: false
           enable-cache: true
-          cache-dependency-glob: uv.lock
-      - run: uv sync --frozen
+          cache-dependency-glob: |
+            uv.lock
+            .python-version
+      - name: Install locked dependencies
+        run: uv sync --frozen
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: inputs.frontend_commit != ''
         with:
@@ -107,10 +124,14 @@ jobs:
           for name in ('openapi.json', 'sse.schema.json', 'sse.examples.json'):
               assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
           PY
-      - run: uv run python -m scripts.validate_compose
-      - run: uv run python -m app.migrate
-      - run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
-      - run: |
+      - name: Validate private networks and container limits
+        run: uv run python -m scripts.validate_compose
+      - name: Apply and verify migrations
+        run: uv run python -m app.migrate
+      - name: Index the pinned approved public corpus
+        run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+      - name: Run real-service integration tests
+        run: |
           mkdir -p artifacts
           uv run pytest -q -m integration --junitxml=artifacts/integration.xml
         env:
@@ -123,8 +144,10 @@ jobs:
           tags: portfolio-assistant-api:ci
           cache-from: type=gha,scope=api-linux-amd64
           cache-to: type=gha,mode=max,scope=api-linux-amd64
-      - run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
-      - run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
+      - name: Verify image streaming and graceful shutdown
+        run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
+      - name: Verify proxy routing and stream cancellation
+        run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
         env:
           FRONTEND_IMAGE: ${{ inputs.frontend_image }}
       - name: Export the tested image for manual publishing
@@ -145,6 +168,7 @@ jobs:
             artifacts/*.json
           retention-days: 7
   checks:
+    permissions: {}
     name: checks
     if: always()
     needs: [static, integration]
