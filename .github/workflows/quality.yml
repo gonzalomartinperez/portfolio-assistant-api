@@ -23,6 +23,7 @@ env:
   AI_PROVIDER: fixture
   ALLOW_PAID_AI: 'false'
   LANGSMITH_TRACING: 'false'
+  DOCKER_BUILD_RECORD_RETENTION_DAYS: '7'
 jobs:
   static:
     name: Static and offline

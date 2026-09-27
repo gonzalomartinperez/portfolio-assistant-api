@@ -3,6 +3,10 @@ name: Approved VPS deployment
 on:
   workflow_dispatch:
     inputs:
+      candidate_run:
+        description: Successful trusted publishing run containing the manifest
+        required: true
+        type: string
       manifest_artifact:
         description: Reviewed release-candidate manifest artifact ID
         required: true
@@ -26,6 +30,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           artifact-ids: ${{ inputs.manifest_artifact }}
+          run-id: ${{ inputs.candidate_run }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           merge-multiple: true
       # Provision a restricted deployment account and reviewed known_hosts first.
