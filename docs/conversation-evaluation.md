@@ -14,7 +14,11 @@ resolution uses the latest substantive visitor topic for retrieval; unrelated ne
 questions discard that retrieval reference. The current question and labeled history
 reach the provider separately from evidence. Context evidence is capped at 19,000
 characters so history fits the existing conservative input reservation without
-increasing budgets or adding routing/model calls. Existing 500-token model output
+increasing budgets or adding routing/model calls. Before provider I/O, the final
+JSON-escaped message text is measured in UTF-8 bytes, including 1,024 bytes of
+framing allowance, against the existing 110,000-token conservative input ceiling.
+Oversized serialized input fails safely without calling the provider; any prior
+reservation remains held under the existing conservative failure policy. Existing 500-token model output
 and 12,000-character application bounds remain; live completeness needs evaluation.
 
 Profile overview retrieval prioritizes public profile content. Professional
