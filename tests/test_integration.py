@@ -16,9 +16,13 @@ from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
 
-pytestmark = pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1', reason='requires real PostgreSQL and Neo4j'
-)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        os.getenv('TEST_INTEGRATION') != '1',
+        reason='requires real PostgreSQL and Neo4j',
+    ),
+]
 
 
 def headers(origin: str, csrf: str) -> dict:
@@ -523,3 +527,63 @@ def test_atomic_run_slot_and_abuse_limits(client_factory):
     )
     assert limited.status_code == 429 and limited.json()['code'] == 'rate_limited'
     assert client.delete('/api/v1/session', headers=auth).status_code == 204
+
+
+def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write():
+    from pathlib import Path
+
+    import psycopg
+    from psycopg import sql
+    from psycopg.conninfo import make_conninfo
+
+    from app.bootstrap.container import create_app
+
+    role = 'fixture_runtime_' + uuid4().hex
+    password = uuid4().hex
+    with connect() as conn:
+        conn.execute(Path('deploy/runtime-grants.sql').read_text())
+        conn.execute(
+            sql.SQL(
+                'CREATE ROLE {} LOGIN PASSWORD {} IN ROLE assistant_runtime'
+            ).format(sql.Identifier(role), sql.Literal(password))
+        )
+    try:
+        config = settings().model_copy(
+            update={
+                'database_url': make_conninfo(
+                    settings().database_url, user=role, password=password
+                )
+            }
+        )
+        with psycopg.connect(config.database_url) as conn:
+            assert conn.execute(
+                'SELECT rolsuper FROM pg_roles WHERE rolname=current_user'
+            ).fetchone() == (False,)
+            for query in (
+                'DELETE FROM chunks',
+                'CREATE TABLE public.forbidden(id int)',
+            ):
+                with (
+                    pytest.raises(psycopg.errors.InsufficientPrivilege),
+                    conn.transaction(),
+                ):
+                    conn.execute(query)
+        with TestClient(create_app(config), client=(str(uuid4()), 50000)) as client:
+            auth = headers(
+                'http://localhost:3000', bootstrap(client, 'http://localhost:3000')
+            )
+            cid = client.post('/api/v1/conversations', headers=auth, json={}).json()[
+                'id'
+            ]
+            result = client.post(
+                f'/api/v1/conversations/{cid}/messages/stream',
+                headers={**auth, 'Idempotency-Key': str(uuid4())},
+                json={'content': 'What is Filomena?'},
+            )
+            assert result.status_code == 200
+            assert 'event: run.completed' in result.text
+            assert client.get('/health/ready').status_code == 200
+            assert client.delete('/api/v1/session', headers=auth).status_code == 204
+    finally:
+        with connect() as conn:
+            conn.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))

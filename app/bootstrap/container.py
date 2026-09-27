@@ -30,6 +30,7 @@ from app.infrastructure.conversations import PostgresConversations
 from app.infrastructure.db import pool, translated
 from app.infrastructure.knowledge import KnowledgeIndex
 from app.infrastructure.ledger import PostgresAccounting
+from app.infrastructure.migrations import check_schema
 from app.infrastructure.runs import PostgresRuns
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
@@ -116,6 +117,7 @@ def create_app(
             )
 
             def ready():
+                check_schema(connection)
                 with database.connection() as conn:
                     conn.execute('SELECT 1 FROM schema_migrations LIMIT 1')
                     if not conn.execute(

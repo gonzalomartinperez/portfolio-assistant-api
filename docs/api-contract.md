@@ -72,3 +72,6 @@ commit, path and line range. They identify supplied evidence; they do not prove 
 every live-model statement is entailed. Fixture output is literal excerpts or a
 bilingual abstention. No hidden reasoning, graph state or internal tool payloads
 are public progress events. Disable proxy buffering/cache for SSE.
+
+Silent streams emit `: keep-alive` SSE comments every 15 seconds. Comments have
+no event name or sequence ID; clients must ignore them while parsing named events.

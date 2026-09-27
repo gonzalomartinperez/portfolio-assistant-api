@@ -33,6 +33,7 @@ def test_citation_metadata_rejects_spoofed_url_and_hash():
     assert not verified(row, commit, {'src/content/en/profile.ts'})
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1',
     reason='requires the reviewed public corpus in PostgreSQL and Neo4j',
@@ -78,6 +79,7 @@ def test_reviewed_direct_questions(question, locale, path, needle):
     assert needle in fixture_message(question, evidence, locale)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL and Neo4j'
 )
@@ -90,6 +92,7 @@ def test_unknown_question_has_no_evidence_and_graph_is_bounded():
     assert hybrid[0]['path'] == 'src/content/en/projects.ts'
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL public corpus'
 )

@@ -1,0 +1,115 @@
+# One shared stack; no container_name or publicly bound database/application ports.
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+x-app: &app
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  logging: *logging
+services:
+  api:
+    <<: *app
+    image: ${API_IMAGE:?Set a verified immutable API image digest}
+    env_file: ${API_ENV_FILE:?Set the private API environment file}
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8000", --no-access-log, --no-proxy-headers, --timeout-graceful-shutdown, "15"]
+    networks: [app, data]
+    mem_limit: 768m
+    cpus: 1.0
+    stop_grace_period: 25s
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"]
+      interval: 20s
+      timeout: 8s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      postgres: {condition: service_healthy}
+      neo4j: {condition: service_healthy}
+  migrate:
+    <<: *app
+    profiles: [maintenance]
+    restart: "no"
+    image: ${API_IMAGE:?Set a verified immutable API image digest}
+    env_file: ${MIGRATION_ENV_FILE:?Set the private migration environment file}
+    networks: [app, data]
+    command: [python, -m, app.migrate]
+    mem_limit: 768m
+    cpus: 1.0
+  web:
+    <<: *app
+    tmpfs: [/tmp, "/app/.next/cache:uid=1000,gid=1000,mode=0700,size=32m"]
+    image: ${WEB_IMAGE:?Set the frontend-owner verified immutable image digest}
+    environment: {NODE_ENV: production, HOSTNAME: 0.0.0.0, PORT: "3000"}
+    networks: [app]
+    mem_limit: 512m
+    cpus: 1.0
+    stop_grace_period: 20s
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+    restart: unless-stopped
+    env_file: ${POSTGRES_ENV_FILE:?Set the private PostgreSQL environment file}
+    networks: [data]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    mem_limit: 1g
+    cpus: 0.75
+    shm_size: 128m
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  neo4j:
+    image: neo4j:5.26.17-community@sha256:d31525aa50da9215d692e5e824696c63583636398f5f5b60260bb92f94095c70
+    restart: unless-stopped
+    env_file: ${NEO4J_ENV_FILE:?Set the private Neo4j environment file}
+    environment:
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    networks: [data]
+    volumes: [neo4j_data:/data]
+    mem_limit: 2g
+    cpus: 0.75
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://localhost:7474/']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+  proxy:
+    <<: *app
+    profiles: [edge]
+    image: nginxinc/nginx-unprivileged:stable-alpine@sha256:4714e0b1b2577eaa1a6131d07c958b67f0eb68e6d0521e90c6e5287db8cf0bc5
+    command: [nginx, -g, "daemon off;"]
+    networks: [app]
+    ports: ["${PUBLIC_BIND:-0.0.0.0}:${HTTP_PORT:-80}:8080", "${PUBLIC_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:8443"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/server.conf:/etc/nginx/assistant-server.conf:ro
+      - ./nginx/routes.conf:/etc/nginx/routes.conf:ro
+      - ./nginx/api-proxy.conf:/etc/nginx/api-proxy.conf:ro
+      - ${TLS_DIRECTORY:?Set the protected certificate directory}:/run/tls:ro
+    mem_limit: 128m
+    cpus: 0.25
+    healthcheck:
+      test: [CMD, nginx, -t]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on: [api, web]
+networks:
+  app: {}
+  data: {internal: true}
+volumes:
+  postgres_data: {}
+  neo4j_data: {}

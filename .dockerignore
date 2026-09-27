@@ -6,3 +6,7 @@
 __pycache__
 *.pyc
 public-portfolio
+
+artifacts
+.env.*
+deploy/*.private.env

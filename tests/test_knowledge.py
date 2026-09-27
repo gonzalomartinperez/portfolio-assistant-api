@@ -19,6 +19,7 @@ def test_graph_facts_are_explicit_and_keep_supporting_line_spans():
     assert facts('README.md', 'Demo might use Java') == ()
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1', reason='requires real seeded indexes'
 )
