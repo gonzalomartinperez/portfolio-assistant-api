@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Operator-only local VPS entry point. No workflow invokes this until separately approved.
+# TRANSFER REFERENCE ONLY: production execution belongs to vps-ops/Coolify.
+# Retained pending ownership acceptance; do not execute from this repository.
 set -euo pipefail
 if [[ $# -ne 3 || "$1" != '--approved' ]]; then
   echo 'Usage: apply-release.sh --approved release.json /private/compose.env' >&2

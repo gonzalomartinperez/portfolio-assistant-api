@@ -1,3 +1,4 @@
+# TRANSFER REFERENCE: vps-ops owns production; Coolify is selected. Do not deploy this stack.
 # One shared stack; no container_name or publicly bound database/application ports.
 x-logging: &logging
   driver: json-file

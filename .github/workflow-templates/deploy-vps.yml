@@ -1,3 +1,4 @@
+# TRANSFER REFERENCE ONLY. Do not activate; vps-ops owns Coolify deployment.
 # DISABLED TEMPLATE: outside .github/workflows. Do not activate without owner approval.
 name: Approved VPS deployment
 on:

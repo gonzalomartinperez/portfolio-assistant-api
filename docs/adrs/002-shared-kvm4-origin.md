@@ -1,6 +1,6 @@
 # ADR 002: shared KVM 4 VPS and one assistant origin
 
-Accepted by owner 2026-09-27; supersedes prior hosting-topology suggestions.
+Accepted by owner 2026-09-27; production ownership superseded by ADR 003; supersedes prior hosting-topology suggestions.
 Both assistant web and API run on the future Hostinger KVM 4 VPS. The portfolio
 remains on Hostinger Business; managed Node.js slots are reserved for other work.
 Hostnames here are planning targets, not DNS or deployment authorization.
@@ -24,14 +24,10 @@ No Domain cookie or wildcard credentialed CORS is permitted.
 
 ## Operations and cost
 
-`deploy/compose.yaml` is the single shared stack specification in this API repo.
-The frontend owner supplies a committed image/configuration handoff; do not build
-or maintain a competing frontend Dockerfile here. Databases use a private internal
-network and persistent project-scoped volumes, with no host ports. Only the proxy
-publishes traffic. Additional VPS projects need their own networks/volumes and
-routes in the same chosen proxy. Coolify is optional management, not a selected
-second proxy. If selected, translate these routing controls into its sole proxy
-and omit the bundled proxy profile.
+Production composition, networks, volumes, proxy and release orchestration belong
+to private vps-ops. Coolify is the selected management platform. The previous
+`deploy/compose.yaml` is retained only as a transfer reference and local verification
+input. ADR 003 records the ownership transition; do not activate a competing proxy.
 
 Initial assistant memory ceilings total about 4.4 GiB (API 768 MiB, web 512 MiB,
 PostgreSQL 1 GiB, Neo4j 2 GiB, proxy 128 MiB). These are initial limits, not measured
