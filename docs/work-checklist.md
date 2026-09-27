@@ -37,9 +37,9 @@ them, not additional projects. Historical main promotion does not authorize anot
 
 ## Requested CI maintenance increment
 
-Conservative Dependabot policy is implemented and locally tested (50 policy cases).
+Conservative Dependabot policy is implemented and locally tested (52 policy cases).
 Repository native auto-merge capability is enabled; unattended automation remains
 **inactive** until a separately authorized default-branch activation and required
-policy check are installed. Existing strict protections/reviews are preserved.
+policy check are installed. Existing strict protections/reviews are preserved. Read-only CI token protection-query access is blocked; the privileged controller must establish access before activation.
 See [scope, tests and activation handoff](dependency-updates.md). This is part of
 repository quality; it adds no deployment controller or main promotion authority.

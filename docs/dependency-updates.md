@@ -34,6 +34,16 @@ need the applicable paid plan for protection/auto-merge features; do not assume 
 configuration transfers unchanged after a visibility or ownership change. Missing
 or unreadable protection metadata prevents automation.
 
+Live Actions runs `36336537107` and `36336760530` exposed a further activation gate:
+the static job's read-only `GITHUB_TOKEN` cannot query the GraphQL protection data,
+even with explicit pull-request read access. Its audit now records
+`audit_state=permission_blocked`, `eligible=false`, `protections_ready=false` as
+an observation, not a successful protection check. The merge controller still
+throws/fails closed on that same error. Its separate write-scoped native-operation
+token must be verified after authorized default-branch activation, before enabling
+the variable; its ability to read those fields is currently **unverified**.
+Do not introduce a PAT or broaden organization permissions to conceal this gate.
+
 ## Eligibility
 
 The allowlist lives in `scripts/dependabot_policy.py` and is intentionally small:
@@ -140,8 +150,10 @@ uv run python -m scripts.dependabot_automation --audit-pr <number>
 
 The audit is read-only, including on closed PRs; it prints fixed decision reasons,
 revision and protection readiness, never PR bodies or token values. CI runs the
-same audit with its read-only `GITHUB_TOKEN` and retains
-`dependency-policy-audit.json` in static diagnostics. This tests real API/token
+same audit with its read-only contents/pull-request `GITHUB_TOKEN` and retains
+`dependency-policy-audit.json` in static diagnostics. A specific permission denial
+is reported as a blocking capability observation; unrelated API failures still fail
+the audit command. The artifact cannot authorize merging. This tests actual API/token
 visibility without enabling auto-merge. Unit tests cover eligible patches/minors,
 whole manifests/lockfiles/groups, 0.x/prereleases/unknowns, spoofing, human commits,
 file scope, native-gate ordering, stale heads, failed/missing CI and base/conflict

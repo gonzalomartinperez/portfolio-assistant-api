@@ -120,7 +120,10 @@ only on an operator remembering to wait for CI.
 See [dependency maintenance](dependency-updates.md) for the allowlist, manual path,
 activation prerequisites and protection evidence. The existing static job now runs
 a read-only GitHub API audit on PRs and retains `dependency-policy-audit.json`; it
-has no write permission and does not authorize merging. Offline policy tests run
+has only contents/pull-request read permissions and does not authorize merging.
+A denied protection query is recorded as `permission_blocked` with eligibility
+and protection readiness false; the privileged controller still fails closed on
+unreadable controls. This diagnostic is not the required authorization gate. Offline policy tests run
 in the existing test suite, without duplicating builds or integration tests.
 
 `dependabot-policy.yml` is a separate trusted-metadata controller. Its single job

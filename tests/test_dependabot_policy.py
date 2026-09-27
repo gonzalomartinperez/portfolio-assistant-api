@@ -378,6 +378,15 @@ def test_native_merge_is_armed_under_a_required_hold_then_released(monkeypatch):
     check['conclusion'] = 'failure'
     assert process(API(), 1, HEAD) == 'waiting_for_required_checks'
     assert events == ['hold', 'revoke', 'action_required']
+    events.clear()
+
+    def denied_controls(api):
+        raise automation.GitHubRequestError('graphql; HTTP 403', permission_denied=True)
+
+    monkeypatch.setattr(automation, 'controls', denied_controls)
+    with pytest.raises(automation.GitHubRequestError):
+        process(API(), 1, HEAD)
+    assert events == ['hold', 'revoke']
 
 
 def test_manual_choice_survives_quality_completion_and_a_failed_prior_attempt(
@@ -438,3 +447,45 @@ def test_privileged_workflow_never_checks_out_or_executes_pr_code():
         'pull-requests': 'write',
         'checks': 'write',
     }
+
+
+def test_api_failure_diagnostics_never_include_remote_text(monkeypatch):
+    import subprocess
+
+    from scripts.dependabot_automation import GitHub, GitHubRequestError
+
+    monkeypatch.setattr(
+        subprocess,
+        'run',
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 1, stdout='private-sentinel', stderr='private-sentinel (HTTP 403)'
+        ),
+    )
+    with pytest.raises(GitHubRequestError) as failure:
+        GitHub().request('graphql', 'POST', {'query': 'trusted query'})
+    assert str(failure.value) == 'graphql; HTTP 403'
+    assert 'private-sentinel' not in str(failure.value)
+
+
+def test_read_only_audit_reports_permission_blocker_without_authorizing_merge(
+    monkeypatch, capsys
+):
+    import sys
+
+    import scripts.dependabot_automation as automation
+
+    class API:
+        def request(self, path, method='GET', data=None):
+            assert method == 'GET' and '/pulls/' in path
+            return pull_request()
+
+    def denied(api):
+        raise automation.GitHubRequestError('graphql; HTTP 403', permission_denied=True)
+
+    monkeypatch.setattr(sys, 'argv', ['policy', '--audit-pr', '1'])
+    monkeypatch.setattr(automation, 'GitHub', API)
+    monkeypatch.setattr(automation, 'controls', denied)
+    automation.main()
+    report = json.loads(capsys.readouterr().out)
+    assert report['audit_state'] == 'permission_blocked'
+    assert report['eligible'] is False and report['protections_ready'] is False

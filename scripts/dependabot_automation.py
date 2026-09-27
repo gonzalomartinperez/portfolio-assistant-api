@@ -42,6 +42,10 @@ CONTROL_QUERY = """query {
 class GitHubRequestError(RuntimeError):
     """An API failure containing only fixed endpoint/category diagnostics."""
 
+    def __init__(self, message: str, *, permission_denied: bool = False):
+        super().__init__(message)
+        self.permission_denied = permission_denied
+
 
 class GitHub:
     """Use gh's existing scoped authentication; never extract or print its token."""
@@ -61,8 +65,33 @@ class GitHub:
         if result.returncode:
             status = re.search(r'HTTP (\d{3})', result.stderr)
             endpoint = 'graphql' if path == 'graphql' else 'rest'
+            denied = bool(status and status[1] in ('401', '403'))
+            field = ''
+            try:
+                errors = json.loads(result.stdout).get('errors', [])
+                for error in errors:
+                    if error.get('type') in ('FORBIDDEN', 'INSUFFICIENT_SCOPES'):
+                        denied = True
+                        allowed = {
+                            'repository',
+                            'ref',
+                            'branchProtectionRule',
+                            'autoMergeAllowed',
+                            'requiredStatusChecks',
+                            'app',
+                            'databaseId',
+                        }
+                        field = '.'.join(
+                            part
+                            for part in error.get('path', [])
+                            if isinstance(part, str) and part in allowed
+                        )
+            except (ValueError, AttributeError, TypeError):
+                pass  # Malformed error bodies are never echoed or treated as approval.
             raise GitHubRequestError(
                 f'{endpoint}; HTTP {status[1] if status else "unknown"}'
+                + (f'; denied field {field}' if field else ''),
+                permission_denied=denied,
             )
         value = json.loads(result.stdout)
         if isinstance(value, dict) and value.get('errors'):
@@ -297,7 +326,28 @@ def main() -> None:
     api = GitHub()
     if args.audit_pr:
         pr = api.request(f'{ROOT}/pulls/{args.audit_pr}')
-        repository = controls(api)
+        try:
+            repository = controls(api)
+        except GitHubRequestError as error:
+            if not error.permission_denied:
+                raise
+            # This diagnostic job has no merge authority. Record the blocker rather
+            # than grant it write/admin access. The privileged controller still fails
+            # closed if its own protection query is unavailable.
+            print(
+                json.dumps(
+                    {
+                        'pr': args.audit_pr,
+                        'head': pr['head']['sha'],
+                        'eligible': False,
+                        'protections_ready': False,
+                        'audit_state': 'permission_blocked',
+                        'reason': str(error),
+                    },
+                    indent=2,
+                )
+            )
+            return
         decision = inspect_candidate(api, pr)
         print(
             json.dumps(
