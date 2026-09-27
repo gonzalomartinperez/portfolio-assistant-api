@@ -1,6 +1,6 @@
 # Agent rules
 
-Use English for code, documentation and commits. Keep fixture mode default. Never read, log, commit or use a real API key without explicit authorization. Only approved public portfolio content may enter the runtime corpus. Integrate task branches through PRs into develop; leave main untouched.
+Use English for code, documentation and commits. Keep fixture mode default. Never read, log, commit or use a real API key without explicit authorization. Only approved public portfolio content may enter the runtime corpus. Integrate task branches through PRs into develop. Promote develop to main only with explicit owner authorization, passing Quality checks and satisfied review requirements. Main promotion does not authorize deployment.
 
 ## Architecture and verification
 
