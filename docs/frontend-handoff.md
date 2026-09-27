@@ -1,6 +1,6 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`8e48bff76feca931c27d8e65e846e23e1da99411`**.
+Immutable API snapshot: **`4602abe7c69487b37fab54eed173531011d47b82`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
 - `contracts/openapi.json` — unchanged public HTTP surface.

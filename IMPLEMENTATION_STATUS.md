@@ -33,11 +33,13 @@ Shared VPS/CI implementation is PR #10: `5438727`, paired-contract verification
 - Shared KVM 4 Compose/proxy, no public DB ports, immutable release manifest,
   manual publishing preparation and disabled approval-gated deployment template.
 
-Latest local full run: **56 passed in 21.44 seconds** with isolated PostgreSQL and
+Latest local full run: **63 passed in 13.69 seconds** with isolated PostgreSQL and
 Neo4j. Ruff check/format, strict mypy (17 files), contract drift, Compose exposure
 validation and actionlint pass. Offline selection is separate from integration.
 A clean detached checkout at `94408ab` followed README installation, migrations and
-pinned GitHub indexing: **52 passed in 28.03 seconds** before the latest four tests.
+pinned GitHub indexing: **52 passed in 28.03 seconds** before the final additions. A second detached checkout at `8e48bff` passed all
+56 tests then present in 8.62 seconds; seven final forwarding-header cases pass
+in the latest full run.
 
 The production API image runs non-root/read-only. Normal SSE and active-stream
 SIGTERM smoke passed; the delayed fixture was persisted as interrupted. Nginx
@@ -46,7 +48,7 @@ and disconnect interruption. Those timings are local observations, not an SLO.
 The original proxy readiness test exposed an unwritable Nginx temporary directory;
 all temporary paths now use tmpfs. Rollouts reload the proxy after replacement.
 
-Redacted known-pattern history scan inspected 200 historical blobs with no findings;
+Redacted known-pattern history scan inspected 244 historical blobs with no findings;
 it is not proof that all possible secrets are absent. A bounded independent review
 found and prompted fixes for injected cleanup configuration, storage-failure event
 translation, ignored public-source revision, proxy reload and runtime DB privileges.

@@ -33,7 +33,10 @@ owner's committed revision. It reuses Quality, including cross-service proxy smo
 then publishes the **tested image archive** without rebuilding it. The artifact
 `release-candidate-manifest` records both image digests, both commits and contract
 version, with `production_authorized: false`. Manual publishing is prepared but
-has not been executed with a frontend release image.
+has not been executed with a frontend release image. GitHub discovers dispatchable
+workflows on the default branch, currently `main`; this workflow remains on
+`develop` until an explicitly approved release promotion. No default-branch change
+or main promotion was performed.
 
 ## Deployment remains disabled
 
