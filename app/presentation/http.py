@@ -23,7 +23,7 @@ from app.presentation.models import (
     SendMessage,
     SessionView,
 )
-from app.presentation.streaming import ClosingStreamingResponse
+from app.presentation.streaming import ClosingStreamingResponse, heartbeat
 
 log = logging.getLogger('portfolio_assistant')
 router = APIRouter(
@@ -292,7 +292,9 @@ def stream_message(
         idempotency_key,
     )
     return ClosingStreamingResponse(
-        execute_run(request, run_id, conversation_id, body.content, body.locale),
+        heartbeat(
+            execute_run(request, run_id, conversation_id, body.content, body.locale)
+        ),
         media_type='text/event-stream',
         headers={
             'Cache-Control': 'no-cache, no-transform',

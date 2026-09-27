@@ -310,3 +310,26 @@ def test_provider_failure_after_delta_is_not_completion(terminal):
         assert events.closed
 
     asyncio.run(run())
+
+
+def test_heartbeat_preserves_events_and_closes_silent_upstream():
+    from app.presentation.streaming import heartbeat
+
+    async def run():
+        release, closed = asyncio.Event(), asyncio.Event()
+
+        async def source():
+            try:
+                yield 'event: run.started\n\n'
+                await release.wait()
+                yield 'event: run.completed\n\n'
+            finally:
+                closed.set()
+
+        stream = heartbeat(source(), interval=0.01)
+        assert await anext(stream) == 'event: run.started\n\n'
+        assert await anext(stream) == ': keep-alive\n\n'
+        await stream.aclose()
+        assert closed.is_set()
+
+    asyncio.run(run())

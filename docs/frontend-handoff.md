@@ -1,6 +1,6 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`94408ab4b59297e93e2574320b3049ee2f5d4f2e`**.
+Immutable API snapshot: **`4602abe7c69487b37fab54eed173531011d47b82`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
 - `contracts/openapi.json` — unchanged public HTTP surface.
@@ -45,6 +45,12 @@ origin for both public URL variables. Keep its exact `https://gonzalomartinperez
 origin allowlisted for credentialed API calls; a shared parent domain does not
 remove CORS/CSRF requirements. No portfolio change is made here.
 
-The frontend currently has ongoing uncommitted work; its new image/configuration
-handoff is therefore a pending cross-repository integration gate. Fixture excerpts
+Frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf` now publishes its
+standalone image/configuration handoff. The shared stack includes its UID 1000
+32 MiB cache tmpfs. Its immutable registry digest and combined release remain
+pending. Canonical edge limits here are 32 KiB bodies and 135-second read/send
+timeouts; API comments provide 15-second heartbeats. The frontend owner should
+reconcile its earlier 16 KiB/no-heartbeat proxy notes with this API-owned stack. Fixture excerpts
 and hash embeddings are deterministic development behavior, not live-model quality.
+
+Local HTTP full-stack verification passed against frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf`: root, API/docs, CORS/CSRF, incremental deltas and disconnect interruption. Its imported contract bytes match this API snapshot. Browser/TLS and registry digest release checks remain separate. See [diagnostic summary](verification/backend-rc.json).

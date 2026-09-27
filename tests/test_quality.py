@@ -33,6 +33,7 @@ def test_citation_metadata_rejects_spoofed_url_and_hash():
     assert not verified(row, commit, {'src/content/en/profile.ts'})
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1',
     reason='requires the reviewed public corpus in PostgreSQL and Neo4j',
@@ -78,6 +79,7 @@ def test_reviewed_direct_questions(question, locale, path, needle):
     assert needle in fixture_message(question, evidence, locale)
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL and Neo4j'
 )
@@ -90,6 +92,7 @@ def test_unknown_question_has_no_evidence_and_graph_is_bounded():
     assert hybrid[0]['path'] == 'src/content/en/projects.ts'
 
 
+@pytest.mark.integration
 @pytest.mark.skipif(
     os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL public corpus'
 )
@@ -102,3 +105,37 @@ def test_graph_outage_falls_back_to_verified_text(monkeypatch):
     )
     rows, _ = retrieve('What is Filomena?', 'en')
     assert rows and rows[0]['path'] == 'src/content/en/projects.ts'
+
+
+@pytest.mark.parametrize(
+    ('peer', 'trusted', 'forwarded', 'expected'),
+    [
+        ('198.51.100.10', '', '203.0.113.4', '198.51.100.10'),
+        ('198.51.100.10', '10.0.0.2', '203.0.113.4', '198.51.100.10'),
+        ('10.0.0.2', '10.0.0.2', '203.0.113.4', '203.0.113.4'),
+        ('10.0.0.2', '10.0.0.2', '192.0.2.99,203.0.113.4', '203.0.113.4'),
+        ('10.0.0.2', '10.0.0.2', 'not-an-address', '10.0.0.2'),
+        ('10.0.0.2', '10.0.0.2', ','.join(['203.0.113.4'] * 6), '10.0.0.2'),
+        ('10.0.0.2', '10.0.0.2', '', '10.0.0.2'),
+    ],
+)
+def test_forwarded_addresses_require_a_trusted_immediate_peer(
+    peer, trusted, forwarded, expected
+):
+    from types import SimpleNamespace
+
+    from starlette.requests import Request
+
+    from app.presentation.http import client_ip
+
+    request = Request(
+        {
+            'type': 'http',
+            'client': (peer, 1000),
+            'headers': [(b'x-forwarded-for', forwarded.encode())],
+            'app': SimpleNamespace(
+                state=SimpleNamespace(config=SimpleNamespace(trusted_proxy_ips=trusted))
+            ),
+        }
+    )
+    assert client_ip(request) == expected

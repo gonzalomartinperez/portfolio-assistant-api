@@ -1,0 +1,70 @@
+"""Render the shared stack with disposable placeholders and verify its exposure."""
+
+import json
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+def main():
+    with tempfile.TemporaryDirectory() as directory:
+        private = Path(directory, 'fixture.env')
+        private.write_text('POSTGRES_USER=fixture\nPOSTGRES_DB=fixture\n')
+        env = {
+            **os.environ,
+            'API_IMAGE': 'example.invalid/api@sha256:' + 'a' * 64,
+            'WEB_IMAGE': 'example.invalid/web@sha256:' + 'b' * 64,
+            'TLS_DIRECTORY': directory,
+            **dict.fromkeys(
+                (
+                    'API_ENV_FILE',
+                    'MIGRATION_ENV_FILE',
+                    'POSTGRES_ENV_FILE',
+                    'NEO4J_ENV_FILE',
+                ),
+                str(private),
+            ),
+        }
+        data = json.loads(
+            subprocess.check_output(
+                [
+                    'docker',
+                    'compose',
+                    '-f',
+                    'deploy/compose.yaml',
+                    '--profile',
+                    'edge',
+                    '--profile',
+                    'maintenance',
+                    'config',
+                    '--format',
+                    'json',
+                ],
+                env=env,
+                text=True,
+            )
+        )
+        services = data['services']
+        assert {name for name, service in services.items() if service.get('ports')} == {
+            'proxy'
+        }
+        assert data['networks']['data']['internal'] is True
+        for name, service in services.items():
+            assert 'container_name' not in service
+            assert int(service['mem_limit']) > 0
+            assert service['logging']['options']['max-file'] == '3'
+            if name in ('postgres', 'neo4j'):
+                assert set(service['networks']) == {'data'}
+            else:
+                assert service['read_only'] is True
+                assert 'ALL' in service['cap_drop']
+        assert services['migrate']['profiles'] == ['maintenance']
+        assert '--no-proxy-headers' in services['api']['command']
+    print(
+        'Shared Compose: private data services, bounded resources, hardened app containers.'
+    )
+
+
+if __name__ == '__main__':
+    main()

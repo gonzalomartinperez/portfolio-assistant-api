@@ -55,3 +55,18 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def check_schema(connection) -> None:
+    """Refuse readiness when this checkout's full migration history is not installed."""
+    paths = sorted(
+        (Path(__file__).parents[2] / 'migrations').glob('[0-9][0-9][0-9]_*.sql')
+    )
+    with connection() as conn:
+        applied = {
+            row['version']: row['sha256']
+            for row in conn.execute('SELECT version,sha256 FROM schema_migrations')
+        }
+    validate_history(paths, applied)
+    if len(applied) != len(paths):
+        raise RuntimeError('pending migrations')

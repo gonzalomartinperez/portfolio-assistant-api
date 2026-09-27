@@ -52,6 +52,7 @@ vector, graph and hybrid strategies with real databases and fixture embeddings.
 - [HTTP/SSE contract and examples](docs/api-contract.md) · [frontend handoff](docs/frontend-handoff.md)
 - [Security/privacy and residual risks](docs/threat-model.md) · [private reporting](SECURITY.md)
 - [Configuration](docs/environment.md) · [operations, backup and upgrades](docs/deployment.md)
+- [Shared VPS decision](docs/adrs/002-shared-kvm4-origin.md) · [CI jobs and release gates](docs/ci.md)
 - [Contributing and Python conventions](CONTRIBUTING.md) · [release checklist](docs/release-checklist.md)
 
 ## Verify
