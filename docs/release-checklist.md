@@ -19,7 +19,12 @@ visual/style changes do not extend the task.
 
 ## Final audit boundaries
 
-Live model quality/injection testing, real embeddings, TLS/reverse-proxy/browser
+Live model quality/injection testing, a future semantic embedding adapter, TLS/browser
 integration, VPS load, encrypted off-site restore and production operations need
 separate authorized verification. There is no chosen source license. These must
 remain visible rather than being described as completed release gates.
+
+All ten backend gates above have local evidence; prior slice checks and PR #10
+Actions passed. Shared HTTP proxy/full-stack evidence is recorded in
+[the diagnostic summary](verification/backend-rc.json). Combined browser release and
+production gates remain separate; no production-ready claim follows from this table.

@@ -1,6 +1,6 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`94408ab4b59297e93e2574320b3049ee2f5d4f2e`**.
+Immutable API snapshot: **`8e48bff76feca931c27d8e65e846e23e1da99411`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
 - `contracts/openapi.json` — unchanged public HTTP surface.
@@ -52,3 +52,5 @@ pending. Canonical edge limits here are 32 KiB bodies and 135-second read/send
 timeouts; API comments provide 15-second heartbeats. The frontend owner should
 reconcile its earlier 16 KiB/no-heartbeat proxy notes with this API-owned stack. Fixture excerpts
 and hash embeddings are deterministic development behavior, not live-model quality.
+
+Local HTTP full-stack verification passed against frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf`: root, API/docs, CORS/CSRF, incremental deltas and disconnect interruption. Its imported contract bytes match this API snapshot. Browser/TLS and registry digest release checks remain separate. See [diagnostic summary](verification/backend-rc.json).

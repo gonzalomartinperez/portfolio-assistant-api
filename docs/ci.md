@@ -29,7 +29,7 @@ publisher's final job. User inputs enter shell steps through environment variabl
 and are validated as full hashes/digests before use.
 
 `Publish tested candidate (manual)` accepts an immutable frontend image and its
-owner's committed revision. It reuses Quality, including cross-service proxy smoke,
+owner's committed revision. It reuses Quality, including cross-service proxy smoke and exact committed frontend contract-byte comparison,
 then publishes the **tested image archive** without rebuilding it. The artifact
 `release-candidate-manifest` records both image digests, both commits and contract
 version, with `production_authorized: false`. Manual publishing is prepared but
@@ -55,6 +55,7 @@ undoes a migration.
 
 Before splitting jobs, required Quality checks took 60 seconds for PR #7,
 80 seconds for PR #8 and 107 seconds for PR #9 (including added image/shutdown
-smoke). Final parallel-run timings are recorded in implementation status after
-actual Actions execution. These runs have different test scope/cache state;
+smoke). The first parallel run (#10, run 36320177528) passed with static/offline 25 seconds,
+real services/container 109 seconds and aggregate 3 seconds; diagnostic artifacts
+were verified via the Actions API. These runs have different test scope/cache state;
 they are not a controlled claim of a fixed percentage speedup.

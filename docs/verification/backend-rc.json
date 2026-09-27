@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-27",
+  "api_source": "8e48bff76feca931c27d8e65e846e23e1da99411",
+  "frontend_source": "c374aeb95484904ebdbe731a5659dc4b145d6eaf",
+  "tests": {
+    "passed": 56,
+    "seconds": 21.44,
+    "real_services": true,
+    "paid_calls": false
+  },
+  "container": {
+    "image": "portfolio-assistant-api:owner",
+    "checks": [
+      {
+        "mode": "normal SSE",
+        "uid": "65532",
+        "events": 27,
+        "passed": true
+      },
+      {
+        "mode": "active-stream SIGTERM",
+        "uid": "65532",
+        "events": 3,
+        "passed": true
+      }
+    ]
+  },
+  "shared_proxy": {
+    "passed": true,
+    "frontend": "committed image",
+    "paths_preserved": true,
+    "portfolio_cors": true,
+    "delta_gap_ms": 147.7,
+    "disconnect_state": "interrupted"
+  },
+  "restore": {
+    "matched_counts": [
+      "migrations|3",
+      "active_corpus|1",
+      "checkpoints|3",
+      "messages|0"
+    ],
+    "seconds": 1.32,
+    "encrypted_offsite": false
+  },
+  "actions": {
+    "run_id": 36320177528,
+    "static_seconds": 25,
+    "integration_seconds": 109,
+    "aggregate": "success"
+  },
+  "limitations": [
+    "Local image IDs are not registry digests",
+    "HTTP proxy smoke is not browser/TLS/VPS verification",
+    "Fixture embeddings are not semantic model embeddings",
+    "Local restore is not encrypted off-server recovery"
+  ],
+  "api_image_id": "sha256:92821fd44f91cb86bb32226e111b22891a27f8a4562a6b8950a33f906cd94c48",
+  "frontend_image_id": "sha256:3689cd8f0022fa44c1dc8ab890c74fa5b1a64668b84ca40a0f76a0387f20af22"
+}

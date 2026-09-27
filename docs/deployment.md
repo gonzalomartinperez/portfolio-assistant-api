@@ -204,8 +204,8 @@ usage reservations, budget cutoff, cleanup backlog and storage nearing capacity.
 
 1. **Implemented:** shared Compose/proxy, immutable manifest validation, non-root
    API build, local proxy/stream checks and parallel repository CI.
-2. **Frontend coordination:** committed production image digest/revision, relative
-   browser URLs, cache paths and standalone image smoke from its owner; run the
+2. **Frontend coordination:** registry image digest and final release manifest. Committed relative browser URLs,
+   cache paths and standalone image build/HTTP smoke are verified locally; run the
    combined browser journey before accepting a paired candidate.
 3. **Owner decisions:** license, backup destination/retention/key custody, shared
    ingress management (plain Compose or optional Coolify), registry policy.
