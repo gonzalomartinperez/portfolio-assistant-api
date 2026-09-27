@@ -1,6 +1,7 @@
 # Operations and future VPS deployment
 
-No production deployment or `main` promotion is performed by this project work.
+Production deployment remains unauthorized. Main promotion requires explicit owner
+approval and passing checks on its own PR.
 The target is Hostinger VPS KVM 4, shared with the assistant frontend and other projects; the existing portfolio remains on Hostinger Business. The shared proxy routes / to Next.js and preserves /api/* for FastAPI. PostgreSQL/pgvector and Neo4j remain private. No additional managed Node.js slot is used.
 No queue service, Kubernetes or heavyweight telemetry platform is required.
 

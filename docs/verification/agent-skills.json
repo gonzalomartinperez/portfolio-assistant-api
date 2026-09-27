@@ -16,5 +16,6 @@
   "structural_tests": "12 passed: catalog relocation, symlink and metadata integrity, missing references/resources, private paths, scaffolding and redacted known-secret detection",
   "behavioral_scenarios": "20 authored scenarios reviewed for scope and overlapping triggers; natural-language model selection and autonomous behavior remain unverified",
   "fixture_workflow": "isolated assistant-ux PostgreSQL/Neo4j started, migrated and indexed the approved immutable public commit; functional integration tests run separately",
-  "manual_verification": "docs/agent-skills.md"
+  "manual_verification": "docs/agent-skills.md",
+  "clean_checkout": "4aadfc5 detached worktree: frozen install, validator, 65 offline tests, Ruff, mypy, contract drift and actual Codex discovery all passed"
 }
