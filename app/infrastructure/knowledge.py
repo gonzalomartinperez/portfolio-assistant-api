@@ -49,20 +49,45 @@ class KnowledgeIndex:
 
         return await asyncio.to_thread(read)
 
-    async def relationships(self, version: str, terms: set[str]) -> tuple[str, ...]:
+    async def relationships(
+        self, version: str, terms: set[str], locale: str = 'en', expand: bool = False
+    ) -> tuple[str, ...]:
         def read():
             try:
                 with self.graph.session() as graph:
-                    result = graph.run(
+                    direct = graph.run(
                         Query(
-                            'MATCH (p:Project)-[:SUPPORTED_BY]->(d:Document {version:$version}) '
-                            'WHERE toLower(p.name) IN $names RETURN DISTINCT d.id AS id ORDER BY id LIMIT 8',
+                            'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
+                            'WHERE p.normalized IN $names AND (d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/") RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12',
                             timeout=2,
                         ),
                         version=version,
                         names=sorted(terms),
+                        prefix=f'src/content/{locale}/',
                     )
-                    return tuple(record['id'] for record in result)
+                    ids = tuple(record['id'] for record in direct)
+                    if not expand:
+                        return ids
+                    related = graph.run(
+                        Query(
+                            'MATCH (seed:Entity {version:$version})-[a:RELATES]->(t:Entity {kind:"Technology",version:$version})'
+                            '<-[b:RELATES]-(other:Entity {version:$version}) '
+                            'WHERE seed.normalized IN $names AND seed.id<>other.id '
+                            'AND a.version=$version AND b.version=$version '
+                            'MATCH (d:Document {id:b.document,version:$version}) '
+                            'WHERE d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/" '
+                            'RETURN d.id AS id,count(DISTINCT t.id) AS shared ORDER BY shared DESC,id LIMIT 12',
+                            timeout=2,
+                        ),
+                        version=version,
+                        names=sorted(terms),
+                        prefix=f'src/content/{locale}/',
+                    )
+                    neighbors = tuple(record['id'] for record in related)
+                    # Keep seed evidence as well as the evidence reached through shared technology.
+                    return tuple(
+                        dict.fromkeys(ids[:2] + neighbors[:3] + ids[2:] + neighbors[3:])
+                    )[:20]
             except (Neo4jError, ServiceUnavailable, SessionExpired):
                 logging.getLogger('portfolio_assistant').warning(
                     '{"operation":"graph_retrieval","status":"unavailable"}'
