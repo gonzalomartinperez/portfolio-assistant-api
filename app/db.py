@@ -1,8 +1,3 @@
-import psycopg
-from psycopg.rows import dict_row
+"""Compatibility entry point; implementation lives in app.infrastructure.db."""
 
-from .config import settings
-
-
-def connect():
-    return psycopg.connect(settings().database_url, row_factory=dict_row)
+from app.infrastructure.db import *

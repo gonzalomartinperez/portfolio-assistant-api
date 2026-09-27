@@ -1,8 +1,8 @@
 # Implementation status · 2026-09-26
 
-## V2 quality pass in progress
+## V2 quality pass merged
 
-On `feat/quality-retrieval-streaming`, 20 tests passed with real PostgreSQL/Neo4j, Ruff passed, migration and OpenAPI drift checks passed, and a production API image built. The observed baseline was 10 tests passing but three direct public questions (Rampy, education, portfolio implementation) returning no usable answer; one Filomena technology question returned an unrelated excerpt. A direct recheck now selects the reviewed English or Spanish source for all five questions in `tests/test_quality.py`, while an unknown question returns no source. Fixture output remains literal source snippets, not model quality. The graph now forwards simulated provider deltas before generation completes, with no real OpenAI call. Production config rejects local defaults, and app migrations are tracked by checksum. This section describes the task branch; CI and merged `develop` integration remain pending.
+On the now-merged `feat/quality-retrieval-streaming`, 20 tests passed with real PostgreSQL/Neo4j, Ruff passed, migration and OpenAPI drift checks passed, and a production API image built. The observed baseline was 10 tests passing but three direct public questions (Rampy, education, portfolio implementation) returning no usable answer; one Filomena technology question returned an unrelated excerpt. A direct recheck now selects the reviewed English or Spanish source for all five questions in `tests/test_quality.py`, while an unknown question returns no source. Fixture output remains literal source snippets, not model quality. The graph now forwards simulated provider deltas before generation completes, with no real OpenAI call. Production config rejects local defaults, and app migrations are tracked by checksum. PR #6 merged as `492e976`; its required Quality check passed. The former pending status was stale.
 
 Both new repositories were bootstrapped private, then changed to public at the owner's explicit request. `main` contains only the one-time bootstrap. Feature PRs #1 and #2 are merged into `develop`; the paired web PR #1 and portfolio PR #72 are also merged into their `develop` branches.
 
@@ -20,3 +20,15 @@ Both new repositories were bootstrapped private, then changed to public at the o
 ## Evidence
 
 `TEST_INTEGRATION=1 uv run pytest -q`: 10 passed against local PostgreSQL and Neo4j, including a no-answer HTTP stream with empty citations and concurrent budget reservations. `uv run ruff check app tests contracts`: pass. Browser checks used Chromium at localhost ports 3000 and 3001, English and Spanish, mobile 390×844, two isolated contexts; cross-session read returned 404. No physical devices tested. The paid-model smoke test, full cross-browser accessibility audit and representative VPS load test remain NOT RUN.
+
+
+## Modular architecture migration · 2026-09-27
+
+ADR 001 records the current migration. Baseline reproduced: 22 real-service tests
+passed on isolated PostgreSQL/Neo4j. Baseline formatting failed in 15 files; lint
+passed. The first slice introduces six explicit layers, typed application ports,
+async LangGraph/provider streaming, run cancellation/timeout policy, pooled HTTP
+connections, SQL-free HTTP routes and durable checkpoint deletion records.
+23 behavior tests and three architecture tests pass locally after migration;
+CI integration is pending for this slice. Strict mypy covers domain/application.
+No paid provider, production deployment or frontend working tree was used.
