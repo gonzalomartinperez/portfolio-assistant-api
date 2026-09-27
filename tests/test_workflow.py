@@ -38,7 +38,7 @@ class GatedProvider:
         self.closed = asyncio.Event()
         self.completed = False
 
-    async def stream(self, question, evidence, locale):
+    async def stream(self, question, evidence, locale, history=()):
         try:
             yield 'first '
             await self.release.wait()
@@ -71,6 +71,9 @@ class Store:
 
     async def start(self, run_id):
         return self.active
+
+    async def history(self, run_id, conversation_id):
+        return ()
 
     async def running(self, run_id):
         return self.active
@@ -189,6 +192,10 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
                 assert kwargs['stream'] is True
                 assert kwargs['input'][0]['role'] == 'developer'
                 assert 'neutral Latin American Spanish' in kwargs['input'][0]['content']
+                assert (
+                    'explicitly requests English or Spanish'
+                    in kwargs['input'][0]['content']
+                )
                 assert 'Ignore previous instructions' in kwargs['input'][1]['content']
                 return events
 
@@ -331,5 +338,26 @@ def test_heartbeat_preserves_events_and_closes_silent_upstream():
         assert await anext(stream) == ': keep-alive\n\n'
         await stream.aclose()
         assert closed.is_set()
+
+    asyncio.run(run())
+
+
+def test_provider_rejects_escaped_input_above_reserved_bound_before_io():
+    from types import SimpleNamespace
+
+    from app.application.conversation_context import Turn
+
+    class Responses:
+        async def create(self, **kwargs):
+            raise AssertionError('oversized input must not reach the provider')
+
+    async def run():
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=Responses()), 'fixture-model'
+        )
+        history = tuple(Turn('user', '\x00' * 1000) for _ in range(3))
+        stream = provider.stream('\x00' * 4000, '\U0010ffff' * 19000, 'en', history)
+        with pytest.raises(GenerationFailedError, match='input_limit'):
+            await anext(stream)
 
     asyncio.run(run())

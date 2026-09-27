@@ -41,21 +41,19 @@ workflows on the default branch, `main`. The owner has authorized promoting the
 fixture-backed candidate from `develop` after successful CI. Once merged, manual
 publishing becomes discoverable; merging alone neither publishes images nor deploys.
 
-## Deployment remains disabled
+## Deployment belongs to vps-ops
 
-`.github/workflow-templates/deploy-vps.yml` is deliberately outside the active
-workflow directory. It describes serialized deployment behind a `production`
-environment. Before activation, the owner must authorize the combined release,
-configure required human reviewers, approve a restricted SSH transport and known
-hosts, and verify backup/migration compatibility. No current workflow deploys
-`develop`, accesses the VPS, changes DNS, or merges `main`.
+Coolify, coordinated by the private vps-ops repository, is the only selected
+production deployment platform. Application workflows validate/build images and
+prepare authorized immutable publication. Publication is not deployment approval.
+Package visibility must be confirmed independently from repository visibility.
+No publication has been authorized for this phase.
 
-`deploy/apply-release.sh` is an operator-only entry point for an approved VPS.
-It validates paired immutable images, applies reviewed forward migrations, starts
-those digests and verifies readiness plus real no-evidence SSE through HTTPS.
-Rollback means applying the previous **schema-compatible** manifest. Database
-restore/recovery is a separate reviewed procedure; rolling back an image never
-undoes a migration.
+`.github/workflow-templates/deploy-vps.yml` and `deploy/apply-release.sh` are frozen
+transfer references from the earlier ownership model. Do not activate or execute
+them here. vps-ops defines migration scheduling, approval, serialization, routing,
+verification and rollback; it must verify its exact Coolify prebuilt-image workflow.
+See [deployment contract](deployment-contract.md) for the asset inventory.
 
 ## Observed Actions duration
 

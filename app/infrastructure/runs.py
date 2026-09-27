@@ -2,6 +2,8 @@ import asyncio
 import json
 from uuid import UUID, uuid4
 
+from app.application.conversation_context import Turn
+
 
 class PostgresRuns:
     def __init__(self, connect):
@@ -9,6 +11,25 @@ class PostgresRuns:
 
     async def start(self, run_id: UUID) -> bool:
         return await asyncio.to_thread(self._transition, run_id, 'running')
+
+    async def history(self, run_id: UUID, conversation_id: UUID) -> tuple[Turn, ...]:
+        def read():
+            with self.connect() as conn:
+                rows = conn.execute(
+                    'SELECT m.role,left(m.content,1000) AS content FROM messages m '
+                    'JOIN runs r ON r.conversation_id=m.conversation_id '
+                    'JOIN conversations c ON c.id=r.conversation_id '
+                    'JOIN sessions s ON s.id=c.session_id '
+                    "WHERE r.id=%s AND r.conversation_id=%s AND r.state='running' "
+                    'AND s.expires_at>now() AND m.created_at<r.created_at '
+                    'ORDER BY m.created_at DESC,m.id DESC LIMIT 6',
+                    (run_id, conversation_id),
+                ).fetchall()
+                return tuple(
+                    Turn(row['role'], row['content']) for row in reversed(rows)
+                )
+
+        return await asyncio.to_thread(read)
 
     async def running(self, run_id: UUID) -> bool:
         def read():

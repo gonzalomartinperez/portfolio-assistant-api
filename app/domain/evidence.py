@@ -58,6 +58,13 @@ STOP = {
     'your',
 }
 ALIASES = {
+    'ai': {'agents', 'orchestration', 'retrieval', 'reranking'},
+    'ia': {'agentes', 'orquestacion', 'recuperacion', 'memoria'},
+    'construyo': {'built', 'contributions', 'desarrolle', 'implemente'},
+    'performance': {'metrics', 'qualifier', 'baseline', 'measured', 'estimated'},
+    'improvements': {'metrics', 'qualifier', 'baseline', 'measured', 'estimated'},
+    'decision': {'architecture', 'trade', 'design', 'decision', 'decisiones'},
+    'learn': {'education', 'qualification', 'studies'},
     'study': {'education', 'university', 'universidad', 'studies', 'estudios'},
     'studied': {'education', 'university', 'universidad', 'studies', 'estudios'},
     'estudio': {'education', 'university', 'universidad', 'estudios'},
@@ -91,7 +98,7 @@ def tokens(text: str) -> set[str]:
     return {
         word
         for word in re.findall(r'[a-z0-9]+', normalized)
-        if len(word) > 2 and word not in STOP
+        if (len(word) > 2 or word in {'ai', 'ia'}) and word not in STOP
     }
 
 

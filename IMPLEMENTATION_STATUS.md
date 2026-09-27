@@ -95,3 +95,21 @@ A fresh local PostgreSQL dump restored into a uniquely named disposable database
 matched three migrations, one active corpus, three checkpoints and message counts
 in 1.32 seconds. It did not exercise encryption/off-site transport. Exact local
 image IDs and diagnostic results: [verification summary](docs/verification/backend-rc.json).
+
+## Conversation, skills and runtime handoff increment
+
+Source 6b1e65f; PR #19. Bounded owned history (six turns/3,000 characters), deterministic
+follow-up retrieval, readable fixture prose and qualified metric citations are
+implemented. Public v1 artifacts are unchanged. Local real-service suite: 83 passed.
+Clean checkout: frozen install, 65 offline tests, Ruff/mypy and contract drift pass.
+Actions run 36331286574 passed both parallel jobs and checks. Production image
+(non-root/read-only) passed default readiness, SSE and SIGTERM; existing committed
+frontend image passed Nginx routing/CORS/disconnect smoke. See
+[recorded evidence](docs/verification/ux-release.json) and
+[conversation before/after](docs/conversation-evaluation.md).
+
+Five portable skills have structural tests and actual client discovery evidence;
+Claude explicit expansion used a loopback transport fixture. Model-driven routing
+is unverified. Coolify is selected and private vps-ops owns production; the API
+[deployment contract](docs/deployment-contract.md) is the handoff. No deployment,
+registry publication, paid model evaluation or production readiness claim is made.

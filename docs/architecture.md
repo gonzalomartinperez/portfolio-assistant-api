@@ -85,3 +85,12 @@ set to null. See [privacy and threats](threat-model.md) and [operations](deploym
 
 See [ADR 001](adrs/001-dependency-direction.md), [GraphRAG](graph-retrieval.md),
 and [stream contract](api-contract.md) for decisions and behavior details.
+
+## Bounded conversational context
+
+RunStore loads earlier turns only for the claimed run/conversation and unexpired
+session, before generation. Application policy caps six turns to 3,000 characters;
+evidence remains independently verified and capped at 19,000 characters. LangGraph
+receives plain Turn contracts, not database rows. Retrieval resolves explicit
+follow-ups without a model routing call. The provider receives the current question,
+untrusted history and public evidence separately. See conversation-evaluation.md.
