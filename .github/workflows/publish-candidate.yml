@@ -68,7 +68,7 @@ jobs:
           docker push "$candidate_image"
           immutable_image=$(docker image inspect --format '{{index .RepoDigests 0}}' "$candidate_image")
           python -m scripts.release_manifest --api-image "$immutable_image" --web-image "$WEB_IMAGE" --api-sha "$GITHUB_SHA" --web-sha "$WEB_SHA"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: release-candidate-manifest
           path: release.json
