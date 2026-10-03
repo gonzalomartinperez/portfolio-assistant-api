@@ -161,7 +161,14 @@ The optional worker runs the same immutable image with command
 `python -m app.knowledge_watch`. It requires GitHub HTTPS egress, PostgreSQL and
 Neo4j writes, and authorized OpenAI embeddings when enabled. Its bare source cache
 is temporary under writable `/tmp`; no additional persistent application volume is
-required. Use one replica; an advisory lock refuses a second worker. Source polls
+required. The worker exposes no HTTP port. Disable the image's inherited API
+HEALTHCHECK for this process (`docker run --no-healthcheck` locally); vps-ops must
+verify the corresponding Coolify override rather than probing port 8000. Monitor
+process liveness and the persisted successful `knowledge_watch.checked_at`
+separately from corpus activation/freshness. A failed candidate can have healthy
+source polling while answers remain temporarily unavailable.
+
+Use one replica; an advisory lock refuses a second worker. Source polls
 are 60 seconds and freshness expires after 90 seconds by default. Configure
 `REQUIRE_FRESH_KNOWLEDGE=true` for production OpenAI. Do not put the polling task
 inside the HTTP process. Startup does not create migrations or grant privileges.
