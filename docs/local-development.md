@@ -45,7 +45,7 @@ uv run mypy
 uv run pytest -q                         # Pure/contract tests; real-service tests skip.
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.
 uv run python -m contracts.export
-git diff --exit-code contracts/openapi.json contracts/sse.schema.json
+git diff --exit-code contracts
 uv run python -m scripts.evaluate_retrieval
 uv run python -m scripts.benchmark_fixture
 uv run python -m scripts.scan_secrets
@@ -61,7 +61,7 @@ containers. Fixture timing is local evidence, not a production capacity guarante
 
 ## Dependencies and maintenance
 
-`uv.lock` and image digests pin reproducible installs. Python 3.14 is checked in the frozen lockfile, tests and production image. Mypy is the only new development dependency in this migration; it checks
+`uv.lock` and image digests pin reproducible installs. Python 3.14 is checked in the frozen lockfile, tests and production image. Mypy checks
 inner contracts and AI orchestration strictly. No ORM/queue/new service was added.
 Run `uv run python -m app.retention` every minute to prune expired data and retry
 checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in

@@ -8,6 +8,10 @@ See [current acceptance checkpoint](docs/work-checklist.md),
 [knowledge synchronization](docs/knowledge-sync.md), and
 [evaluation limitations](docs/assistant-evaluation.md).
 
+PR [#32](https://github.com/gonzalomartinperez/portfolio-assistant-api/pull/32)
+merged at `3f57202cb80392a60e311ec10a95d2363656f83a` after final-head
+[Actions 37156892280](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37156892280)
+passed; static 34s, integration/image 112s, aggregate 2s. Diagnostic artifacts exist.
 No paid model calls, portfolio edits, image publication, main merge or production
 action occurred. Current verification: **183 passed in 9.93 seconds** with real isolated databases;
 Ruff, strict mypy (22 files), contract export and skill validation pass. The final
