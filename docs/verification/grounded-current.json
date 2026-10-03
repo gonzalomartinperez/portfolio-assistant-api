@@ -82,7 +82,18 @@
         "samples": 7,
         "terminal_failures": 0
       }
-    ]
+    ],
+    "clean_checkout": {
+      "commit": "0cab0a6",
+      "frozen_install": "passed",
+      "offline_passed": 159,
+      "integration_deselected": 23,
+      "seconds": 5.15,
+      "ruff": "passed",
+      "mypy": "passed",
+      "skills": "passed",
+      "contract_drift": "passed"
+    }
   },
   "limitations": [
     "No paid OpenAI inference or semantic-embedding quality evaluation.",

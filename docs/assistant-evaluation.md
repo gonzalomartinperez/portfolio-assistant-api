@@ -56,3 +56,8 @@ Local language benchmark: 120 synthetic messages, Lingua low-accuracy mode, Pyth
 warm p95 3.432 ms, whole-process peak RSS 175.61 MiB. This is detector evidence,
 not browser performance or future VPS capacity. The native wheel adds ~162 MiB
 compressed download, a deliberate dependency tradeoff requiring production measurement.
+
+LangSmith remains a transitive LangChain dependency; no tracer/exporter is enabled.
+There is no OpenTelemetry dependency or exporter. Removing a required transitive
+package by patching dependencies would break reproducibility; configuration rejects
+external tracing instead. Operational redacted local logs are retained.

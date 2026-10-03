@@ -14,7 +14,9 @@ Ruff, strict mypy (22 files), contract export and skill validation pass. The fin
 non-root image passes SSE/SIGTERM and proxy/disconnect smoke. See
 [bounded evidence](docs/verification/grounded-current.json). Local fixture evaluation
 covered 120 questions, 40 adversarial inputs and 27 multi-turn turns with no terminal
-failures; this does not establish real model answer quality.
+failures; this does not establish real model answer quality. A detached clean
+checkout at 0cab0a6 passed frozen installation, 159 offline tests (23 integration
+deselected), lint, typing, skill validation and contract drift.
 
 # Historical implementation status · 2026-09-27
 
