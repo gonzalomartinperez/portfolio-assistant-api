@@ -44,3 +44,12 @@ public main branch and must not fetch private career-ops. Current source text re
 supported until the portfolio owner publishes the optional structured projection.
 Never treat fixture results as real-model quality or prompt-injection resistance.
 Stop paid evaluation without explicit authorization; continue offline policy tests.
+
+For broad question coverage, use [the evaluation guide](../../../docs/assistant-evaluation.md)
+and the canonical `evals/assistant-intents.json`; do not load the full generated
+1000-case artifact for ordinary onboarding. Run
+`uv run python -m scripts.build_assistant_bank --check` after edits. Keep all family
+paraphrases in one development/holdout split. The fixture harness supports the full
+bank and representative small samples; record exact corpus revisions and distinguish
+terminal transport success from reviewed factual quality. Never ingest evaluation
+questions as public facts or tune prompts using held-out answers.

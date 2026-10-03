@@ -1,17 +1,53 @@
 # Assistant quality evaluation
 
-`evals/assistant.json` contains 120 authored bilingual questions (60 English, 60
-Spanish), 40 held out from prompt tuning, and 40 adversarial prompts. Existing
-`evaluate_conversations` core/continuity suites cover 15 multi-turn scenarios.
-These are evaluation inputs and review rubrics, not verified answers or public RAG
-content. Review status remains pending until actual model output is assessed.
+`evals/assistant.json` contains **1000 questions** in 100 intent families: five
+variations for each English/Spanish locale hint. The source is
+`evals/assistant-intents.json`: three authored bilingual phrasings per family
+(600 questions), plus concise and evidence-limits request variants (400 questions).
+This distinction avoids presenting format variants as 1000 independent intents.
+
+The 120 original cases retain their IDs and wording. All variations of a family
+share one split: 670 development cases and 330 holdout cases, with no paraphrase
+leakage between them. Forty additional adversarial prompts are preserved. Language
+policy cases deliberately include mixed/unsupported input languages; output must
+still be English or Spanish. Existing conversation suites cover 15 multi-turn scenarios.
+
+Topics include profile, recent roles, public agent/RAG work, projects, qualified
+metrics, education, role fit, public personal information and privacy boundaries.
+Question topics were reviewed against committed public portfolio
+`0b363684fd1bafacafbba3924488f51cbc011a5c`. Older project names can remain documented
+in experience even when absent from the featured-project list. Never turn a leading
+question, missing nationality/age, estimated metric or employer context into a fact.
+
+These are evaluation inputs, **not runtime knowledge, memorized answers or training
+data**. The RAG reads the active public corpus and is not restricted to these
+questions. Keep both bank files outside indexing, prompts and production images.
+More question coverage does not create missing facts or prove live-model quality.
+
+## Maintain the bank
+
+Edit the canonical intent source, keeping paraphrases semantically aligned and
+English/Spanish copy natural. Do not hand-edit the generated artifact. Family IDs
+and existing case IDs are stable; split changes require explicit review. Then run:
+
+```sh
+uv run python -m scripts.build_assistant_bank
+uv run python -m scripts.build_assistant_bank --check
+uv run pytest -q tests/test_grounded_assistant.py
+```
+
+The compiler rejects duplicate normalized wording/identities, missing locales and
+oversized questions. CI validates generated drift and the tests check family split
+isolation. Default ten-case sampling spans ten topics and both locale hints rather
+than spending a paid sample on ten paraphrases of one question. Full sampling is
+without replacement. Report initial corpus/version and per-answer citation revisions.
 
 ## Safe local fixture execution
 
 After isolated migrations and pinned public indexing:
 
 ```sh
-uv run python -m scripts.evaluate_assistant --mode fixture --split all --limit 10 --output artifacts/assistant-fixture.json
+uv run python -m scripts.evaluate_assistant --mode fixture --split all --limit 1000 --output artifacts/assistant-fixture-1000.json
 uv run python -m scripts.evaluate_assistant --mode fixture --split adversarial --limit 40 --output artifacts/adversarial-fixture.json
 uv run python -m scripts.evaluate_conversations --suite core --output artifacts/conversations.json
 uv run python -m scripts.evaluate_conversations --suite continuity --output artifacts/continuity.json
@@ -21,8 +57,18 @@ The harness owns a loopback server and rejects nonlocal/production databases.
 Synthetic loopback-proxy visitor addresses allow representative users through the
 unchanged per-subject limits; this is a test-only configuration, not a production
 rate exception. It deletes its own sessions and leaves usage reservations intact.
-It never automatically retries a generation. Fixture configuration explicitly
+It never automatically retries a generation. Each case uses a separate synthetic
+benchmark-network address; production rate limits are unchanged. Failed/incomplete
+terminal events produce a nonzero exit code after the report is written. Fixture configuration explicitly
 selects both fixture adapters and never loads a key from `.env.local`.
+
+Recorded fixture runs and their limitations are in
+[question coverage evidence](verification/question-coverage.json). The expanded
+development bank exposed spoken-language retrieval selecting technical paragraphs;
+the ranking now prefers public profile language fields while excluding programming
+language questions and response-language preferences. The fixture preserves both
+published proficiency levels, including in concise answers. Real-model answer
+quality still needs separately authorized review.
 
 ## Authorized OpenAI execution
 

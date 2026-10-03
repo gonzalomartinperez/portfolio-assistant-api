@@ -12,6 +12,12 @@ the required gate. New commits cancel stale runs for the same PR/ref.
 | Real services and container | Real PostgreSQL/Neo4j migrations/indexing/integration tests; build image once, test non-root SSE/shutdown and actual Nginx routing | None |
 | checks | Required aggregate; fails unless both jobs succeed, including cancelled/skipped failures | Both, with `always()` |
 
+Static checks compile the authored bilingual question bank and reject generated
+drift. The real-service job exercises ten development cases spanning all topics and
+both locale hints through the HTTP/SSE harness; failed terminals fail the job.
+Full 1000-case fixture runs are recorded locally rather than adding that cost to
+every PR. These checks establish executable coverage, not live-model answer quality.
+
 Tests are explicitly marked `integration`. Offline and real-service jobs run
 disjoint selections, retaining all coverage. The container is built once with
 BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the

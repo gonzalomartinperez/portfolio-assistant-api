@@ -114,6 +114,46 @@ def tokens(text: str) -> set[str]:
     }
 
 
+def asks_spoken_languages(terms: set[str]) -> bool:
+    if terms & {'programming', 'programacion', 'coding', 'codigo'}:
+        return False
+    if not terms & {
+        'spoken',
+        'idiomas',
+        'idioma',
+        'habla',
+        'speak',
+        'speaks',
+    } and terms & {
+        'build',
+        'built',
+        'stack',
+        'developed',
+        'backend',
+        'frontend',
+        'desarrollar',
+        'desarrollo',
+    }:
+        return False
+    return bool(
+        terms
+        & {
+            'languages',
+            'language',
+            'idiomas',
+            'idioma',
+            'spoken',
+            'habla',
+            'speak',
+            'speaks',
+        }
+        or (
+            terms & {'proficiency', 'fluency', 'nivel'}
+            and terms & {'english', 'spanish', 'ingles', 'espanol'}
+        )
+    )
+
+
 def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
     content = tokens(row['content'])
     path = tokens(row['path'])

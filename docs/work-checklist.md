@@ -59,3 +59,11 @@ Repository native auto-merge capability is enabled; unattended automation remain
 policy check are installed. Existing strict protections/reviews are preserved. Read-only CI token protection-query access is blocked; the privileged controller must establish access before activation.
 See [scope, tests and activation handoff](dependency-updates.md). This is part of
 repository quality; it adds no deployment controller or main promotion authority.
+
+## Question coverage increment
+
+100 intent families / 1000 question variations (500 per locale hint), plus the
+existing 40 adversarial prompts. Canonical source and deterministic compiler prevent
+copy drift; family-level splits protect holdout isolation. Fixture execution and
+current-head CI are the verification gates. Live answer quality remains unverified;
+question count is coverage, not additional approved biographical facts.
