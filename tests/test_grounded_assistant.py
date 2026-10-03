@@ -347,10 +347,16 @@ def test_evaluation_bank_is_bilingual_and_holdout_is_separate():
     from pathlib import Path
 
     bank = json.loads(Path('evals/assistant.json').read_text())['cases']
-    assert len(bank) == 120 and len({case['id'] for case in bank}) == 120
-    assert sum(case['locale'] == 'en' for case in bank) == 60
-    assert sum(case['locale'] == 'es' for case in bank) == 60
-    assert sum(case['split'] == 'holdout' for case in bank) == 40
+    assert len(bank) == 1000 and len({case['id'] for case in bank}) == 1000
+    assert sum(case['locale'] == 'en' for case in bank) == 500
+    assert sum(case['locale'] == 'es' for case in bank) == 500
+    assert sum(case['split'] == 'holdout' for case in bank) == 330
+    families = {case['family_id'] for case in bank}
+    assert len(families) == 100
+    for family in families:
+        members = [case for case in bank if case['family_id'] == family]
+        assert len({case['split'] for case in members}) == 1
+        assert len(members) == 10
     assert not any('answer' in case for case in bank)
 
 
@@ -420,3 +426,116 @@ def test_graph_driver_outage_is_recoverable_for_knowledge_worker(monkeypatch, tm
     publisher = knowledge_watch.PublicKnowledgePublisher(tmp_path)
     with pytest.raises(DependencyUnavailableError, match='candidate_failed'):
         asyncio.run(publisher.publish('a' * 40))
+
+
+def test_authored_question_bank_has_no_drift_or_duplicate_paraphrases():
+    from pathlib import Path
+
+    from scripts.build_assistant_bank import compile_bank
+
+    source = json.loads(Path('evals/assistant-intents.json').read_text())
+    bank = json.loads(Path('evals/assistant.json').read_text())
+    assert compile_bank(source) == bank
+    source['families'].append(source['families'][0])
+    with pytest.raises(ValueError, match='intent family'):
+        compile_bank(source)
+
+
+def test_question_compiler_rejects_duplicate_text_across_families():
+    from pathlib import Path
+
+    from scripts.build_assistant_bank import compile_bank
+
+    source = json.loads(Path('evals/assistant-intents.json').read_text())
+    source['families'][1]['variants'][1]['en'] = source['families'][0]['variants'][0][
+        'en'
+    ]
+    with pytest.raises(ValueError, match='duplicate question'):
+        compile_bank(source)
+
+
+def test_small_evaluation_sample_spans_topics_and_locale_hints_without_replacement():
+    from pathlib import Path
+
+    from scripts.evaluate_assistant import select_cases
+
+    bank = json.loads(Path('evals/assistant.json').read_text())
+    small = select_cases(bank, 'development', 10)
+    assert len({case['topic'] for case in small}) == 10
+    assert sum(case['locale'] == 'en' for case in small) == 5
+    assert all(case['split'] == 'development' for case in small)
+    holdout = select_cases(bank, 'holdout', 1000)
+    assert len(holdout) == 330
+    assert all(case['split'] == 'holdout' for case in holdout)
+    complete = select_cases(bank, 'all', 1000)
+    assert {case['id'] for case in complete} == {case['id'] for case in bank['cases']}
+    assert len(complete) == 1000
+
+
+@pytest.mark.parametrize(
+    'question,expected',
+    [
+        ('What spoken languages does Gonzalo list?', True),
+        ('¿Qué idiomas publica Gonzalo?', True),
+        ('What English proficiency is publicly documented?', True),
+        ('Which programming languages did Gonzalo use?', False),
+        ('Which languages did Gonzalo use to build Filomena?', False),
+        ('Does Gonzalo speak English?', True),
+        ('Answer in Spanish: what is Filomena?', False),
+        ('Responde en inglés: ¿qué es Filomena?', False),
+    ],
+)
+def test_spoken_language_queries_do_not_capture_programming_or_response_preferences(
+    question, expected
+):
+    from app.domain.evidence import asks_spoken_languages, tokens
+
+    assert asks_spoken_languages(tokens(question)) is expected
+
+
+@pytest.mark.parametrize(
+    'locale,question',
+    [('en', 'What spoken languages?'), ('es', '¿Qué idiomas? Responde breve.')],
+)
+def test_language_retrieval_and_fixture_preserve_the_source_levels(locale, question):
+    import hashlib
+
+    from app.ai.retrieval import PublicRetrieval
+    from app.application.answer import context
+    from app.application.knowledge import Chunk, Corpus
+    from app.domain.fixture import fixture_message, fixture_supports
+
+    content = 'languages: [{ language: "English", level: "B2" }, { language: "Spanish", level: "Native" }],'
+    path = f'src/content/{locale}/profile.ts'
+    commit = 'a' * 40
+    chunk = Chunk(
+        'languages',
+        'Public profile',
+        f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L1',
+        'code',
+        path,
+        1,
+        1,
+        content,
+        hashlib.sha256(content.encode()).hexdigest(),
+    )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'version', commit, (chunk,), frozenset({path}), ('languages',)
+            )
+
+        async def relationships(self, *args, **kwargs):
+            return ()
+
+    sources = asyncio.run(PublicRetrieval(Index()).search(question, locale))
+    assert sources and sources[0].id == 'languages'
+    evidence = (
+        context(sources)
+        + '\nPUBLIC SOURCE [2] src/content/en/experience.ts lines 1-1:\nsummary: "Unrelated software delivery context should not answer a spoken-language question."'
+    )
+    answer = fixture_message(question, evidence, locale)
+    assert 'English: B2' in answer and 'Spanish: Native' in answer
+    assert 'C2' not in answer and 'Unrelated software' not in answer
+    assert fixture_supports(content, answer, path)

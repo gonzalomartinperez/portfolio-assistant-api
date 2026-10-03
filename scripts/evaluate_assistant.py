@@ -5,6 +5,7 @@ import json
 import socket
 import threading
 import time
+from collections import defaultdict, deque
 from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlparse
@@ -79,7 +80,7 @@ def evaluate(config: Settings, cases: list[dict], url: str) -> list[dict]:
         with httpx.Client(base_url=url, timeout=130) as client:
             origin = config.origins[0]
             visitor = {
-                'X-Forwarded-For': f'192.0.2.{index % 240 + 1}',
+                'X-Forwarded-For': f'198.18.{index // 250}.{index % 250 + 1}',
                 'Origin': origin,
             }
             response = client.post(
@@ -123,6 +124,9 @@ def evaluate(config: Settings, cases: list[dict], url: str) -> list[dict]:
                     {
                         'id': case['id'],
                         'locale_hint': case['locale'],
+                        'family_id': case.get('family_id'),
+                        'variation': case.get('variation'),
+                        'topic': case.get('topic'),
                         'split': case['split'],
                         'first_delta_ms': first,
                         'total_ms': round((time.perf_counter() - started) * 1000, 2),
@@ -138,6 +142,32 @@ def evaluate(config: Settings, cases: list[dict], url: str) -> list[dict]:
     return reports
 
 
+def select_cases(bank: dict, split: str, limit: int) -> list[dict]:
+    pool = bank['adversarial'] if split == 'adversarial' else bank['cases']
+    queues = defaultdict(deque)
+    topics = []
+    for case in pool:
+        if split != 'all' and case['split'] != split:
+            continue
+        topic = case.get('topic', 'adversarial')
+        if topic not in topics:
+            topics.append(topic)
+        queues[topic, case['locale']].append(case)
+    first = [
+        (topic, 'en' if index % 2 == 0 else 'es') for index, topic in enumerate(topics)
+    ]
+    order = first + [
+        (topic, 'es' if locale == 'en' else 'en') for topic, locale in first
+    ]
+    selected = []
+    while len(selected) < limit:
+        batch = [queues[key].popleft() for key in order if queues[key]]
+        if not batch:
+            break
+        selected.extend(batch[: limit - len(selected)])
+    return selected
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=('fixture', 'openai'), default='fixture')
@@ -150,23 +180,23 @@ def main():
     parser.add_argument('--limit', type=int, default=10)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    if not 1 <= args.limit <= 120:
-        parser.error('--limit must be between 1 and 120')
-    config = configuration(args.mode, args.allow_paid)
     bank = json.loads(Path('evals/assistant.json').read_text())
-    cases = [
-        case
-        for case in (
-            bank['adversarial'] if args.split == 'adversarial' else bank['cases']
-        )
-        if args.split == 'all' or case['split'] == args.split
-    ][: args.limit]
+    maximum = max(len(bank['cases']), len(bank['adversarial']))
+    if not 1 <= args.limit <= maximum:
+        parser.error(f'--limit must be between 1 and {maximum}')
+    config = configuration(args.mode, args.allow_paid)
+    cases = select_cases(bank, args.split, args.limit)
     with evaluation_server(config) as url:
+        catalog = httpx.get(url + '/api/v1/knowledge/suggestions', timeout=10)
+        catalog.raise_for_status()
+        revision = catalog.json()
         reports = evaluate(config, cases, url)
     args.output.write_text(
         json.dumps(
             {
                 'mode': args.mode,
+                'corpus_version': revision['corpus_version'],
+                'source_commit': revision['source_commit'],
                 'model': config.openai_model if args.mode == 'openai' else None,
                 'reasoning_effort': config.openai_reasoning_effort
                 if args.mode == 'openai'
@@ -179,18 +209,21 @@ def main():
         )
         + '\n'
     )
+    failures = sum(item['terminal'] != 'run.completed' for item in reports)
     print(
         json.dumps(
             {
                 'mode': args.mode,
                 'cases': len(reports),
-                'terminal_failures': sum(
-                    item['terminal'] != 'run.completed' for item in reports
-                ),
+                'terminal_failures': failures,
                 'human_review_required': True,
             }
         )
     )
+    if failures:
+        raise SystemExit(
+            'evaluation contains failed or incomplete runs; inspect the report'
+        )
 
 
 if __name__ == '__main__':

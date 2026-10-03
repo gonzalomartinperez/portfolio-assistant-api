@@ -13,9 +13,20 @@ def metric_excerpts(content: str) -> list[str]:
     ]
 
 
+def language_excerpts(content: str) -> list[str]:
+    return [
+        f'{language}: {level}'
+        for language, level in re.findall(
+            r'language:\s*"([^"\n]{1,100})",\s*level:\s*"([^"\n]{1,100})"', content
+        )
+    ]
+
+
 def fixture_supports(content: str, answer: str, path: str) -> bool:
     """Match emitted deterministic excerpts, including short qualified metrics."""
     content = re.sub(r'"\s*\+\s*"', '', content)
+    if any(text in answer for text in language_excerpts(content)):
+        return True
     if any(text in answer for text in metric_excerpts(content)):
         return True
     if any(text in answer for text in re.findall(r'"([^"\n]{25,})"', content)):
@@ -45,7 +56,12 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
     if not evidence:
         return insufficient
     if 'PUBLIC SOURCE ' in evidence:
-        from .evidence import ALIASES, requested_affiliation, tokens
+        from .evidence import (
+            ALIASES,
+            asks_spoken_languages,
+            requested_affiliation,
+            tokens,
+        )
 
         terms = tokens(question)
         expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
@@ -99,6 +115,11 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
                 )
                 subject = ' — '.join(names[:2])
 
+            if asks_spoken_languages(terms):
+                languages = language_excerpts(content)
+                if languages:
+                    excerpts.append('; '.join(languages))
+                continue
             if terms & {'technologies', 'technology', 'tecnologias', 'stack'}:
                 stacks = re.findall(r'technologyNames\(\[([^]]*)', content, re.DOTALL)
                 technologies = [

@@ -55,6 +55,7 @@ requires evaluation. See [continuous knowledge synchronization](docs/knowledge-s
 - [Architecture and lifecycle](docs/architecture.md) · [decisions](docs/adrs/001-dependency-direction.md)
 - [HTTP/SSE contract and examples](docs/api-contract.md) · [frontend handoff](docs/frontend-handoff.md)
 - [Conversation behavior and before/after evaluation](docs/conversation-evaluation.md)
+- [1000-question bilingual evaluation bank and safe harness](docs/assistant-evaluation.md)
 - [Security/privacy and residual risks](docs/threat-model.md) · [private reporting](SECURITY.md)
 - [Configuration](docs/environment.md) · [operations](docs/deployment.md) · [Coolify runtime handoff](docs/deployment-contract.md)
 - [Shared VPS decision](docs/adrs/002-shared-kvm4-origin.md) · [CI jobs and release gates](docs/ci.md)

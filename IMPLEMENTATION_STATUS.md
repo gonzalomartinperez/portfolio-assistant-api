@@ -160,3 +160,25 @@ registry publication, paid model evaluation or production readiness claim is mad
   live-model conversational quality remain unverified.
 - Latest mandate permits PR integration into develop only. Historical main merges
   do not authorize further promotion. Actual portfolio integration is deferred.
+
+
+## Bilingual question coverage increment (2026-10-03)
+
+1000 questions across 100 intent families are implemented with a canonical authored
+source, deterministic generation and family-level development/holdout isolation.
+The original 120 questions and 40 adversarial prompts remain. The bank is evaluation
+input, not runtime facts; active immutable public knowledge remains authoritative.
+
+All 1000 final fixture cases completed (670 development + 330 holdout), against
+public portfolio `0b363684fd1bafacafbba3924488f51cbc011a5c`. Development cases exposed
+a spoken-language retrieval gap; ranking and fixture excerpts now retain both
+published proficiency levels without confusing programming or response language.
+Local full suite: 196 passed (173 offline, 23 integration). Frozen clean-snapshot
+installation, lint/format, strict mypy, skills, workflow syntax, contract drift and
+redacted scan passed. The non-root image passed SSE/SIGTERM and proxy cancellation.
+See [aggregate evidence](docs/verification/question-coverage.json).
+
+CI checks generated-bank drift and runs ten representative real-store fixture
+cases; current-head Actions remains the merge gate. No paid model evaluation,
+registry publication, main promotion or production deployment. Fixture completion
+does not establish real-model answer quality.

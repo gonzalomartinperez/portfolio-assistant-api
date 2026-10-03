@@ -10,6 +10,7 @@ from app.application.contracts import Evidence
 from app.application.knowledge import KnowledgeIndex
 from app.domain.evidence import (
     EvidenceRecord,
+    asks_spoken_languages,
     lexical_score,
     requested_affiliation,
     tokens,
@@ -115,6 +116,12 @@ class PublicRetrieval:
                 'content_hash': chunk.content_hash,
             }
             score = lexical_score(row, terms, locale)
+            if (
+                asks_spoken_languages(terms)
+                and chunk.path.endswith('/profile.ts')
+                and 'language:' in chunk.content
+            ):
+                score += 100
             if (
                 overview
                 and chunk.path.endswith('/profile.ts')
