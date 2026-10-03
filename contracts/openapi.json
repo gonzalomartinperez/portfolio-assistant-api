@@ -386,6 +386,69 @@
         ],
         "title": "SessionView",
         "type": "object"
+      },
+      "StarterPrompt": {
+        "properties": {
+          "id": {
+            "pattern": "^[a-z0-9-]{1,80}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "question": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "topic": {
+            "enum": [
+              "profile",
+              "experience",
+              "projects",
+              "education",
+              "achievement"
+            ],
+            "title": "Topic",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "topic",
+          "question"
+        ],
+        "title": "StarterPrompt",
+        "type": "object"
+      },
+      "SuggestionsView": {
+        "properties": {
+          "corpus_version": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Corpus Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StarterPrompt"
+            },
+            "maxItems": 6,
+            "title": "Items",
+            "type": "array"
+          },
+          "source_commit": {
+            "pattern": "^[0-9a-f]{40}$",
+            "title": "Source Commit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "corpus_version",
+          "source_commit",
+          "items"
+        ],
+        "title": "SuggestionsView",
+        "type": "object"
       }
     }
   },
@@ -1118,6 +1181,120 @@
           }
         },
         "summary": "Stream Message"
+      }
+    },
+    "/api/v1/knowledge/suggestions": {
+      "get": {
+        "operationId": "getKnowledgeSuggestions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "enum": [
+                "en",
+                "es"
+              ],
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Knowledge Suggestions"
       }
     },
     "/api/v1/messages/{message_id}/feedback": {

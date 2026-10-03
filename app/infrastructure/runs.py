@@ -16,13 +16,13 @@ class PostgresRuns:
         def read():
             with self.connect() as conn:
                 rows = conn.execute(
-                    'SELECT m.role,left(m.content,1000) AS content FROM messages m '
+                    'SELECT m.role,left(m.content,2000) AS content FROM messages m '
                     'JOIN runs r ON r.conversation_id=m.conversation_id '
                     'JOIN conversations c ON c.id=r.conversation_id '
                     'JOIN sessions s ON s.id=c.session_id '
                     "WHERE r.id=%s AND r.conversation_id=%s AND r.state='running' "
                     'AND s.expires_at>now() AND m.created_at<r.created_at '
-                    'ORDER BY m.created_at DESC,m.id DESC LIMIT 6',
+                    'ORDER BY m.created_at DESC,m.id DESC LIMIT 12',
                     (run_id, conversation_id),
                 ).fetchall()
                 return tuple(

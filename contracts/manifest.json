@@ -1,6 +1,7 @@
 {
   "artifacts": {
-    "openapi.json": "94600f5af972226f6619d2eb7bb8e2f07ecf9ad3d3bf778d27712ba87191d359",
+    "knowledge.schema.json": "2489d6ff589e4bdfa50891ed8c110fb8e93371feda9db84818572bf9c4d387d0",
+    "openapi.json": "f4ed0a3cb2608f6308ccf0af375dcfeaa18bbacfed14dd2efcc497b650a565f4",
     "sse.schema.json": "6cc2a2eb99eb86532d455eeb9022142f969ff4b2365c21c11bd9139edf409aff"
   },
   "contract_version": "1"

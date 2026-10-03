@@ -36,7 +36,11 @@ Load these selectively: a citation-policy fix does not require every ingest deta
    fixture authority and a separate Compose project/database.
 
 Report corpus SHA/version, provenance, strategy outcomes, recovery tests and limits.
-Current embeddings are deterministic hashes; a semantic embedding adapter is not
-implemented. Fixture excerpts do not establish real-model quality or prompt-injection
-resistance. Stop for an unapproved source, paid evaluation or shared/live target;
-continue pure policy tests and analysis without those dependencies.
+Fixture embeddings are deterministic hashes. OpenAI semantic embeddings are implemented
+but remain paid and separately authorized. Review [synchronization and public projection](../../../docs/knowledge-sync.md)
+for the continuous worker, superseded-candidate guard, freshness and schema handoff.
+Use the worker only against an isolated target when authorized; it follows the fixed
+public main branch and must not fetch private career-ops. Current source text remains
+supported until the portfolio owner publishes the optional structured projection.
+Never treat fixture results as real-model quality or prompt-injection resistance.
+Stop paid evaluation without explicit authorization; continue offline policy tests.

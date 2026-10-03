@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
@@ -10,7 +11,12 @@ from uuid import UUID
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
 from app.application.conversation_context import Turn, bounded_history
-from app.domain.errors import BudgetExhaustedError, DependencyUnavailableError
+from app.domain.errors import (
+    BudgetExhaustedError,
+    DependencyUnavailableError,
+    ProviderUnavailableError,
+    RejectedError,
+)
 from app.domain.fixture import fixture_supports
 
 
@@ -69,6 +75,16 @@ def citations(
                 for source in sources[:2]
                 if fixture_supports(source.content, answer, source.path)
             )
+    else:
+        prose = re.sub(r'```[\s\S]*?```|`[^`\n]*`', '', answer)
+        used = {
+            int(number) for number in re.findall(r'(?<![\w])\[([0-9]+)\](?!\()', prose)
+        }
+        if any(number < 1 or number > len(sources) for number in used):
+            raise ValueError('invalid source reference')
+        sources = tuple(
+            source for index, source in enumerate(sources, 1) if index in used
+        )
     result: list[dict[str, object]] = []
     for source in sources:
         record = asdict(source)
@@ -166,6 +182,10 @@ class RunService:
             code = (
                 'budget_exhausted'
                 if isinstance(error, BudgetExhaustedError)
+                else 'provider_unavailable'
+                if isinstance(error, ProviderUnavailableError)
+                else error.code
+                if isinstance(error, RejectedError)
                 else 'generation_failed'
             )
             try:

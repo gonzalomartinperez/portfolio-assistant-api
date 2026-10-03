@@ -16,6 +16,22 @@ authorized. Critical security issues interrupt the sequence below.
 | 6 Deployment handoff | API image/runtime/migrations for Coolify managed by vps-ops | Application contract complete; current update supersedes direct portfolio access with same-origin `/embed` target. Production publication, Coolify and VPS tests remain unauthorized/unverified. Frozen shared templates are transfer references only. |
 | Final | Reviewed increment, current-head CI, committed contracts and exact results | Backend increment integrated by PR #23 at 4186664 after current-head CI. Dependency automation is a separate CI increment; GitHub is authoritative for merge status. No main or production action. |
 
+## Current public-knowledge increment · 2026-10-03
+
+| Priority | Acceptance | Status |
+| --- | --- | --- |
+| 1 Current knowledge | Poll approved published main; coalesce revisions; atomic activation; stale knowledge fails closed | Implemented; deterministic worker and real database activation/cache tests. Local worker fetched and indexed main 2f4fb400184b34593fd71f4d5fbf29738496a5a0. No production worker configured. |
+| 1 Model and language | OpenAI only, GPT-6 Luna, medium, ES/EN, bounded context, source-supported citations | Implemented adapters/configuration and offline tests. Real paid answer quality remains unverified. |
+| 2 Retrieval and budget | Semantic, lexical and graph retrieval; shared USD 10 admission ledger; public embedding cache | Implemented migrations 004/005 and adapters, tested with synthetic provider and real stores. Real embedding precision and paid accounting still require authorized evaluation. |
+| 2 Security | No tracing, no provider fallback, safe errors, private cache exclusions, request deadline | Implemented and tested. Local logs remain for operations; no external telemetry enabled. |
+| 3 Skills and CI | Update existing focused workflows, retain boundaries and secure runner compatibility | Structural/behavioral regression tests pass; current-head Actions remains the merge gate. |
+| 3 Handoffs | Public projection schema, source-backed starter endpoint, Coolify worker/runtime contract | Committed artifacts prepared; portfolio projection publication, frontend import and vps-ops execution remain external gates. |
+
+Pending live evaluation is not a claimed capability. Extra LLM planning/reranking,
+budget warning notifications and corpus pruning remain deferred until their need,
+cost and operational policy are reviewed. The existing deterministic LangGraph
+retrieve/answer flow remains intentional; no paid evaluation or deployment authorized.
+
 ## Remaining external gates and deferred work
 
 - **Blocked on authorization:** live-model usefulness, role-fit reasoning, bilingual

@@ -9,7 +9,7 @@ credentials. `AGENTS.md` is the canonical agent guidance.
 ## Python conventions
 
 The [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-is our reference, adapted to Python 3.13, typed application contracts and Ruff:
+is our reference, adapted to Python 3.14, typed application contracts and Ruff:
 
 - Ruff owns formatting: four-space indentation, its 88-column wrapping target,
   single-quoted strings, and triple-double-quoted docstrings. Long SQL and URLs
@@ -75,3 +75,7 @@ changes with `uv run python -m scripts.validate_skills`; CI uses the same comman
 Dependency maintenance follows [the conservative Dependabot policy](docs/dependency-updates.md).
 Passing CI alone does not qualify a dependency update. Review scope, transitive
 changes and activation/required-check state before enabling any automated path.
+
+Application and fixture checks use Python 3.14 from the frozen uv environment.
+Privileged stdlib-only dependency/release scripts also support runner Python 3.12;
+Ruff per-file targets and a grammar test preserve that security boundary.

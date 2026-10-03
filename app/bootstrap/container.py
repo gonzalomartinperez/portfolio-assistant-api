@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from neo4j import GraphDatabase
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -28,8 +28,10 @@ from app.infrastructure.answer import (
 from app.infrastructure.checkpoints import drain_cleanup
 from app.infrastructure.conversations import PostgresConversations
 from app.infrastructure.db import pool, translated
+from app.infrastructure.embedding import FixtureEmbeddings, OpenAIEmbeddings
 from app.infrastructure.knowledge import KnowledgeIndex
-from app.infrastructure.ledger import PostgresAccounting
+from app.infrastructure.language import LocalLanguageDetector
+from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
 from app.infrastructure.migrations import check_schema
 from app.infrastructure.runs import PostgresRuns
 from app.presentation.http import router
@@ -70,6 +72,7 @@ def create_app(
             max_transaction_retry_time=0,
         )
         client = None
+        embedding_client = None
         try:
             await asyncio.to_thread(database.open, wait=True, timeout=10)
             await checkpoints.open(wait=True, timeout=10)
@@ -97,12 +100,37 @@ def create_app(
                         )
                     ),
                 )
+            embeddings = FixtureEmbeddings()
+            if config.embeddings_provider == 'openai':
+                embedding_client = OpenAI(
+                    api_key=config.openai_api_key, timeout=20, max_retries=0
+                )
+                embeddings = OpenAIEmbeddings(
+                    embedding_client,
+                    EmbeddingAccounting(
+                        connection,
+                        Decimal(config.reserve_cutoff_usd),
+                        Decimal(config.embedding_usd_per_million),
+                    ),
+                    async_client=client,
+                )
+            index = KnowledgeIndex(
+                connection,
+                graph,
+                embeddings,
+                database=config.neo4j_database,
+                freshness=config.knowledge_freshness_seconds
+                if config.require_fresh_knowledge
+                else None,
+            )
+            app.state.knowledge = index
             saver = AsyncPostgresSaver(checkpoints)
             workflow = LangGraphWorkflow(
-                PublicRetrieval(KnowledgeIndex(connection, graph)),
+                PublicRetrieval(index),
                 provider,
                 accounting,
                 saver,
+                detector=LocalLanguageDetector(),
             )
             app.state.conversations = Conversations(
                 PostgresConversations(connection),
@@ -121,7 +149,8 @@ def create_app(
                 with database.connection() as conn:
                     conn.execute('SELECT 1 FROM schema_migrations LIMIT 1')
                     if not conn.execute(
-                        "SELECT id FROM knowledge_versions WHERE status='active' LIMIT 1"
+                        "SELECT id FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                        (embeddings.provider, embeddings.model),
                     ).fetchone():
                         raise RuntimeError('corpus_unavailable')
                 graph.verify_connectivity()
@@ -143,6 +172,8 @@ def create_app(
         finally:
             if client:
                 await client.close()
+            if embedding_client:
+                await asyncio.to_thread(embedding_client.close)
             await checkpoints.close()
             await asyncio.to_thread(graph.close)
             await asyncio.to_thread(database.close)

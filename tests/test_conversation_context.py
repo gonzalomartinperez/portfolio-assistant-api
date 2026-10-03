@@ -17,9 +17,16 @@ def test_context_budget_keeps_recent_turns_without_promoting_roles():
         Turn('user' if i % 2 else 'assistant', str(i) * 1500) for i in range(10)
     )
     result = bounded_history(history)
-    assert sum(len(turn.content) for turn in result) == 3000
-    assert [turn.content[0] for turn in result] == ['7', '8', '9']
-    assert [turn.role for turn in result] == ['user', 'assistant', 'user']
+    assert sum(len(turn.content) for turn in result) == 8000
+    assert [turn.content[0] for turn in result] == ['4', '5', '6', '7', '8', '9']
+    assert [turn.role for turn in result] == [
+        'assistant',
+        'user',
+        'assistant',
+        'user',
+        'assistant',
+        'user',
+    ]
 
 
 def test_followup_uses_visitor_topic_and_topic_change_drops_it():

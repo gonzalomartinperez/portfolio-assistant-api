@@ -61,7 +61,7 @@ def validate(root: Path) -> list[str]:
             ):
                 raise ValueError
             names.add(name)
-        except (yaml.YAMLError, ValueError):
+        except yaml.YAMLError, ValueError:
             errors.append(f'{location}: invalid or duplicate portable metadata')
         for resource in folder.rglob('*'):
             relative = resource.relative_to(root).as_posix()

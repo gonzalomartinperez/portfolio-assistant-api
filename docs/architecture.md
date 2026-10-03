@@ -89,7 +89,7 @@ and [stream contract](api-contract.md) for decisions and behavior details.
 ## Bounded conversational context
 
 RunStore loads earlier turns only for the claimed run/conversation and unexpired
-session, before generation. Application policy caps six turns to 3,000 characters;
+session, before generation. Application policy caps 12 turns to 8,000 characters;
 evidence remains independently verified and capped at 19,000 characters. LangGraph
 receives plain Turn contracts, not database rows. Retrieval resolves explicit
 follow-ups without a model routing call. The provider receives the current question,

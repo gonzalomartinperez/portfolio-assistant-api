@@ -3,7 +3,7 @@
 Status: application contract, not deployment authorization. Coolify is selected
 for the future Hostinger KVM 4 VPS and managed only through private vps-ops.
 The portfolio remains on Business. No Coolify installation or production test has
-been performed here. API source snapshot: `57429618cf487b78842dd460411a72da45728ba0`.
+been performed here. Baseline source snapshot: `9fe079a34f822f56aa2fea0741088721c28bdcf5`.
 The commit containing this document identifies the handoff revision.
 
 ## Artifact and runtime
@@ -71,11 +71,13 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
-Current application schema: exactly `001_initial.sql`, `002_checkpoint_cleanup.sql`,
-then `003_cleanup_attempts.sql`, with the locked LangGraph checkpoint schema created
-by the same image. This increment introduces no migration; the previous 7150318
-and current source use identical schema checksums. There is no declared compatibility
-with future schema versions.
+Current application schema includes ordered migrations 001–005, plus the locked
+LangGraph checkpoint schema. Migration 004 adds semantic vectors, lexical search,
+embedding identity, freshness state and a single-active-version constraint. Migration 005 persists public embeddings after each successful call for crash-safe
+reuse. Apply both before starting this image. Older images reject unknown applied migrations;
+image-only rollback to the previous release is not compatible without a separately
+reviewed recovery path. Reapply reviewed runtime grants including SELECT on
+knowledge_watch. The worker uses separate corpus/ledger write credentials.
 
 **Rollback limitation:** readiness rejects unknown applied migrations. Older images
 may therefore be incompatible after an upgrade even when tables are additive.
@@ -86,7 +88,7 @@ a separately tested recovery procedure.
 ## Health, routing and streams
 
 - `GET /health/live`: process response, not dependency readiness.
-- `GET /health/ready`: schema/checksum, active public corpus and graph connectivity;
+- `GET /health/ready`: schema/checksum, active public corpus matching the configured embedding model and graph connectivity;
   use as the traffic admission probe. No paid model call.
 - Suggested container probe: `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"`.
   Initial settings: interval 20s, timeout 8s, retries 3, start period 30s; verify on VPS.
@@ -125,7 +127,7 @@ Local/CI image and Nginx fixture tests are recorded in IMPLEMENTATION_STATUS.md 
 [CI](ci.md); they are not Coolify tests. Historical local idle stack measurement
 ~874 MiB included web and both databases; not a VPS guarantee. Previous proposed
 resource ceilings are retained only as transfer inputs in deployment.md. vps-ops
-owns final measurement/allocation. JSON stdout logs include correlation, latency,
+owns final measurement/allocation. Structured application stderr logs include correlation, latency,
 retrieval strategy/count and usage; omit raw prompts, answers and dependency errors.
 Rotation/collection belongs to vps-ops.
 
@@ -152,3 +154,40 @@ health routing, migration serialization, retention scheduling and backup recover
 Official references: [Coolify build/deployment model](https://coolify.io/docs/core/build-deployment-model)
 and [health checks](https://coolify.io/docs/applications/configuration/health-checks).
 Their documented options do not establish that our future VPS is configured or tested.
+
+## Continuous worker and Coolify secret delivery
+
+The optional worker runs the same immutable image with command
+`python -m app.knowledge_watch`. It requires GitHub HTTPS egress, PostgreSQL and
+Neo4j writes, and authorized OpenAI embeddings when enabled. Its bare source cache
+is temporary under writable `/tmp`; no additional persistent application volume is
+required. Use one replica; an advisory lock refuses a second worker. Source polls
+are 60 seconds and freshness expires after 90 seconds by default. Configure
+`REQUIRE_FRESH_KNOWLEDGE=true` for production OpenAI. Do not put the polling task
+inside the HTTP process. Startup does not create migrations or grant privileges.
+
+Allow at least 60 seconds for worker termination. SIGTERM prevents further chunks
+from being embedded and blocks activation; the current bounded operation finishes.
+Git/embedding timeouts are 30/20 seconds respectively. The API's streaming grace
+remains separate. vps-ops must verify restart/probe and shutdown behavior on Coolify.
+
+Coolify is the initial secret store/delivery mechanism. Disable Build Variable for
+runtime secrets; never build images with credentials. Protect the control plane
+with restricted access and 2FA. Keep encrypted backups and the matching APP_KEY
+outside this VPS, with a tested recovery procedure. No Infisical, Redis or external
+secret SDK is required. Applications support runtime environment delivery, not
+native _FILE loading. Missing values fail validation without returning their values.
+Production remains unauthorized; none of these settings enable a deploy trigger.
+
+OpenAI mode accepts only GPT-6 Luna and medium effort. Output/reasoning ceiling:
+8192 tokens; emergency rendered-output bound: 40000 characters. Responses use
+store=False; provider retention is still subject to the account's applicable policy.
+Generation and embeddings share the approved USD 10 monthly ledger. No fallback
+model/provider, automatic billed generation retry or external telemetry exporter.
+
+Frontend handoff: SSE v1 schema/examples remain unchanged. OpenAPI gains the public
+knowledge/suggestions GET endpoint; import the complete committed snapshot before
+claiming paired-contract release readiness. New safe failure codes are
+provider_unavailable and knowledge_updating. Header behavior is no-store for private
+API responses and no-store,no-transform for streams. Catalog absence/freshness failure
+must not start a generation retry loop.

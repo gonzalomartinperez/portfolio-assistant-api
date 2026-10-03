@@ -1,0 +1,117 @@
+{
+  "date": "2026-10-03",
+  "environment": "WSL Linux x86_64; local Python 3.14.4; container Python 3.14.8",
+  "baseline_api": "9fe079a34f822f56aa2fea0741088721c28bdcf5",
+  "regression_portfolio": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+  "observed_published_portfolio": "2f4fb400184b34593fd71f4d5fbf29738496a5a0",
+  "source_revision": "The commit containing this report; resolve with git log --follow.",
+  "verification": {
+    "full_pytest": {
+      "passed": 183,
+      "seconds": 9.93,
+      "real_databases": true,
+      "paid_provider": false
+    },
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "strict_mypy": {
+      "passed": true,
+      "files": 22
+    },
+    "skill_catalog": "passed",
+    "contract_export": "passed",
+    "local_image": {
+      "id": "sha256:f8f7ac5469103d54d1b59aa02698380d4e530be6088ecfb9640fa2ffe1381128",
+      "bytes": 294192235,
+      "registry_published": false
+    },
+    "container_smoke": {
+      "image": "portfolio-assistant-api:grounded-rc",
+      "checks": [
+        {
+          "mode": "normal SSE",
+          "uid": "65532",
+          "events": 11,
+          "passed": true
+        },
+        {
+          "mode": "active-stream SIGTERM",
+          "uid": "65532",
+          "events": 3,
+          "passed": true
+        }
+      ]
+    },
+    "proxy_smoke": {
+      "passed": true,
+      "frontend": "routing fixture (not frontend acceptance)",
+      "paths_preserved": true,
+      "portfolio_cors": true,
+      "delta_gap_ms": 150.9,
+      "disconnect_state": "interrupted"
+    },
+    "language": {
+      "environment": "WSL Linux x86_64; Python 3.14.4; Lingua 2.2.0 low accuracy; synthetic inputs",
+      "cold_ms": 32.602,
+      "warm_p95_ms": 3.432,
+      "process_peak_rss_mib": 175.61,
+      "samples": 120
+    },
+    "fixture_evaluations": [
+      {
+        "artifact": "assistant-fixture-full.json",
+        "mode": "fixture",
+        "samples": 120,
+        "terminal_failures": 0
+      },
+      {
+        "artifact": "adversarial-fixture.json",
+        "mode": "fixture",
+        "samples": 40,
+        "terminal_failures": 0
+      },
+      {
+        "artifact": "conversations-grounded.json",
+        "mode": "fixture; deterministic excerpts, not live-model quality",
+        "samples": 20,
+        "terminal_failures": 0
+      },
+      {
+        "artifact": "continuity-grounded.json",
+        "mode": "fixture; deterministic excerpts, not live-model quality",
+        "samples": 7,
+        "terminal_failures": 0
+      }
+    ],
+    "clean_checkout": {
+      "commit": "0cab0a6",
+      "frozen_install": "passed",
+      "offline_passed": 159,
+      "integration_deselected": 23,
+      "seconds": 5.15,
+      "ruff": "passed",
+      "mypy": "passed",
+      "skills": "passed",
+      "contract_drift": "passed"
+    },
+    "actions": {
+      "run": "https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37156608025",
+      "head": "579702406cb00bd226968b7023a322f108ec2f00",
+      "conclusion": "success",
+      "job_seconds": {
+        "static": 34,
+        "integration_container": 131,
+        "checks": 4
+      },
+      "scope": "Precedes the final Neo4j driver-error regression fix; final current-head CI remains required."
+    }
+  },
+  "limitations": [
+    "No paid OpenAI inference or semantic-embedding quality evaluation.",
+    "No production, Coolify or real portfolio iframe integration test.",
+    "Local image ID is not a registry digest.",
+    "Fixture terminal completion is not factual accuracy or injection-resistance evidence.",
+    "Current-head Actions and clean-checkout verification recorded separately when available.",
+    "Public structured projection has not been published by portfolio owner."
+  ]
+}
