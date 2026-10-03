@@ -1,3 +1,4 @@
+import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
@@ -150,7 +151,7 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     reserve(sent.headers['x-run-id'], Decimal('0.05'))
     settle(sent.headers['x-run-id'], 1000, 500)
     with pytest.raises(BudgetExhaustedError):
-        reserve(str(uuid4()), Decimal('9.01'))
+        reserve(str(uuid4()), Decimal('10.01'))
     pending_id = str(uuid4())
     with connect() as conn:
         conn.execute(
@@ -276,6 +277,20 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(
         )
         command('add', '.')
         command('commit', '-qm', 'fixture: graph failure')
+        with connect() as conn:
+            conn.execute(
+                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit',
+                ('a' * 40,),
+            )
+        superseded = sync(repo, watched=True)
+        assert superseded['superseded'] is True
+        with connect() as conn:
+            assert (
+                conn.execute(
+                    "SELECT id FROM knowledge_versions WHERE status='active'"
+                ).fetchone()['id']
+                == second['knowledge_version']
+            )
         monkeypatch.setattr(
             'app.infrastructure.indexing.GraphDatabase.driver',
             lambda *args, **kwargs: (_ for _ in ()).throw(
@@ -291,6 +306,7 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(
         assert active == second['knowledge_version']
     finally:
         with connect() as conn:
+            conn.execute('DELETE FROM knowledge_watch')
             conn.execute(
                 "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
             )
@@ -687,3 +703,193 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
         visitor.delete(
             '/api/v1/session', headers=headers('http://localhost:3000', visitor_token)
         )
+
+
+def test_embedding_ledger_shares_atomic_monthly_limit():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.infrastructure.ledger import EmbeddingAccounting
+
+    with connect() as conn:
+        spent = conn.execute(
+            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+        ).fetchone()['amount']
+    accounting = EmbeddingAccounting(
+        connect, spent + Decimal('0.0002'), Decimal('0.02')
+    )
+    identifiers = []
+
+    def reserve_one():
+        try:
+            return accounting.reserve_embedding(10000, 'index')
+        except BudgetExhaustedError:
+            return None
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            identifiers = [
+                identifier
+                for identifier in executor.map(lambda _: reserve_one(), range(2))
+                if identifier
+            ]
+        assert len(identifiers) == 1
+        accounting.settle_embedding(identifiers[0], 100)
+        with connect() as conn:
+            row = conn.execute(
+                'SELECT kind,actual_usd,run_id FROM spend_ledger WHERE id=%s',
+                (identifiers[0],),
+            ).fetchone()
+        assert row['kind'] == 'embedding_index' and row['run_id'] is None
+        assert row['actual_usd'] == Decimal('0.000002')
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (identifiers,))
+
+
+def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
+    from app.domain.errors import RejectedError
+    from app.infrastructure.knowledge import KnowledgeIndex
+
+    class ForbiddenEmbeddings:
+        provider = 'fixture'
+        model = 'hash64-v1'
+        dimensions = 64
+
+        async def query(self, text):
+            raise AssertionError('stale corpus must not incur query embedding cost')
+
+    index = KnowledgeIndex(connect, None, ForbiddenEmbeddings(), freshness=90)
+    try:
+        with connect() as conn:
+            commit = conn.execute(
+                "SELECT source_commit FROM knowledge_versions WHERE status='active'"
+            ).fetchone()['source_commit']
+            conn.execute(
+                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit,checked_at=now()',
+                ('b' * 40,),
+            )
+        with pytest.raises(RejectedError, match='knowledge_updating'):
+            asyncio.run(index.candidates('question'))
+        with connect() as conn:
+            conn.execute(
+                "UPDATE knowledge_watch SET observed_commit=%s,checked_at=now()-interval '2 minutes'",
+                (commit,),
+            )
+        with pytest.raises(RejectedError, match='knowledge_updating'):
+            asyncio.run(index.candidates('question'))
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM knowledge_watch')
+
+
+def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
+    tmp_path, monkeypatch
+):
+    import hashlib
+    import subprocess
+    from types import SimpleNamespace
+
+    from app.infrastructure import indexing
+
+    repo = tmp_path / 'public-fixture'
+    repo.mkdir()
+
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+
+    git('init', '-q')
+    git('config', 'user.name', 'Fixture Test')
+    git('config', 'user.email', 'fixture@example.invalid')
+    git(
+        'remote', 'add', 'origin', 'https://github.com/gonzalomartinperez/portfolio.git'
+    )
+    content = (
+        '# Public fixture\nA synthetic public embedding cache test ' + uuid4().hex + '.'
+    )
+    (repo / 'README.md').write_text(content)
+    git('add', '.')
+    git('commit', '-qm', 'fixture: cache recovery')
+    revision = git('rev-parse', 'HEAD')
+    version = revision + '-semantic-v7'
+    content_hash = hashlib.sha256(content.encode()).hexdigest()
+    config = settings().model_copy(
+        update={
+            'ai_provider': 'openai',
+            'embeddings_provider': 'openai',
+            'allow_paid_ai': True,
+            'openai_api_key': 'synthetic-fixture-key',
+        }
+    )
+    calls = []
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.embeddings = self
+
+        def create(self, **kwargs):
+            calls.append(kwargs['model'])
+            return SimpleNamespace(
+                data=[SimpleNamespace(embedding=[0.1] * 1536)],
+                usage=SimpleNamespace(total_tokens=2),
+            )
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(indexing, 'OpenAI', FakeOpenAI)
+    monkeypatch.setattr(indexing, 'settings', lambda: config)
+    project = indexing.project
+    with connect() as conn:
+        original = conn.execute(
+            "SELECT id FROM knowledge_versions WHERE status='active'"
+        ).fetchone()['id']
+        before = {
+            row['id'] for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
+        }
+    try:
+        monkeypatch.setattr(
+            indexing,
+            'project',
+            lambda *args, **kwargs: (_ for _ in ()).throw(
+                RuntimeError('synthetic projection failure')
+            ),
+        )
+        with pytest.raises(RuntimeError, match='synthetic projection failure'):
+            indexing.sync(repo)
+        with connect() as conn:
+            assert conn.execute(
+                'SELECT content_hash FROM public_embedding_cache WHERE content_hash=%s',
+                (content_hash,),
+            ).fetchone()
+            assert (
+                conn.execute(
+                    "SELECT id FROM knowledge_versions WHERE status='active'"
+                ).fetchone()['id']
+                == original
+            )
+        monkeypatch.setattr(indexing, 'project', project)
+        assert indexing.sync(repo)['changed'] is True
+        assert calls == ['text-embedding-3-small']
+    finally:
+        with connect() as conn:
+            conn.execute(
+                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
+            )
+            conn.execute(
+                "UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,)
+            )
+            conn.execute('DELETE FROM chunks WHERE knowledge_version=%s', (version,))
+            conn.execute(
+                'DELETE FROM source_files WHERE knowledge_version=%s', (version,)
+            )
+            conn.execute('DELETE FROM knowledge_versions WHERE id=%s', (version,))
+            conn.execute(
+                'DELETE FROM public_embedding_cache WHERE content_hash=%s',
+                (content_hash,),
+            )
+            owned = [
+                row['id']
+                for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
+                if row['id'] not in before
+            ]
+            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (owned,))

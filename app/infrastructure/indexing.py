@@ -7,18 +7,29 @@ import os
 import re
 import subprocess
 import tempfile
+from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
+from threading import Event
 from urllib.parse import quote
 
 from neo4j import GraphDatabase
+from openai import OpenAI
 
 from app.bootstrap.config import settings
 from app.infrastructure.db import connect
-from app.infrastructure.embedding import embed
+from app.infrastructure.embedding import (
+    FixtureEmbeddings,
+    OpenAIEmbeddings,
+    embed,
+    vector,
+)
 from app.infrastructure.graph import project
+from app.infrastructure.ledger import EmbeddingAccounting
+from app.infrastructure.public_projection import PublicProjection, graph_facts
 
 ROOT_PATTERNS = (
+    re.compile(r'^public/assistant-knowledge\.json$'),
     re.compile(r'^src/content/(en|es)/(profile|experience|projects|education)\.ts$'),
     re.compile(r'^docs/(development|public-content|editorial-guidelines)\.md$'),
     re.compile(r'^README\.md$'),
@@ -69,8 +80,52 @@ def chunk_id(commit: str, path: str, start: int, content_hash: str):
     ).hexdigest()
 
 
+def projection_spans(content: str):
+    decoder = json.JSONDecoder()
+    array = re.search(r'"facts"\s*:\s*\[', content)
+    if array is None:
+        raise ValueError('public projection requires facts')
+    position = array.end()
+    while True:
+        while content[position].isspace() or content[position] == ',':
+            position += 1
+        if content[position] == ']':
+            break
+        _, end = decoder.raw_decode(content, position)
+        yield (
+            content[:position].count('\n') + 1,
+            content[:end].count('\n') + 1,
+            content[position:end],
+        )
+        position = end
+    personal = re.search(r'"personal"\s*:\s*(?=\{)', content)
+    if personal is not None:
+        _, end = decoder.raw_decode(content, personal.end())
+        yield (
+            content[: personal.start()].count('\n') + 1,
+            content[:end].count('\n') + 1,
+            content[personal.start() : end],
+        )
+
+
 def chunks(path: str, content: str, commit: str):
     lines = content.splitlines()
+    if path == 'public/assistant-knowledge.json':
+        for start, end, block in projection_spans(content):
+            content_hash = hashlib.sha256(block.encode()).hexdigest()
+            yield {
+                'id': chunk_id(commit, path, start, content_hash),
+                'content': block,
+                'title': 'Approved public profile',
+                'url': citation_url(commit, path, start, end),
+                'source_type': 'page',
+                'path': path,
+                'start_line': start,
+                'end_line': end,
+                'content_hash': content_hash,
+                'embedding': embed(block),
+            }
+        return
     boundaries = [0]
     if path.endswith('.md'):
         boundaries.extend(
@@ -109,14 +164,20 @@ def reused_record(old: dict, commit: str):
     }
 
 
-def sync(repo: Path, ref: str = 'HEAD'):
+def sync(
+    repo: Path, ref: str = 'HEAD', *, watched: bool = False, stop: Event | None = None
+):
     # The lock spans both projections; only activation changes the authoritative pointer.
     with connect() as lock:
-        lock.execute('SELECT pg_advisory_xact_lock(472022)')
-        return _sync(repo, ref)
+        lock.autocommit = True
+        lock.execute('SELECT pg_advisory_lock(472022)')
+        try:
+            return _sync(repo, ref, watched=watched, stop=stop)
+        finally:
+            lock.execute('SELECT pg_advisory_unlock(472022)')
 
 
-def _sync(repo: Path, ref: str):
+def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = None):
     repo = repo.resolve(strict=True)
     remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
     if remote not in (
@@ -132,7 +193,10 @@ def _sync(repo: Path, ref: str):
     )
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('invalid commit')
-    version = commit + '-v6'
+    config = settings()
+    version = commit + (
+        '-semantic-v7' if config.embeddings_provider == 'openai' else '-v6'
+    )
     files = manifest_at_commit(repo, commit)
     with connect() as conn:
         existing = conn.execute(
@@ -158,17 +222,32 @@ def _sync(repo: Path, ref: str):
     file_manifest = []
     records = []
     documents = {}
+    structured = None
     embedded_chunks = 0
     reused_files = 0
     for path, blob_sha in files:
+        if stop is not None and stop.is_set():
+            raise RuntimeError('sync_cancelled')
         size = int(git(repo, 'cat-file', '-s', blob_sha))
-        if size > MAX_BYTES:
+        if size > (500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES):
             raise ValueError('source size limit exceeded')
         data = git(repo, 'cat-file', 'blob', blob_sha)
         content = data.decode('utf-8')
         if SECRET_PATTERN.search(content):
             raise ValueError(f'possible secret in {path}')
         documents[path] = content
+        if path == 'public/assistant-knowledge.json':
+            structured = PublicProjection.model_validate_json(content)
+            file_manifest.append(
+                {
+                    'path': path,
+                    'blob_sha': blob_sha,
+                    'sha256': hashlib.sha256(data).hexdigest(),
+                    'bytes': len(data),
+                }
+            )
+            records.extend(chunks(path, content, commit))
+            continue
         old_file = old_files.get(path)
         quality = f'{"markdown_sections" if path.endswith(".md") else "text_fallback"}:{CHUNKER_VERSION}'
         if (
@@ -203,12 +282,63 @@ def _sync(repo: Path, ref: str):
                 'bytes': len(data),
             }
         )
+    if structured is not None:
+        graph_facts(structured, documents)
+    if any(len(record['content'].encode('utf-8')) > 8000 for record in records):
+        raise ValueError('complete source spans must fit the embedding input bound')
     if not records or len(records) > 500:
         raise ValueError('corpus must contain between 1 and 500 chunks')
+    embedding_client = None
+    encoder = FixtureEmbeddings()
+    if config.embeddings_provider == 'openai':
+        embedding_client = OpenAI(
+            api_key=config.openai_api_key, timeout=20, max_retries=0
+        )
+        encoder = OpenAIEmbeddings(
+            embedding_client,
+            EmbeddingAccounting(
+                connect,
+                Decimal(config.reserve_cutoff_usd),
+                Decimal(config.embedding_usd_per_million),
+            ),
+        )
+    try:
+        for record in records:
+            if stop is not None and stop.is_set():
+                raise RuntimeError('sync_cancelled')
+            if config.embeddings_provider == 'openai':
+                with connect() as conn:
+                    cached = conn.execute(
+                        'SELECT embedding AS semantic_embedding FROM public_embedding_cache WHERE content_hash=%s AND provider=%s AND model=%s',
+                        (record['content_hash'], encoder.provider, encoder.model),
+                    ).fetchone()
+                record['semantic_embedding'] = (
+                    str(cached['semantic_embedding'])
+                    if cached
+                    else vector(encoder.encode(record['content'], 'index'))
+                )
+                if not cached:
+                    with connect() as conn:
+                        conn.execute(
+                            'INSERT INTO public_embedding_cache(content_hash,provider,model,embedding) VALUES (%s,%s,%s,%s::vector) ON CONFLICT DO NOTHING',
+                            (
+                                record['content_hash'],
+                                encoder.provider,
+                                encoder.model,
+                                record['semantic_embedding'],
+                            ),
+                        )
+    finally:
+        if embedding_client:
+            embedding_client.close()
     with connect() as conn:
         conn.execute(
             "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'",
             (version, commit),
+        )
+        conn.execute(
+            'UPDATE knowledge_versions SET embedding_provider=%s,embedding_model=%s WHERE id=%s',
+            (encoder.provider, encoder.model, version),
         )
         conn.execute('DELETE FROM chunks WHERE knowledge_version=%s', (version,))
         conn.execute('DELETE FROM source_files WHERE knowledge_version=%s', (version,))
@@ -226,7 +356,7 @@ def _sync(repo: Path, ref: str):
             )
         for record in records:
             conn.execute(
-                'INSERT INTO chunks(id,knowledge_version,content,title,url,source_type,path,start_line,end_line,content_hash,embedding_provider,embedding_model,embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector)',
+                'INSERT INTO chunks(id,knowledge_version,content,title,url,source_type,path,start_line,end_line,content_hash,embedding_provider,embedding_model,embedding,semantic_embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s::vector)',
                 (
                     record['id'],
                     version,
@@ -238,9 +368,10 @@ def _sync(repo: Path, ref: str):
                     record['start_line'],
                     record['end_line'],
                     record['content_hash'],
-                    'fixture',
-                    'hash64-v1',
+                    encoder.provider,
+                    encoder.model,
                     record['embedding'],
+                    record.get('semantic_embedding'),
                 ),
             )
     driver = GraphDatabase.driver(
@@ -252,8 +383,17 @@ def _sync(repo: Path, ref: str):
     )
     try:
         driver.verify_connectivity()
-        with driver.session() as session:
-            facts_count = project(session, version, records, documents)
+        with driver.session(database=config.neo4j_database) as session:
+            if structured is None:
+                facts_count = project(session, version, records, documents)
+            else:
+                facts_count = project(
+                    session,
+                    version,
+                    records,
+                    documents,
+                    explicit_facts=graph_facts(structured, documents),
+                )
     finally:
         driver.close()
     with connect() as conn:
@@ -262,6 +402,18 @@ def _sync(repo: Path, ref: str):
         ).fetchone()['n']
         if count != len(records):
             raise RuntimeError('vector projection incomplete')
+        if stop is not None and stop.is_set():
+            raise RuntimeError('sync_cancelled')
+        if watched:
+            observed = conn.execute(
+                'SELECT observed_commit FROM knowledge_watch WHERE singleton FOR UPDATE'
+            ).fetchone()
+            if not observed or observed['observed_commit'] != commit:
+                return {
+                    'knowledge_version': version,
+                    'changed': False,
+                    'superseded': True,
+                }
         conn.execute(
             "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
         )
@@ -286,7 +438,7 @@ def main():
     parser.add_argument('--repo', type=Path)
     parser.add_argument('--source', choices=['local', 'github'], default='local')
     parser.add_argument(
-        '--ref', help='Local Git ref, or develop/full commit SHA for GitHub'
+        '--ref', help='Local Git ref, or main/develop/full commit SHA for GitHub'
     )
     args = parser.parse_args()
     if args.source == 'local':
@@ -294,9 +446,9 @@ def main():
             parser.error('--repo is required for local sync')
         result = sync(args.repo, args.ref or 'HEAD')
     else:
-        ref = args.ref or 'develop'
-        if ref != 'develop' and not re.fullmatch(r'[0-9a-f]{40}', ref):
-            parser.error('GitHub ref must be develop or a full commit SHA')
+        ref = args.ref or 'main'
+        if ref not in ('main', 'develop') and not re.fullmatch(r'[0-9a-f]{40}', ref):
+            parser.error('GitHub ref must be main, develop or a full commit SHA')
         with tempfile.TemporaryDirectory(prefix='portfolio-public-sync-') as temp:
             repo = Path(temp) / 'gonzalomartinperez' / 'portfolio'
             repo.mkdir(parents=True)

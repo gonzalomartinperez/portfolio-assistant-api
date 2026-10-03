@@ -100,7 +100,11 @@ class PublicRetrieval:
         scores = {}
         for chunk in corpus.chunks:
             # Editorial/development instructions are not evidence of professional contributions.
-            if not repository_question and not chunk.path.startswith('src/content/'):
+            if (
+                not repository_question
+                and not chunk.path.startswith('src/content/')
+                and chunk.path != 'public/assistant-knowledge.json'
+            ):
                 continue
             row: EvidenceRecord = {
                 'path': chunk.path,
@@ -141,7 +145,14 @@ class PublicRetrieval:
             (key for key in eligible if scores[key] >= 3),
             key=lambda key: (-scores[key], key),
         )
-        vector = [key for key in corpus.nearest if key in eligible and scores[key] >= 3]
+        vector = [
+            key
+            for key in corpus.nearest
+            if key in eligible and (corpus.semantic or scores[key] >= 3)
+        ]
+        lexical = list(
+            dict.fromkeys(lexical + [key for key in corpus.lexical if key in eligible])
+        )
         graph = []
         if self.strategy == 'graph' or (self.strategy == 'hybrid' and relationship):
             graph = [
@@ -159,7 +170,11 @@ class PublicRetrieval:
             ranked = list(dict.fromkeys(graph + lexical + vector))
         else:
             ranks: dict[str, float] = {}
-            for weight, ids in ((3.0, lexical), (0.1, vector), (0.25, graph)):
+            for weight, ids in (
+                (1.0 if corpus.semantic else 3.0, lexical),
+                (1.0 if corpus.semantic else 0.1, vector),
+                (0.5, graph),
+            ):
                 for index, key in enumerate(ids):
                     ranks[key] = ranks.get(key, 0) + weight / (10 + index)
             ranked = sorted(ranks, key=lambda key: (-ranks[key], -scores[key], key))

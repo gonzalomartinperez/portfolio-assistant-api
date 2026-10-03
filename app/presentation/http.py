@@ -17,11 +17,14 @@ from app.presentation.models import (
     ConversationView,
     ErrorBody,
     FeedbackCreate,
+    Locale,
     MessagePage,
     Page,
     RunView,
     SendMessage,
     SessionView,
+    StarterPrompt,
+    SuggestionsView,
 )
 from app.presentation.streaming import ClosingStreamingResponse, heartbeat
 
@@ -297,7 +300,7 @@ def stream_message(
         ),
         media_type='text/event-stream',
         headers={
-            'Cache-Control': 'no-cache, no-transform',
+            'Cache-Control': 'no-store, no-transform',
             'X-Accel-Buffering': 'no',
             'X-Run-ID': str(run_id),
         },
@@ -328,3 +331,17 @@ def record_feedback(
     session=Depends(mutation_session),
 ):
     request.app.state.conversations.feedback(session, message_id, body.rating)
+
+
+@router.get(
+    '/api/v1/knowledge/suggestions',
+    response_model=SuggestionsView,
+    operation_id='getKnowledgeSuggestions',
+)
+def get_knowledge_suggestions(request: Request, locale: Locale = 'en'):
+    version, commit, prompts = request.app.state.knowledge.starter_prompts(locale)
+    return SuggestionsView(
+        corpus_version=version,
+        source_commit=commit,
+        items=[StarterPrompt(**asdict(prompt)) for prompt in prompts],
+    )

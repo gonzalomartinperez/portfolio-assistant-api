@@ -114,3 +114,23 @@ Role-fit wording no longer becomes an employer filter merely because it contains
 "for". Fixture attribution excludes visible neighboring employer records. These
 are backend behavior changes, not new request fields or SSE events. Existing
 consumers and persisted conversations need no migration or type regeneration.
+
+## Current-knowledge increment
+
+This increment retains SSE v1 event names and payloads. OpenAPI adds
+`GET /api/v1/knowledge/suggestions?locale=en|es` with corpus_version, source_commit
+and bilingual section-backed items. The web owner must import a committed snapshot,
+regenerate types and validate the catalog payload; do not read this working tree.
+The endpoint is public and does not create a session or charge model use.
+
+Handle `knowledge_updating` as a recoverable availability state and
+`provider_unavailable` as an OpenAI outage. Neither permits automatic paid generation
+retry. Existing clients still receive the v1 run.failed envelope and can use their
+safe generic unknown-code behavior until localization is added. Session/cookie/CSRF,
+run ownership, cancellation and source record shapes are retained. Cited real answers
+now attach only the supplied references actually used as [1]…[5]. Fixture behavior
+remains separately identified. Real-model citation support requires paid evaluation.
+
+The source public projection and personal facts need the portfolio-owner handoff
+in knowledge-sync.md. This repository does not implement the portfolio launcher,
+CSP, frontend preferences or production deployment.

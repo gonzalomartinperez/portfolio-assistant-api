@@ -2,14 +2,13 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
-from dataclasses import asdict
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 
-from app.application.answer import generate
+from app.application.answer import bounded_sources, generate
 from app.application.contracts import (
     Accounting,
     AnswerCommand,
@@ -23,6 +22,37 @@ from app.application.conversation_context import (
     bounded_history,
     retrieval_question,
 )
+from app.application.language import LanguageDetector, select_locale
+
+
+class EvidenceData(TypedDict):
+    id: str
+    title: str
+    url: str
+    source_type: str
+    commit_sha: str
+    path: str
+    start_line: int
+    end_line: int
+    content: str
+
+
+def evidence_data(source: Evidence) -> EvidenceData:
+    return {
+        'id': source.id,
+        'title': source.title,
+        'url': source.url,
+        'source_type': source.source_type,
+        'commit_sha': source.commit_sha,
+        'path': source.path,
+        'start_line': source.start_line,
+        'end_line': source.end_line,
+        'content': source.content,
+    }
+
+
+class RetrievalUpdate(TypedDict):
+    sources: list[EvidenceData]
 
 
 class State(TypedDict):
@@ -30,7 +60,7 @@ class State(TypedDict):
     history: tuple[Turn, ...]
     locale: str
     run_id: str
-    sources: list[dict[str, Any]]
+    sources: list[EvidenceData]
     answer: str
 
 
@@ -40,13 +70,14 @@ class LangGraphWorkflow:
         retrieval: Retrieval,
         provider: Provider,
         accounting: Accounting | None = None,
-        checkpointer: BaseCheckpointSaver[Any] | None = None,
+        checkpointer: BaseCheckpointSaver[str] | None = None,
+        detector: LanguageDetector | None = None,
     ) -> None:
-        async def retrieve(state: State) -> dict[str, Any]:
+        async def retrieve(state: State) -> RetrievalUpdate:
             sources = await retrieval.search(
                 retrieval_question(state['question'], state['history']), state['locale']
             )
-            return {'sources': [asdict(s) for s in sources[:5]]}
+            return {'sources': [evidence_data(s) for s in bounded_sources(sources)]}
 
         async def answer(state: State) -> dict[str, str]:
             writer = get_stream_writer()
@@ -70,12 +101,19 @@ class LangGraphWorkflow:
         builder.add_edge('retrieve', 'answer')
         builder.add_edge('answer', END)
         self.graph = builder.compile(checkpointer=checkpointer)
+        self.detector = detector
 
     async def stream(self, command: AnswerCommand) -> AsyncGenerator[WorkflowEvent]:
+        history = bounded_history(command.history)
+        locale = (
+            select_locale(command.question, history, command.locale, self.detector)
+            if self.detector
+            else command.locale
+        )
         state: State = {
             'question': command.question,
             'history': bounded_history(command.history),
-            'locale': command.locale,
+            'locale': locale,
             'run_id': command.run_id,
             'sources': [],
             'answer': '',

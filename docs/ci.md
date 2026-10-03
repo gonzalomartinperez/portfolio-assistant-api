@@ -37,9 +37,9 @@ then publishes the **tested image archive** without rebuilding it. The artifact
 `release-candidate-manifest` records both image digests, both commits and contract
 version, with `production_authorized: false`. Manual publishing is prepared but
 has not been executed with a frontend release image. GitHub discovers dispatchable
-workflows on the default branch, `main`. The owner has authorized promoting the
-fixture-backed candidate from `develop` after successful CI. Once merged, manual
-publishing becomes discoverable; merging alone neither publishes images nor deploys.
+workflows on the default branch, `main`. Default-branch activation requires separate owner authorization; this increment
+merges into develop only. Discovery of the publisher neither authorizes image
+publication nor production deployment.
 
 ## Deployment belongs to vps-ops
 
@@ -139,3 +139,11 @@ API failures leave a blocking hold, recoverable through explicit reevaluation.
 Current default-branch activation is pending; automation is not live merely because
 its file exists on develop. Do not add its check to branch protection before the
 trusted workflow can emit it. Production workflows remain absent/disabled.
+
+## Python 3.14 application compatibility
+
+Frozen installs select Python 3.14 from `.python-version`; the image uses a pinned
+Python 3.14 Debian slim manifest. Privileged dependency/release scripts intentionally
+remain Python 3.12-compatible because those trusted jobs use the hosted runner
+system interpreter without installing PR dependencies. Ruff per-file targets and
+a grammar test enforce this distinction. They do not fall back for application checks.

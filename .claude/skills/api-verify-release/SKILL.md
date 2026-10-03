@@ -57,3 +57,9 @@ and `uv run pytest -q tests/test_dependabot_policy.py`. Read-only audits use
 enable merging. Check actual protections and activation state, not labels/titles.
 Default-branch activation and repository-setting changes require current authority;
 this skill does not grant it or permit main promotion. Preserve manual opt-outs.
+
+The selected secret mechanism is Coolify runtime environment delivery. Do not add
+Infisical, Redis, a secret SDK or a deployment controller without a concrete new
+request. Read the updated runtime contract before changing worker/grants/migrations.
+Python 3.14 and model GPT-6 Luna with medium reasoning are validated defaults; paid
+calls and real answer-quality claims remain separate from fixture acceptance.

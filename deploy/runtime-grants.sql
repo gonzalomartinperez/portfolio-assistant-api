@@ -8,7 +8,7 @@ END $$;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public TO assistant_runtime;
 GRANT SELECT ON schema_migrations, checkpoint_migrations, knowledge_versions,
-  chunks, source_files TO assistant_runtime;
+  chunks, source_files, knowledge_watch TO assistant_runtime;
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions, conversations, messages, runs,
   feedback, spend_ledger, rate_events, checkpoint_cleanup, checkpoints,
   checkpoint_blobs, checkpoint_writes TO assistant_runtime;

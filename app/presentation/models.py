@@ -43,7 +43,7 @@ class MessageView(BaseModel):
     id: UUID
     role: Literal['user', 'assistant']
     content: str
-    citations: list['Citation'] = []
+    citations: list[Citation] = []
     created_at: datetime
 
 
@@ -82,3 +82,15 @@ class RunView(BaseModel):
 
 class FeedbackCreate(BaseModel):
     rating: Literal['up', 'down']
+
+
+class StarterPrompt(BaseModel):
+    id: str = Field(pattern=r'^[a-z0-9-]{1,80}$')
+    topic: Literal['profile', 'experience', 'projects', 'education', 'achievement']
+    question: str = Field(min_length=1, max_length=500)
+
+
+class SuggestionsView(BaseModel):
+    corpus_version: str = Field(min_length=1, max_length=100)
+    source_commit: str = Field(pattern=r'^[0-9a-f]{40}$')
+    items: list[StarterPrompt] = Field(max_length=6)

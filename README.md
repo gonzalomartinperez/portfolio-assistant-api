@@ -47,6 +47,8 @@ questions. Bounded Neo4j paths add evidence for relationships such as projects a
 roles sharing technologies. Provenance includes immutable source commits, chunks
 and public line links. The [retrieval evaluation](docs/graph-retrieval.md) compares
 vector, graph and hybrid strategies with real databases and fixture embeddings.
+An authorized OpenAI adapter now supplies semantic embeddings; live quality still
+requires evaluation. See [continuous knowledge synchronization](docs/knowledge-sync.md).
 
 ## Explore
 

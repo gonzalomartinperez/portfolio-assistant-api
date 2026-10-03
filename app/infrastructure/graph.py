@@ -5,7 +5,7 @@ import hashlib
 from app.domain.graph import facts
 
 
-def project(graph, version, records, documents):
+def project(graph, version, records, documents, *, explicit_facts=None):
     graph.run(
         'CREATE CONSTRAINT document_identity IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE'
     ).consume()
@@ -20,18 +20,21 @@ def project(graph, version, records, documents):
         tx.run(
             'MATCH (n:Entity {version:$version}) DETACH DELETE n', version=version
         ).consume()
-        for record in records:
-            tx.run(
-                'CREATE (d:Document {id:$id,version:$version,title:$title,url:$url,path:$path})',
-                id=record['id'],
-                version=version,
-                title=record['title'],
-                url=record['url'],
-                path=record['path'],
-            ).consume()
+        tx.run(
+            'UNWIND $records AS row CREATE (:Document {id:row.id,version:$version,title:row.title,url:row.url,path:row.path})',
+            version=version,
+            records=[
+                {'id': r['id'], 'title': r['title'], 'url': r['url'], 'path': r['path']}
+                for r in records
+            ],
+        ).consume()
         count = 0
         for path, content in documents.items():
-            for fact in facts(path, content):
+            for fact in (
+                facts(path, content)
+                if explicit_facts is None
+                else explicit_facts.get(path, ())
+            ):
                 supports = [
                     r
                     for r in records

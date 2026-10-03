@@ -190,6 +190,9 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
         class Responses:
             async def create(self, **kwargs):
                 assert kwargs['stream'] is True
+                assert kwargs['store'] is False
+                assert kwargs['reasoning'] == {'effort': 'medium'}
+                assert kwargs['max_output_tokens'] == 8192
                 assert kwargs['input'][0]['role'] == 'developer'
                 assert 'neutral Latin American Spanish' in kwargs['input'][0]['content']
                 assert (

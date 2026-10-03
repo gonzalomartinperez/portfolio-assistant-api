@@ -14,11 +14,11 @@ class Turn:
 
 
 def bounded_history(turns: tuple[Turn, ...]) -> tuple[Turn, ...]:
-    """Keep recent turns in chronological order, within 3,000 characters total."""
+    """Keep recent turns in chronological order, within 8,000 characters total."""
     result = []
-    remaining = 3000
-    for turn in reversed(turns[-6:]):
-        content = turn.content[: min(1000, remaining)]
+    remaining = 8000
+    for turn in reversed(turns[-12:]):
+        content = turn.content[: min(2000, remaining)]
         if not content:
             break
         result.append(Turn(turn.role, content))

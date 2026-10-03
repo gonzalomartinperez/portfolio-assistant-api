@@ -46,7 +46,7 @@ def translated(connection):
         try:
             with connection() as conn:
                 yield conn
-        except (psycopg.Error, PoolTimeout, TooManyRequests):
+        except psycopg.Error, PoolTimeout, TooManyRequests:
             raise DependencyUnavailableError('storage_unavailable') from None
 
     return operation

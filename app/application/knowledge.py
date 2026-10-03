@@ -26,6 +26,8 @@ class Corpus:
     chunks: tuple[Chunk, ...]
     paths: frozenset[str]
     nearest: tuple[str, ...]
+    lexical: tuple[str, ...] = ()
+    semantic: bool = False
 
 
 class KnowledgeIndex(Protocol):

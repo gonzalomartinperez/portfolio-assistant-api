@@ -13,3 +13,7 @@ class BudgetExhaustedError(Exception):
 
 class DependencyUnavailableError(Exception):
     """An I/O dependency failed; details must stay outside application contracts."""
+
+
+class ProviderUnavailableError(Exception):
+    """OpenAI cannot serve the request; no alternate provider may be selected."""

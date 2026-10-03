@@ -1,4 +1,22 @@
-# Implementation status · 2026-09-27
+# Implementation status · current increment 2026-10-03
+
+The sections below retain historical verification. The current increment adds
+continuous published-portfolio synchronization, semantic/lexical retrieval adapters,
+public structured facts and starter-question contracts, local language detection,
+Python 3.14, OpenAI-only GPT-6 Luna/medium configuration and migration 004/005.
+See [current acceptance checkpoint](docs/work-checklist.md),
+[knowledge synchronization](docs/knowledge-sync.md), and
+[evaluation limitations](docs/assistant-evaluation.md).
+
+No paid model calls, portfolio edits, image publication, main merge or production
+action occurred. Current verification: **182 passed in 9.87 seconds** with real isolated databases;
+Ruff, strict mypy (22 files), contract export and skill validation pass. The final
+non-root image passes SSE/SIGTERM and proxy/disconnect smoke. See
+[bounded evidence](docs/verification/grounded-current.json). Local fixture evaluation
+covered 120 questions, 40 adversarial inputs and 27 multi-turn turns with no terminal
+failures; this does not establish real model answer quality.
+
+# Historical implementation status · 2026-09-27
 
 ## Scope and reconciled history
 

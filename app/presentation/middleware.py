@@ -1,5 +1,6 @@
 """Bound request bytes before JSON parsing; public errors never echo input."""
 
+import asyncio
 import json
 import logging
 import time
@@ -9,7 +10,7 @@ from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.application.telemetry import request_id
+from app.application.request_context import request_id
 from app.domain.errors import RejectedError
 
 log = logging.getLogger('portfolio_assistant')
@@ -54,6 +55,9 @@ def install(app, origins):
                 response = await call_next(request)
             except Exception:  # noqa: BLE001 - Public HTTP fault boundary: translate unexpected failures without leaking details.
                 response = error(request, 'dependency_unavailable', 503)
+        if request.url.path.startswith('/api/'):
+            response.headers['Cache-Control'] = 'no-store, no-transform'
+            response.headers['Pragma'] = 'no-cache'
         response.headers['X-Request-ID'] = request.state.request_id
         vary = response.headers.get('Vary', '')
         if 'Origin' not in vary:
@@ -73,9 +77,10 @@ def install(app, origins):
 
 
 class BodyLimit:
-    def __init__(self, app, maximum: int = 32768):
+    def __init__(self, app, maximum: int = 32768, timeout: float = 10):
         self.app = app
         self.maximum = maximum
+        self.timeout = timeout
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http' or scope['method'] not in (
@@ -88,8 +93,24 @@ class BodyLimit:
         # Bounded buffering also covers chunked requests and lying Content-Length.
         chunks = []
         size = 0
+        deadline = asyncio.get_running_loop().time() + self.timeout
         while True:
-            message = await receive()
+            try:
+                async with asyncio.timeout_at(deadline):
+                    message = await receive()
+            except TimeoutError:
+                identifier = uuid4().hex
+                response = JSONResponse(
+                    {
+                        'code': 'request_timeout',
+                        'message': 'Request timed out',
+                        'request_id': identifier,
+                    },
+                    status_code=408,
+                    headers={'X-Request-ID': identifier, 'Cache-Control': 'no-store'},
+                )
+                await response(scope, receive, send)
+                return
             if message['type'] == 'http.disconnect':
                 return
             size += len(message.get('body', b''))

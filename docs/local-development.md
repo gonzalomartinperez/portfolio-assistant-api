@@ -1,6 +1,6 @@
 # Deterministic local demo
 
-Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv and Python 3.13
+Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv and Python 3.14
 (`uv` installs the pinned interpreter when needed). No model key is needed.
 All commands run from this repository root. The frontend is independently owned;
 these instructions do not modify its checkout or services.
@@ -61,8 +61,7 @@ containers. Fixture timing is local evidence, not a production capacity guarante
 
 ## Dependencies and maintenance
 
-`uv.lock` and image digests pin reproducible installs. The Python minor version is
-unchanged. Mypy is the only new development dependency in this migration; it checks
+`uv.lock` and image digests pin reproducible installs. Python 3.14 is checked in the frozen lockfile, tests and production image. Mypy is the only new development dependency in this migration; it checks
 inner contracts and AI orchestration strictly. No ORM/queue/new service was added.
 Run `uv run python -m app.retention` every minute to prune expired data and retry
 checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
