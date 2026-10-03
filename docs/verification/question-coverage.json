@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-03",
+  "environment": "WSL Linux x86_64; Python 3.14.4; isolated real PostgreSQL/pgvector and Neo4j; deterministic fixture generation/embeddings",
+  "baseline_api": "901983cb73a0db0fe7e016ca46443d3b451faf05",
+  "source_revision": "The commit containing this report; resolve with git log --follow.",
+  "public_portfolio": "0b363684fd1bafacafbba3924488f51cbc011a5c",
+  "regression_portfolio": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+  "bank": {
+    "questions": 1000,
+    "intent_families": 100,
+    "authored_questions": 600,
+    "request_format_variants": 400,
+    "locale_hints": {
+      "en": 500,
+      "es": 500
+    },
+    "splits": {
+      "development": 670,
+      "holdout": 330
+    },
+    "adversarial_preserved": 40,
+    "topics": {
+      "profile": 70,
+      "experience": 150,
+      "projects": 160,
+      "skills": 120,
+      "metrics": 110,
+      "education": 110,
+      "fit": 90,
+      "personal": 60,
+      "boundaries": 80,
+      "language": 50
+    },
+    "runtime_fact_source": false
+  },
+  "verification": {
+    "full_pytest": {
+      "passed": 196,
+      "seconds": 12.33,
+      "offline": 173,
+      "integration": 23
+    },
+    "fixture_bank": {
+      "executed": 1000,
+      "completed": 1000,
+      "terminal_failures": 0,
+      "runs": "Separate development (670) and holdout (330) executions after final fixture correction",
+      "corpus_version": "0b363684fd1bafacafbba3924488f51cbc011a5c-v6",
+      "median_first_delta_ms": 89.4,
+      "median_total_ms": 137.37,
+      "timing_scope": "Local fixture diagnostics; cache/order differ from baseline, no comparative speed claim",
+      "raw_local_reports": [
+        "artifacts/assistant-fixture-1000-final.json",
+        "artifacts/assistant-fixture-holdout-final.json"
+      ]
+    },
+    "spoken_language_variants": {
+      "passed": 10,
+      "both_source_supported_levels": true,
+      "correct_profile_citation": true,
+      "scope": "Development family only; fixture responses, not reviewed real-model output"
+    },
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "strict_mypy_files": 22,
+    "bank_drift": "passed",
+    "skills": "passed",
+    "workflow_validation": "passed (pinned actionlint via scripts/check_workflows.sh)",
+    "public_contract_drift": "unchanged",
+    "redacted_secret_scan": {
+      "history_blobs_scanned": 476,
+      "findings": [],
+      "scope": "Known credential patterns only; no values printed. Not proof that no secrets exist."
+    },
+    "clean_staged_snapshot": {
+      "tree": "b51cdebfb795693b82438d69aeaf91a5a1d76a64",
+      "frozen_install": "passed",
+      "bank_and_skill_validation": "passed",
+      "scope": "Application/skill sources before addition of this evidence document"
+    },
+    "local_image": {
+      "id": "sha256:b724a3c322304ee024bfd0e42a02749f6c479566d12a35a594e9b95ca59a250b",
+      "bytes": 294192419,
+      "baseline_bytes": 294192235,
+      "question_bank_in_image": false,
+      "registry_published": false
+    },
+    "container_smoke": {
+      "image": "portfolio-assistant-api:question-coverage",
+      "checks": [
+        {
+          "mode": "normal SSE",
+          "uid": "65532",
+          "events": 11,
+          "passed": true
+        },
+        {
+          "mode": "active-stream SIGTERM",
+          "uid": "65532",
+          "events": 3,
+          "passed": true
+        }
+      ]
+    },
+    "proxy_smoke": {
+      "passed": true,
+      "frontend": "routing fixture (not frontend acceptance)",
+      "paths_preserved": true,
+      "portfolio_cors": true,
+      "delta_gap_ms": 152.7,
+      "disconnect_state": "interrupted"
+    }
+  },
+  "limitations": [
+    "No paid OpenAI inference or embedding-quality evaluation.",
+    "Fixture completion is not factual accuracy, live conversational usefulness or injection-resistance evidence.",
+    "No production, Coolify or actual portfolio integration tested.",
+    "Local image ID is not a registry digest.",
+    "Personal questions do not establish unpublished age, nationality or private details."
+  ]
+}
