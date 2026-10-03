@@ -9,7 +9,7 @@ from pathlib import Path
 from threading import Event
 
 import psycopg
-from neo4j.exceptions import Neo4jError
+from neo4j.exceptions import DriverError, Neo4jError
 from openai import APIError
 
 from app.domain.errors import DependencyUnavailableError
@@ -86,6 +86,7 @@ class PublicKnowledgePublisher:
             RuntimeError,
             psycopg.Error,
             Neo4jError,
+            DriverError,
             APIError,
         ) as error:
             raise DependencyUnavailableError('candidate_failed') from error

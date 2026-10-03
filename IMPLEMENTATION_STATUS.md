@@ -9,7 +9,7 @@ See [current acceptance checkpoint](docs/work-checklist.md),
 [evaluation limitations](docs/assistant-evaluation.md).
 
 No paid model calls, portfolio edits, image publication, main merge or production
-action occurred. Current verification: **182 passed in 9.87 seconds** with real isolated databases;
+action occurred. Current verification: **183 passed in 9.93 seconds** with real isolated databases;
 Ruff, strict mypy (22 files), contract export and skill validation pass. The final
 non-root image passes SSE/SIGTERM and proxy/disconnect smoke. See
 [bounded evidence](docs/verification/grounded-current.json). Local fixture evaluation

@@ -7,8 +7,8 @@
   "source_revision": "The commit containing this report; resolve with git log --follow.",
   "verification": {
     "full_pytest": {
-      "passed": 182,
-      "seconds": 9.87,
+      "passed": 183,
+      "seconds": 9.93,
       "real_databases": true,
       "paid_provider": false
     },
@@ -21,8 +21,8 @@
     "skill_catalog": "passed",
     "contract_export": "passed",
     "local_image": {
-      "id": "sha256:0db58ea9ddb5dae760d3ece992cd54ed42a17225ae8c50d5ad2bc15dc2606887",
-      "bytes": 294192223,
+      "id": "sha256:f8f7ac5469103d54d1b59aa02698380d4e530be6088ecfb9640fa2ffe1381128",
+      "bytes": 294192235,
       "registry_published": false
     },
     "container_smoke": {
@@ -47,7 +47,7 @@
       "frontend": "routing fixture (not frontend acceptance)",
       "paths_preserved": true,
       "portfolio_cors": true,
-      "delta_gap_ms": 149.8,
+      "delta_gap_ms": 150.9,
       "disconnect_state": "interrupted"
     },
     "language": {
@@ -93,6 +93,17 @@
       "mypy": "passed",
       "skills": "passed",
       "contract_drift": "passed"
+    },
+    "actions": {
+      "run": "https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37156608025",
+      "head": "579702406cb00bd226968b7023a322f108ec2f00",
+      "conclusion": "success",
+      "job_seconds": {
+        "static": 34,
+        "integration_container": 131,
+        "checks": 4
+      },
+      "scope": "Precedes the final Neo4j driver-error regression fix; final current-head CI remains required."
     }
   },
   "limitations": [

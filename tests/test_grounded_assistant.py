@@ -406,3 +406,17 @@ def test_achievement_starter_requires_public_support_and_uses_supported_locale()
         for prompt in suggestions(paths, 'en', achievements=True)
     )
     assert suggestions(frozenset(), 'es', achievements=True) == ()
+
+
+def test_graph_driver_outage_is_recoverable_for_knowledge_worker(monkeypatch, tmp_path):
+    from neo4j.exceptions import ServiceUnavailable
+
+    from app.infrastructure import knowledge_watch
+
+    def unavailable(*args, **kwargs):
+        raise ServiceUnavailable('synthetic unavailable graph')
+
+    monkeypatch.setattr(knowledge_watch, 'sync', unavailable)
+    publisher = knowledge_watch.PublicKnowledgePublisher(tmp_path)
+    with pytest.raises(DependencyUnavailableError, match='candidate_failed'):
+        asyncio.run(publisher.publish('a' * 40))
