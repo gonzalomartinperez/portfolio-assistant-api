@@ -5,6 +5,15 @@ work, six-layer boundaries and v1 consumers. Use checked PRs into **develop only
 no main promotion, paid calls, artifact publication or production execution is
 authorized. Critical security issues interrupt the sequence below.
 
+Current audited implementation: `15b6943` (PR #34), 196 tests passed on
+2026-10-04. Earlier tables retain dated increment evidence. The detailed open
+findings, owners and closure criteria are maintained once in
+[live-evaluation readiness](live-evaluation-readiness.md): A1 harness isolation;
+A2 live quality; A3 frontend adoption; A4 promotion controls; A5 dependency
+activation; A6 corpus retention; A7 public projection; A8 operations. A9 closes
+documentation drift only. None of these pending runtime/external gates is complete
+merely because its handoff is documented.
+
 | Priority / deliverable | Acceptance criterion | Status and evidence |
 | --- | --- | --- |
 | 1 Conversations | Direct public evidence, bounded bilingual context, safe topic changes and role-fit retrieval | Implemented history/evidence separation and answer-first provider contract in #19; source 5742961 fixes named-example topic changes, reference refinements and target-role parsing. Actual fixture comparisons in the evaluation guide; live reasoning/tone unverified. |
@@ -55,8 +64,11 @@ them, not additional projects. Historical main promotion does not authorize anot
 
 Conservative Dependabot policy is implemented and locally tested (52 policy cases).
 Repository native auto-merge capability is enabled; unattended automation remains
-**inactive** until a separately authorized default-branch activation and required
-policy check are installed. Existing strict protections/reviews are preserved. Read-only CI token protection-query access is blocked; the privileged controller must establish access before activation.
+**inactive** until separately authorized required-check/variable activation and
+privileged-token verification. Policy files are already on the default branch;
+their presence alone does not enable merging. Existing strict protections/reviews
+are preserved. Read-only CI token protection-query access is blocked; the
+privileged controller must establish access before activation.
 See [scope, tests and activation handoff](dependency-updates.md). This is part of
 repository quality; it adds no deployment controller or main promotion authority.
 

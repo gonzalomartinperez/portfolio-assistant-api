@@ -44,6 +44,11 @@ Report findings with file locations, commands actually run and results, fixture 
 live evidence, compatible revisions and unresolved gates. Stop when the scoped
 acceptance criteria are met; do not extend verification into cosmetic refactoring.
 
+For real-provider preparation, load the [dated audit and closure criteria](../../../docs/live-evaluation-readiness.md).
+Recheck open findings against the requested revision; especially do not treat the
+evaluation harness's PostgreSQL loopback check as validation of Neo4j isolation.
+Keep documented follow-up work distinct from implemented and tested fixes.
+
 Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.
 
 The frontend's primary `/embed` and demo `/` call same-origin `/api`. Actual

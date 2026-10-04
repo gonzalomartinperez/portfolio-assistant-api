@@ -1,4 +1,20 @@
-# Implementation status · current increment 2026-10-03
+# Implementation status · current checkpoint 2026-10-04
+
+Current implementation: PR #34 merged into develop at
+`15b6943f741ac80498a5fee611aa74d24250eb6b`. The fresh audit passed **196 tests in
+11.10 seconds** with isolated real databases; hybrid retrieval passed nine cases
+and the existing non-root image passed SSE/SIGTERM smoke. The 1000-question bank
+is implemented and fixture-executed, not reviewed live-model answer quality.
+Current-head implementation CI passed
+[Quality 37160535949](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37160535949).
+
+Read [the dated audit and closure criteria](docs/live-evaluation-readiness.md)
+before paid evaluation or future release work. Harness isolation, paired frontend
+adoption, workflow enforcement/activation, corpus retention and operational
+verification remain explicit gates. This checkpoint documents them; it does not
+implement fixes or authorize paid calls, publication, main promotion or deployment.
+
+## Historical public-knowledge increment · 2026-10-03
 
 The sections below retain historical verification. The current increment adds
 continuous published-portfolio synchronization, semantic/lexical retrieval adapters,
@@ -13,7 +29,7 @@ merged at `3f57202cb80392a60e311ec10a95d2363656f83a` after final-head
 [Actions 37156892280](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37156892280)
 passed; static 34s, integration/image 112s, aggregate 2s. Diagnostic artifacts exist.
 No paid model calls, portfolio edits, image publication, main merge or production
-action occurred. Current verification: **183 passed in 9.93 seconds** with real isolated databases;
+action occurred. Verification at that increment: **183 passed in 9.93 seconds** with real isolated databases;
 Ruff, strict mypy (22 files), contract export and skill validation pass. The final
 non-root image passes SSE/SIGTERM and proxy/disconnect smoke. See
 [bounded evidence](docs/verification/grounded-current.json). Local fixture evaluation

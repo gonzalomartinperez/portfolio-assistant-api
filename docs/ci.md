@@ -142,9 +142,11 @@ can omit the policy on an ordinary PR after activation. Manual/unverifiable upda
 receive an explicit action-required result, not a permanently pending hidden job.
 API failures leave a blocking hold, recoverable through explicit reevaluation.
 
-Current default-branch activation is pending; automation is not live merely because
-its file exists on develop. Do not add its check to branch protection before the
-trusted workflow can emit it. Production workflows remain absent/disabled.
+As of the 2026-10-04 audit, trusted policy files already exist on main. Required
+policy-check configuration, privileged-token verification and authorized variable
+enablement remain pending; file presence alone does not activate automation.
+Confirm ordinary-PR check emission before making it required. See the dated state
+in dependency-updates.md. Production workflows remain absent/disabled.
 
 ## Python 3.14 application compatibility
 
