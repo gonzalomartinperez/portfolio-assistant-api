@@ -53,7 +53,9 @@ uv run python -m scripts.evaluate_conversations --suite core --output artifacts/
 uv run python -m scripts.evaluate_conversations --suite continuity --output artifacts/continuity.json
 ```
 
-The harness owns a loopback server and rejects nonlocal/production databases.
+The harness owns a loopback server and rejects production mode and nonloopback
+PostgreSQL hosts. It currently does not validate the Neo4j destination; both service
+targets must be explicitly isolated (see A1 in the readiness audit).
 Synthetic loopback-proxy visitor addresses allow representative users through the
 unchanged per-subject limits; this is a test-only configuration, not a production
 rate exception. It deletes its own sessions and leaves usage reservations intact.
@@ -71,6 +73,11 @@ published proficiency levels, including in concise answers. Real-model answer
 quality still needs separately authorized review.
 
 ## Authorized OpenAI execution
+
+First review [live-evaluation readiness](live-evaluation-readiness.md), including
+the unresolved harness destination guard (A1). Its current loopback PostgreSQL
+check does not validate Neo4j isolation. Do not start paid evaluation until that
+guard is fixed/tested and both service targets are explicitly isolated.
 
 Only after owner approval: configure the isolated database and environment with
 AI_PROVIDER=openai, EMBEDDINGS_PROVIDER=openai, ALLOW_PAID_AI=true and a private

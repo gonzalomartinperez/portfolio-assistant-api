@@ -1,12 +1,18 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`57429618cf487b78842dd460411a72da45728ba0`**.
+Current immutable API snapshot: **`15b6943f741ac80498a5fee611aa74d24250eb6b`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
-- `contracts/openapi.json` — unchanged public HTTP surface.
+- `contracts/openapi.json` — compatible v1 HTTP surface plus the public starter catalog.
 - `contracts/sse.schema.json` — discriminated event payloads for the existing seven events.
 - `contracts/sse.examples.json` — success/abstention, failure and cancellation.
 - `contracts/manifest.json` — deterministic artifact hashes.
+
+Earlier snapshot `5742961` remains historical compatibility evidence, not the
+snapshot for importing the new catalog. The 2026-10-04 audit observed frontend
+develop `aed8ea710c8b847ddc9066aaef5ce48d3793b494` still pinned to API `6b1e65f`;
+new catalog/error-state adoption and paired browser verification remain pending.
+See [A3 closure criteria](live-evaluation-readiness.md#findings-and-closure-criteria).
 
 The frontend owner imports this snapshot and regenerates types in its own PR.
 No frontend working-tree files are dependencies of this handoff. Requests/events,
