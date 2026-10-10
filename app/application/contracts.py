@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from app.application.conversation_context import Turn
+from app.application.presentation_context import PresentationContext
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,7 @@ class AnswerCommand:
     question: str
     locale: str
     history: tuple[Turn, ...] = ()
+    context: PresentationContext | None = None
 
 
 @dataclass(frozen=True)
@@ -61,7 +63,12 @@ class Provider(Protocol):
     """Incremental answer generation without assistant tools or authorization decisions."""
 
     def stream(
-        self, question: str, evidence: str, locale: str, history: tuple[Turn, ...] = ()
+        self,
+        question: str,
+        evidence: str,
+        locale: str,
+        history: tuple[Turn, ...] = (),
+        context: PresentationContext | None = None,
     ) -> AsyncGenerator[str | Usage]:
         """Yield incremental text and final usage; closing cancels upstream work."""
         ...

@@ -175,6 +175,84 @@
         "title": "FeedbackCreate",
         "type": "object"
       },
+      "MessageContext": {
+        "additionalProperties": false,
+        "properties": {
+          "current_path": {
+            "enum": [
+              "/",
+              "/about",
+              "/work",
+              "/work/filomena",
+              "/education",
+              "/cv",
+              "/contact",
+              "/stack",
+              "/assistant",
+              "/es",
+              "/es/about",
+              "/es/work",
+              "/es/work/filomena",
+              "/es/education",
+              "/es/cv",
+              "/es/contact",
+              "/es/stack",
+              "/es/assistant"
+            ],
+            "title": "Current Path",
+            "type": "string"
+          },
+          "opened_path": {
+            "enum": [
+              "/",
+              "/about",
+              "/work",
+              "/work/filomena",
+              "/education",
+              "/cv",
+              "/contact",
+              "/stack",
+              "/assistant",
+              "/es",
+              "/es/about",
+              "/es/work",
+              "/es/work/filomena",
+              "/es/education",
+              "/es/cv",
+              "/es/contact",
+              "/es/stack",
+              "/es/assistant"
+            ],
+            "title": "Opened Path",
+            "type": "string"
+          },
+          "presentation": {
+            "enum": [
+              "compact",
+              "expanded",
+              "page"
+            ],
+            "title": "Presentation",
+            "type": "string"
+          },
+          "theme": {
+            "enum": [
+              "dark",
+              "light"
+            ],
+            "title": "Theme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "theme",
+          "opened_path",
+          "current_path",
+          "presentation"
+        ],
+        "title": "MessageContext",
+        "type": "object"
+      },
       "MessagePage": {
         "properties": {
           "items": {
@@ -346,6 +424,16 @@
             "minLength": 1,
             "title": "Content",
             "type": "string"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "locale": {
             "default": "en",

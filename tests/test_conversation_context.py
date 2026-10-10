@@ -59,7 +59,7 @@ def test_workflow_resolves_retrieval_but_preserves_current_question_and_untruste
             return (SOURCE,)
 
     class Provider:
-        async def stream(self, question, evidence, locale, history=()):
+        async def stream(self, question, evidence, locale, history=(), context=None):
             assert question == 'Give me an example'
             assert history[0].role == 'user'
             assert 'ExampleCompany' not in evidence
