@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -23,7 +24,14 @@ def main():
         assert service['logging']['options']['max-file'] == '3'
         assert 'no-new-privileges:true' in service['security_opt']
         assert all(port['host_ip'] == '127.0.0.1' for port in service['ports'])
-        assert '@sha256:' in service['image']
+        if service['image'] == 'portfolio-assistant-postgres:local':
+            assert service['build']['dockerfile'] == 'Dockerfile.postgres'
+            base = Path('Dockerfile.postgres').read_text().splitlines()[0]
+            assert re.fullmatch(
+                r'FROM pgvector/pgvector:0\.8\.7-pg17@sha256:[a-f0-9]{64}', base
+            )
+        else:
+            assert '@sha256:' in service['image']
     assert 'shared_buffers=128MB' in local['services']['postgres']['command']
     assert 'max_connections=50' in local['services']['postgres']['command']
     with tempfile.TemporaryDirectory() as directory:

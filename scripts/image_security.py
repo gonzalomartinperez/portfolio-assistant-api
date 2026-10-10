@@ -43,6 +43,10 @@ def evaluate(raw: str, image_id: str) -> dict[str, int]:
     findings = [item for result in report.results for item in result.vulnerabilities]
     return {
         'critical': sum(item.severity == 'CRITICAL' for item in findings),
+        'fixable_critical': sum(
+            item.severity == 'CRITICAL' and bool(item.fixed_version.strip())
+            for item in findings
+        ),
         'fixable_high': sum(
             item.severity == 'HIGH' and bool(item.fixed_version.strip())
             for item in findings

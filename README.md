@@ -24,7 +24,7 @@ Use Linux/WSL, Docker Compose and uv from this repository root:
 ```sh
 uv sync --frozen
 source scripts/fixture-env.sh
-docker compose up -d --wait
+docker compose up --build -d --wait
 uv run python -m app.migrate
 uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log

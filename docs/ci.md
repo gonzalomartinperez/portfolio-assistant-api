@@ -185,3 +185,15 @@ Local policy tests: `uv run pytest -q tests/test_image_security.py`. Full report
 and summary are retained with integration diagnostics even on failure. Scan the
 release digest again at release selection: the vulnerability database changes
 independently of source/image revisions.
+
+
+The integration job now builds Dockerfile.postgres once and uses the tested
+non-root image for its owned Compose fixture. It supplies that exact container ID
+to the existing two-service evaluation guard and stops only its fixture even on
+failure. PostgreSQL logs are captured before artifact upload. The complete database
+scan and matching-image summary are retained; fixable CRITICAL/HIGH findings fail
+the job. Unfixed database CRITICAL/HIGH findings still require explicit production
+assessment. The API's all-CRITICAL gate is unchanged. Full Neo4j Java scanning is
+recorded separately for release assessment because its advisory database is ~936 MiB;
+it is not represented as a green per-PR security gate. No extra API build or paid
+provider call was added. Actual current-head Actions remains the merge gate.

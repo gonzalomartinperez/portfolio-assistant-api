@@ -84,10 +84,18 @@ def validate_targets(
         containers,
         ('postgres', 'neo4j'),
         (5432, 7687),
-        (('postgres:', 'pgvector/pgvector:'), ('neo4j:',)),
+        (
+            ('postgres:', 'pgvector/pgvector:', 'portfolio-assistant-postgres:'),
+            ('neo4j:',),
+        ),
         strict=True,
     ):
         labels = container.config.labels or {}
+        if container.config.image.startswith('portfolio-assistant-postgres:') and (
+            labels.get('org.opencontainers.image.source')
+            != 'https://github.com/gonzalomartinperez/portfolio-assistant-api'
+        ):
+            raise ValueError('evaluation database image provenance is missing')
         if re.fullmatch(r'[a-f0-9]{64}', name) and name != container.identity:
             raise ValueError('evaluation container does not match the declared ID')
         if not container.state.running or not container.config.image.startswith(images):
