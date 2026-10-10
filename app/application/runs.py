@@ -110,6 +110,21 @@ class RunService:
         self.workflow = workflow
         self.fixture = fixture
         self.timeout_seconds = timeout_seconds
+        self._cleanup_tasks: set[asyncio.Task[None]] = set()
+
+    async def drain_cleanup(self) -> None:
+        """Keep storage open for interruption writes after ASGI cancellation."""
+        if self._cleanup_tasks:
+            _, pending = await asyncio.wait(tuple(self._cleanup_tasks), timeout=5)
+            if pending:
+                logging.getLogger('portfolio_assistant').warning(
+                    '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
+                )
+
+    def _cleanup_finished(self, task: asyncio.Task[None]) -> None:
+        self._cleanup_tasks.discard(task)
+        if not task.cancelled():
+            task.exception()
 
     async def execute(
         self,
@@ -206,10 +221,6 @@ class RunService:
                 else RunEvent('run.cancelled', {})
             )
         finally:
-            if pending and not pending.done():
-                pending.cancel()
-                await asyncio.gather(pending, return_exceptions=True)
-
             # The cleanup task survives cancellation from an ASGI task-group scope.
             async def interrupt() -> None:
                 try:
@@ -220,11 +231,9 @@ class RunService:
                     )
 
             cleanup = asyncio.create_task(interrupt())
-            try:
-                await asyncio.shield(cleanup)
-            except asyncio.CancelledError:
-                # Keep a strong reference until completion; SQL has its own timeout.
-                cleanup.add_done_callback(
-                    lambda task: task.exception() if not task.cancelled() else None
-                )
-                raise
+            self._cleanup_tasks.add(cleanup)
+            cleanup.add_done_callback(self._cleanup_finished)
+            if pending and not pending.done():
+                pending.cancel()
+                await asyncio.gather(pending, return_exceptions=True)
+            await asyncio.shield(cleanup)

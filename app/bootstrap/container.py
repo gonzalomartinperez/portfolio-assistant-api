@@ -73,6 +73,7 @@ def create_app(
         )
         client = None
         embedding_client = None
+        runs = None
         try:
             await asyncio.to_thread(database.open, wait=True, timeout=10)
             await checkpoints.open(wait=True, timeout=10)
@@ -137,12 +138,13 @@ def create_app(
                 config.retention_days,
                 config.rate_hash_key,
             )
-            app.state.runs = RunService(
+            runs = RunService(
                 PostgresRuns(connection),
                 workflow,
                 fixture=config.ai_provider == 'fixture',
                 timeout_seconds=config.run_timeout_seconds,
             )
+            app.state.runs = runs
 
             def ready():
                 check_schema(connection)
@@ -170,6 +172,8 @@ def create_app(
             app.state.cleanup = cleanup
             yield
         finally:
+            if runs:
+                await runs.drain_cleanup()
             if client:
                 await client.close()
             if embedding_client:

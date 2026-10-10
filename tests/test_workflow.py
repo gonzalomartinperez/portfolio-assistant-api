@@ -131,6 +131,40 @@ def test_interrupted_stream_cancels_silent_provider_without_saving_partial_answe
     asyncio.run(run())
 
 
+def test_shutdown_drains_interruption_write_after_request_task_is_cancelled():
+    from uuid import uuid4
+
+    async def run():
+        started, release = asyncio.Event(), asyncio.Event()
+
+        class SlowStore(Store):
+            async def interrupt(self, run_id):
+                started.set()
+                await release.wait()
+                self.interrupted = True
+
+        store = SlowStore()
+        service = RunService(
+            store, LangGraphWorkflow(Retrieval(), GatedProvider()), fixture=False
+        )
+        stream = service.execute(uuid4(), uuid4(), 'question', 'en')
+        assert (await anext(stream)).name == 'run.started'
+        close = asyncio.create_task(stream.aclose())
+        await asyncio.wait_for(started.wait(), 1)
+        close.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await close
+        drain = asyncio.create_task(service.drain_cleanup())
+        await asyncio.sleep(0)
+        assert not drain.done() and not store.interrupted
+        release.set()
+        await asyncio.wait_for(drain, 1)
+        assert store.interrupted and store.answer is None
+        await service.drain_cleanup()
+
+    asyncio.run(run())
+
+
 def test_output_limit_closes_provider_and_unknown_usage_is_not_refunded():
     async def run():
         class Provider:

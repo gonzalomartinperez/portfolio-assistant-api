@@ -126,6 +126,14 @@ def main():
                     assert client.get('/health/live').status_code == 200
                     uid = docker('exec', name, 'id', '-u')
                     assert uid == '65532'
+                    docker(
+                        'exec',
+                        name,
+                        'python',
+                        '-c',
+                        'import shutil; assert shutil.which("git"); '
+                        'assert not shutil.which("uv"); assert not shutil.which("uvx")',
+                    )
                     response = client.post(
                         '/api/v1/session',
                         headers={

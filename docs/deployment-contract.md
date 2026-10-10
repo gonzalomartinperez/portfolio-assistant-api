@@ -33,6 +33,14 @@ Use a read-only root filesystem, writable `/tmp`, dropped capabilities and
 no-new-privileges where supported. The API needs no persistent container volume.
 PostgreSQL and Neo4j data durability is owned by vps-ops.
 
+The image uses separate dependency and runtime stages with the frozen production
+lock. `uv`/`uvx` and development dependencies are absent from runtime. Git remains
+necessary for the approved public-corpus CLI/worker. SIGTERM is explicit; before
+closing storage, lifespan drains tracked interruption writes for up to five
+seconds. A failed/timed-out cleanup relies on the existing persisted lease and
+retention reconciliation, not a successful-answer claim.
+
+
 ## Configuration and secrets
 
 All API configuration is runtime configuration; no build-time secrets or public
@@ -94,7 +102,9 @@ a separately tested recovery procedure.
   Initial settings: interval 20s, timeout 8s, retries 3, start period 30s; verify on VPS.
 
 Preserve `/api/v1/...` verbatim. FastAPI `root_path` is empty: never strip/add `/api`.
-Route `/` and `/embed` to frontend; docs `/docs`, `/redoc`, `/openapi.json` and `/health/*` require
+Route `/` to the authenticated backoffice; the native chat belongs to the separate
+portfolio origin. The backoffice does not serve `/embed`. Docs `/docs`, `/redoc`,
+`/openapi.json` and `/health/*` require
 explicit API routing or restricted administrative access. The API contract artifacts
 remain authoritative. vps-ops must verify the exact Coolify routing configuration.
 
@@ -106,14 +116,17 @@ forwarding headers and configure exact trusted peers. TLS/security headers and a
 Cloudflare layer require separate end-to-end verification.
 
 Host-only Secure HttpOnly SameSite=Lax `__Host-assistant_session` has no Domain
-attribute. Mutations still require allowed Origin and CSRF token. The current target
-needs only `ALLOWED_ORIGINS=https://assistant.gonzalomartinperez.com`: both `/embed`
-(primary UI) and `/` (demo) call relative `/api` from that origin. The future parent
-portfolio embeds the frontend; it does not need permission to call the API. Actual
-portfolio integration is deferred. Existing deployments can retain explicitly
-configured legacy origins; this is a target configuration, not a wire removal.
+attribute. Mutations still require allowed Origin and CSRF token. The current native portfolio target requires the explicitly approved origin
+`https://gonzalomartinperez.com` in `ALLOWED_ORIGINS`, with credentialed CORS and
+unchanged CSRF enforcement. The portfolio's committed client constructs paths
+under the separately configured assistant API origin. Add other origins only after
+review; a shared parent domain does not remove cross-origin requirements. The
+assistant remains disabled in the portfolio and production integration is untested.
+The former `/embed` plan below is historical, superseded by the native UI and
+authenticated backoffice decision; it must not drive current proxy/framing setup.
 
-Frontend/vps-ops own the `/embed` framing policy and exact parent allowlist. Do not
+Historical iframe guidance (not the current native integration):
+frontend/vps-ops own the `/embed` framing policy and exact parent allowlist. Do not
 copy the frozen Nginx template's global `frame-ancestors 'none'` onto that frontend
 route. API routes can retain anti-framing headers. Do not broaden CORS, cookie Domain
 or SameSite merely to support an iframe. The proposed HTTPS parent and assistant
@@ -198,3 +211,31 @@ claiming paired-contract release readiness. New safe failure codes are
 provider_unavailable and knowledge_updating. Header behavior is no-store for private
 API responses and no-store,no-transform for streams. Catalog absence/freshness failure
 must not start a generation retry loop.
+
+
+## Application-owned database tuning
+
+Root `compose.yaml` is an isolated local/test specification, not the shared
+production stack. It pins service images, binds development ports to loopback,
+retains project-scoped volumes, prevents privilege escalation and rotates local
+logs at 10 MiB × 3 per service. No fixed container names or production secrets.
+
+| Service | Local ceiling | Application-specific settings |
+| --- | --- | --- |
+| PostgreSQL/pgvector | 512 MiB, 0.75 CPU, 128 PIDs, no extra swap | shared_buffers 128 MiB; work_mem 4 MiB; max_connections 50; shutdown grace 30 s |
+| Neo4j Community | 1536 MiB, 1 CPU, 192 PIDs, no extra swap | initial/max heap 256 MiB; page cache 256 MiB; shutdown grace 60 s |
+
+These are tested fixture ceilings, not reservations or a VPS capacity guarantee.
+`work_mem` applies per operation; 50 connections is a bound, not a throughput
+target. API pools are bounded at 8 application + 4 checkpoint connections per
+process; workers, migrations and backoffice need separate capacity. Neo4j also
+needs native/JVM memory beyond configured heap/cache. Let vps-ops measure the
+combined workload and preserve OS, backup, proxy and other-project headroom.
+Do not blindly impose read-only roots, arbitrary users or dropped database
+capabilities: official image initialization and durable data permissions must work.
+
+Validation: `uv run python -m scripts.validate_compose` checks the local resource,
+log and loopback invariants and the retained production transfer reference. It
+does not validate the actual Coolify server. See [dated local evidence and release
+blockers](verification/runtime-2026-10-10.md). Production databases have private
+networks and no public host ports; their canonical composition belongs to vps-ops.

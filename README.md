@@ -5,9 +5,9 @@ portfolio. It retrieves cited public evidence about projects, roles, technologie
 and education, then streams an answer while keeping anonymous conversations
 isolated. The [portfolio](https://github.com/gonzalomartinperez/portfolio) supplies
 approved public content; the independently owned
-[web client](https://github.com/gonzalomartinperez/portfolio-assistant-web) consumes
-this API's committed contract. Its primary `/embed` UI and secondary `/` demo use
-same-origin `/api`; actual portfolio integration is deferred. See the
+native portfolio client consumes this API's committed contract; its rollout remains
+disabled. The [backoffice](https://github.com/gonzalomartinperez/portfolio-assistant-backoffice)
+is the independently owned authenticated administration surface. See the
 [committed frontend handoff](docs/frontend-handoff.md).
 
 **Current status:** working fixture-backed engineering release candidate on

@@ -1,4 +1,4 @@
-"""Render the shared stack with disposable placeholders and verify its exposure."""
+"""Verify local resource limits and the frozen shared-stack transfer reference."""
 
 import json
 import os
@@ -8,6 +8,24 @@ from pathlib import Path
 
 
 def main():
+    local = json.loads(
+        subprocess.check_output(
+            ['docker', 'compose', 'config', '--format', 'json'], text=True
+        )
+    )
+    for service in local['services'].values():
+        assert 'container_name' not in service
+        assert service['mem_limit'] == service['memswap_limit']
+        assert int(service['mem_limit']) > 0
+        assert float(service['cpus']) > 0
+        assert int(service['pids_limit']) > 0
+        assert service['logging']['driver'] == 'local'
+        assert service['logging']['options']['max-file'] == '3'
+        assert 'no-new-privileges:true' in service['security_opt']
+        assert all(port['host_ip'] == '127.0.0.1' for port in service['ports'])
+        assert '@sha256:' in service['image']
+    assert 'shared_buffers=128MB' in local['services']['postgres']['command']
+    assert 'max_connections=50' in local['services']['postgres']['command']
     with tempfile.TemporaryDirectory() as directory:
         private = Path(directory, 'fixture.env')
         private.write_text('POSTGRES_USER=fixture\nPOSTGRES_DB=fixture\n')
@@ -62,7 +80,8 @@ def main():
         assert services['migrate']['profiles'] == ['maintenance']
         assert '--no-proxy-headers' in services['api']['command']
     print(
-        'Shared Compose: private data services, bounded resources, hardened app containers.'
+        'Local Compose: loopback-only, bounded resources/logs. '
+        'Frozen transfer reference: private data services and hardened containers.'
     )
 
 
