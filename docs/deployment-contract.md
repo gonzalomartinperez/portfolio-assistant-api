@@ -34,10 +34,10 @@ no-new-privileges where supported. The API needs no persistent container volume.
 PostgreSQL and Neo4j data durability is owned by vps-ops.
 
 The image uses separate dependency and runtime stages with the frozen production
-lock. `uv`/`uvx` and development dependencies are absent from runtime. Git remains
+lock. `uv`/`uvx`, pip, ensurepip and development dependencies are absent from runtime. Git remains
 necessary for the approved public-corpus CLI/worker. SIGTERM is explicit; before
-closing storage, lifespan drains tracked interruption writes for up to five
-seconds. A failed/timed-out cleanup relies on the existing persisted lease and
+closing storage, lifespan interrupts remaining active run IDs and drains tracked interruption
+writes for up to five seconds. A failed/timed-out cleanup relies on the existing persisted lease and
 retention reconciliation, not a successful-answer claim.
 
 
@@ -61,7 +61,13 @@ configuration objects or structured validation details into logs or CI artifacts
 
 ## Services and migrations
 
-Tested services: PostgreSQL 17 with pgvector 0.8.1; Neo4j 5.26.17 Community.
+Tested services: PostgreSQL 17 with pgvector 0.8.1; Neo4j 5.26.31 Community.
+The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
+immutable upstream image digest. These are same-line patch updates; they are not
+authorization to upgrade production stores. vps-ops must back up and rehearse
+restoration before replacing a Neo4j image; no zero-downtime or reverse store
+compatibility is claimed. The retained deploy/ transfer reference is not the
+canonical production stack and has not been silently rewritten.
 See locked Python dependencies and pinned local Compose images for exact versions.
 Private TCP access to PostgreSQL 5432 and Neo4j Bolt 7687 is required. Fixture
 chat requires no external model network; approved indexing uses GitHub HTTPS,
@@ -239,3 +245,5 @@ log and loopback invariants and the retained production transfer reference. It
 does not validate the actual Coolify server. See [dated local evidence and release
 blockers](verification/runtime-2026-10-10.md). Production databases have private
 networks and no public host ports; their canonical composition belongs to vps-ops.
+
+Current patch and vulnerability evidence: [runtime security verification](verification/runtime-security-2026-10-10.md).

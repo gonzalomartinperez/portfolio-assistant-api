@@ -129,9 +129,13 @@ class RunService:
         self.fixture = fixture
         self.timeout_seconds = timeout_seconds
         self._cleanup_tasks: set[asyncio.Task[None]] = set()
+        self._active_runs: set[UUID] = set()
 
     async def drain_cleanup(self) -> None:
         """Keep storage open for interruption writes after ASGI cancellation."""
+        # Lifespan can resume before nested stream generators reach their finally.
+        for run_id in tuple(self._active_runs):
+            self._schedule_interrupt(run_id)
         if self._cleanup_tasks:
             _, pending = await asyncio.wait(tuple(self._cleanup_tasks), timeout=5)
             if pending:
@@ -143,6 +147,20 @@ class RunService:
         self._cleanup_tasks.discard(task)
         if not task.cancelled():
             task.exception()
+
+    def _schedule_interrupt(self, run_id: UUID) -> asyncio.Task[None]:
+        async def interrupt() -> None:
+            try:
+                await self.store.interrupt(run_id)
+            except DependencyUnavailableError:
+                logging.getLogger('portfolio_assistant').warning(
+                    '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
+                )
+
+        cleanup = asyncio.create_task(interrupt())
+        self._cleanup_tasks.add(cleanup)
+        cleanup.add_done_callback(self._cleanup_finished)
+        return cleanup
 
     async def execute(
         self,
@@ -156,6 +174,7 @@ class RunService:
         answer = ''
         sources: tuple[Evidence, ...] = ()
         pending: asyncio.Task[WorkflowEvent] | None = None
+        self._active_runs.add(run_id)
         try:
             if not await self.store.start(run_id):
                 yield RunEvent('run.cancelled', {})
@@ -242,17 +261,8 @@ class RunService:
             )
         finally:
             # The cleanup task survives cancellation from an ASGI task-group scope.
-            async def interrupt() -> None:
-                try:
-                    await self.store.interrupt(run_id)
-                except DependencyUnavailableError:
-                    logging.getLogger('portfolio_assistant').warning(
-                        '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
-                    )
-
-            cleanup = asyncio.create_task(interrupt())
-            self._cleanup_tasks.add(cleanup)
-            cleanup.add_done_callback(self._cleanup_finished)
+            cleanup = self._schedule_interrupt(run_id)
+            self._active_runs.discard(run_id)
             if pending and not pending.done():
                 pending.cancel()
                 await asyncio.gather(pending, return_exceptions=True)

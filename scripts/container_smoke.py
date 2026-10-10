@@ -214,6 +214,15 @@ def main():
                         }
                     )
             finally:
+                log = subprocess.run(
+                    ['docker', 'logs', '--tail', '80', name],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=10,
+                )
+                Path('artifacts').mkdir(exist_ok=True)
+                Path('artifacts', f'{name}.log').write_text(log.stdout + log.stderr)
                 docker('rm', '-f', name)
     print(json.dumps({'image': args.image, 'checks': reports}, indent=2))
 

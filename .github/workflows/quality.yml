@@ -162,6 +162,22 @@ jobs:
           tags: portfolio-assistant-api:ci
           cache-from: type=gha,scope=api-linux-amd64
           cache-to: type=gha,mode=max,scope=api-linux-amd64
+      - name: Verify pinned image scanner
+        run: |
+          mkdir -p /tmp/image-scanner artifacts
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+            https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz \
+            --output /tmp/image-scanner/trivy.tar.gz
+          echo 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f  /tmp/image-scanner/trivy.tar.gz' | sha256sum --check
+          tar -xzf /tmp/image-scanner/trivy.tar.gz -C /tmp/image-scanner trivy
+      - name: Inventory the tested image and reject critical or fixable high findings
+        run: |
+          /tmp/image-scanner/trivy --config '' image --image-src docker \
+            --ignorefile '' --scanners vuln --format json \
+            --output artifacts/image-vulnerabilities.json portfolio-assistant-api:ci
+          image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
+          uv run python -m scripts.image_security \
+            --report artifacts/image-vulnerabilities.json --image-id "$image_id" > artifacts/image-security-summary.json
       - name: Verify image streaming and graceful shutdown
         run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
       - name: Verify proxy routing and stream cancellation
@@ -184,6 +200,7 @@ jobs:
           path: |
             artifacts/*.xml
             artifacts/*.json
+            artifacts/assistant-smoke-*.log
           retention-days: 7
   checks:
     permissions: {}

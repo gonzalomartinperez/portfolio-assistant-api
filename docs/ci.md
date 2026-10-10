@@ -150,8 +150,8 @@ in dependency-updates.md. Production workflows remain absent/disabled.
 
 ## Python 3.14 application compatibility
 
-Frozen installs select Python 3.14 from `.python-version`; the image uses a pinned
-Python 3.14 Debian slim manifest. Privileged dependency/release scripts intentionally
+Frozen installs select Python 3.14.8 from `.python-version` with uv 0.13.0; the
+image uses the same pinned Python patch on Debian slim. Privileged dependency/release scripts intentionally
 remain Python 3.12-compatible because those trusted jobs use the hosted runner
 system interpreter without installing PR dependencies. Ruff per-file targets and
 a grammar test enforce this distinction. They do not fall back for application checks.
@@ -164,3 +164,24 @@ Static/offline took 31 s; real services/container 179 s; aggregate 3 s. Integrat
 included the updated runtime build, tool-exclusion checks and shutdown/proxy smoke.
 These jobs still run in parallel and retain disjoint suites. The cold security-package
 layer differs from the prior build, so these times are not a controlled speedup claim.
+
+
+## Image security policy
+
+The existing integration job scans the image it already built; there is no second
+build or privileged scan of PR code. Trivy 0.75.0 is fetched from its upstream
+release and verified with a reviewed archive SHA-256 before execution. It produces
+a complete OS/language report without ignore files or severity filtering. The
+maintained `scripts.image_security` gate validates schema, OS inventory and the
+actual Docker image ID; malformed, missing or stale reports fail closed. All
+CRITICAL findings and HIGH findings with an available fixed version fail Quality.
+Unfixed HIGH findings remain counted and visible in the retained full artifact;
+they require assessment before production and are not approved by a green gate.
+This is an added remediation gate, not a clean-image or production-security claim.
+Scanner network failures fail the job. No production secrets or publishing token
+are available to the job. The required aggregate `checks` remains unchanged.
+
+Local policy tests: `uv run pytest -q tests/test_image_security.py`. Full report
+and summary are retained with integration diagnostics even on failure. Scan the
+release digest again at release selection: the vulnerability database changes
+independently of source/image revisions.

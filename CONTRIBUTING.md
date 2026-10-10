@@ -76,6 +76,9 @@ Dependency maintenance follows [the conservative Dependabot policy](docs/depende
 Passing CI alone does not qualify a dependency update. Review scope, transitive
 changes and activation/required-check state before enabling any automated path.
 
-Application and fixture checks use Python 3.14 from the frozen uv environment.
+Application and fixture checks use Python 3.14.8 from the frozen uv environment.
+Use uv 0.13.0: older uv 0.12.10 download metadata cannot provision the pinned
+interpreter on a clean checkout. CI and the Docker builder use the same reviewed
+uv version; no global tool installation or lockfile regeneration is required.
 Privileged stdlib-only dependency/release scripts also support runner Python 3.12;
 Ruff per-file targets and a grammar test preserve that security boundary.

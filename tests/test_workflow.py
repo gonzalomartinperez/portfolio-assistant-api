@@ -165,6 +165,32 @@ def test_shutdown_drains_interruption_write_after_request_task_is_cancelled():
     asyncio.run(run())
 
 
+def test_shutdown_interrupts_active_run_before_nested_generator_cleanup():
+    from uuid import uuid4
+
+    async def run():
+        store, provider = Store(), GatedProvider()
+        service = RunService(
+            store, LangGraphWorkflow(Retrieval(), provider), fixture=False
+        )
+        stream = service.execute(uuid4(), uuid4(), 'question', 'en')
+        assert (await anext(stream)).name == 'run.started'
+        assert (await anext(stream)).name == 'run.status'
+        assert (await anext(stream)).name == 'message.delta'
+        request = asyncio.create_task(anext(stream))
+        await asyncio.sleep(0)
+        await service.drain_cleanup()
+        assert store.interrupted and store.answer is None
+        request.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await request
+        await stream.aclose()
+        await service.drain_cleanup()
+        assert provider.closed.is_set()
+
+    asyncio.run(run())
+
+
 def test_output_limit_closes_provider_and_unknown_usage_is_not_refunded():
     async def run():
         class Provider:
