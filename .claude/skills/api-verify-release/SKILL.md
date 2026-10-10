@@ -46,7 +46,9 @@ acceptance criteria are met; do not extend verification into cosmetic refactorin
 
 For real-provider preparation, load the [dated audit and closure criteria](../../../docs/live-evaluation-readiness.md).
 Recheck open findings against the requested revision; especially do not treat the
-evaluation harness's PostgreSQL loopback check as validation of Neo4j isolation.
+historical PostgreSQL-only check as validation of Neo4j isolation. The maintained
+harness now checks both configured destinations against owned Docker identities;
+read the evaluation procedure for prerequisites and remaining quality limitations.
 Keep documented follow-up work distinct from implemented and tested fixes.
 
 Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.

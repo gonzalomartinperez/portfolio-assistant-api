@@ -412,6 +412,54 @@ def client_factory():
         client.__exit__(None, None, None)
 
 
+def test_canonical_citations_match_stream_final_and_persisted_history(client_factory):
+    import json
+    from dataclasses import replace
+
+    from app.application.contracts import WorkflowEvent
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+    from tests.test_workflow import SOURCE
+
+    sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
+
+    class SyntheticWorkflow:
+        async def stream(self, command):
+            yield WorkflowEvent('evidence', sources=sources)
+            yield WorkflowEvent('delta', text='Claim [5], another [2].')
+            yield WorkflowEvent('answer', text='Claim [5], another [2].')
+
+    application = create_app(Settings(_env_file=None, ai_provider='fixture'))
+    client = client_factory(application, client=(str(uuid4()), 50000))
+    application.state.runs.workflow = SyntheticWorkflow()
+    application.state.runs.fixture = False
+    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
+    try:
+        cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+        response = client.post(
+            f'/api/v1/conversations/{cid}/messages/stream',
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={'content': 'What is Filomena?', 'locale': 'en'},
+        )
+        assert response.status_code == 200
+        events = [
+            json.loads(line[6:])
+            for line in response.text.splitlines()
+            if line.startswith('data: ')
+        ]
+        final = next(
+            event['payload'] for event in events if event['type'] == 'message.completed'
+        )
+        assert final['content'] == 'Claim [2], another [1].'
+        assert [source['id'] for source in final['citations']] == ['2', '5']
+        history = client.get(f'/api/v1/conversations/{cid}/messages').json()['items']
+        answer = next(message for message in history if message['role'] == 'assistant')
+        assert answer['content'] == final['content']
+        assert answer['citations'] == final['citations']
+    finally:
+        client.delete('/api/v1/session', headers=auth).raise_for_status()
+
+
 def test_every_owned_mutation_and_stream_wire_contract(client_factory):
     import json
 

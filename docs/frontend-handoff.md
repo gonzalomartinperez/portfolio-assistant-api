@@ -204,3 +204,18 @@ pgvector and Neo4j; 38 new offline validation/propagation cases plus HTTP integr
 covering omission, valid context, rejection before provider calls, idempotency and
 no SSE/history leakage. A subsequent example/fingerprint test also passed. No
 paid calls were needed for this contract change; no deployment/activation occurred.
+
+
+## Canonical final citations · 2026-10-10
+
+No HTTP/SSE schema or source-record shape changes. Provider deltas remain truly
+incremental and can contain original retrieval indices. After the answer is
+complete, prose markers are normalized to the compact, used-source order before
+persistence and `message.completed`. For retrieved sources 1–5, using original
+[2] and [5] returns those two records in that order and canonical markers [1]/[2].
+Code spans/fences and inline numeric Markdown link labels are preserved. Invalid
+references fail the run rather than fabricating sources. The UI must treat the
+completed payload as authoritative, replacing provisional streamed text; do not
+merge its content as another delta. History returns the same canonical content and
+citations. Partial/interrupted output has no verified final-source association.
+This mapping guarantees consistent references, not that every claim is true.

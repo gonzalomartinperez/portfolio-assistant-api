@@ -8,7 +8,6 @@ import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from pathlib import Path
-from urllib.parse import urlparse
 from uuid import uuid4
 
 import httpx
@@ -16,14 +15,12 @@ import uvicorn
 
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
+from scripts.evaluation_isolation import validate_targets
 
 
 @contextmanager
 def evaluation_server(config: Settings):
-    if config.environment != 'development' or urlparse(
-        config.database_url
-    ).hostname not in ('localhost', '127.0.0.1'):
-        raise ValueError('evaluation requires an isolated local development database')
+    validate_targets(config)
     server = uvicorn.Server(
         uvicorn.Config(create_app(config), log_level='error', access_log=False)
     )

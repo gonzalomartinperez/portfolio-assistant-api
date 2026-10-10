@@ -30,8 +30,10 @@ def is_followup(question: str) -> bool:
     """Recognize explicit reference/reframing cues without a paid routing call."""
     # An example *of a named subject* is a new topic, not a history reference.
     if re.search(
-        r'(?i)\b(?:example (?:of|at|for) (?!that\b|this\b|it\b|those\b)|'
-        r'ejemplo (?:de|en|sobre) (?!eso\b|ese\b|esa\b|esto\b))',
+        r'(?i)\b(?:example(?:\s+(?:concrete|specific|practical|real|technical)){0,2}'
+        r'\s+(?:of|at|for)\s+(?!that\b|this\b|it\b|those\b)|'
+        r'ejemplo(?:\s+(?:concreto|específico|especifico|práctico|practico|real|técnico|tecnico)){0,2}'
+        r'\s+(?:de|en|sobre)\s+(?!eso\b|ese\b|esa\b|esto\b))',
         question,
     ) or re.match(r'(?i)^\s*(?:instead|en cambio)\b', question):
         return False
