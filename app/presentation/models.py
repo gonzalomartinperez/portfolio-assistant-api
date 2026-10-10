@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.application.presentation_context import PortfolioPath, Presentation, Theme
 
 Locale = Literal['en', 'es']
 
@@ -63,9 +65,19 @@ class Citation(BaseModel):
     end_line: int | None = None
 
 
+class MessageContext(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+
+    theme: Theme
+    opened_path: PortfolioPath
+    current_path: PortfolioPath
+    presentation: Presentation
+
+
 class SendMessage(BaseModel):
     content: str = Field(min_length=1, max_length=4000)
     locale: Locale = 'en'
+    context: MessageContext | None = None
 
 
 class RunView(BaseModel):

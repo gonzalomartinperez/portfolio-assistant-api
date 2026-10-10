@@ -10,6 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 
 from app.application.conversations import digest
+from app.application.presentation_context import PresentationContext
 from app.presentation.events import events
 from app.presentation.models import (
     ConversationCreate,
@@ -243,7 +244,12 @@ def sse(
 
 
 async def execute_run(
-    request: Request, run_id: UUID, conversation_id: UUID, question: str, locale: str
+    request: Request,
+    run_id: UUID,
+    conversation_id: UUID,
+    question: str,
+    locale: str,
+    context: PresentationContext | None = None,
 ):
     sequence = 0
     started = time.perf_counter()
@@ -251,7 +257,9 @@ async def execute_run(
     first_delta_ms = None
     try:
         async with aclosing(
-            request.app.state.runs.execute(run_id, conversation_id, question, locale)
+            request.app.state.runs.execute(
+                run_id, conversation_id, question, locale, context
+            )
         ) as stream:
             async for event in stream:
                 if event.name == 'message.delta' and first_delta_ms is None:
@@ -291,12 +299,26 @@ def stream_message(
         session,
         conversation_id,
         body.content,
-        digest(body.model_dump_json()),
+        digest(body.model_dump_json(exclude_none=True)),
         idempotency_key,
     )
     return ClosingStreamingResponse(
         heartbeat(
-            execute_run(request, run_id, conversation_id, body.content, body.locale)
+            execute_run(
+                request,
+                run_id,
+                conversation_id,
+                body.content,
+                body.locale,
+                PresentationContext(
+                    theme=body.context.theme,
+                    opened_path=body.context.opened_path,
+                    current_path=body.context.current_path,
+                    presentation=body.context.presentation,
+                )
+                if body.context
+                else None,
+            )
         ),
         media_type='text/event-stream',
         headers={

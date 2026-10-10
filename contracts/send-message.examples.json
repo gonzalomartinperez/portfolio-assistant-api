@@ -1,0 +1,26 @@
+[
+  {
+    "content": "¿Qué experiencia tiene Gonzalo?",
+    "locale": "es"
+  },
+  {
+    "content": "What is his experience?",
+    "locale": "en",
+    "context": {
+      "theme": "dark",
+      "opened_path": "/work",
+      "current_path": "/about",
+      "presentation": "compact"
+    }
+  },
+  {
+    "content": "Contame sobre Filomena.",
+    "locale": "es",
+    "context": {
+      "theme": "light",
+      "opened_path": "/es/work",
+      "current_path": "/es/work/filomena",
+      "presentation": "expanded"
+    }
+  }
+]

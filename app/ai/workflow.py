@@ -23,6 +23,7 @@ from app.application.conversation_context import (
     retrieval_question,
 )
 from app.application.language import LanguageDetector, select_locale
+from app.application.presentation_context import PresentationContext
 
 
 class EvidenceData(TypedDict):
@@ -62,6 +63,7 @@ class State(TypedDict):
     run_id: str
     sources: list[EvidenceData]
     answer: str
+    context: PresentationContext | None
 
 
 class LangGraphWorkflow:
@@ -82,7 +84,11 @@ class LangGraphWorkflow:
         async def answer(state: State) -> dict[str, str]:
             writer = get_stream_writer()
             command = AnswerCommand(
-                state['run_id'], state['question'], state['locale'], state['history']
+                state['run_id'],
+                state['question'],
+                state['locale'],
+                state['history'],
+                state['context'],
             )
             sources = tuple(Evidence(**s) for s in state['sources'])
             parts = []
@@ -117,6 +123,7 @@ class LangGraphWorkflow:
             'run_id': command.run_id,
             'sources': [],
             'answer': '',
+            'context': command.context,
         }
         sources: tuple[Evidence, ...] = ()
         raw = self.graph.astream(

@@ -38,7 +38,7 @@ class GatedProvider:
         self.closed = asyncio.Event()
         self.completed = False
 
-    async def stream(self, question, evidence, locale, history=()):
+    async def stream(self, question, evidence, locale, history=(), context=None):
         try:
             yield 'first '
             await self.release.wait()

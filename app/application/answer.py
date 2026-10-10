@@ -44,7 +44,11 @@ async def generate(
     count = 0
     async with aclosing(
         provider.stream(
-            command.question, context(sources), command.locale, command.history
+            command.question,
+            context(sources),
+            command.locale,
+            command.history,
+            command.context,
         )
     ) as stream:
         async for item in stream:

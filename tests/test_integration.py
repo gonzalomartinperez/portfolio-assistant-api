@@ -662,7 +662,7 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
         def __init__(self):
             self.histories = []
 
-        async def stream(self, question, evidence, locale, history=()):
+        async def stream(self, question, evidence, locale, history=(), context=None):
             self.histories.append(history)
             yield 'Public fixture response'
 
@@ -893,3 +893,68 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
                 if row['id'] not in before
             ]
             conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (owned,))
+
+
+def test_optional_presentation_context_survives_http_graph_and_provider(client_factory):
+    from app.application.presentation_context import PresentationContext
+    from app.bootstrap.container import create_app
+
+    class CaptureProvider:
+        def __init__(self):
+            self.contexts = []
+
+        async def stream(self, question, evidence, locale, history=(), context=None):
+            self.contexts.append(context)
+            yield 'Public fixture response'
+
+    provider = CaptureProvider()
+    client = client_factory(
+        create_app(provider_override=provider), client=(str(uuid4()), 50000)
+    )
+    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
+    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    path = f'/api/v1/conversations/{cid}/messages/stream'
+    metadata = {
+        'theme': 'dark',
+        'opened_path': '/work',
+        'current_path': '/es/about',
+        'presentation': 'expanded',
+    }
+    try:
+        first = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={'content': 'What did he build at Rampy?', 'locale': 'en'},
+        )
+        assert 'event: run.completed' in first.text
+        assert provider.contexts == [None]
+        key = str(uuid4())
+        payload = {'content': 'Give me an example', 'locale': 'en', 'context': metadata}
+        second = client.post(
+            path, headers={**auth, 'Idempotency-Key': key}, json=payload
+        )
+        assert 'event: run.completed' in second.text
+        assert provider.contexts[-1] == PresentationContext(**metadata)
+        assert 'opened_path' not in second.text
+        conflict = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': key},
+            json={**payload, 'context': {**metadata, 'theme': 'light'}},
+        )
+        assert conflict.status_code == 409
+        invalid = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={
+                **payload,
+                'context': {**metadata, 'current_path': '/about?secret=sentinel'},
+            },
+        )
+        assert invalid.status_code == 422
+        assert 'sentinel' not in invalid.text
+        assert len(provider.contexts) == 2
+        history = client.get(f'/api/v1/conversations/{cid}/messages')
+        assert history.status_code == 200
+        assert 'opened_path' not in history.text
+    finally:
+        client.delete('/api/v1/session', headers=auth).raise_for_status()

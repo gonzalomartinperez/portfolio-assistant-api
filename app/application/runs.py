@@ -11,6 +11,7 @@ from uuid import UUID
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
 from app.application.conversation_context import Turn, bounded_history
+from app.application.presentation_context import PresentationContext
 from app.domain.errors import (
     BudgetExhaustedError,
     DependencyUnavailableError,
@@ -111,7 +112,12 @@ class RunService:
         self.timeout_seconds = timeout_seconds
 
     async def execute(
-        self, run_id: UUID, conversation_id: UUID, question: str, locale: str
+        self,
+        run_id: UUID,
+        conversation_id: UUID,
+        question: str,
+        locale: str,
+        context: PresentationContext | None = None,
     ) -> AsyncGenerator[RunEvent]:
         """Yield v1 events; cancel silent providers and never save partial answers."""
         answer = ''
@@ -132,6 +138,7 @@ class RunService:
                             bounded_history(
                                 await self.store.history(run_id, conversation_id)
                             ),
+                            context,
                         )
                     )
                 ) as stream:
