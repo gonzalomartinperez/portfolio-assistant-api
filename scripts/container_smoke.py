@@ -134,6 +134,15 @@ def main():
                         'import shutil; assert shutil.which("git"); '
                         'assert not shutil.which("uv"); assert not shutil.which("uvx")',
                     )
+                    docker(
+                        'exec',
+                        name,
+                        '/usr/local/bin/python',
+                        '-c',
+                        'import importlib.util; '
+                        'assert importlib.util.find_spec("pip") is None; '
+                        'assert importlib.util.find_spec("ensurepip") is None',
+                    )
                     response = client.post(
                         '/api/v1/session',
                         headers={
