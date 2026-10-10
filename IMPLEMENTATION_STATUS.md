@@ -1,3 +1,8 @@
+> Latest local evidence: [244-turn authorized OpenAI evaluation](docs/verification/live-depth-2026-10-10.md),
+> followed by targeted regressions and database cleanup. Older checkpoints below
+> are historical; successful transport is not a universal answer-quality or
+> production-readiness claim. Main and the portfolio assistant remain unchanged.
+
 # Implementation status · current checkpoint 2026-10-04
 
 Current implementation: PR #34 merged into develop at

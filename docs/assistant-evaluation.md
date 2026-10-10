@@ -121,3 +121,19 @@ LangSmith remains a transitive LangChain dependency; no tracer/exporter is enabl
 There is no OpenTelemetry dependency or exporter. Removing a required transitive
 package by patching dependencies would break reproducibility; configuration rejects
 external tracing instead. Operational redacted local logs are retained.
+
+## Dated live evidence
+
+The separately authorized [244-turn OpenAI evaluation](verification/live-depth-2026-10-10.md)
+records actual model calls, local abstentions, exposed-case revalidation, citation
+checks, costs and database cleanup. Its committed manifests freeze selection;
+raw results stay ignored. It does not certify all1000 questions or independent
+holdout quality. Archive baseline bytes before tuning and never repeat completed
+paid generations merely because a harness was interrupted. Recover a persisted
+result only with unambiguous identity and explicitly mark unobserved HTTP terminals.
+
+Output language is selected by the application; the provider must follow it.
+A separate bounded normal-accuracy guard checks common unsupported initial prose
+while avoiding technical-name false positives. It is not a universal multilingual
+sanitizer. Test valid short English/Spanish, code and technical names alongside
+foreign prose, and measure first-output latency after changing it.

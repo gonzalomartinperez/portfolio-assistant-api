@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "bank_revision": "be47979d302471121144a9bf53f23229de9190de",
+  "selection": "Final recent-role boundary regression; exposed cases",
+  "scenarios": [
+    {
+      "id": "experience-8-en",
+      "topic": "experience",
+      "split": "development",
+      "turns": [
+        {
+          "question": "Compare his recent roles using public evidence.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "experience-8-es",
+      "topic": "experience",
+      "split": "development",
+      "turns": [
+        {
+          "question": "Compara sus trabajos recientes usando evidencia pública.",
+          "locale": "es"
+        }
+      ]
+    }
+  ]
+}

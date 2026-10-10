@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "experiment_ceiling_usd": "0.50",
+  "runs": [
+    {
+      "run": "live-depth",
+      "api_revision": "be47979d302471121144a9bf53f23229de9190de",
+      "source_revision": "afea06a04650db65059a8900d58554b8952b2c99",
+      "turns": 244,
+      "actual_generation_calls": 236,
+      "local_abstentions": 8,
+      "terminals": {
+        "run.completed": 243,
+        "persisted.completed": 1
+      },
+      "public_failure_codes": {},
+      "all_completed_marker_validity": true,
+      "all_completed_history_matches": true,
+      "all_completed_provenance_membership": true,
+      "ledger_accounted_delta_usd": "0.096218",
+      "ledger_accounted_end_usd": "0.153519",
+      "raw_report_sha256": "4d45fdf079e4167966e660b43f7152386999c8bfd89ce7ba4fabe4b2bb1991c7",
+      "timed_generation_samples": 235,
+      "first_delta_p50_ms": 2447.59
+    },
+    {
+      "run": "live-revalidation",
+      "api_revision": "586af7e61e99a02053e34f5981ce3fba33a6bfaf",
+      "source_revision": "afea06a04650db65059a8900d58554b8952b2c99",
+      "turns": 41,
+      "actual_generation_calls": 40,
+      "local_abstentions": 1,
+      "terminals": {
+        "run.completed": 40,
+        "run.failed": 1
+      },
+      "public_failure_codes": {
+        "generation_failed": 1
+      },
+      "all_completed_marker_validity": true,
+      "all_completed_history_matches": true,
+      "all_completed_provenance_membership": true,
+      "ledger_accounted_delta_usd": "0.067291",
+      "ledger_accounted_end_usd": "0.220810",
+      "raw_report_sha256": "928f6adaf52740296b5389d9321d9a73f5cf56c07f04d3fbb4926b3ee39b6b60",
+      "timed_generation_samples": 39,
+      "first_delta_p50_ms": 3403.22
+    },
+    {
+      "run": "live-final",
+      "api_revision": "757ad40f2ca89e81e97d5fbbe69e2b6f8d06163b",
+      "source_revision": "afea06a04650db65059a8900d58554b8952b2c99",
+      "turns": 13,
+      "actual_generation_calls": 12,
+      "local_abstentions": 1,
+      "terminals": {
+        "run.completed": 13
+      },
+      "public_failure_codes": {},
+      "all_completed_marker_validity": true,
+      "all_completed_history_matches": true,
+      "all_completed_provenance_membership": true,
+      "ledger_accounted_delta_usd": "0.004899",
+      "ledger_accounted_end_usd": "0.225709",
+      "raw_report_sha256": "ebe7f5339b4fae0d65596a26c2e2236f91cf6cd56b3e346cd0a3a8f0729b3d46",
+      "timed_generation_samples": 12,
+      "first_delta_p50_ms": 3323.32
+    },
+    {
+      "run": "live-role-final",
+      "api_revision": "0c52d82487fd70bc18377753caebbab2d72cf2aa",
+      "source_revision": "afea06a04650db65059a8900d58554b8952b2c99",
+      "turns": 2,
+      "actual_generation_calls": 2,
+      "local_abstentions": 0,
+      "terminals": {
+        "run.completed": 2
+      },
+      "public_failure_codes": {},
+      "all_completed_marker_validity": true,
+      "all_completed_history_matches": true,
+      "all_completed_provenance_membership": true,
+      "ledger_accounted_delta_usd": "0.001420",
+      "ledger_accounted_end_usd": "0.227129",
+      "raw_report_sha256": "f6b9ac7f61c793d3227b6ebe5bd22468080782e9b3c81803db689d4ef0523d35",
+      "timed_generation_samples": 2,
+      "first_delta_p50_ms": 4198.72
+    }
+  ],
+  "total_turns": 300,
+  "actual_generation_calls": 290,
+  "limits": [
+    "Agent-assisted qualitative review; no independent owner scores.",
+    "Post-fix cases are exposed exploratory regressions, not untouched holdout.",
+    "Initial bounded language guard is not universal language enforcement.",
+    "No production, VPS, physical-device, OAuth or full 1000-case live acceptance."
+  ],
+  "local_checks": {
+    "full_suite": {
+      "passed": 319,
+      "seconds": 14.7,
+      "integration_tests": 25
+    },
+    "ruff": "passed",
+    "format": "passed",
+    "mypy": "passed",
+    "contract_drift": "none"
+  },
+  "final_storage_audit": {
+    "active": [
+      {
+        "id": "afea06a04650db65059a8900d58554b8952b2c99-semantic-v7",
+        "source_commit": "afea06a04650db65059a8900d58554b8952b2c99",
+        "embedding_provider": "openai",
+        "embedding_model": "text-embedding-3-small"
+      }
+    ],
+    "chunks": {
+      "total": 76,
+      "semantic": 76,
+      "unique_hashes": 75
+    },
+    "cache": {
+      "total": 85
+    },
+    "ledger": [
+      {
+        "kind": "embedding_index",
+        "entries": 85,
+        "accounted": "0.000583"
+      },
+      {
+        "kind": "inference",
+        "entries": 308,
+        "accounted": "0.226235"
+      },
+      {
+        "kind": "embedding_query",
+        "entries": 311,
+        "accounted": "0.000311"
+      }
+    ],
+    "sessions": {
+      "total": 0
+    },
+    "messages": {
+      "total": 0
+    },
+    "orphan_checkpoints": {
+      "threads": 0
+    },
+    "pending_cleanup": {
+      "total": 0
+    },
+    "graph_labels": [
+      {
+        "labels": [
+          "Document"
+        ],
+        "count": 76
+      },
+      {
+        "labels": [
+          "Entity"
+        ],
+        "count": 140
+      }
+    ],
+    "graph_edges": {
+      "count": 502,
+      "all_supporting_documents_in_active_pg": true,
+      "valid_source_spans": true
+    }
+  },
+  "artifact_secret_check": {
+    "authorized_key_absent": true,
+    "artifact_files_checked": 14,
+    "known_pattern_tracked_history_scan": "passed; no reported findings"
+  },
+  "integration_pr": "https://github.com/gonzalomartinperez/portfolio-assistant-api/pull/43"
+}

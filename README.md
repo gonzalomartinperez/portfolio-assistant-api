@@ -82,3 +82,8 @@ The assistant has no mutation tools, unrestricted browsing or private repository
 access. Prompt instructions are not authorization controls, and fixture tests do
 not prove live-model safety. Public visibility does not imply an open-source
 license: no source license has been selected. See [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Recent verification: [authorized 244-turn OpenAI evaluation and fixes](docs/verification/live-depth-2026-10-10.md).
+This records real generation, RAG/persistence audits and remaining release gates;
+fixture evidence and live qualitative review are reported separately. Production
+and the native portfolio assistant remain disabled.

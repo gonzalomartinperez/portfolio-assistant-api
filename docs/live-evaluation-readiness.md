@@ -1,3 +1,8 @@
+> Latest local evidence: [244-turn authorized OpenAI evaluation](verification/live-depth-2026-10-10.md),
+> followed by targeted regressions and database cleanup. Older checkpoints below
+> are historical; successful transport is not a universal answer-quality or
+> production-readiness claim. Main and the portfolio assistant remain unchanged.
+
 # Audit and live-evaluation readiness · 2026-10-04
 
 Audited API revision: `15b6943f741ac80498a5fee611aa74d24250eb6b`.
