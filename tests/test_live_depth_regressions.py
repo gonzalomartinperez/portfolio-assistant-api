@@ -323,3 +323,42 @@ def test_recent_roles_keep_newer_company_when_contributions_start_in_next_span()
         PublicRetrieval(Index()).search('Compare his recent roles.', 'en')
     )
     assert [s.id for s in sources] == ['0', '1', '2']
+
+
+def test_recent_company_date_and_contribution_can_cross_a_chunk_boundary():
+    commit = 'a' * 40
+    path = 'src/content/en/experience.ts'
+    contents = (
+        'company: "Newest", startedOn: "2026-09-01"',
+        'company: "Middle",',
+        'startedOn: "2025-12-01", contributions: ["GraphRAG delivery"]',
+        'company: "Older", startedOn: "2024-12-01"',
+    )
+    chunks = tuple(
+        Chunk(
+            str(i),
+            str(i),
+            f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L{i + 1}-L{i + 1}',
+            'code',
+            path,
+            i + 1,
+            i + 1,
+            content,
+            hashlib.sha256(content.encode()).hexdigest(),
+        )
+        for i, content in enumerate(contents)
+    )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'v', commit, chunks, frozenset({path}), ('0', '3'), semantic=True
+            )
+
+        async def relationships(self, *args, **kwargs):
+            return ('0', '3')
+
+    sources = asyncio.run(
+        PublicRetrieval(Index()).search('Compare his recent roles.', 'en')
+    )
+    assert [s.id for s in sources] == ['0', '1', '3', '2']

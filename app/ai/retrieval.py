@@ -268,17 +268,43 @@ class PublicRetrieval:
                 if not subjects and terms & {'roles', 'empleos', 'puestos', 'trabajos'}:
                     dated = []
                     companies: set[str] = set()
+                    companions = []
+                    by_path: dict[str, list[str]] = {}
                     for key, chunk in eligible.items():
-                        company = re.search(r'company:\s*"([^"\n]+)"', chunk.content)
-                        start_date = re.search(
-                            r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', chunk.content
-                        )
-                        if company and start_date:
-                            dated.append((start_date[1], company[1], key))
-                    for _, company_name, key in sorted(dated, reverse=True):
+                        by_path.setdefault(chunk.path, []).append(key)
+                    for keys in by_path.values():
+                        keys.sort(key=lambda key: eligible[key].start_line)
+                        for index, key in enumerate(keys):
+                            chunk = eligible[key]
+                            company = re.search(
+                                r'company:\s*"([^"\n]+)"', chunk.content
+                            )
+                            if not company:
+                                continue
+                            following = (
+                                keys[index + 1] if index + 1 < len(keys) else None
+                            )
+                            text = chunk.content[company.end() :]
+                            if (
+                                following
+                                and eligible[following].start_line == chunk.end_line + 1
+                            ):
+                                text += '\n' + eligible[following].content
+                            text = text.split('company:', 1)[0]
+                            start_date = re.search(
+                                r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', text
+                            )
+                            if start_date:
+                                dated.append(
+                                    (start_date[1], company[1], key, following)
+                                )
+                    for _, company_name, key, following in sorted(dated, reverse=True):
                         if company_name not in companies:
                             anchors.append(key)
                             companies.add(company_name)
+                            if following and 'startedOn:' not in eligible[key].content:
+                                companions.append(following)
+                    anchors += companions
                 ranked = list(dict.fromkeys(anchors + ranked))
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
