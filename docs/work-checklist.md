@@ -6,10 +6,15 @@ no main promotion, artifact publication or production execution is authorized.
 Critical security issues interrupt the sequence below. Paid calls require explicit
 scope/budget; the dated experiment below does not authorize ongoing usage.
 
-Current integrated runtime: `ab671fa90877113eecc6e3305f8c61d27052de97` (PR #40).
-PR #40 runtime security patches passed current-head CI. The subsequent database-image
-increment is verified locally and awaiting its current-head CI.
+Current integrated checkpoint: `a3f9b7ce9fbc9646cec4d6dc17f3ed0d4f371ec1`
+(manually reviewed Dependabot PR #31), including database-image PR #41 at
+`6cc116609acec823314e94b88fe15137ddd96786`. Both passed actual current-head
+Quality runs before merging. Runtime security PR #40 is preserved in this history.
 Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
+Latest [runtime security evidence](verification/runtime-security-2026-10-10.md) and
+[database evidence](verification/database-images-2026-10-10.md) supersede earlier
+container observations. [CI evidence](ci.md#executed-overnight-verification) identifies
+the actual runs; [vps-ops request](vps-ops-request.md) is the committed handoff prompt.
 [2026-10-10 evidence and blockers](verification/runtime-2026-10-10.md) records
 237 real-service tests, image/proxy checks, source revisions and the bounded
 real-provider experiment. The older [readiness audit](live-evaluation-readiness.md)
@@ -19,12 +24,12 @@ retains its dated closure criteria; neither document grants additional authority
 | --- | --- | --- |
 | 1 Conversations | Grounded bilingual answers, correct citations and topic changes | Observed citation mapping and Spanish topic-switch defects fixed in PR #39, with pure, streaming, HTTP/history and fixture continuity regressions. Three real-provider turns revalidated final citations/history and the observed Spanish topic switch; broader claim-support quality remains pending. |
 | 1 Compatibility | Stable HTTP/SSE, optional visitor context, sessions/history/cancellation | Context validated and mapped separately from evidence in PR #36; OpenAPI/examples committed, legacy clients preserved. Native portfolio contract import/browser pairing pending with its owner; rollout remains disabled. |
-| 2 Security/reliability | Ownership, CSRF, isolation, budgets, termination and safe ingestion | Existing controls tested; interruption writes now drain before pool shutdown. Both database isolation guards implemented in PR #39. Candidate image removes base pip/ensurepip bundles: 58 HIGH findings remain, none with an available fix in the local scan. Assessment still required. Production blocked. |
-| 3 Backend quality | Strict boundaries/types, real persistence and image/proxy evidence | 291 tests including shutdown-ordering and database-image provenance regressions on Python 3.14.8, Ruff/format, strict mypy, frozen install, contract/Compose/skills checks; final non-root image streaming, SIGTERM and proxy/disconnect checks pass. PR #37 current-head CI passed. |
+| 2 Security/reliability | Ownership, CSRF, isolation, budgets, termination and safe ingestion | Existing controls tested; interruption writes now drain before pool shutdown. Both database isolation guards implemented in PR #39. API image removes base pip/ensurepip bundles: 58 unresolved HIGH findings. Patched PostgreSQL: 3 CRITICAL/65 HIGH, none fixable in the scan; Neo4j: 1 CRITICAL/113 HIGH, including vendor Java fixes. Full reports retained, no suppression. Production assessment remains blocked. |
+| 3 Backend quality | Strict boundaries/types, real persistence and image/proxy evidence | 291 tests including shutdown-ordering and database-image provenance regressions on Python 3.14.8, Ruff/format, strict mypy, frozen install, contract/Compose/skills checks; final non-root image streaming, SIGTERM and proxy/disconnect checks pass. PR #41 current-head CI passed; 25 real-service tests also confirmed in downloaded CI diagnostics. |
 | 4 Skills | Focused canonical catalog and portable discovery | Five canonical skills with relative Codex links, validator/scenarios; previously exercised client discovery. Updated release skill reflects application/database scope. Model-based natural-language selection remains unverified. |
-| 5 CI/dependencies | Pinned parallel checks, minimal permissions, protected merges | PR #37 actual static 31 s, integration 179 s, gate 3 s. Strict develop freshness and required checks verified. Dependency automation activation and manual Actions major PR #31 remain separate gates. |
-| 6 Deployment handoff | Image/runtime/databases for vps-ops-managed Coolify | Contract updated with local database ceilings, runtime-only configuration, native CORS and backoffice ownership. VPS allocation, image publication, production execution and recovery validation remain unverified/unauthorized. |
-| Final | Integrated increments with precise release recommendation | PRs #36–#40 merged into develop; main untouched. This is a verified application increment, not production release approval. |
+| 5 CI/dependencies | Pinned parallel checks, minimal permissions, protected merges | PR #41 actual static 36 s, integration 219 s, gate 3 s; PR #31 actual 30/148/3 s. Strict develop freshness and required checks verified. Actions major PR #31 manually reviewed and merged; unattended dependency automation remains inactive. |
+| 6 Deployment handoff | Image/runtime/databases for vps-ops-managed Coolify | Contract and committed vps-ops master request updated with local database ceilings, the tested non-root PostgreSQL image, runtime-only configuration, native CORS and backoffice ownership. VPS allocation, image publication, production execution and recovery validation remain unverified/unauthorized. |
+| Final | Integrated increments with precise release recommendation | PRs #36–#41 and manually reviewed dependency PR #31 merged into develop; main untouched. This is a verified application increment, not production release approval. |
 
 The public-knowledge/coverage sections below retain earlier implementation history;
 the current table and dated verification define remaining acceptance gates.
@@ -78,6 +83,11 @@ privileged-token verification. Policy files are already on the default branch;
 their presence alone does not enable merging. Existing strict protections/reviews
 are preserved. Read-only CI token protection-query access is blocked; the
 privileged controller must establish access before activation.
+Dependabot PR #31 was instead manually reviewed: authenticated bot/source/base,
+one bot commit, four pinned action-only changes, signed upstream release and
+current-head Quality. No automatic merge eligibility was granted to this major
+update. API and backoffice open-PR inventories were empty at the 2026-10-10
+05:15 UTC checkpoint; this does not assert that security alerts are empty.
 See [scope, tests and activation handoff](dependency-updates.md). This is part of
 repository quality; it adds no deployment controller or main promotion authority.
 
