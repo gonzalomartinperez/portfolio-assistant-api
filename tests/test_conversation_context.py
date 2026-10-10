@@ -2,6 +2,8 @@
 
 import asyncio
 
+import pytest
+
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import AnswerCommand
 from app.application.conversation_context import (
@@ -10,6 +12,33 @@ from app.application.conversation_context import (
     retrieval_question,
 )
 from tests.test_workflow import SOURCE
+
+
+@pytest.mark.parametrize(
+    'question',
+    [
+        'Ahora contame un ejemplo concreto de su trabajo en Teamcubation.',
+        'Un ejemplo específico de su trabajo en Teamcubation',
+        'Dame un ejemplo práctico sobre Teamcubation',
+        'Give me a concrete example of his work at Teamcubation',
+        'A specific technical example at Teamcubation, please',
+    ],
+)
+def test_qualified_named_example_changes_topic_without_old_employer(question):
+    history = (Turn('user', 'What did he build at Rampy?'),)
+    assert retrieval_question(question, history) == question
+    for followup in ('Explícalo técnicamente', 'Explain that technically'):
+        query = retrieval_question(followup, (*history, Turn('user', question)))
+        assert 'Teamcubation' in query and 'Rampy' not in query
+
+
+@pytest.mark.parametrize(
+    'question', ['Dame un ejemplo concreto de eso', 'A specific example of that']
+)
+def test_qualified_referential_example_preserves_topic(question):
+    assert 'Rampy' in retrieval_question(
+        question, (Turn('user', 'What did he build at Rampy?'),)
+    )
 
 
 def test_context_budget_keeps_recent_turns_without_promoting_roles():
