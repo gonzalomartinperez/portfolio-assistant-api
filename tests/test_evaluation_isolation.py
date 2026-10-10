@@ -134,3 +134,16 @@ def test_production_rejected_before_inspection(containers):
             config().model_copy(update={'environment': 'production'}),
             inspect=inspect(containers),
         )
+
+
+@pytest.mark.parametrize('trusted', [True, False])
+def test_application_database_image_requires_repository_provenance(containers, trusted):
+    containers[0]['Config']['Image'] = 'portfolio-assistant-postgres:local'
+    if trusted:
+        containers[0]['Config']['Labels']['org.opencontainers.image.source'] = (
+            'https://github.com/gonzalomartinperez/portfolio-assistant-api'
+        )
+        validate_targets(config(), inspect=inspect(containers))
+    else:
+        with pytest.raises(ValueError, match='provenance'):
+            validate_targets(config(), inspect=inspect(containers))

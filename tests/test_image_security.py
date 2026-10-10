@@ -43,6 +43,7 @@ def report(severity='LOW', fixed=''):
 def test_all_findings_remain_visible(severity, fixed, critical, fixable, unresolved):
     assert evaluate(json.dumps(report(severity, fixed)), IMAGE_ID) == {
         'critical': critical,
+        'fixable_critical': int(bool(critical and fixed.strip())),
         'fixable_high': fixable,
         'unresolved_high': unresolved,
         'total': 1,

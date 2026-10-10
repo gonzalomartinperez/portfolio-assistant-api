@@ -61,7 +61,7 @@ configuration objects or structured validation details into logs or CI artifacts
 
 ## Services and migrations
 
-Tested services: PostgreSQL 17 with pgvector 0.8.1; Neo4j 5.26.31 Community.
+Tested services: PostgreSQL 17.11 with pgvector 0.8.7; Neo4j 5.26.31 Community.
 The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
@@ -247,3 +247,45 @@ blockers](verification/runtime-2026-10-10.md). Production databases have private
 networks and no public host ports; their canonical composition belongs to vps-ops.
 
 Current patch and vulnerability evidence: [runtime security verification](verification/runtime-security-2026-10-10.md).
+
+
+## Application-owned PostgreSQL artifact
+
+Build: `docker build --platform linux/amd64 -f Dockerfile.postgres -t portfolio-assistant-postgres:local .`.
+Root Compose is local/test only and builds this image; production composition stays
+in vps-ops. Planned package name is ghcr.io/gonzalomartinperez/portfolio-assistant-postgres,
+private unless separately authorized. No publication workflow has been activated
+for this new artifact and no registry digest is claimed. vps-ops must consume an
+authorized tested digest; local image IDs are not registry manifests.
+
+The inherited entrypoint/docker command initializes a fresh cluster only when
+PGDATA is empty, then execs postgres. It binds internal TCP 5432 and exposes no
+production host port. UID/GID 999 needs ownership of /var/lib/postgresql/data; an
+existing volume is not automatically chowned. Mount only the reviewed data volume
+and writable /tmp plus /var/run/postgresql (UID/GID 999, mode 3775). Read-only root,
+dropped capabilities and no-new-privileges were tested. pg_isready checks server
+acceptance, not application schema/corpus readiness; API /health/ready remains
+the application readiness check. Allow at least the tested 30-second stop grace;
+PostgreSQL's inherited signal/entrypoint owns database shutdown.
+
+Fresh initialization requires POSTGRES_USER, POSTGRES_DB and secret POSTGRES_PASSWORD
+or the official entrypoint's POSTGRES_PASSWORD_FILE mechanism, readable by UID 999.
+Never use trust authentication. Deliver credentials privately through Coolify;
+retain separate schema-owner and restricted API roles. Changing bootstrap variables
+does not change credentials in an existing cluster. Runtime PostgreSQL options
+include shared_buffers=128MB, work_mem=4MB and max_connections=50 in local tests;
+these are measured-test settings/ceilings, not a VPS capacity promise.
+
+Image replacement alone does not update SQL extension metadata in existing databases.
+Before the API starts, the database owner must review and run ALTER EXTENSION vector
+UPDATE TO '0.8.7' where needed, then verify extversion. This is separate from the
+application's checksummed migrations; never edit applied migrations. Rehearse backup
+and restore before replacing production database images. An old image is not a
+guaranteed rollback after an extension/store upgrade. Default PostgreSQL stdout logs
+are managed by vps-ops; do not enable parameter/statement logging for private chats.
+
+[Database image evidence and unresolved findings](verification/database-images-2026-10-10.md)
+are production assessment gates, not waivers. Publication approval, visibility,
+compatible artifact selection and restoration remain external owner decisions.
+
+The [vps-ops dispatch request](vps-ops-request.md) connects these application contracts to the separate operations owner without granting deployment authority.

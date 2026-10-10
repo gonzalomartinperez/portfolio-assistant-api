@@ -89,3 +89,13 @@ Trivy report and `scripts.image_security`: any CRITICAL or fixable HIGH finding
 blocks CI. Unfixed HIGH findings remain visible and require production assessment;
 a green remediation gate is not deployment approval. Check base-interpreter pip
 and ensurepip exclusion as well as the application venv in container smoke tests.
+
+
+Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`
+with an isolated project. It runs UID 999, so existing PGDATA ownership must match;
+never silently chown shared volumes. Verify both fresh initialization and a copy of
+owned stopped data, and explicitly review vector extension metadata upgrades. Read
+the database artifact section of deployment-contract.md before publishing/selecting
+an image. Database scan policy rejects fixable CRITICAL/HIGH; unresolved critical
+findings and vendor Java updates remain production gates. Do not patch vendor jars
+or equate local counts with complete recovery verification.
