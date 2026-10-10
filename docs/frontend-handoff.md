@@ -144,6 +144,12 @@ CSP, frontend preferences or production deployment.
 
 ## Native portfolio presentation context · 2026-10-10
 
+This current native integration supersedes the historical iframe deployment sections
+above. The portfolio owns the native UI and keeps it disabled; the renamed
+portfolio-assistant-backoffice owns the authenticated administration surface.
+The runtime contract defines CORS/proxy requirements; no host source was changed.
+
+
 Contract implementation: `61da393520014ed2c8b1f8a0635b3b4e615f9e53`.
 `SendMessage.context` is optional; omission or JSON null preserves existing clients
 and the legacy idempotency fingerprint. `locale` remains top-level `en`/`es`.

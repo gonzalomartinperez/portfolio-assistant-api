@@ -66,3 +66,11 @@ inner contracts and AI orchestration strictly. No ORM/queue/new service was adde
 Run `uv run python -m app.retention` every minute to prune expired data and retry
 checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
 [operations](deployment.md). Configuration is documented in [environment](environment.md).
+
+
+The root Compose services have bounded memory/CPU/PIDs and rotating logs. See the
+[application database settings](deployment-contract.md#application-owned-database-tuning)
+for tested fixture ceilings; the file is not a production composition. Render
+`docker compose config --quiet` and run `uv run python -m scripts.validate_compose`
+after changing it. Preserve volumes and verify migrations, indexing and real-service
+tests before accepting new constraints. Production allocation belongs to vps-ops.
