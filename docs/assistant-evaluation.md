@@ -53,9 +53,16 @@ uv run python -m scripts.evaluate_conversations --suite core --output artifacts/
 uv run python -m scripts.evaluate_conversations --suite continuity --output artifacts/continuity.json
 ```
 
-The harness owns a loopback server and rejects production mode and nonloopback
-PostgreSQL hosts. It currently does not validate the Neo4j destination; both service
-targets must be explicitly isolated (see A1 in the readiness audit).
+Both harnesses own a loopback server and validate PostgreSQL and Neo4j before
+creating clients. Source `scripts/fixture-env.sh` to declare the isolated Compose
+project; the guard checks active database containers, project/service labels and
+loopback-published ports matching the configured endpoints. Alternatively provide
+exact 64-character Docker IDs in EVALUATION_POSTGRES_CONTAINER and
+EVALUATION_NEO4J_CONTAINER. CI supplies its own job service IDs; wildcard published
+bindings are allowed only in that disposable hosted-runner context. Missing Docker,
+unverifiable metadata, remote targets and mismatches fail closed without revealing
+DSNs or Docker environment values. This proves target identity, not absence of prior
+data: use a fresh project and never point evaluation at shared/production services.
 Synthetic loopback-proxy visitor addresses allow representative users through the
 unchanged per-subject limits; this is a test-only configuration, not a production
 rate exception. It deletes its own sessions and leaves usage reservations intact.
@@ -74,10 +81,10 @@ quality still needs separately authorized review.
 
 ## Authorized OpenAI execution
 
-First review [live-evaluation readiness](live-evaluation-readiness.md), including
-the unresolved harness destination guard (A1). Its current loopback PostgreSQL
-check does not validate Neo4j isolation. Do not start paid evaluation until that
-guard is fixed/tested and both service targets are explicitly isolated.
+First review [live-evaluation readiness](live-evaluation-readiness.md) and the
+[current implementation evidence](verification/overnight-readiness-2026-10-10.md).
+The two-service guard is implemented and tested; declare the owned targets before
+starting. Its structural checks are not authorization for paid usage.
 
 Only after owner approval: configure the isolated database and environment with
 AI_PROVIDER=openai, EMBEDDINGS_PROVIDER=openai, ALLOW_PAID_AI=true and a private

@@ -63,6 +63,29 @@ class RunStore(Protocol):
         ...
 
 
+_MARKDOWN_REFERENCE = re.compile(
+    r'```[\s\S]*?```|`[^`\n]*`|(?<![\w])\[([0-9]+)\](?!\()'
+)
+
+
+def referenced_sources(answer: str, count: int) -> tuple[int, ...]:
+    used = {int(match[1]) for match in _MARKDOWN_REFERENCE.finditer(answer) if match[1]}
+    if any(number < 1 or number > count for number in used):
+        raise ValueError('invalid source reference')
+    return tuple(sorted(used))
+
+
+def normalize_citation_markers(answer: str, count: int) -> str:
+    """Map prose markers to the compact citation list; leave code and links intact."""
+    mapping = {
+        source: index
+        for index, source in enumerate(referenced_sources(answer, count), 1)
+    }
+    return _MARKDOWN_REFERENCE.sub(
+        lambda match: f'[{mapping[int(match[1])]}]' if match[1] else match[0], answer
+    )
+
+
 def citations(
     sources: tuple[Evidence, ...], answer: str, fixture: bool
 ) -> list[dict[str, object]]:
@@ -77,12 +100,7 @@ def citations(
                 if fixture_supports(source.content, answer, source.path)
             )
     else:
-        prose = re.sub(r'```[\s\S]*?```|`[^`\n]*`', '', answer)
-        used = {
-            int(number) for number in re.findall(r'(?<![\w])\[([0-9]+)\](?!\()', prose)
-        }
-        if any(number < 1 or number > len(sources) for number in used):
-            raise ValueError('invalid source reference')
+        used = referenced_sources(answer, len(sources))
         sources = tuple(
             source for index, source in enumerate(sources, 1) if index in used
         )
@@ -189,6 +207,8 @@ class RunService:
                         elif event.kind == 'answer':
                             answer = event.text
             refs = citations(sources, answer, self.fixture)
+            if not self.fixture:
+                answer = normalize_citation_markers(answer, len(sources))
             message_id = await self.store.complete(
                 run_id, conversation_id, answer, refs
             )

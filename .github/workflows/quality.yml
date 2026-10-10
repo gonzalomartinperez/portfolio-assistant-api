@@ -151,6 +151,9 @@ jobs:
           TEST_INTEGRATION: '1'
       - name: Exercise representative bilingual question families
         run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
+        env:
+          EVALUATION_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
