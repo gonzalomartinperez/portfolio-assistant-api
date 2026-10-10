@@ -270,11 +270,11 @@ class PublicRetrieval:
                     companies: set[str] = set()
                     for key, chunk in eligible.items():
                         company = re.search(r'company:\s*"([^"\n]+)"', chunk.content)
-                        started = re.search(
+                        start_date = re.search(
                             r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', chunk.content
                         )
-                        if company and started:
-                            dated.append((started[1], company[1], key))
+                        if company and start_date:
+                            dated.append((start_date[1], company[1], key))
                     for _, company_name, key in sorted(dated, reverse=True):
                         if company_name not in companies:
                             anchors.append(key)
