@@ -60,3 +60,35 @@ size **271,704,822 bytes**. Its full scan retains the same 257 findings and pass
 the added remediation gate with 0 critical / 0 fixable high / 58 unresolved high.
 Raw local artifacts are ignored under `artifacts/security-20261010/`; CI retains
 the full report, policy summary and bounded fixture-container logs.
+
+Final local non-root image normal SSE and active-stream SIGTERM passed; the proxy
+fixture preserved API paths, allowed the declared portfolio origin and persisted
+disconnection as interrupted (152.4 ms local delta gap). Proxy fixture success is
+not native browser or effective production proxy acceptance.
+
+## Bounded real-provider revalidation
+
+Three further authorized generations reused the owned isolated semantic experiment
+database and public corpus `ccd4dd3b0a7d222b2fed384578cc847b7dddd93b`, with
+GPT-6 Luna / medium and an explicit USD 0.50 experiment ceiling. No retries, fallback
+or extra indexing. All three reached completed terminals and passed final numeric
+marker bounds plus exact content/citation equality with HTTP history. The natural
+Spanish switch from Rampy to Teamcubation produced the documented Payway GraphRAG
+example; the subsequent technical followup retained it. Visitor context was also
+supplied using valid native paths, dark theme and compact presentation.
+
+The temporary diagnostic exited nonzero because its final assertion demanded the
+literal employer name in the answer. That was too specific: the relevant example
+is publicly described as Payway. The three answers were recovered from this owned
+experiment's checkpoints and reviewed against the committed Spanish experience
+source; an offline check confirmed Payway and absence of the prior Rampy subject
+in both topic-switch answers. Generation was not repeated to satisfy that check.
+Raw public-answer artifacts remain ignored and mode 0600. Sessions were deleted.
+This finite review closes the observed regression only, not broad claim-support or
+1000-case live quality targets.
+
+Cumulative isolated ledger: USD 0.007209 settled plus USD 0.05 held for the earlier
+cancelled run; accounted USD 0.057209. Incremental estimate: USD 0.001178. Earlier
+direct probes estimated USD 0.0000874 outside this ledger. These are configured
+price estimates, not provider invoices. The live stores retained their previous
+Neo4j patch; the new 5.26.31 verification used separate fixture stores.

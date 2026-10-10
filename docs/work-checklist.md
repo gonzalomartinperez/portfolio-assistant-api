@@ -16,7 +16,7 @@ retains its dated closure criteria; neither document grants additional authority
 
 | Priority / deliverable | Acceptance criterion | Current status and evidence |
 | --- | --- | --- |
-| 1 Conversations | Grounded bilingual answers, correct citations and topic changes | Observed citation mapping and Spanish topic-switch defects fixed in PR #39, with pure, streaming, HTTP/history and fixture continuity regressions. Live revalidation and broader claim-support quality remain pending. |
+| 1 Conversations | Grounded bilingual answers, correct citations and topic changes | Observed citation mapping and Spanish topic-switch defects fixed in PR #39, with pure, streaming, HTTP/history and fixture continuity regressions. Three real-provider turns revalidated final citations/history and the observed Spanish topic switch; broader claim-support quality remains pending. |
 | 1 Compatibility | Stable HTTP/SSE, optional visitor context, sessions/history/cancellation | Context validated and mapped separately from evidence in PR #36; OpenAPI/examples committed, legacy clients preserved. Native portfolio contract import/browser pairing pending with its owner; rollout remains disabled. |
 | 2 Security/reliability | Ownership, CSRF, isolation, budgets, termination and safe ingestion | Existing controls tested; interruption writes now drain before pool shutdown. Both database isolation guards implemented in PR #39. Candidate image removes base pip/ensurepip bundles: 58 HIGH findings remain, none with an available fix in the local scan. Assessment still required. Production blocked. |
 | 3 Backend quality | Strict boundaries/types, real persistence and image/proxy evidence | 289 tests including the shutdown-ordering regression on Python 3.14.8, Ruff/format, strict mypy, frozen install, contract/Compose/skills checks; final non-root image streaming, SIGTERM and proxy/disconnect checks pass. PR #37 current-head CI passed. |
@@ -48,7 +48,8 @@ and executed on 2026-10-10; production and further paid scope are separate decis
 ## Remaining external gates and deferred work
 
 - **Implemented:** citation/context regressions and both harness isolation guards.
-  **Pending:** bounded real-provider revalidation and broader claim-support review. Thirteen single-turn terminals do
+  **Verified:** bounded three-turn real-provider revalidation. Broader claim-support
+  review remains pending. Thirteen single-turn terminals do
   not establish broad answer quality.
 - **Pending coordination:** native portfolio context import/browser evidence and
   the missing private operations contract for real backoffice metrics. Consume
