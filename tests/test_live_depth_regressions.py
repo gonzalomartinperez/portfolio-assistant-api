@@ -273,3 +273,53 @@ def test_supported_buffered_stream_preserves_text_and_usage():
         assert items[-1] == Usage(10, 20) and events.closed
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    'text',
+    [
+        'No encontré evidencia pública suficiente para responder con certeza.',
+        'Filomena is publicly listed as being used by five institutions: UNS, UNRN, UNC, UNVM, and FAMFyG.',
+        'He has hands-on experience building retrieval systems for production AI agents, especially GraphRAG. At Rampy, he used Neo4j for graph-based retrieval, PostgreSQL/pgvector for vector search, Mem0 for memory, and reranking to improve the retrieval pipeline.',
+    ],
+)
+def test_supported_prose_and_technical_names_do_not_trigger_output_rejection(text):
+    assert not LocalLanguageDetector().rejects_output(text)
+
+
+def test_recent_roles_keep_newer_company_when_contributions_start_in_next_span():
+    commit = 'a' * 40
+    path = 'src/content/en/experience.ts'
+    contents = (
+        'company: "Newest", startedOn: "2026-09-01", contributions: ["AI workflows"]',
+        'company: "Middle", startedOn: "2025-12-01", context: "Merchant platform"',
+        'company: "Older", startedOn: "2024-12-01", contributions: ["Permissions"]',
+    )
+    chunks = tuple(
+        Chunk(
+            str(i),
+            str(i),
+            f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L2',
+            'code',
+            path,
+            1,
+            2,
+            content,
+            hashlib.sha256(content.encode()).hexdigest(),
+        )
+        for i, content in enumerate(contents)
+    )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'v', commit, chunks, frozenset({path}), ('0', '2'), semantic=True
+            )
+
+        async def relationships(self, *args, **kwargs):
+            return ('0', '2')
+
+    sources = asyncio.run(
+        PublicRetrieval(Index()).search('Compare his recent roles.', 'en')
+    )
+    assert [s.id for s in sources] == ['0', '1', '2']

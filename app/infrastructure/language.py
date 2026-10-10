@@ -13,6 +13,18 @@ def detector():
     return LanguageDetectorBuilder.from_all_languages().with_low_accuracy_mode().build()
 
 
+@lru_cache(maxsize=1)
+def output_detector():
+    return LanguageDetectorBuilder.from_languages(
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.PORTUGUESE,
+        Language.FRENCH,
+        Language.GERMAN,
+        Language.ITALIAN,
+    ).build()
+
+
 class LocalLanguageDetector:
     def supported(self, text: str) -> Locale | None:
         cleaned = re.sub(r'https?://\S+|`[^`]*`', '', text)
@@ -28,13 +40,14 @@ class LocalLanguageDetector:
         return None
 
     def rejects_output(self, text: str) -> bool:
-        """Reject confidently unsupported prose; ambiguous technical text stays usable."""
+        """Reject common unsupported prose; ambiguous technical text stays usable."""
         cleaned = re.sub(r'```[\s\S]*?```|https?://\S+|`[^`]*`', '', text)
         if len(re.findall(r'[^\W\d_]+', cleaned)) < 8:
             return False
-        confidence = detector().compute_language_confidence_values(cleaned)
+        confidence = output_detector().compute_language_confidence_values(cleaned)
         return bool(
             len(confidence) >= 2
-            and confidence[0].value - confidence[1].value >= 0.15
+            and confidence[0].value >= 0.95
+            and confidence[0].value - confidence[1].value >= 0.30
             and confidence[0].language not in (Language.ENGLISH, Language.SPANISH)
         )

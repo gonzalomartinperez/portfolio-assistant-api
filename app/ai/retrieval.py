@@ -236,6 +236,8 @@ class PublicRetrieval:
                 'qualification',
                 'education',
                 'formacion',
+                'formation',
+                'estudou',
                 'titulo',
                 'universidad',
                 'study',
@@ -243,14 +245,13 @@ class PublicRetrieval:
                 'estudio',
                 'estudios',
             }:
-                ranked.sort(
-                    key=lambda key: (
-                        not (
-                            eligible[key].path.endswith('/education.ts')
-                            and eligible[key].start_line == 1
-                        )
-                    )
-                )
+                qualification = [
+                    key
+                    for key in eligible
+                    if eligible[key].path.endswith('/education.ts')
+                    and eligible[key].start_line == 1
+                ]
+                ranked = list(dict.fromkeys(qualification + ranked))
             if relationship:
                 subjects = comparison_subjects(
                     question, tuple(chunk.content for chunk in eligible.values())
@@ -264,18 +265,20 @@ class PublicRetrieval:
                     ]
                     if matching:
                         anchors.append(max(matching, key=lambda key: scores[key]))
-                if not subjects and terms & {'roles', 'empleos', 'puestos'}:
+                if not subjects and terms & {'roles', 'empleos', 'puestos', 'trabajos'}:
+                    dated = []
                     companies: set[str] = set()
-                    for key in lexical:
-                        content = eligible[key].content
-                        company = re.search(r'company:\s*"([^"\n]+)"', content)
-                        if (
-                            company
-                            and 'contributions:' in content
-                            and company[1] not in companies
-                        ):
+                    for key, chunk in eligible.items():
+                        company = re.search(r'company:\s*"([^"\n]+)"', chunk.content)
+                        started = re.search(
+                            r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', chunk.content
+                        )
+                        if company and started:
+                            dated.append((started[1], company[1], key))
+                    for _, company_name, key in sorted(dated, reverse=True):
+                        if company_name not in companies:
                             anchors.append(key)
-                            companies.add(company[1])
+                            companies.add(company_name)
                 ranked = list(dict.fromkeys(anchors + ranked))
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
