@@ -2,28 +2,30 @@
 
 Single priority/status checkpoint for the consolidated mandate. Preserve existing
 work, six-layer boundaries and v1 consumers. Use checked PRs into **develop only**;
-no main promotion, paid calls, artifact publication or production execution is
-authorized. Critical security issues interrupt the sequence below.
+no main promotion, artifact publication or production execution is authorized.
+Critical security issues interrupt the sequence below. Paid calls require explicit
+scope/budget; the dated experiment below does not authorize ongoing usage.
 
-Current audited implementation: `15b6943` (PR #34), 196 tests passed on
-2026-10-04. Earlier tables retain dated increment evidence. The detailed open
-findings, owners and closure criteria are maintained once in
-[live-evaluation readiness](live-evaluation-readiness.md): A1 harness isolation;
-A2 live quality; A3 frontend adoption; A4 promotion controls; A5 dependency
-activation; A6 corpus retention; A7 public projection; A8 operations. A9 closes
-documentation drift only. None of these pending runtime/external gates is complete
-merely because its handoff is documented.
+Current audited runtime: `7f3e5e8fc821df3c1adaa3dfb4b7e97228d08f9f` (PR #37).
+Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
+[2026-10-10 evidence and blockers](verification/runtime-2026-10-10.md) records
+237 real-service tests, image/proxy checks, source revisions and the bounded
+real-provider experiment. The older [readiness audit](live-evaluation-readiness.md)
+retains its dated closure criteria; neither document grants additional authority.
 
-| Priority / deliverable | Acceptance criterion | Status and evidence |
+| Priority / deliverable | Acceptance criterion | Current status and evidence |
 | --- | --- | --- |
-| 1 Conversations | Direct public evidence, bounded bilingual context, safe topic changes and role-fit retrieval | Implemented history/evidence separation and answer-first provider contract in #19; source 5742961 fixes named-example topic changes, reference refinements and target-role parsing. Actual fixture comparisons in the evaluation guide; live reasoning/tone unverified. |
-| 1 Compatibility | Published HTTP/SSE, sessions/history, true provider streaming, cancellation and interruption | v1 artifacts unchanged. Frontend a9a85bb consumes snapshot 6b1e65f; current handoff pins compatible 5742961. `/embed` primary, `/` demo, same-origin API. Committed embed protocol reviewed; browser verification remains the frontend owner’s gate. |
-| 2 Security and reliability | Ownership, isolation, Origin/CSRF, atomic budgets, limits, recovery and safe ingestion | Existing suite covers these controls; #22 added serialized provider-input budget guard. Current increment tests assistant-only Origin with host-scoped Secure cookie and rejected parent-origin mutations. |
-| 3 Backend quality | Architecture, Google-adapted Python conventions, typing, real databases, migrations, retrieval, image/proxy smoke | Prior latest CI passed 85 tests (67 offline + 18 integration), image and proxy checks. Current local source 5742961 passes 97 tests, lint, typing, contract drift and skill validation; current-head Actions remains the merge gate. |
-| 4 Skills | Small canonical catalog, portable discovery, meaningful validation | Complete: five canonical `.claude/skills` with relative Codex links, validator and 12 tests. Codex discovery and Claude discovery/expansion tested; natural-language model selection remains unverified. See agent-skills.md. |
-| 5 CI | Pinned actions, parallel checks, minimal permissions, required aggregate, failure artifacts | Implemented; Dependabot #17/#18 merged. Actual final prior run 36332774736 passed (static 22s, integration/container 92s, gate 2s). PR #23 current-head Actions passed. New dependency-policy work requires its own checked PR. |
-| 6 Deployment handoff | API image/runtime/migrations for Coolify managed by vps-ops | Application contract complete; current update supersedes direct portfolio access with same-origin `/embed` target. Production publication, Coolify and VPS tests remain unauthorized/unverified. Frozen shared templates are transfer references only. |
-| Final | Reviewed increment, current-head CI, committed contracts and exact results | Backend increment integrated by PR #23 at 4186664 after current-head CI. Dependency automation is a separate CI increment; GitHub is authoritative for merge status. No main or production action. |
+| 1 Conversations | Grounded bilingual answers, correct citations and topic changes | Partial: live single-turn experiment executed; numeric citation mapping and a natural Spanish topic change failed. Explicit regression/remediation gates in the dated evidence. |
+| 1 Compatibility | Stable HTTP/SSE, optional visitor context, sessions/history/cancellation | Context validated and mapped separately from evidence in PR #36; OpenAPI/examples committed, legacy clients preserved. Native portfolio contract import/browser pairing pending with its owner; rollout remains disabled. |
+| 2 Security/reliability | Ownership, CSRF, isolation, budgets, termination and safe ingestion | Existing controls tested; interruption writes now drain before pool shutdown. Image has 62 HIGH scanner findings needing assessment/remediation; canonical live harness still lacks complete Neo4j isolation guard. Production blocked. |
+| 3 Backend quality | Strict boundaries/types, real persistence and image/proxy evidence | 237 tests, Ruff/format, strict mypy, frozen install, contract/Compose/skills checks; final non-root image streaming, SIGTERM and proxy/disconnect checks pass. PR #37 current-head CI passed. |
+| 4 Skills | Focused canonical catalog and portable discovery | Five canonical skills with relative Codex links, validator/scenarios; previously exercised client discovery. Updated release skill reflects application/database scope. Model-based natural-language selection remains unverified. |
+| 5 CI/dependencies | Pinned parallel checks, minimal permissions, protected merges | PR #37 actual static 31 s, integration 179 s, gate 3 s. Strict develop freshness and required checks verified. Dependency automation activation and manual Actions major PR #31 remain separate gates. |
+| 6 Deployment handoff | Image/runtime/databases for vps-ops-managed Coolify | Contract updated with local database ceilings, runtime-only configuration, native CORS and backoffice ownership. VPS allocation, image publication, production execution and recovery validation remain unverified/unauthorized. |
+| Final | Integrated increments with precise release recommendation | PRs #36/#37 merged into develop; main untouched. This is a verified application increment, not production release approval. |
+
+The public-knowledge/coverage sections below retain earlier implementation history;
+the current table and dated verification define remaining acceptance gates.
 
 ## Current public-knowledge increment · 2026-10-03
 
@@ -39,15 +41,19 @@ merely because its handoff is documented.
 Pending live evaluation is not a claimed capability. Extra LLM planning/reranking,
 budget warning notifications and corpus pruning remain deferred until their need,
 cost and operational policy are reviewed. The existing deterministic LangGraph
-retrieve/answer flow remains intentional; no paid evaluation or deployment authorized.
+retrieve/answer flow remains intentional. A bounded paid evaluation was authorized
+and executed on 2026-10-10; production and further paid scope are separate decisions.
 
 ## Remaining external gates and deferred work
 
-- **Blocked on authorization:** live-model usefulness, role-fit reasoning, bilingual
-  personality and adversarial evaluation; fixture excerpts cannot prove these.
-- **Pending coordination:** paired `/embed` browser evidence and frontend deployment-document
-  reconciliation with its newly committed embed protocol. Continue independent API checks; never consume mutable sibling files.
-- **Deferred:** real portfolio integration and cross-tab conversation transfer.
+- **In progress:** close observed live citation/context defects and complete harness
+  isolation before extending paid evaluation. Thirteen single-turn terminals do
+  not establish broad answer quality.
+- **Pending coordination:** native portfolio context import/browser evidence and
+  the missing private operations contract for real backoffice metrics. Consume
+  only committed snapshots; fixture dashboards are not integration proof.
+- **Deferred:** enabling the real portfolio assistant; cross-tab transfer is not
+  a release requirement.
 - **Outside application ownership:** Coolify/Traefik, DNS/TLS, resource allocation,
   encrypted off-server restoration and deployment belong to private vps-ops.
   Runtime contract is ready for its review; no registry digest exists until an

@@ -45,9 +45,9 @@ configuration, writable paths and health endpoint. Private vps-ops owns producti
 composition and Coolify execution. This repository supplies the API runtime contract.
 No DNS/deployment is authorized.
 
-Actual portfolio integration is deferred. The consolidated mandate supersedes the
-previous direct-panel integration plan; see the embedded-experience contract below.
-No portfolio or frontend working-tree change is part of this handoff.
+Current integration: native portfolio UI, disabled until separately approved;
+authenticated backoffice at the assistant origin. The native context section below
+supersedes earlier iframe guidance. No sibling source is part of this handoff.
 
 Frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf` now publishes its
 standalone image/configuration handoff. The retained transfer template includes its UID 1000
@@ -80,7 +80,8 @@ root_path. This revision does not authorize image publication or deployment.
 
 ## Embedded-experience contract
 
-The primary UI is frontend `/embed`; `/` is a secondary testing/demo surface.
+This section records the former iframe plan, not current deployment requirements.
+The then-primary UI was frontend `/embed`; `/` was a secondary testing/demo surface.
 Both use same-origin relative `/api/v1/...` through the vps-ops-owned proxy, which
 preserves the prefix. A parent iframe host neither receives the session credential
 nor needs API CORS permission. Keep the assistant origin as the target allowlist;

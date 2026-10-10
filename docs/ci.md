@@ -155,3 +155,12 @@ Python 3.14 Debian slim manifest. Privileged dependency/release scripts intentio
 remain Python 3.12-compatible because those trusted jobs use the hosted runner
 system interpreter without installing PR dependencies. Ruff per-file targets and
 a grammar test enforce this distinction. They do not fall back for application checks.
+
+
+Current container increment: PR #37, source
+`badf49dd931660fe674073abc70d3a8c696a37f5`, passed
+[Quality run 38021519477](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38021519477).
+Static/offline took 31 s; real services/container 179 s; aggregate 3 s. Integration
+included the updated runtime build, tool-exclusion checks and shutdown/proxy smoke.
+These jobs still run in parallel and retain disjoint suites. The cold security-package
+layer differs from the prior build, so these times are not a controlled speedup claim.
