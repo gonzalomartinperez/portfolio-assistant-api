@@ -78,7 +78,7 @@ Production is coordinated exclusively by private vps-ops using Coolify. The API
 [deployment contract](deployment-contract.md) preserves `/api/v1` paths with empty
 root_path. This revision does not authorize image publication or deployment.
 
-## Embedded-experience contract (historical)
+## Embedded-experience contract
 
 This section records the former iframe plan, not current deployment requirements.
 The then-primary UI was frontend `/embed`; `/` was a secondary testing/demo surface.
