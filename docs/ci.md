@@ -197,3 +197,24 @@ assessment. The API's all-CRITICAL gate is unchanged. Full Neo4j Java scanning i
 recorded separately for release assessment because its advisory database is ~936 MiB;
 it is not represented as a green per-PR security gate. No extra API build or paid
 provider call was added. Actual current-head Actions remains the merge gate.
+
+
+## Executed overnight verification
+
+Actual current-head Quality runs on 2026-10-10, before protected develop merges:
+
+| Increment | Run | Static/offline | Real services/container | Aggregate |
+| --- | --- | --- | --- | --- |
+| Runtime security, PR #40 | [38024426083](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38024426083) | 27 s | 133 s | 3 s |
+| PostgreSQL image, PR #41 | [38025993266](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38025993266) | 36 s | 219 s | 3 s |
+| Reviewed artifact action, PR #31 | [38026495119](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38026495119) | 30 s | 148 s | 3 s |
+
+All jobs passed. These are hosted-runner observations, not controlled performance
+comparisons. PR #41 adds the necessary PostgreSQL build and complete scan; no test
+coverage was removed for speed. Its downloaded diagnostics confirmed 25 integration
+tests with zero failures/errors and full image reports. Local combined verification
+passed 291 tests. PR #31 changed four SHA-pinned upload-artifact references to 7.0.2;
+the successful run exercised the updated action. This major update received manual
+review, not blanket Dependabot auto-merge permission. Native protection remained
+strict and the current head was matched at merge. Main and publication/deployment
+workflows were not activated.
