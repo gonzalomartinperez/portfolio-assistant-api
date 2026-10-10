@@ -7,7 +7,8 @@ Critical security issues interrupt the sequence below. Paid calls require explic
 scope/budget; the dated experiment below does not authorize ongoing usage.
 
 Current integrated runtime: `ab671fa90877113eecc6e3305f8c61d27052de97` (PR #40).
-The runtime security-patch increment is verified locally and awaiting current-head CI.
+PR #40 runtime security patches passed current-head CI. The subsequent database-image
+increment is verified locally and awaiting its current-head CI.
 Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
 [2026-10-10 evidence and blockers](verification/runtime-2026-10-10.md) records
 237 real-service tests, image/proxy checks, source revisions and the bounded

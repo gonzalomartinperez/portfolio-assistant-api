@@ -19,7 +19,8 @@ production deployment remain unverified. See [verification status](IMPLEMENTATIO
 
 ## Run a free local demo
 
-Use Linux/WSL, Docker Compose and uv from this repository root:
+Use Linux/WSL, Docker Compose and **uv 0.13.0** from this repository root.
+uv provisions the pinned Python 3.14.8; older uv download metadata may not support it:
 
 ```sh
 uv sync --frozen
@@ -58,6 +59,7 @@ requires evaluation. See [continuous knowledge synchronization](docs/knowledge-s
 - [1000-question bilingual evaluation bank and safe harness](docs/assistant-evaluation.md)
 - [Security/privacy and residual risks](docs/threat-model.md) · [private reporting](SECURITY.md)
 - [Configuration](docs/environment.md) · [operations](docs/deployment.md) · [Coolify runtime handoff](docs/deployment-contract.md)
+- [vps-ops dispatch request](docs/vps-ops-request.md) · [database image evidence](docs/verification/database-images-2026-10-10.md)
 - [Shared VPS decision](docs/adrs/002-shared-kvm4-origin.md) · [CI jobs and release gates](docs/ci.md)
 - [Contributing and Python conventions](CONTRIBUTING.md) · [release checklist](docs/release-checklist.md)
 

@@ -1,6 +1,6 @@
 # Deterministic local demo
 
-Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv and Python 3.14
+Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv 0.13.0 and Python 3.14.8
 (`uv` installs the pinned interpreter when needed). No model key is needed.
 All commands run from this repository root. The frontend is independently owned;
 these instructions do not modify its checkout or services.
