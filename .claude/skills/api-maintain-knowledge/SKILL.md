@@ -53,3 +53,13 @@ paraphrases in one development/holdout split. The fixture harness supports the f
 bank and representative small samples; record exact corpus revisions and distinguish
 terminal transport success from reviewed factual quality. Never ingest evaluation
 questions as public facts or tune prompts using held-out answers.
+
+For an authorized deep live evaluation, follow the dated methodology and limits in
+[the 244-turn evidence](../../../docs/verification/live-depth-2026-10-10.md). Freeze
+selection and baseline bytes before fixes; label reviewed families as exposed, not
+fresh holdout. Distinguish actual generation from local abstention and recovered
+DB completion from observed HTTP terminals. Validate final/history equality, cited
+span support and cleanup separately. Do not replay paid calls on interruption.
+Comparison and degree regressions belong in `tests/test_live_depth_regressions.py`;
+keep qualification and adjacent role spans verified and bounded. Language guards
+need supported technical/short-prose regressions, not only foreign rejection tests.

@@ -22,6 +22,19 @@ def explicit_locale(question: str) -> Locale | None:
     )
     if explicit:
         return 'en' if explicit[1].lower() in ('english', 'inglés', 'ingles') else 'es'
+    preference = re.search(
+        r'(?i)^\s*(?:(?:now|ahora)\s+)?(?:(?:in|en)\s+)?'
+        r'(english|inglés|ingles|spanish|español)(?:\s+(?:please|por favor))?[.!?]?\s*$',
+        question,
+    ) or re.search(
+        r'(?i)^\s*(?:switch to|cambia a|hablá|habla)\s+'
+        r'(english|inglés|ingles|spanish|español)\b',
+        question,
+    )
+    if preference:
+        return (
+            'en' if preference[1].lower() in ('english', 'inglés', 'ingles') else 'es'
+        )
     return None
 
 

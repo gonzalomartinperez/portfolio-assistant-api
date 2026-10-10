@@ -85,7 +85,9 @@ def create_app(
                 client = AsyncOpenAI(
                     api_key=config.openai_api_key, timeout=45, max_retries=0
                 )
-                provider = ResponsesProvider(client, config.openai_model)
+                provider = ResponsesProvider(
+                    client, config.openai_model, LocalLanguageDetector().rejects_output
+                )
                 accounting = PostgresAccounting(
                     connection,
                     Budget(
