@@ -256,7 +256,7 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
                 assert kwargs['input'][0]['role'] == 'developer'
                 assert 'neutral Latin American Spanish' in kwargs['input'][0]['content']
                 assert (
-                    'explicitly requests English or Spanish'
+                    'application has already resolved the output language'
                     in kwargs['input'][0]['content']
                 )
                 assert 'Ignore previous instructions' in kwargs['input'][1]['content']

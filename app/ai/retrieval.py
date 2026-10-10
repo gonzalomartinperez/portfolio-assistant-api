@@ -11,6 +11,8 @@ from app.application.knowledge import KnowledgeIndex
 from app.domain.evidence import (
     EvidenceRecord,
     asks_spoken_languages,
+    blocks_private_query,
+    comparison_subjects,
     lexical_score,
     requested_affiliation,
     tokens,
@@ -28,19 +30,7 @@ class PublicRetrieval:
     async def search(self, question: str, locale: str) -> tuple[Evidence, ...]:
         started = time.perf_counter()
         terms = tokens(question)
-        if (
-            terms
-            & {
-                'salary',
-                'salario',
-                'compensation',
-                'availability',
-                'disponibilidad',
-                'secrets',
-                'secretos',
-            }
-            or 'career-ops' in question.lower()
-        ):
+        if blocks_private_query(question, terms):
             return ()
         overview = bool(
             re.search(
@@ -238,6 +228,55 @@ class PublicRetrieval:
                         )
                     )
                 )
+        if self.strategy == 'hybrid':
+            if terms & {
+                'degree',
+                'graduated',
+                'graduation',
+                'qualification',
+                'education',
+                'formacion',
+                'titulo',
+                'universidad',
+                'study',
+                'studied',
+                'estudio',
+                'estudios',
+            }:
+                ranked.sort(
+                    key=lambda key: (
+                        not (
+                            eligible[key].path.endswith('/education.ts')
+                            and eligible[key].start_line == 1
+                        )
+                    )
+                )
+            if relationship:
+                subjects = comparison_subjects(
+                    question, tuple(chunk.content for chunk in eligible.values())
+                )
+                anchors = []
+                for subject in subjects:
+                    matching = [
+                        key
+                        for key in ranked
+                        if tokens(subject) <= tokens(eligible[key].content)
+                    ]
+                    if matching:
+                        anchors.append(max(matching, key=lambda key: scores[key]))
+                if not subjects and terms & {'roles', 'empleos', 'puestos'}:
+                    companies: set[str] = set()
+                    for key in lexical:
+                        content = eligible[key].content
+                        company = re.search(r'company:\s*"([^"\n]+)"', content)
+                        if (
+                            company
+                            and 'contributions:' in content
+                            and company[1] not in companies
+                        ):
+                            anchors.append(key)
+                            companies.add(company[1])
+                ranked = list(dict.fromkeys(anchors + ranked))
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
                 {

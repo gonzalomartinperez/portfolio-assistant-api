@@ -208,3 +208,68 @@ def verified(row: EvidenceRecord, source_commit: str, known_paths: set[str]) -> 
         row['url'] == expected
         and hashlib.sha256(row['content'].encode()).hexdigest() == row['content_hash']
     )
+
+
+def blocks_private_query(question: str, terms: set[str]) -> bool:
+    if 'career-ops' in question.lower() or terms & {
+        'salary',
+        'salario',
+        'compensation',
+        'availability',
+        'disponibilidad',
+    }:
+        return True
+    if not terms & {'secret', 'secreto', 'secrets', 'secretos'}:
+        return False
+    professional = bool(terms & {'management', 'gestion', 'infisical'})
+    disclosure = bool(
+        terms
+        & {
+            'reveal',
+            'revela',
+            'revelar',
+            'print',
+            'imprime',
+            'mostrar',
+            'mostrame',
+            'muestra',
+            'show',
+            'expose',
+            'private',
+            'privados',
+            'password',
+            'contrasena',
+            'clave',
+            'key',
+            'credentials',
+            'credenciales',
+            'export',
+        }
+    )
+    return not professional or disclosure
+
+
+def comparison_subjects(question: str, contents: tuple[str, ...]) -> tuple[str, ...]:
+    """Use only named subjects present verbatim in public evidence, never implied facts."""
+    names = re.findall(r'\b[A-Z][a-zA-Z0-9.-]{2,}\b', question)
+    excluded = {
+        'gonzalo',
+        'english',
+        'spanish',
+        'compare',
+        'what',
+        'which',
+        'how',
+        'compara',
+    }
+    return tuple(
+        dict.fromkeys(
+            name
+            for name in names
+            if name.lower() not in excluded
+            and any(
+                re.search(r'\b' + re.escape(name) + r'\b', content)
+                for content in contents
+            )
+        )
+    )

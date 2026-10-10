@@ -26,3 +26,15 @@ class LocalLanguageDetector:
         if confidence[0].language == Language.SPANISH:
             return 'es'
         return None
+
+    def rejects_output(self, text: str) -> bool:
+        """Reject confidently unsupported prose; ambiguous technical text stays usable."""
+        cleaned = re.sub(r'```[\s\S]*?```|https?://\S+|`[^`]*`', '', text)
+        if len(re.findall(r'[^\W\d_]+', cleaned)) < 8:
+            return False
+        confidence = detector().compute_language_confidence_values(cleaned)
+        return bool(
+            len(confidence) >= 2
+            and confidence[0].value - confidence[1].value >= 0.15
+            and confidence[0].language not in (Language.ENGLISH, Language.SPANISH)
+        )
