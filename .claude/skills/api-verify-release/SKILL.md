@@ -106,3 +106,8 @@ Verify the isolated OTLP receiver, auth/schema and cancellation regressions with
 services are authorized. Keep provider health, observed execution totals, sampled
 traces and configured cost estimates distinct. Do not deploy monitoring or expose
 internal endpoints based on this skill.
+
+For public README/gallery changes, use [capture provenance](../../../docs/verification/readme-gallery.md).
+Publish actual interface captures with supported states and intrinsic proportions, never
+private fixtures/credentials or screenshots presented as production evidence. Verify
+Markdown and HTML image links; keep deployment and provider claims tied to recorded checks.

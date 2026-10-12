@@ -1,77 +1,154 @@
 # Portfolio Assistant API
 
-A bilingual, evidence-grounded assistant for Gonzalo Martín Pérez's public
-professional profile. It answers questions about projects, experience, education
-and skills, carries context across follow-ups, and streams responses with source
-links visitors can inspect.
+**A grounded conversation about Gonzalo’s work — backed by public evidence.**
 
-![Technology stack: Python 3.14, FastAPI, LangGraph, PostgreSQL 18, pgvector, Neo4j 5.26, OpenAI and private OpenTelemetry](docs/assets/technology-stack.svg)
+The backend for Gonzalo Martín Pérez’s professional assistant: bilingual conversations,
+public-portfolio synchronization, hybrid retrieval, streamed answers and private
+operational measurements. The public chat lives in the portfolio; this repository
+owns the reasoning, contracts and persistence behind it.
 
-The [portfolio](https://github.com/gonzalomartinperez/portfolio) owns the native chat
-interface and approved public knowledge. The
-[authenticated backoffice](https://github.com/gonzalomartinperez/portfolio-assistant-backoffice)
-owns the custom operational dashboard. This repository owns API/session behavior,
-retrieval, generation, persistence and the private operational contract.
+![Python 3.14, FastAPI, LangGraph 1.x, PostgreSQL 18, pgvector, Neo4j 5.26, OpenAI and private OpenTelemetry](docs/assets/technology-stack.svg)
 
-**Status:** implemented and locally verified, with fixture and authorized real-model
-evidence reported separately. The native portfolio assistant remains disabled.
-Production deployment, image publication and shared monitoring activation are not
-performed here; private vps-ops manages Coolify on the future Hostinger VPS.
+[Explore the assistant](#the-assistant-in-use) · [Run locally](#quick-start-without-a-model-key) · [Architecture](#how-it-works) · [Verification](#verification-and-evidence) · [Documentation](#documentation-map)
 
-## Assistant interface preview
+> **Current state:** implemented and verified locally with deterministic fixtures and
+> separately documented real-model evaluations. The public portfolio assistant remains
+> disabled. Image publication, production deployment and monitoring activation are separate approvals.
 
-The API powers the native conversation UI owned by the portfolio. These actual
-production-build browser captures show the expanded and compact interfaces replaying
-public answers recorded in the authorized GPT-6 Luna evaluation. The capture harness
-uses deterministic HTTP/SSE fixtures; these are not new live calls or production
-availability proof. The assistant remains disabled on the public portfolio.
+## What this backend does
 
-![Expanded native assistant in dark mode, showing a response, public source link, answer actions and composer](docs/assets/assistant/expanded-dark-en.png)
+| Capability | What a visitor or operator gets |
+| --- | --- |
+| Evidence-grounded answers | Projects, experience, education and skills explained with message-specific public sources. Unknown facts remain uncertain. |
+| Context-aware conversation | Follow-up questions retain the visitor’s topic; assistant claims never become retrieval evidence. |
+| English and Spanish | US English and neutral Latin American Spanish, with explicit handling of unsupported languages. |
+| Current portfolio knowledge | A synchronization worker observes approved public revisions and activates complete, versioned indexes. |
+| Reliable streaming | Explicit completion, interruption and cancellation; owned sessions/history and CSRF protection. |
+| Private operations | Availability, corpus freshness, execution outcomes, latency and estimated usage without exposing transcripts. |
 
-![Compact native assistant panel in dark mode, showing the same shared conversation interface](docs/assets/assistant/compact-dark-en.png)
+The live provider is **OpenAI only**, using **GPT-6 Luna with medium reasoning effort**.
+There is no alternate-model fallback or automatic billed generation retry. An unavailable
+provider produces an honest unavailable state. Cost figures are configured estimates,
+not an OpenAI invoice; reservations and settled usage remain distinct.
 
-Capture source: [portfolio revision `bcae79e704da`](https://github.com/gonzalomartinperez/portfolio/tree/bcae79e704daca02cfe0ef488377de60b85dfff8),
-with [browser-test provenance](https://github.com/gonzalomartinperez/portfolio/blob/bcae79e704daca02cfe0ef488377de60b85dfff8/docs/verification/native-assistant.md).
-See [recapture details and limitations](docs/verification/readme-captures-2026-10-12.md).
-The UI is maintained in that repository; these documentation images create no runtime
-dependency and do not enable the assistant.
+## The assistant in use
 
-## Conversation and knowledge flow
+These are actual browser captures of the native portfolio UI. Completed answers and
+citations are replayed from an authorized GPT-6 Luna evaluation through deterministic
+HTTP/SSE fixtures. They show the application, not a mockup or an enabled production site.
+
+### Expanded conversation
+
+A recruiter’s question, a substantive answer, inspectable source spans and a follow-up
+composer in the same conversation surface.
+
+<p align="center">
+  <a href="docs/assets/gallery/02-expanded-conversation.png"><img src="docs/assets/gallery/02-expanded-conversation.png" width="900" alt="Expanded native conversation showing a recruiter question, a recorded model answer, three public source links and an unsent follow-up"></a>
+</p>
+
+### From first question to recovery
+
+Click a frame to inspect the original-resolution PNG.
+
+<table>
+  <tr>
+    <td valign="top" width="50%"><strong>1 · A welcoming starting point</strong><br>Identity, scope and a useful starter question.<br><a href="docs/assets/gallery/01-welcome.png"><img src="docs/assets/gallery/01-welcome.png" width="420" alt="Compact assistant empty state with Gonzalo’s avatar, introductory copy, starter question and composer"></a></td>
+    <td valign="top" width="50%"><strong>2 · A compact, sourced answer</strong><br>A recorded achievement with estimates clearly qualified.<br><a href="docs/assets/gallery/03-compact-sources.png"><img src="docs/assets/gallery/03-compact-sources.png" width="420" alt="Compact assistant displaying a question about a Rampy achievement, a qualified answer, public sources and follow-up composer"></a></td>
+  </tr>
+  <tr>
+    <td valign="top"><strong>3 · Conversation controls</strong><br>History and conversation actions belong to the shared native feature.<br><a href="docs/assets/gallery/04-history.png"><img src="docs/assets/gallery/04-history.png" width="420" alt="Native conversation drawer with a new-conversation action and saved-conversation controls"></a></td>
+    <td valign="top"><strong>4 · Honest interruption</strong><br>Partial output remains readable; recovery checks saved history.<br><a href="docs/assets/gallery/05-interrupted.png"><img src="docs/assets/gallery/05-interrupted.png" width="420" alt="Interrupted response with preserved partial text and an explicit connection-ended notice"></a></td>
+  </tr>
+</table>
+
+<details>
+<summary><strong>Mobile, Spanish/light theme and unavailable-service states</strong></summary>
+
+The narrow viewport uses the same conversation implementation. Long responses scroll
+inside the panel; the composer remains separate from the reading surface.
+
+<p align="center">
+  <a href="docs/assets/gallery/07-mobile-es.png"><img src="docs/assets/gallery/07-mobile-es.png" width="320" alt="Mobile native assistant in Spanish and the light theme, with a real recorded public-answer replay and visible composer"></a>
+  <a href="docs/assets/gallery/06-unavailable.png"><img src="docs/assets/gallery/06-unavailable.png" width="320" alt="Native assistant showing a safe unavailable-service notice and recovery controls"></a>
+</p>
+
+</details>
+
+[Gallery provenance and limits](docs/verification/readme-gallery.md) distinguish recorded
+model output, fixture failures and browser emulation. Captures do not prove physical-device,
+production-routing or live-provider availability. No credentials or private visitor messages
+are included. The portfolio working tree and disabled rollout were not changed.
+
+## How it works
 
 ```mermaid
 flowchart LR
-    P[Public portfolio revision] --> W[Source observation and indexing]
-    W --> V[(PostgreSQL and pgvector)]
-    W --> G[(Neo4j evidence graph)]
-    U[Native chat visitor] --> H[FastAPI session and CSRF boundary]
-    H --> L[LangGraph conversation workflow]
-    L --> V
-    L --> G
-    L --> O[OpenAI: GPT-6 Luna / medium]
-    O --> S[Incremental SSE with cited sources]
-    S --> U
-    H --> C[(Owned conversation history)]
+    subgraph Knowledge[Versioned public knowledge]
+        P[Approved portfolio revision] --> W[Observe and index]
+        W --> V[(PostgreSQL + pgvector)]
+        W --> G[(Neo4j evidence graph)]
+    end
+    U[Native portfolio chat] --> H[Session + CSRF boundary]
+    H --> L[LangGraph workflow]
+    V --> L
+    G --> L
+    L --> O[OpenAI · GPT-6 Luna]
+    O --> S[Validated answer + source mapping]
+    S --> E[Incremental SSE]
+    E --> U
+    S --> C[(Owned conversation history)]
 ```
 
-Only approved public content enters retrieval. Each active index pins an immutable
-source revision; continuous synchronization publishes a new complete index before
-replacing the previous one. Private career-ops material and evaluation questions
-are excluded. Freshness checks can reject generation while knowledge is stale.
+**Retrieve → ground → generate → validate → persist.** Vector retrieval and graph facts
+provide public evidence. The application validates citations against that evidence and
+associates them with the persisted answer. Language and presentation context can guide
+an answer, but cannot replace evidence or system instructions.
 
-The only live model provider is OpenAI. An unavailable provider produces a safe
-unavailable response; there is no alternate-model fallback or automatic billed
-retry. Neutral Latin American Spanish and US English are supported. Unknown facts
-remain uncertain rather than becoming invented achievements or hiring guarantees.
+The knowledge worker observes the published public source, pins an immutable revision,
+and publishes a complete index before switching the active version. Freshness policy can
+reject generation while knowledge is stale. Private career-ops material and authored
+evaluation questions never enter the runtime corpus.
 
-## Free local setup
+### Boundaries and ownership
 
-Use Linux/WSL, Docker Compose and **uv 0.13.0**. uv installs **Python 3.14.8**.
-No OpenAI key is required for the deterministic fixture mode.
+```mermaid
+flowchart TB
+    B[Bootstrap · composition and lifecycle] --> P[Presentation · HTTP and SSE]
+    P --> A[Application · use cases and ports]
+    A --> D[Domain · pure policy and state]
+    B --> AI[AI · injected workflow and retrieval]
+    AI --> A
+    B --> I[Infrastructure · provider, stores and source]
+    I --> A
+    I --> D
+```
+
+| Location | Responsibility |
+| --- | --- |
+| `app/domain`, `app/application` | Framework-independent policy, explicit lifecycle and small ports. |
+| `app/ai` | LangGraph orchestration and retrieval with injected capabilities. |
+| `app/infrastructure`, `app/presentation` | Concrete I/O, validation, HTTP and SSE boundaries. |
+| `contracts`, `migrations`, `evals` | Pinned wire artifacts, explicit schema evolution and reproducible evaluation cases. |
+
+Import-boundary tests enforce this direction. Strict mypy covers the inner layers and AI
+contracts. Cancellation, deadlines and cleanup are part of application behavior.
+
+The [portfolio](https://github.com/gonzalomartinperez/portfolio) owns the public UI and
+approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-assistant-backoffice)
+owns authenticated operations. Private **vps-ops** owns Coolify, proxy/TLS, production
+composition, secrets, release selection and recovery. This repository owns its application
+image, migrations and runtime contract.
+
+## Quick start without a model key
+
+**Requirements:** Linux/WSL, Git, Docker Compose and uv **0.13.0**. Frozen installation
+uses Python **3.14.8**. Run from this repository’s root.
 
 ```sh
 uv sync --frozen
-export ASSISTANT_PROJECT=assistant-local-demo
-export POSTGRES_PORT=55451 NEO4J_PORT=57701 NEO4J_HTTP_PORT=57501
+export ASSISTANT_PROJECT=assistant-readme-demo
+# Choose unused loopback ports before sourcing the fixture environment.
+export POSTGRES_PORT=55463 NEO4J_PORT=57713 NEO4J_HTTP_PORT=57513
 source scripts/fixture-env.sh
 docker compose up --build -d --wait
 uv run python -m app.migrate
@@ -79,50 +156,48 @@ uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aeb
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
-Choose unused ports and a distinct project name. In another terminal, run
-`uv run python -m scripts.demo` or add `--locale es`. See
-[local development](docs/local-development.md) for environment setup and isolated
-real-service verification. Copy only safe configuration placeholders; keep real
-secrets in the ignored `.env.local` or Coolify runtime secret delivery.
+The source command downloads one pinned, approved public portfolio revision. Fixture
+mode makes **no paid model or embedding calls**. In a second terminal:
 
-## Architecture
-
-```mermaid
-flowchart TB
-    B[Bootstrap: composition and lifecycle] --> HTTP[Presentation: HTTP and SSE]
-    HTTP --> A[Application: conversation operations and ports]
-    A --> D[Domain: pure policy and state]
-    B --> AI[AI: injected workflow and retrieval]
-    AI --> A
-    B --> I[Infrastructure: databases, public source, OpenAI and telemetry]
-    I --> A
-    I --> D
+```sh
+uv run python -m scripts.demo
+uv run python -m scripts.demo --locale es
 ```
 
-Feature behavior stays independent from concrete network/storage SDKs. Architecture
-tests enforce import direction; strict mypy checks domain, application and AI
-contracts. Async streaming owns cancellation, deadline enforcement and cleanup.
-Source markers are validated and mapped to the correct persisted answer.
+The demo establishes a session, sends a question, receives SSE output and deletes its
+session without printing credentials. Liveness is `/health/live`; readiness is
+`/health/ready` and requires migrations, an active corpus and graph connectivity.
 
-## Private operational dashboard
+To stop the selected fixture services, use `docker compose stop` from the terminal
+where the fixture environment is loaded. Preserve volumes; do not use `down -v` against
+shared environments. [Local development](docs/local-development.md) covers alternate
+ports, real-service tests and local source indexing. [Environment](docs/environment.md)
+explains private `.env.local` configuration and authorized real-provider setup.
+
+## Public and private contracts
+
+| Surface | Contract |
+| --- | --- |
+| Sessions and conversations | [`/api/v1` OpenAPI](contracts/openapi.json), including session ownership, CSRF, history/deletion and optional portfolio context. |
+| Incremental answers | [SSE schema](contracts/sse.schema.json) and [examples](contracts/sse.examples.json); a broken connection is not completion. |
+| Starting questions | `/api/v1/knowledge/suggestions`, grounded in the active approved corpus. |
+| Operational snapshot | `/internal/ops/v1/status`, authenticated server-to-server, excluded from public OpenAPI. |
+| Operational metrics | `/internal/ops/v1/metrics`, private bearer access and cache exclusion. |
 
 ```mermaid
 flowchart LR
-    API[API operational measurements] --> DB[(Anonymous PostgreSQL facts)]
-    DB --> OPS[Private authenticated status / metrics]
-    OPS --> BO[Backoffice server: OAuth-protected custom UI]
-    API -. Optional manual OTLP .-> COL[Private collector: vps-ops]
-    COL -. Deployment-owned .-> OBS[Prometheus / Grafana]
+    API[Bounded anonymous measurements] --> DB[(PostgreSQL operational facts)]
+    DB --> OPS[Private status + metrics]
+    OPS --> BO[OAuth-protected backoffice server]
+    API -. Opt-in manual OTLP .-> COL[Private collector · vps-ops]
+    COL -. Deployment-owned .-> OBS[Prometheus + Grafana]
 ```
 
-The implemented server-to-server API exposes observed outcomes, first-fragment
-latency, source freshness, configured usage estimates and sampled phase timings.
-There are no prompts, transcripts, credentials or visitor identifiers in telemetry.
-Private OTLP export is opt-in; collector failures do not retry or interrupt chat.
-
-Prometheus/Grafana deployment and the paired authenticated-browser dashboard remain
-separate acceptance gates. Health checks do not make paid model calls or certify
-provider availability. Read [the private contract and limitations](docs/private-observability.md).
+No prompts, transcripts, session credentials or visitor identities enter operational
+payloads. Manual OTLP export is opt-in; exporter failures do not retry chat generation.
+Health checks never call the paid provider. Shared Prometheus/Grafana deployment and
+end-to-end production dashboard pairing remain unverified. See
+[the private operations contract](docs/private-observability.md).
 
 ## Verification and evidence
 
@@ -134,42 +209,51 @@ uv run pytest -q
 uv run python -m scripts.validate_skills
 uv run python -m scripts.validate_compose
 uv run python -m contracts.export
+git diff --exit-code contracts
 ```
 
-The ordinary suite skips explicitly marked database integration tests. After preparing
-isolated services, run `TEST_INTEGRATION=1 uv run pytest -q`. CI runs static/offline
-checks and real-service/container checks in parallel, with frozen dependencies,
-pinned actions and a required aggregate gate. Contract export must leave no drift.
+For an isolated prepared database/corpus, use `TEST_INTEGRATION=1 uv run pytest -q`.
+Ordinary tests explicitly skip those integrations. CI runs static/offline and
+real-service/container jobs independently, then requires the aggregate `checks` gate.
+Frozen dependencies, pinned actions, current-head checks and image scans remain mandatory.
 
-- [Private operations verification](docs/verification/private-observability-2026-10-12.md):
-  contracts, OTLP receiver, real stores, backoffice adapter and remaining gates.
-- [Deep real-model evaluation](docs/verification/live-depth-2026-10-10.md): baseline,
-  revalidation, citation/persistence audit, costs and remaining quality limits.
-- [Final bilingual voice polish](docs/assistant-voice.md): focused real-model cases
-  and topic-retention regression evidence.
-- [PostgreSQL 18 verification](docs/verification/postgres18-2026-10-12.md): fresh
-  store, pgvector, migrations and container compatibility.
-- [1000-question evaluation bank](docs/assistant-evaluation.md): authored intent
-  families and fixture coverage, not 1000 independently live-scored answers.
-
-Local measurements are not field performance, physical-device or production results.
-Image vulnerability findings and release recovery requirements remain explicit gates.
-
-## Contributor and runtime guides
-
-| Topic | Canonical guide |
+| Evidence | What was actually verified |
 | --- | --- |
-| Boundaries and lifecycle | [Architecture](docs/architecture.md) |
-| HTTP, SSE and contract refresh | [API contract](docs/api-contract.md) |
-| Public knowledge synchronization | [Knowledge sync](docs/knowledge-sync.md) |
-| Private dashboard data and OTLP | [Observability](docs/private-observability.md) |
-| Configuration and secret requirements | [Environment](docs/environment.md) |
-| Coolify image/runtime handoff | [Deployment contract](docs/deployment-contract.md) |
-| Official LTS and stable exceptions | [Support policy](docs/support-policy.md) |
-| CI and dependency review | [CI](docs/ci.md) · [Dependencies](docs/dependency-updates.md) |
-| Coding standards and agent skills | [Contributing](CONTRIBUTING.md) · [Skills](docs/agent-skills.md) |
-| Security and reporting | [Threat model](docs/threat-model.md) · [Security](SECURITY.md) |
-| Bounded remaining acceptance work | [Checklist](docs/work-checklist.md) |
+| [Deep model evaluation](docs/verification/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
+| [Bilingual voice](docs/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
+| [1000-question bank](docs/assistant-evaluation.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
+| [Private operations](docs/verification/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
+| [PostgreSQL 18](docs/verification/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
 
-No source license has been selected; public visibility alone does not grant one.
-[Third-party notices](THIRD_PARTY_NOTICES.md) record dependency/asset attribution.
+These are local/test-environment results, not field performance or production guarantees.
+Known vendor image findings, effective proxy behavior, backup/restore, live OAuth pairing
+and physical-device acceptance remain documented release gates.
+
+## Deployment and documentation
+
+Build the application-owned image with:
+
+```sh
+docker build --platform linux/amd64 -t portfolio-assistant-api:local .
+```
+
+It runs non-root on private port **8000**. Startup does not migrate or ingest knowledge;
+those are explicit operations. vps-ops selects reviewed prebuilt image digests and performs
+separately authorized deployment. Main promotion does not authorize publication or deployment.
+
+## Documentation map
+
+| Work | Start here |
+| --- | --- |
+| Install, configure and connect | [Local development](docs/local-development.md) · [Environment](docs/environment.md) |
+| Understand policy and boundaries | [Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) |
+| Integrate a client or refresh types | [API contract](docs/api-contract.md) · [Frontend handoff](docs/frontend-handoff.md) |
+| Maintain public knowledge | [Knowledge synchronization](docs/knowledge-sync.md) |
+| Operate private measurements | [Observability](docs/private-observability.md) |
+| Prepare a compatible VPS release | [Runtime contract](docs/deployment-contract.md) · [vps-ops handoff](docs/vps-ops-request.md) |
+| Review CI and dependency updates | [CI](docs/ci.md) · [Dependency policy](docs/dependency-updates.md) |
+| Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/agent-skills.md) |
+| Review support and remaining work | [Supported versions](docs/support-policy.md) · [Acceptance checklist](docs/work-checklist.md) |
+
+**License:** no source license has been selected; public visibility does not grant one.
+See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
