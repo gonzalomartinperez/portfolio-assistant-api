@@ -1079,3 +1079,38 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
             'traces'
         ]
     ]
+
+
+def test_operational_usage_month_is_utc_even_with_non_utc_connection():
+    from contextlib import contextmanager
+
+    from app.bootstrap.config import Settings
+    from app.infrastructure.operations import PostgresOperations
+
+    identifier = uuid4()
+    with connect() as conn:
+        # This precedes the UTC month but falls in Tokyo's local month.
+        boundary = conn.execute(
+            "SELECT date_trunc('month',now(),'UTC')-interval '1 minute' AS value"
+        ).fetchone()['value']
+        conn.execute(
+            "INSERT INTO spend_ledger(id,kind,reserved_usd,actual_usd,input_tokens,output_tokens,created_at) VALUES (%s,'embedding_query',0.00001,0.00001,11,0,%s)",
+            (identifier, boundary),
+        )
+
+    @contextmanager
+    def tokyo_connection():
+        with connect() as conn:
+            conn.execute("SET LOCAL TIME ZONE 'Asia/Tokyo'")
+            yield conn
+
+    config = Settings(
+        ops_read_token='isolated-fixture-operations-token-0000', ops_api_commit='a' * 40
+    )
+    try:
+        utc = PostgresOperations(connect, config).snapshot()['usage']
+        tokyo = PostgresOperations(tokyo_connection, config).snapshot()['usage']
+        assert utc == tokyo
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE id=%s', (identifier,))

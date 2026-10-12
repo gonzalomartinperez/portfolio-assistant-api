@@ -64,7 +64,7 @@ class PostgresOperations:
                 "SELECT count(*) AS total,count(*) FILTER (WHERE outcome='completed') AS completed,count(*) FILTER (WHERE outcome='cancelled') AS cancelled,count(*) FILTER (WHERE outcome='failed') AS failed,percentile_cont(0.5) WITHIN GROUP (ORDER BY first_token_ms) AS p50,percentile_cont(0.95) WITHIN GROUP (ORDER BY first_token_ms) AS p95 FROM operational_executions WHERE started_at>=now()-interval '30 days'"
             ).fetchone()
             usage = conn.execute(
-                "SELECT coalesce(sum(input_tokens),0) AS input_tokens,coalesce(sum(output_tokens),0) AS output_tokens,coalesce(sum(actual_usd),0) AS settled,coalesce(sum(reserved_usd) FILTER (WHERE actual_usd IS NULL),0) AS reserved FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+                "SELECT coalesce(sum(input_tokens),0) AS input_tokens,coalesce(sum(output_tokens),0) AS output_tokens,coalesce(sum(actual_usd),0) AS settled,coalesce(sum(reserved_usd) FILTER (WHERE actual_usd IS NULL),0) AS reserved FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
             ).fetchone()
             rows = conn.execute(
                 "SELECT trace_id,started_at,outcome,duration_ms,stages FROM operational_executions WHERE sampled AND started_at>=now()-interval '7 days' ORDER BY started_at DESC LIMIT 100"

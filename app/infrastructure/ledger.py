@@ -19,7 +19,7 @@ def reserve(
     with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472019)')
         spent = conn.execute(
-            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
         ).fetchone()['amount']
         if spent + amount > cutoff:
             raise BudgetExhaustedError()
@@ -118,7 +118,7 @@ class EmbeddingAccounting:
         with self.connection() as conn:
             conn.execute('SELECT pg_advisory_xact_lock(472019)')
             spent = conn.execute(
-                "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+                "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
             ).fetchone()['amount']
             if spent + amount > self.monthly:
                 raise BudgetExhaustedError()
