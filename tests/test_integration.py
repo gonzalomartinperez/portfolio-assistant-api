@@ -10,10 +10,10 @@ from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 
 from app.bootstrap.config import settings
+from app.domain.fixture import insufficient_message
 from app.infrastructure.db import connect
 from app.infrastructure.embedding import embed
 from app.infrastructure.ledger import BudgetExhaustedError, reserve, settle
-from app.domain.fixture import insufficient_message
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
