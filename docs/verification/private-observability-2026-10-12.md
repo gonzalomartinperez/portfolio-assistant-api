@@ -122,3 +122,9 @@ manual review/merge, not eligibility for unattended dependency automation. The
 live voice evaluation remains evidence for its recorded earlier SDK revision;
 no paid model replay was made for this dependency refresh. Current container and
 provider-adapter tests are deterministic, not another live OpenAI evaluation.
+
+After dependency integration, the committed backoffice adapter was replayed against
+actual local HTTP from API revision `5ff96d3dbd015ddf9f90f83231052f57b7d494c8` under
+Node 24.21.0: valid status mapped to available; invalid bearer mapped to authorization
+failure. The runtime `api_commit` matched that revision. This still does not claim
+browser/OAuth or deployed dashboard acceptance.
