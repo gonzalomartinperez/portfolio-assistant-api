@@ -55,7 +55,7 @@ def install(app, origins):
                 response = await call_next(request)
             except Exception:  # noqa: BLE001 - Public HTTP fault boundary: translate unexpected failures without leaking details.
                 response = error(request, 'dependency_unavailable', 503)
-        if request.url.path.startswith('/api/'):
+        if request.url.path.startswith(('/api/', '/internal/')):
             response.headers['Cache-Control'] = 'no-store, no-transform'
             response.headers['Pragma'] = 'no-cache'
         response.headers['X-Request-ID'] = request.state.request_id

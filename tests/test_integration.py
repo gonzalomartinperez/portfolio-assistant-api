@@ -151,6 +151,13 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     assert 'access-control-allow-origin' not in denied_preflight.headers
     reserve(sent.headers['x-run-id'], Decimal('0.05'))
     settle(sent.headers['x-run-id'], 1000, 500)
+    with connect() as conn:
+        usage = conn.execute(
+            'SELECT input_tokens,output_tokens,actual_usd FROM spend_ledger WHERE run_id=%s',
+            (sent.headers['x-run-id'],),
+        ).fetchone()
+    assert usage['input_tokens'] == 1000 and usage['output_tokens'] == 500
+    assert usage['actual_usd'] == Decimal('0.000350')
     with pytest.raises(BudgetExhaustedError):
         reserve(str(uuid4()), Decimal('10.01'))
     pending_id = str(uuid4())
@@ -785,11 +792,12 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
         accounting.settle_embedding(identifiers[0], 100)
         with connect() as conn:
             row = conn.execute(
-                'SELECT kind,actual_usd,run_id FROM spend_ledger WHERE id=%s',
+                'SELECT kind,actual_usd,run_id,input_tokens,output_tokens FROM spend_ledger WHERE id=%s',
                 (identifiers[0],),
             ).fetchone()
         assert row['kind'] == 'embedding_index' and row['run_id'] is None
         assert row['actual_usd'] == Decimal('0.000002')
+        assert row['input_tokens'] == 100 and row['output_tokens'] == 0
     finally:
         with connect() as conn:
             conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (identifiers,))
@@ -1007,3 +1015,102 @@ def test_optional_presentation_context_survives_http_graph_and_provider(client_f
         assert 'opened_path' not in history.text
     finally:
         client.delete('/api/v1/session', headers=auth).raise_for_status()
+
+
+def test_private_operations_persist_survive_deletion_and_match_contract(client_factory):
+    import time
+
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+    from app.presentation.operations import OperationalSnapshot
+
+    token = 'isolated-fixture-operations-token-0000'
+    application = create_app(
+        Settings(
+            ops_read_token=token, ops_api_commit='a' * 40, ops_trace_sample_ratio=1
+        )
+    )
+    client = client_factory(application, client=(str(uuid4()), 50000))
+    csrf = bootstrap(client, 'http://localhost:3000')
+    owner_headers = headers('http://localhost:3000', csrf)
+    cid = client.post('/api/v1/conversations', headers=owner_headers, json={}).json()[
+        'id'
+    ]
+    response = client.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**owner_headers, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'What is Filomena?', 'locale': 'en'},
+    )
+    assert 'event: run.completed' in response.text
+    deadline = time.monotonic() + 3
+    ops_headers = {'Authorization': 'Bearer ' + token}
+    while True:
+        snapshot = client.get('/internal/ops/v1/status', headers=ops_headers)
+        assert snapshot.status_code == 200, snapshot.text
+        data = OperationalSnapshot.model_validate(snapshot.json())
+        if data.traces:
+            break
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+    trace = data.traces[0]
+    assert trace.outcome == 'completed' and trace.duration_ms > 0
+    assert data.executions.completed >= 1
+    assert data.executions.first_token_p50_ms is not None
+    assert any(stage.name == 'generation' for stage in trace.stages)
+    assert 'no-store' in snapshot.headers['cache-control']
+    encoded = snapshot.text
+    for secret in (cid, response.headers['x-run-id'], 'What is Filomena?', token):
+        assert secret not in encoded
+    assert (
+        client.delete(f'/api/v1/conversations/{cid}', headers=owner_headers).status_code
+        == 204
+    )
+    retained = client.get('/internal/ops/v1/status', headers=ops_headers).json()
+    assert any(t['id'] == trace.id for t in retained['traces'])
+    with connect() as conn:
+        old_id = uuid4().hex
+        conn.execute(
+            "INSERT INTO operational_executions(trace_id,started_at,outcome,duration_ms,stages,sampled) VALUES (%s,now()-interval '8 days','completed',1,'[]',true)",
+            (old_id,),
+        )
+    assert old_id not in [
+        t['id']
+        for t in client.get('/internal/ops/v1/status', headers=ops_headers).json()[
+            'traces'
+        ]
+    ]
+
+
+def test_operational_usage_month_is_utc_even_with_non_utc_connection():
+    from contextlib import contextmanager
+
+    from app.bootstrap.config import Settings
+    from app.infrastructure.operations import PostgresOperations
+
+    identifier = uuid4()
+    with connect() as conn:
+        # This precedes the UTC month but falls in Tokyo's local month.
+        boundary = conn.execute(
+            "SELECT date_trunc('month',now(),'UTC')-interval '1 minute' AS value"
+        ).fetchone()['value']
+        conn.execute(
+            "INSERT INTO spend_ledger(id,kind,reserved_usd,actual_usd,input_tokens,output_tokens,created_at) VALUES (%s,'embedding_query',0.00001,0.00001,11,0,%s)",
+            (identifier, boundary),
+        )
+
+    @contextmanager
+    def tokyo_connection():
+        with connect() as conn:
+            conn.execute("SET LOCAL TIME ZONE 'Asia/Tokyo'")
+            yield conn
+
+    config = Settings(
+        ops_read_token='isolated-fixture-operations-token-0000', ops_api_commit='a' * 40
+    )
+    try:
+        utc = PostgresOperations(connect, config).snapshot()['usage']
+        tokyo = PostgresOperations(tokyo_connection, config).snapshot()['usage']
+        assert utc == tokyo
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE id=%s', (identifier,))

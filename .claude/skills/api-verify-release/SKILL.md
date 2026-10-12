@@ -99,3 +99,10 @@ the database artifact section of deployment-contract.md before publishing/select
 an image. Database scan policy rejects fixable CRITICAL/HIGH; unresolved critical
 findings and vendor Java updates remain production gates. Do not patch vendor jars
 or equate local counts with complete recovery verification.
+
+For operational/dashboard changes, load [private observability](../../../docs/private-observability.md).
+Verify the isolated OTLP receiver, auth/schema and cancellation regressions with
+`uv run pytest -q tests/test_private_observability.py`, then real persistence when
+services are authorized. Keep provider health, observed execution totals, sampled
+traces and configured cost estimates distinct. Do not deploy monitoring or expose
+internal endpoints based on this skill.

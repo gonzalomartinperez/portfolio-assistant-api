@@ -12,3 +12,6 @@ GRANT SELECT ON schema_migrations, checkpoint_migrations, knowledge_versions,
 GRANT SELECT, INSERT, UPDATE, DELETE ON sessions, conversations, messages, runs,
   feedback, spend_ledger, rate_events, checkpoint_cleanup, checkpoints,
   checkpoint_blobs, checkpoint_writes TO assistant_runtime;
+
+-- Operational facts contain no session/conversation content; API may append/read only.
+GRANT SELECT, INSERT ON operational_executions TO assistant_runtime;

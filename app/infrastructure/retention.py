@@ -16,6 +16,12 @@ def prune() -> dict[str, int]:
                 'INSERT INTO checkpoint_cleanup(thread_id) VALUES (%s) ON CONFLICT DO NOTHING',
                 (run_id,),
             )
+        conn.execute(
+            "DELETE FROM operational_executions WHERE started_at<now()-interval '30 days'"
+        )
+        conn.execute(
+            "UPDATE operational_executions SET stages='[]'::jsonb,sampled=false WHERE started_at<now()-interval '7 days' AND (sampled OR stages<>'[]'::jsonb)"
+        )
         removed = conn.execute(
             'DELETE FROM sessions WHERE expires_at<=now() RETURNING id'
         ).fetchall()

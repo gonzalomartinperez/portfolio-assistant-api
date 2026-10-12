@@ -8,6 +8,7 @@ from dataclasses import asdict
 
 from app.application.contracts import Evidence
 from app.application.knowledge import KnowledgeIndex
+from app.application.observability import phase
 from app.domain.evidence import (
     EvidenceRecord,
     asks_spoken_languages,
@@ -45,7 +46,8 @@ class PublicRetrieval:
         )
         if not terms:
             return ()
-        corpus = await self.index.candidates(question)
+        with phase('vector_retrieval'):
+            corpus = await self.index.candidates(question)
         if corpus is None:
             return ()
         # Do not answer an explicit employer/project premise with unrelated evidence.
@@ -152,13 +154,14 @@ class PublicRetrieval:
         )
         graph = []
         if self.strategy == 'graph' or (self.strategy == 'hybrid' and relationship):
-            graph = [
-                key
-                for key in await self.index.relationships(
-                    corpus.version, terms, locale, expand=relationship
-                )
-                if key in eligible
-            ]
+            with phase('graph_retrieval'):
+                graph = [
+                    key
+                    for key in await self.index.relationships(
+                        corpus.version, terms, locale, expand=relationship
+                    )
+                    if key in eligible
+                ]
         if self.strategy == 'vector':
             ranked = vector
         elif self.strategy == 'graph':

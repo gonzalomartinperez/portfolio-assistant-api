@@ -43,7 +43,11 @@ explicit code/review/evaluation change, not a silent environment override.
 | KNOWLEDGE_POLL_SECONDS | 60 | Integer 10–300 seconds |
 | KNOWLEDGE_FRESHNESS_SECONDS | 90 | Integer 30–600 seconds, strictly greater than poll interval |
 | REQUIRE_FRESH_KNOWLEDGE | false | Required true for production OpenAI; local pinned fixtures may stay false |
-| OTEL_SDK_DISABLED | true | False is rejected |
+| OTEL_SDK_DISABLED | true | Optional manual private OTLP export; false requires operations configuration and private collector |
+| OPS_READ_TOKEN | unset | Runtime-only URL-safe secret, 32–256 characters; enables read-only internal operations API |
+| OPS_API_COMMIT | unset | Full 40-character lowercase source SHA; required with operations token |
+| OPS_TRACE_SAMPLE_RATIO | 0.1 | Fraction 0–1; affects trace drilldown/export, not aggregate observation |
+| OTEL_PRIVATE_ENDPOINT | unset | Private HTTP(S) origin without credentials/path/query |
 
 Production OpenAI also requires OpenAI semantic embeddings. The output ceiling is
 8,192 tokens including reasoning, fixed in policy; it is not a requested answer length.
@@ -52,3 +56,6 @@ OpenAI for embeddings; it is never indexed into the public corpus. Responses use
 `store=False`, which does not establish provider Zero Data Retention.
 
 Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
+
+See [private observability](private-observability.md) for auth, data exclusions,
+retention, vendor environment restrictions and measurement limits.

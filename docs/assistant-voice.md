@@ -22,14 +22,14 @@ Unknown facts use a short localized public-information response, without paid re
 
 ## Verification · 2026-10-12
 
-The committed `evals/voice-2026-10-12.json` has20 exploratory turns:14 independent
+The committed `evals/voice-2026-10-12.json` has 20 exploratory turns: 14 independent
 questions and two three-turn depth conversations. Its seven-turn final subset is
 `evals/voice-final-2026-10-12.json`. These are not untouched holdout or recruitment
 conversion measurements. The approved public corpus stays pinned to
 `afea06a04650db65059a8900d58554b8952b2c99`; newer portfolio revisions are not evaluated here.
 
-Actual OpenAI GPT-6 Luna/medium execution completed all27 turns. One English salary
-question in each run was answered locally without a model call:25 actual generations.
+Actual OpenAI GPT-6 Luna/medium execution completed all 27 turns. One English salary
+question in each run was answered locally without a model call: 25 actual generations.
 References, provenance membership and final/history equality passed. Qualitative
 agent review covered plain-language introductions, skeptical recruiters, unsupported
 perfect-fit requests, decisive leadership gaps, estimates, private salary/start-date
@@ -44,9 +44,9 @@ followup cues. It never adopts an assistant claim as evidence. Three final real
 Spanish turns then retained Teamcubation through technical expansion and summary.
 The new regression also verifies invented assistant text is excluded.
 
-The final shared isolated ledger accounted USD0.240271 including older uncertain
+The final shared isolated ledger accounted USD 0.240271 including older uncertain
 reservations; exact per-run usage remains in ignored local artifacts. Preserve the
-USD0.50 experiment ceiling. Local response files, prompts and credentials are not
+USD 0.50 experiment ceiling. Local response files, prompts and credentials are not
 public artifacts. No production, portfolio activation, fallback or automatic retry.
 
 Run `uv run pytest -q tests/test_assistant_voice.py tests/test_conversation_context.py`

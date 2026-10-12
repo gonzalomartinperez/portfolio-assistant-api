@@ -1,0 +1,288 @@
+{
+  "$defs": {
+    "ExecutionsView": {
+      "additionalProperties": false,
+      "properties": {
+        "cancelled": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Cancelled",
+          "type": "integer"
+        },
+        "completed": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "failed": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "first_token_p50_ms": {
+          "anyOf": [
+            {
+              "maximum": 1000000000000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Token P50 Ms"
+        },
+        "first_token_p95_ms": {
+          "anyOf": [
+            {
+              "maximum": 1000000000000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "First Token P95 Ms"
+        },
+        "total": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "total",
+        "completed",
+        "cancelled",
+        "failed",
+        "first_token_p50_ms",
+        "first_token_p95_ms"
+      ],
+      "title": "ExecutionsView",
+      "type": "object"
+    },
+    "KnowledgeView": {
+      "additionalProperties": false,
+      "properties": {
+        "corpus_version": {
+          "pattern": "^[a-zA-Z0-9._-]{1,128}$",
+          "title": "Corpus Version",
+          "type": "string"
+        },
+        "indexed_at": {
+          "maxLength": 40,
+          "title": "Indexed At",
+          "type": "string"
+        },
+        "source_commit": {
+          "pattern": "^[a-f0-9]{40}$",
+          "title": "Source Commit",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "fresh",
+            "updating",
+            "stale"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "source_commit",
+        "corpus_version",
+        "indexed_at"
+      ],
+      "title": "KnowledgeView",
+      "type": "object"
+    },
+    "StageView": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "name": {
+          "enum": [
+            "language",
+            "vector_retrieval",
+            "graph_retrieval",
+            "generation",
+            "finalization"
+          ],
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "duration_ms"
+      ],
+      "title": "StageView",
+      "type": "object"
+    },
+    "TraceView": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_ms": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "id": {
+          "pattern": "^[a-f0-9]{32}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "completed",
+            "cancelled",
+            "failed"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "$ref": "#/$defs/StageView"
+          },
+          "maxItems": 16,
+          "title": "Stages",
+          "type": "array"
+        },
+        "started_at": {
+          "maxLength": 40,
+          "title": "Started At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "started_at",
+        "outcome",
+        "duration_ms",
+        "stages"
+      ],
+      "title": "TraceView",
+      "type": "object"
+    },
+    "UsageView": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_usd": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Budget Usd",
+          "type": "number"
+        },
+        "input_tokens": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "output_tokens": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Output Tokens",
+          "type": "integer"
+        },
+        "pricing_revision": {
+          "pattern": "^[a-zA-Z0-9._-]{1,128}$",
+          "title": "Pricing Revision",
+          "type": "string"
+        },
+        "reserved_usd": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Reserved Usd",
+          "type": "number"
+        },
+        "settled_usd": {
+          "maximum": 1000000000000,
+          "minimum": 0,
+          "title": "Settled Usd",
+          "type": "number"
+        }
+      },
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "settled_usd",
+        "reserved_usd",
+        "budget_usd",
+        "pricing_revision"
+      ],
+      "title": "UsageView",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "api_commit": {
+      "pattern": "^[a-f0-9]{40}$",
+      "title": "Api Commit",
+      "type": "string"
+    },
+    "availability": {
+      "enum": [
+        "ready",
+        "degraded",
+        "unavailable"
+      ],
+      "title": "Availability",
+      "type": "string"
+    },
+    "executions": {
+      "$ref": "#/$defs/ExecutionsView"
+    },
+    "knowledge": {
+      "$ref": "#/$defs/KnowledgeView"
+    },
+    "observed_at": {
+      "maxLength": 40,
+      "title": "Observed At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "traces": {
+      "items": {
+        "$ref": "#/$defs/TraceView"
+      },
+      "maxItems": 100,
+      "title": "Traces",
+      "type": "array"
+    },
+    "usage": {
+      "$ref": "#/$defs/UsageView"
+    }
+  },
+  "required": [
+    "schema_version",
+    "observed_at",
+    "api_commit",
+    "availability",
+    "knowledge",
+    "executions",
+    "usage",
+    "traces"
+  ],
+  "title": "OperationalSnapshot",
+  "type": "object"
+}

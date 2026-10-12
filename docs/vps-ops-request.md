@@ -100,3 +100,31 @@ verify the stack locally with isolated safe fixture services and retained eviden
 Do not stop unrelated containers or remove shared volumes. Report exact revisions,
 image digests, effective headers/routes, backup/restore evidence, resource results
 and outstanding owner decisions before requesting production authorization.
+
+## Superseding PostgreSQL and monitoring handoff · 2026-10-12
+
+PostgreSQL now selects 18.6 / pgvector 0.8.7 through Dockerfile.postgres and local
+Compose. PR #46 passed current-head Actions and merged at
+`2e951faa25b5ebe0d15e8642f9cbb4e6e2e35527`. Older 17 data volumes remain untouched.
+Use the new volume/PGDATA contract and rehearse data migration only where existing
+stores actually require it. Historical image findings above are dated evidence;
+re-scan the exact selected artifacts rather than assuming identical results.
+
+The next API revision implements `/internal/ops/v1/status` and `/metrics` behind
+`OPS_READ_TOKEN`, and optional manual private OTLP. Read docs/private-observability.md
+and the additive operations schema/example. Reconcile the committed API handoff
+before selecting images. Migration 006 and runtime grants precede startup; old
+images reject its migration history. No production artifact has been published.
+
+Backoffice server uses `OPERATIONS_API_ORIGIN=http://<private-api-service>:8000`
+and `OPERATIONS_READ_TOKEN` equal to the API's runtime `OPS_READ_TOKEN`. Never set
+`OPERATIONS_SOURCE_MODE=fixture` in production, expose these secrets to the browser,
+or route `/internal/ops/*` publicly. `OPS_API_COMMIT` identifies the actual API source.
+Leave OTel disabled unless private infrastructure is selected and verified. If enabled,
+provide `OTEL_PRIVATE_ENDPOINT` and private egress, supported Prometheus/Grafana images,
+authentication, retention and measured resource budgets in vps-ops only. Do not create
+another controller or publish monitoring dashboards. No health/scrape performs paid AI.
+
+Accept the release only after actual OAuth/dashboard pairing, effective private routing,
+collector connectivity, vulnerability review, backup/restore and compatible rollback.
+Application CI/local fixtures are preparation evidence, not production approval.
