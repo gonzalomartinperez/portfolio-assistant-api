@@ -414,3 +414,43 @@ def test_cancelled_observer_joins_failed_write_without_resuming_worker():
         await observer.close()
 
     asyncio.run(run())
+
+
+def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypatch):
+    import ast
+    from pathlib import Path
+
+    from openai import AsyncOpenAI, OpenAI
+
+    monkeypatch.setenv('OPENAI_BASE_URL', 'https://untrusted.invalid/v1')
+    calls = []
+    for file in ('app/bootstrap/container.py', 'app/infrastructure/indexing.py'):
+        tree = ast.parse(Path(file).read_text())
+        calls.extend(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in ('OpenAI', 'AsyncOpenAI')
+        )
+    assert len(calls) == 3
+
+    async def run():
+        for call in calls:
+            kwargs = {
+                arg.arg: ast.literal_eval(arg.value)
+                for arg in call.keywords
+                if arg.arg in ('base_url', 'timeout', 'max_retries')
+            }
+            assert kwargs.get('base_url') == 'https://api.openai.com/v1'
+            assert kwargs.get('max_retries') == 0
+            if call.func.id == 'AsyncOpenAI':
+                async with AsyncOpenAI(
+                    api_key='synthetic-fixture-only', **kwargs
+                ) as client:
+                    assert client.base_url.host == 'api.openai.com'
+            else:
+                with OpenAI(api_key='synthetic-fixture-only', **kwargs) as client:
+                    assert client.base_url.host == 'api.openai.com'
+
+    asyncio.run(run())

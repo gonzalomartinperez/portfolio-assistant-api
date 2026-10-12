@@ -292,7 +292,10 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
     encoder = FixtureEmbeddings()
     if config.embeddings_provider == 'openai':
         embedding_client = OpenAI(
-            api_key=config.openai_api_key, timeout=20, max_retries=0
+            api_key=config.openai_api_key,
+            base_url='https://api.openai.com/v1',
+            timeout=20,
+            max_retries=0,
         )
         encoder = OpenAIEmbeddings(
             embedding_client,

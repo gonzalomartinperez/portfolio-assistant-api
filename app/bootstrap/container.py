@@ -86,7 +86,10 @@ def create_app(
             if config.ai_provider == 'openai':
                 # Paid authorization was validated by Settings. Never retry a possibly billed run.
                 client = AsyncOpenAI(
-                    api_key=config.openai_api_key, timeout=45, max_retries=0
+                    api_key=config.openai_api_key,
+                    base_url='https://api.openai.com/v1',
+                    timeout=45,
+                    max_retries=0,
                 )
                 provider = ResponsesProvider(
                     client, config.openai_model, LocalLanguageDetector().rejects_output
@@ -109,7 +112,10 @@ def create_app(
             embeddings = FixtureEmbeddings()
             if config.embeddings_provider == 'openai':
                 embedding_client = OpenAI(
-                    api_key=config.openai_api_key, timeout=20, max_retries=0
+                    api_key=config.openai_api_key,
+                    base_url='https://api.openai.com/v1',
+                    timeout=20,
+                    max_retries=0,
                 )
                 embeddings = OpenAIEmbeddings(
                     embedding_client,

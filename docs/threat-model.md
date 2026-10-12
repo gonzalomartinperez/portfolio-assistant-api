@@ -56,3 +56,9 @@ OTLP fields constrain the read surface. SDK environment hooks and HTTP redirects
 rejected; no model/HTTP auto-instrumentation or external SaaS tracing is enabled.
 Collector egress, DNS control, monitoring authentication and operational metadata
 retention remain vps-ops responsibilities. See [measurement limits](private-observability.md).
+
+Provider clients pin the OpenAI HTTPS origin explicitly rather than inheriting
+`OPENAI_BASE_URL`. The regression inspects all production SDK constructor sites
+and instantiates real sync/async SDK clients with a poisoned override, without
+sending a request or using a paid credential. VPS DNS/TLS/egress trust remains an
+operational boundary; pinning a URL does not protect a compromised host administrator.
