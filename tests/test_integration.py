@@ -13,6 +13,7 @@ from app.bootstrap.config import settings
 from app.infrastructure.db import connect
 from app.infrastructure.embedding import embed
 from app.infrastructure.ledger import BudgetExhaustedError, reserve, settle
+from app.domain.fixture import insufficient_message
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
@@ -191,7 +192,7 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
         json={'content': 'quasar xylophone', 'locale': 'en'},
     )
     assert unsupported.status_code == 200
-    assert 'not find enough public evidence' in unsupported.text
+    assert insufficient_message('en') in unsupported.text
     assert '"citations":[]' in unsupported.text
     assert (
         first.delete(
