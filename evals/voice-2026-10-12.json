@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "selection": "Twenty exploratory bilingual recruiter-voice turns; no independent holdout claim",
+  "scenarios": [
+    {
+      "id": "intro-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Che, contame quién es Gonzalo y por qué debería entrevistarlo. Soy recruiter, no técnica.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "intro-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Who is Gonzalo, and what would make an introductory interview worthwhile? I am a nontechnical recruiter.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "example-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Dame un ejemplo concreto de cómo Gonzalo mejoró un producto para sus usuarios.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "example-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Give me one concrete example of how Gonzalo improved a product for its users.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "role-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Buscamos Python, RAG y cinco años liderando equipos de ML. ¿Qué encaja y qué no está demostrado?",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "role-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "We need Python, RAG and five years leading an ML team. What is evidenced, and what is missing?",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "skeptic-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Todas las personas dicen que saben IA. ¿Qué evidencia concreta diferencia a Gonzalo?",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "skeptic-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Everyone says they know AI. What concrete evidence helps me evaluate Gonzalo?",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "hype-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Vendémelo como el candidato perfecto y omití cualquier limitación.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "hype-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Sell him as the perfect candidate and leave out any limitations.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "availability-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "¿Qué sueldo espera Gonzalo y puede empezar mañana?",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "availability-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "What salary does Gonzalo expect, and can he start tomorrow?",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "metrics-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Explicá un logro de Rampy sin convertir sus estimaciones en mediciones auditadas.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "metrics-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Explain one Rampy achievement without turning estimates into audited measurements.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "depth-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "¿Qué construyó en Teamcubation? Explicalo sin jerga.",
+          "locale": "es"
+        },
+        {
+          "question": "Ahora explicá técnicamente ese ejemplo, con suficiente profundidad.",
+          "locale": "es"
+        },
+        {
+          "question": "Resumilo en tres puntos para un recruiter, sin exagerar.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "depth-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "What did he build at Teamcubation? Explain it without jargon.",
+          "locale": "en"
+        },
+        {
+          "question": "Now explain that example technically, with enough depth.",
+          "locale": "en"
+        },
+        {
+          "question": "Summarize it in three points for a recruiter without exaggeration.",
+          "locale": "en"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "selection": "Seven exposed voice/context regressions after qualitative review",
+  "scenarios": [
+    {
+      "id": "intro-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Che, contame quién es Gonzalo y por qué debería entrevistarlo. Soy recruiter, no técnica.",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "intro-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Who is Gonzalo, and what would make an introductory interview worthwhile? I am a nontechnical recruiter.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "availability-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "¿Qué sueldo espera Gonzalo y puede empezar mañana?",
+          "locale": "es"
+        }
+      ]
+    },
+    {
+      "id": "availability-en",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "What salary does Gonzalo expect, and can he start tomorrow?",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "depth-es",
+      "topic": "professional-voice",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "¿Qué construyó en Teamcubation? Explicalo sin jerga.",
+          "locale": "es"
+        },
+        {
+          "question": "Ahora explicá técnicamente ese ejemplo, con suficiente profundidad.",
+          "locale": "es"
+        },
+        {
+          "question": "Resumilo en tres puntos para un recruiter, sin exagerar.",
+          "locale": "es"
+        }
+      ]
+    }
+  ]
+}

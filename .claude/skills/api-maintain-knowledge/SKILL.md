@@ -63,3 +63,8 @@ span support and cleanup separately. Do not replay paid calls on interruption.
 Comparison and degree regressions belong in `tests/test_live_depth_regressions.py`;
 keep qualification and adjacent role spans verified and bounded. Language guards
 need supported technical/short-prose regressions, not only foreign rejection tests.
+
+For tone/localization changes, load [assistant voice](../../../docs/assistant-voice.md)
+and its small bilingual evaluation manifest. Prompt composition tests cannot prove
+natural tone. Preserve qualifications and real uncertainty, and test plain-language
+to technical followups without losing the named visitor topic.

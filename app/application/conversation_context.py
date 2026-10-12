@@ -39,8 +39,8 @@ def is_followup(question: str) -> bool:
         return False
     return bool(
         re.search(
-            r'(?i)\b(example|shorter|brief|technically|translate|rephrase|that|it|those|there|'
-            r'ejemplo|breve|tecnicamente|técnicamente|traducir|traduce|tradúcelo|traducelo|traducción|eso|ese|allí|ahí|hazlo|explícalo|explicalo)\b',
+            r'(?i)\b(example|shorter|brief|technically|translate|rephrase|summarize|that|it|those|there|'
+            r'ejemplo|breve|resumilo|resúmelo|resumelo|tecnicamente|técnicamente|traducir|traduce|tradúcelo|traducelo|traducción|eso|ese|allí|ahí|hazlo|explícalo|explicalo)\b',
             question,
         )
     )
@@ -50,13 +50,17 @@ def retrieval_question(question: str, history: tuple[Turn, ...]) -> str:
     """Keep the visitor topic and its latest refinement; never use assistant claims."""
     if is_followup(question):
         refinement = ''
+        earliest_reference = ''
         for turn in reversed(history):
             if turn.role != 'user':
                 continue
+            earliest_reference = turn.content[:1000]
             if not is_followup(turn.content):
                 return '\n'.join(
                     part for part in (turn.content[:1000], refinement, question) if part
                 )
             if not refinement:
                 refinement = turn.content[:1000]
+        if earliest_reference:
+            return '\n'.join(dict.fromkeys((earliest_reference, refinement, question)))
     return question

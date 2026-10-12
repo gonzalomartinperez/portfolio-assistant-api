@@ -46,13 +46,17 @@ def fixture_supports(content: str, answer: str, path: str) -> bool:
     )
 
 
+def insufficient_message(locale: str) -> str:
+    return (
+        'No tengo información pública suficiente para confirmar ese dato.'
+        if locale == 'es'
+        else "I don't have enough public information to confirm that."
+    )
+
+
 def fixture_message(question: str, evidence: str, locale: str) -> str:
     # A deterministic excerpt viewer, not a model-quality simulation.
-    insufficient = (
-        'No encontré evidencia pública suficiente para responder con certeza.'
-        if locale == 'es'
-        else 'I could not find enough public evidence to answer confidently.'
-    )
+    insufficient = insufficient_message(locale)
     if not evidence:
         return insufficient
     if 'PUBLIC SOURCE ' in evidence:

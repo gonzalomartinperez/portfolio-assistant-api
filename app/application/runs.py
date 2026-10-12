@@ -18,7 +18,7 @@ from app.domain.errors import (
     ProviderUnavailableError,
     RejectedError,
 )
-from app.domain.fixture import fixture_supports
+from app.domain.fixture import fixture_supports, insufficient_message
 
 
 @dataclass(frozen=True)
@@ -90,7 +90,7 @@ def citations(
     sources: tuple[Evidence, ...], answer: str, fixture: bool
 ) -> list[dict[str, object]]:
     if fixture:
-        if answer.startswith(('I could not find enough', 'No encontré evidencia')):
+        if answer in (insufficient_message('en'), insufficient_message('es')):
             sources = ()
         else:
             # Fixture quotes identify actual excerpt support, not every retrieved candidate.
