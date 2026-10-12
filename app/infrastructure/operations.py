@@ -156,7 +156,9 @@ class OperationalObserver:
                     await asyncio.shield(write)
                 except asyncio.CancelledError:
                     # The SQL adapter bounds the write; join it before the shared pool closes.
-                    await write
+                    result = await asyncio.gather(write, return_exceptions=True)
+                    if isinstance(result[0], BaseException):
+                        self.dropped += 1
                     raise
             except Exception:  # noqa: BLE001 - Observational storage/export failures cannot interrupt generation or reveal payloads.
                 self.dropped += 1

@@ -384,3 +384,33 @@ def test_framework_does_not_inherit_global_request_exporter(monkeypatch):
     )
     assert not exporter.get_finished_spans()
     provider.shutdown()
+
+
+def test_cancelled_observer_joins_failed_write_without_resuming_worker():
+    import threading
+
+    async def run():
+        started, release = threading.Event(), threading.Event()
+
+        def save(*args):
+            started.set()
+            assert release.wait(timeout=1)
+            raise RuntimeError('secret-canary')
+
+        observer = OperationalObserver(SimpleNamespace(save=save), sample_ratio=0)
+        observer.start()
+        observer.record(
+            Execution('d' * 32, datetime.now(UTC), 'completed', 10, None, (), None)
+        )
+        await asyncio.to_thread(started.wait, 1)
+        observer.worker.cancel()
+        await asyncio.sleep(0)
+        release.set()
+        result = await asyncio.wait_for(
+            asyncio.gather(observer.worker, return_exceptions=True), 1
+        )
+        assert isinstance(result[0], asyncio.CancelledError)
+        assert observer.dropped == 1
+        await observer.close()
+
+    asyncio.run(run())

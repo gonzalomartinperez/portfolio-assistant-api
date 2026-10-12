@@ -151,6 +151,13 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     assert 'access-control-allow-origin' not in denied_preflight.headers
     reserve(sent.headers['x-run-id'], Decimal('0.05'))
     settle(sent.headers['x-run-id'], 1000, 500)
+    with connect() as conn:
+        usage = conn.execute(
+            'SELECT input_tokens,output_tokens,actual_usd FROM spend_ledger WHERE run_id=%s',
+            (sent.headers['x-run-id'],),
+        ).fetchone()
+    assert usage['input_tokens'] == 1000 and usage['output_tokens'] == 500
+    assert usage['actual_usd'] == Decimal('0.000350')
     with pytest.raises(BudgetExhaustedError):
         reserve(str(uuid4()), Decimal('10.01'))
     pending_id = str(uuid4())
@@ -785,11 +792,12 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
         accounting.settle_embedding(identifiers[0], 100)
         with connect() as conn:
             row = conn.execute(
-                'SELECT kind,actual_usd,run_id FROM spend_ledger WHERE id=%s',
+                'SELECT kind,actual_usd,run_id,input_tokens,output_tokens FROM spend_ledger WHERE id=%s',
                 (identifiers[0],),
             ).fetchone()
         assert row['kind'] == 'embedding_index' and row['run_id'] is None
         assert row['actual_usd'] == Decimal('0.000002')
+        assert row['input_tokens'] == 100 and row['output_tokens'] == 0
     finally:
         with connect() as conn:
             conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (identifiers,))

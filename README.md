@@ -123,6 +123,8 @@ isolated services, run `TEST_INTEGRATION=1 uv run pytest -q`. CI runs static/off
 checks and real-service/container checks in parallel, with frozen dependencies,
 pinned actions and a required aggregate gate. Contract export must leave no drift.
 
+- [Private operations verification](docs/verification/private-observability-2026-10-12.md):
+  contracts, OTLP receiver, real stores, backoffice adapter and remaining gates.
 - [Deep real-model evaluation](docs/verification/live-depth-2026-10-10.md): baseline,
   revalidation, citation/persistence audit, costs and remaining quality limits.
 - [Final bilingual voice polish](docs/assistant-voice.md): focused real-model cases
