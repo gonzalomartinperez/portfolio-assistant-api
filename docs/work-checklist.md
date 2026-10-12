@@ -104,8 +104,9 @@ question count is coverage, not additional approved biographical facts.
 - Completed/integrated: final neutral Spanish/US English voice and retained-topic fix
   (PR #45); PostgreSQL 18.6/pgvector 0.8.7 fresh-store upgrade (PR #46).
 - Implemented/locally verified: private status/Prometheus API, manual opt-in OTLP,
-  migration 006 and committed backoffice adapter compatibility; final current-head
-  CI/container evidence gates integration. See the dated operations report.
+  migration 006 and committed backoffice adapter compatibility. PR #47 passed final
+  current-head CI and integrated into develop; actual image/health/SSE evidence is
+  recorded in the dated operations report.
 - Completed research: actual LTS policies for Node/Next/Neo4j/Prometheus/LangGraph/
   LangChain; maintained stable exceptions and Python 3.15 Lingua wheel blocker.
 - Deferred to owners: native assistant activation, actual OAuth/browser dashboard

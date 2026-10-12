@@ -215,7 +215,9 @@ tokens and manual opt-in OTLP are implemented with migration 006. Local full sui
 342 passed in 28.89 seconds against PostgreSQL 18.6/pgvector 0.8.7 and Neo4j 5.26.31.
 Focused tests include an actual loopback OTLP protobuf receiver and runtime redaction,
 stream cleanup, bounded queues, authenticated reads and deletion-independent persistence.
-Final branch CI and container evidence must be recorded before integration acceptance.
+Final application code passed CI and merged through PR #47 at
+`8d411d76699c98e512f07127af371e2b6305fd57`. The dated operations report records
+actual image/default healthcheck/SSE/SIGTERM and frontend-adapter evidence.
 
 The README now includes repository-authored technology chips and Mermaid diagrams
 for application boundaries, grounded conversations and private monitoring ownership.

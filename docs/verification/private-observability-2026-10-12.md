@@ -77,3 +77,32 @@ OAuth/dashboard pairing, retention scheduling, measured KVM 4 resources, encrypt
 backup/restore and compatible rollback. Model availability is not inferred from
 store readiness; usage is an estimate with incomplete historical token coverage.
 No main promotion, publication, deployment or portfolio assistant activation occurs.
+
+## Final application acceptance
+
+PR #47 passed final code revision `017df0c3036a3a976cf3b016b783f2932be31d7d` in
+Actions `38293707505`: static/offline 30 seconds, real-services/container 186 seconds,
+aggregate gate 4 seconds. It merged into develop at
+`8d411d76699c98e512f07127af371e2b6305fd57`. The added non-UTC connection regression
+passed separately; ledger reservations and snapshot aggregation now explicitly
+truncate the calendar month in UTC, independently of database session timezone.
+
+Local final production image ID:
+`sha256:5d33ab1db6178f930f5860cd70f27b766609812615a20e49c85f4f3182fc3bc6`.
+It is an engine image ID, not a published registry manifest digest. Runtime source
+hashes matched the final operations/ledger/bootstrap files. Size: 272,623,078 bytes;
+the earlier same-environment baseline was 271,706,379 bytes, a 916,699-byte increase
+(about 0.34%). This is container size, not browser bundle or model-quality performance.
+
+The image passed normal SSE and active-stream SIGTERM smoke. A separate private
+Compose-network fixture used the image's default startup command, its actual Docker
+healthcheck, read-only filesystem, UID 65532, dropped capabilities, 512 MiB memory,
+one CPU and 128 PID limits. Readiness and authenticated status returned 200, missing
+bearer returned 401, Prometheus exposition and no-store headers passed, and Docker
+reported healthy. Only the owned test container was stopped/removed; volumes remain.
+The first cold image build downloaded Lingua's 162.4 MiB wheel slowly; the final cached
+build reused dependencies. No build-time secrets or alternate production stack were added.
+
+This verifies application artifact/runtime readiness in local Linux fixtures and
+GitHub CI. Residual database/vendor vulnerabilities, real OAuth/browser pairing,
+collector deployment, backup/restore and actual VPS acceptance remain open owner gates.
