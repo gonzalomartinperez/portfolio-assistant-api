@@ -6,10 +6,11 @@ no main promotion, artifact publication or production execution is authorized.
 Critical security issues interrupt the sequence below. Paid calls require explicit
 scope/budget; the dated experiment below does not authorize ongoing usage.
 
-Current integrated checkpoint: `a3f9b7ce9fbc9646cec4d6dc17f3ed0d4f371ec1`
-(manually reviewed Dependabot PR #31), including database-image PR #41 at
-`6cc116609acec823314e94b88fe15137ddd96786`. Both passed actual current-head
-Quality runs before merging. Runtime security PR #40 is preserved in this history.
+Latest integrated application checkpoint (2026-10-12):
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` (reviewed Dependabot PR #48),
+including PostgreSQL 18 PR #46 and private operations PR #47. The final security/
+runtime handoff is tracked by PR #49; its required checks and merge remain
+authoritative. Earlier runtime security/database commits are preserved in history.
 Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
 Latest [runtime security evidence](verification/runtime-security-2026-10-10.md) and
 [database evidence](verification/database-images-2026-10-10.md) supersede earlier

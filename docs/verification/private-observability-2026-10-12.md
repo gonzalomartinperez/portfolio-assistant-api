@@ -128,3 +128,19 @@ actual local HTTP from API revision `5ff96d3dbd015ddf9f90f83231052f57b7d494c8` u
 Node 24.21.0: valid status mapped to available; invalid bearer mapped to authorization
 failure. The runtime `api_commit` matched that revision. This still does not claim
 browser/OAuth or deployed dashboard acceptance.
+
+## Final origin/transport regressions
+
+The final origin hardening pins all three production OpenAI clients to the official
+HTTPS API origin with zero retries. Real SDK sync/async clients resisted a poisoned
+vendor endpoint variable. A real OpenAI SDK/httpx mock transport exercised Responses
+SSE text/usage mapping and provider 503 handling; assertions verified GPT-6 Luna,
+medium reasoning, output allowance, `store=false` and exactly one request. This is
+simulated upstream transport, not a new paid model evaluation.
+
+Private OTLP configuration additionally rejects Unicode-dot host ambiguity, numeric
+hostname aliases, IPv4-mapped metadata addresses and invalid/zero ports. Trusted
+DNS/private egress remains an operational responsibility. Final local suite:
+**356 passed in 154.76 seconds**, including 27 real PostgreSQL/Neo4j tests; focused
+observability/transport/configuration suite: **31 passed in 32.01 seconds**. These
+are measured verification runs under concurrent local work, not claimed speedups.

@@ -1,3 +1,7 @@
+Latest verified continuation: [2026-10-12 operations/runtime evidence](docs/verification/private-observability-2026-10-12.md).
+It records current application/dependency checks and explicit production limitations.
+The sections below retain dated implementation history, not standing rollout authority.
+
 > Latest local evidence: [244-turn authorized OpenAI evaluation](docs/verification/live-depth-2026-10-10.md),
 > followed by targeted regressions and database cleanup. Older checkpoints below
 > are historical; successful transport is not a universal answer-quality or
