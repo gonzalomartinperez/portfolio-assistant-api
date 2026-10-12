@@ -61,7 +61,7 @@ configuration objects or structured validation details into logs or CI artifacts
 
 ## Services and migrations
 
-Tested services: PostgreSQL 17.11 with pgvector 0.8.7; Neo4j 5.26.31 Community.
+Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j 5.26.31 Community.
 The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
@@ -289,3 +289,5 @@ are production assessment gates, not waivers. Publication approval, visibility,
 compatible artifact selection and restoration remain external owner decisions.
 
 The [vps-ops dispatch request](vps-ops-request.md) connects these application contracts to the separate operations owner without granting deployment authority.
+
+Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.

@@ -50,3 +50,5 @@ Production OpenAI also requires OpenAI semantic embeddings. The output ceiling i
 Configuration does not authorize paid calls. Visitors' query text may be sent to
 OpenAI for embeddings; it is never indexed into the public corpus. Responses use
 `store=False`, which does not establish provider Zero Data Retention.
+
+Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.

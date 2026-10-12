@@ -74,3 +74,5 @@ for tested fixture ceilings; the file is not a production composition. Render
 `docker compose config --quiet` and run `uv run python -m scripts.validate_compose`
 after changing it. Preserve volumes and verify migrations, indexing and real-service
 tests before accepting new constraints. Production allocation belongs to vps-ops.
+
+Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.

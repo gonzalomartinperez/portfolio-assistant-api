@@ -24,11 +24,11 @@ def main():
         assert service['logging']['options']['max-file'] == '3'
         assert 'no-new-privileges:true' in service['security_opt']
         assert all(port['host_ip'] == '127.0.0.1' for port in service['ports'])
-        if service['image'] == 'portfolio-assistant-postgres:local':
+        if service['image'] == 'portfolio-assistant-postgres:18.6':
             assert service['build']['dockerfile'] == 'Dockerfile.postgres'
             base = Path('Dockerfile.postgres').read_text().splitlines()[0]
             assert re.fullmatch(
-                r'FROM pgvector/pgvector:0\.8\.7-pg17@sha256:[a-f0-9]{64}', base
+                r'FROM pgvector/pgvector:0\.8\.7-pg18@sha256:[a-f0-9]{64}', base
             )
         else:
             assert '@sha256:' in service['image']
