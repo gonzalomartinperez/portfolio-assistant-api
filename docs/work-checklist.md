@@ -98,3 +98,16 @@ existing 40 adversarial prompts. Canonical source and deterministic compiler pre
 copy drift; family-level splits protect holdout isolation. Fixture execution and
 current-head CI are the verification gates. Live answer quality remains unverified;
 question count is coverage, not additional approved biographical facts.
+
+## Final voice, support and private operations increment
+
+- Completed/integrated: final neutral Spanish/US English voice and retained-topic fix
+  (PR #45); PostgreSQL 18.6/pgvector 0.8.7 fresh-store upgrade (PR #46).
+- In progress: private status/Prometheus API, manual opt-in OTLP, migration 006 and
+  committed backoffice compatibility evidence; final CI/container gate required.
+- Completed research: actual LTS policies for Node/Next/Neo4j/Prometheus/LangGraph/
+  LangChain; maintained stable exceptions and Python 3.15 Lingua wheel blocker.
+- Deferred to owners: native assistant activation, actual OAuth/browser dashboard
+  pairing, collector/Grafana/Prometheus deployment and production readiness.
+- Remaining release gates: vulnerability review, measured VPS resources, effective
+  private proxy/egress, encrypted backup/restore and compatible rollback.

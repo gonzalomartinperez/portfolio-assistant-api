@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from decimal import Decimal
 
 from fastapi import FastAPI
@@ -33,9 +33,11 @@ from app.infrastructure.knowledge import KnowledgeIndex
 from app.infrastructure.language import LocalLanguageDetector
 from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
 from app.infrastructure.migrations import check_schema
+from app.infrastructure.operations import OperationalObserver, PostgresOperations
 from app.infrastructure.runs import PostgresRuns
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
+from app.presentation.operations import router as operations_router
 
 
 def create_app(
@@ -74,6 +76,7 @@ def create_app(
         client = None
         embedding_client = None
         runs = None
+        observer = None
         try:
             await asyncio.to_thread(database.open, wait=True, timeout=10)
             await checkpoints.open(wait=True, timeout=10)
@@ -140,11 +143,38 @@ def create_app(
                 config.retention_days,
                 config.rate_hash_key,
             )
+            if config.ops_read_token:
+
+                @contextmanager
+                def operational_connection():
+                    with database.connection(timeout=0.5) as conn:
+                        yield conn
+
+                operations = PostgresOperations(operational_connection, config)
+                exporter = None
+                if not config.otel_sdk_disabled:
+                    from app.infrastructure.telemetry import PrivateTelemetry
+
+                    exporter = PrivateTelemetry(
+                        config.otel_private_endpoint,
+                        config.ops_api_commit,
+                        config.ops_trace_sample_ratio,
+                    )
+                observer = OperationalObserver(
+                    operations,
+                    sample_ratio=config.ops_trace_sample_ratio,
+                    exporter=exporter,
+                )
+                observer.start()
+                app.state.operations = operations
+                app.state.observer = observer
+
             runs = RunService(
                 PostgresRuns(connection),
                 workflow,
                 fixture=config.ai_provider == 'fixture',
                 timeout_seconds=config.run_timeout_seconds,
+                observer=observer,
             )
             app.state.runs = runs
 
@@ -176,6 +206,8 @@ def create_app(
         finally:
             if runs:
                 await runs.drain_cleanup()
+            if observer:
+                await observer.close()
             if client:
                 await client.close()
             if embedding_client:
@@ -202,4 +234,5 @@ def create_app(
     )
     install(app, config.origins)
     app.include_router(router)
+    app.include_router(operations_router)
     return app

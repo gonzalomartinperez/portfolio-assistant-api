@@ -46,3 +46,13 @@ facts, attribution caveats, unsupported employers/metrics, direct and retrieved
 injection, citations, partial failure and real streaming through the intended
 proxy. Record costs and failures; do not treat a small passing sample as proof of
 safety. No live credentials or paid calls were used for this implementation.
+
+## Optional private observability
+
+`/internal/ops/*` requires a dedicated runtime bearer secret and must remain private
+behind effective proxy rules. No browser receives that secret. Runtime validation,
+no-store caching, fixed public errors, bounded queries/payloads and allowlisted manual
+OTLP fields constrain the read surface. SDK environment hooks and HTTP redirects are
+rejected; no model/HTTP auto-instrumentation or external SaaS tracing is enabled.
+Collector egress, DNS control, monitoring authentication and operational metadata
+retention remain vps-ops responsibilities. See [measurement limits](private-observability.md).

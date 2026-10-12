@@ -84,3 +84,8 @@ Privileged stdlib-only dependency/release scripts also support runner Python 3.1
 Ruff per-file targets and a grammar test preserve that security boundary.
 
 Support and upgrade decisions: [supported-version policy](docs/support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
+
+For private operational changes, preserve the scalar-only application observation
+model and server-to-server authentication boundary. Run the focused observability
+tests plus real-store tests when modifying SQL. Review actual OTLP receiver payloads,
+not only mock exporter calls; never add automatic SDK input/output capture.

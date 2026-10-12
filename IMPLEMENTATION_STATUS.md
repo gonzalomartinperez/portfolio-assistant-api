@@ -203,3 +203,21 @@ CI checks generated-bank drift and runs ten representative real-store fixture
 cases; current-head Actions remains the merge gate. No paid model evaluation,
 registry publication, main promotion or production deployment. Fixture completion
 does not establish real-model answer quality.
+
+## Current continuation · 2026-10-12
+
+Voice polish PR #45 and PostgreSQL 18 PR #46 are integrated into develop. Python
+remains 3.14.8 because Lingua 2.2.0 lacks CP315 wheels; official support classifications
+are corrected in docs/support-policy.md, including LangChain/LangGraph 1.x LTS.
+
+Private operational status/Prometheus exposition, anonymous durable facts, actual usage
+tokens and manual opt-in OTLP are implemented with migration 006. Local full suite:
+342 passed in 28.89 seconds against PostgreSQL 18.6/pgvector 0.8.7 and Neo4j 5.26.31.
+Focused tests include an actual loopback OTLP protobuf receiver and runtime redaction,
+stream cleanup, bounded queues, authenticated reads and deletion-independent persistence.
+Final branch CI and container evidence must be recorded before integration acceptance.
+
+The README now includes repository-authored technology chips and Mermaid diagrams
+for application boundaries, grounded conversations and private monitoring ownership.
+No source license has been selected. No production deployment, monitoring stack,
+main promotion, image publication or portfolio activation is claimed.

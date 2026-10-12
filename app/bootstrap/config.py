@@ -1,9 +1,10 @@
+import ipaddress
 from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.domain.budget import Budget
@@ -37,6 +38,12 @@ class Settings(BaseSettings):
     langsmith_tracing_v2: bool = False
     openai_log: Literal['', 'error'] = ''
     otel_sdk_disabled: bool = True
+    ops_read_token: str | None = Field(
+        default=None, repr=False, pattern=r'^[A-Za-z0-9_-]{32,256}$'
+    )
+    ops_api_commit: str | None = Field(default=None, pattern=r'^[a-f0-9]{40}$')
+    otel_private_endpoint: str | None = None
+    ops_trace_sample_ratio: float = Field(default=0.1, ge=0, le=1)
     secure_cookies: bool = False
     retention_days: int = Field(default=7, ge=1, le=30)
     run_timeout_seconds: float = Field(default=60, gt=0, le=120)
@@ -49,6 +56,13 @@ class Settings(BaseSettings):
     output_usd_per_million: str = Field(default='0.50', pattern=r'^\d+(?:\.\d+)?$')
     embedding_usd_per_million: str = Field(default='0.02', pattern=r'^\d+(?:\.\d+)?$')
 
+    @field_validator(
+        'ops_read_token', 'ops_api_commit', 'otel_private_endpoint', mode='before'
+    )
+    @classmethod
+    def empty_optional_operations(cls, value):
+        return None if value == '' else value
+
     @model_validator(mode='after')
     def safe_configuration(self):
         if (
@@ -56,9 +70,39 @@ class Settings(BaseSettings):
             or self.langchain_tracing_v2
             or self.langchain_tracing
             or self.langsmith_tracing_v2
-            or not self.otel_sdk_disabled
         ):
             raise ValueError('external tracing is disabled for this application')
+        if self.ops_read_token and not self.ops_api_commit:
+            raise ValueError('operational access requires an identified API revision')
+        if not self.otel_sdk_disabled:
+            if not self.ops_read_token or not self.otel_private_endpoint:
+                raise ValueError(
+                    'telemetry requires private endpoint and operational configuration'
+                )
+            endpoint = urlparse(self.otel_private_endpoint)
+            host = endpoint.hostname or ''
+            try:
+                address = ipaddress.ip_address(host)
+                private = address.is_loopback or (
+                    address.is_private
+                    and not address.is_link_local
+                    and not address.is_unspecified
+                    and not address.is_multicast
+                )
+            except ValueError:
+                private = bool(host) and ('.' not in host or host.endswith('.internal'))
+            if (
+                endpoint.scheme not in ('http', 'https')
+                or not private
+                or endpoint.username
+                or endpoint.password
+                or endpoint.query
+                or endpoint.fragment
+                or endpoint.path not in ('', '/')
+            ):
+                raise ValueError(
+                    'telemetry endpoint must be a private origin without credentials'
+                )
         if Decimal(self.monthly_budget_usd) > 10:
             raise ValueError('monthly budget must not exceed the approved USD 10')
         Budget(

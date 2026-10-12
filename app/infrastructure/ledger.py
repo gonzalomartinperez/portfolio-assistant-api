@@ -56,8 +56,8 @@ def settle(
     cost = cost.quantize(Decimal('0.000001'), rounding=ROUND_CEILING)
     with connection() as conn:
         conn.execute(
-            'UPDATE spend_ledger SET actual_usd=%s WHERE run_id=%s',
-            (cost, UUID(run_id)),
+            'UPDATE spend_ledger SET actual_usd=%s,input_tokens=%s,output_tokens=%s WHERE run_id=%s',
+            (cost, input_tokens, output_tokens, UUID(run_id)),
         )
     logging.getLogger('portfolio_assistant').info(
         json.dumps(
@@ -133,11 +133,12 @@ class EmbeddingAccounting:
             raise ValueError('invalid embedding usage')
         with self.connection() as conn:
             conn.execute(
-                'UPDATE spend_ledger SET actual_usd=%s WHERE id=%s AND actual_usd IS NULL',
+                'UPDATE spend_ledger SET actual_usd=%s,input_tokens=%s,output_tokens=0 WHERE id=%s AND actual_usd IS NULL',
                 (
                     (Decimal(tokens) * self.price / Decimal(1000000)).quantize(
                         Decimal('0.000001'), rounding=ROUND_CEILING
                     ),
+                    tokens,
                     identifier,
                 ),
             )

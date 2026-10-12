@@ -10,13 +10,16 @@ because its major line is supported.
 | --- | --- | --- |
 | PostgreSQL | 18.6 | Official five-year major support; 18 ends 2030-11-14. PostgreSQL does not label releases LTS. |
 | pgvector | 0.8.7 | Maintained stable extension, no formal LTS label; tested with PG 18.6. |
-| Neo4j | 5.26 LTS | Retain the vendor-designated LTS line and review its security patches. |
-| Python | 3.14.8 | Maintained stable release, not officially called LTS.3.15 remains blocked below. |
+| Neo4j | 5.26 LTS | Retain the vendor-designated LTS line and review security patches. Current guide says November 2028; the older announcement says June 2028. |
+| Python | 3.14.8 | Maintained stable release, not officially called LTS. 3.15 remains blocked below. |
+| LangGraph / LangChain Core | 1.2.12 / 1.6.5 | Official 1.x LTS: active until 2.0, then at least one year of maintenance; associated packages need separate review. |
+| Node / Next.js (backoffice) | 24 LTS / 16 Active LTS | Node 24 ends 2028-04-30; Next 16 active until next major, maintenance policy two years from initial release. |
+| Debian runtime base | 13 Trixie | General support until 2028-08-09, followed by LTS until 2030-06-30, subject to package/architecture coverage. |
 | uv | 0.13.0 | Stable pinned tooling; no formal LTS designation. |
-| FastAPI, LangGraph, OpenAI SDK, psycopg | `uv.lock` | Maintained stable packages; no universal LTS policy. Review compiler/framework/auth changes manually. |
-| OpenTelemetry Python | Stable SDK/OTLP APIs when adopted | No formal LTS; use manual allowlisted instrumentation and stable exporters. Avoid a beta exporter merely to get a badge. |
+| FastAPI, OpenAI SDK, psycopg | `uv.lock` | Maintained stable packages; no universal LTS policy. Review compiler/framework/auth changes manually. |
+| OpenTelemetry Python | Stable SDK/OTLP APIs when adopted | No formal LTS; use manual allowlisted instrumentation and stable exporters. SDK/HTTP exporter 1.45.1 pulls vendor semantic conventions 0.66b1: reviewed beta dependency exception, not an all-stable graph. |
 | Prometheus server | 3.13 LTS target | Supported until 2027-07-31; 3.5 LTS is already end-of-life. Selection/deployment belongs to vps-ops. |
-| Grafana/collector | Reviewed maintained GA target | vps-ops must select exact supported editions/versions and digests; do not invent a universal OSS LTS guarantee. |
+| Grafana/collector | Reviewed maintained GA target | Grafana minors receive 9 months, last minor of a major 15 months. Collector stability is component/signal-specific. vps-ops selects editions, patches and digests. |
 
 The independently owned backoffice pins Node 24 LTS and uses stable React/TypeScript
 releases; their libraries do not all have an LTS program. Its owner maintains the
@@ -68,3 +71,17 @@ References: [PostgreSQL policy](https://www.postgresql.org/support/versioning/),
 [Neo4j LTS](https://neo4j.com/blog/developer/neo4j-v5-lts-evolution/),
 [Prometheus LTS](https://prometheus.io/docs/introduction/release-cycle/),
 [Grafana release stages](https://grafana.com/docs/release-life-cycle/).
+
+## Optional Redis
+
+Redis is not used by this assistant. If another application needs it, Redis Open
+Source 8.2 is an official Extended line through 2030-09-01; distinguish that from
+Redis Cloud or Redis Software support. Do not add a cache merely to align a list.
+
+Additional official references: [LangChain/LangGraph LTS](https://docs.langchain.com/oss/python/release-policy),
+[Node schedule](https://github.com/nodejs/Release), [Next.js LTS](https://nextjs.org/support-policy),
+[Python lifecycle](https://devguide.python.org/versions/), [Debian 13](https://www.debian.org/releases/trixie/),
+[Neo4j current guide](https://neo4j.com/docs/upgrade-migration-guide/current/),
+[Grafana support](https://grafana.com/docs/grafana/latest/upgrade-guide/when-to-upgrade/),
+[Redis Open Source support](https://redis.io/docs/latest/operate/oss_and_stack/install/version-mgmt/),
+[Collector stability](https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md).

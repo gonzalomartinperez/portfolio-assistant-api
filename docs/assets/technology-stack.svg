@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="92" viewBox="0 0 800 92" role="img" aria-labelledby="title"><title id="title">Portfolio assistant technology stack</title>
+<rect x="8" y="8" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="102" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">Python 3.14</text>
+<rect x="206" y="8" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="300" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">FastAPI</text>
+<rect x="404" y="8" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="498" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">LangGraph 1.x</text>
+<rect x="602" y="8" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="696" y="29" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">PostgreSQL 18</text>
+<rect x="8" y="50" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="102" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">pgvector</text>
+<rect x="206" y="50" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="300" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">Neo4j 5.26 LTS</text>
+<rect x="404" y="50" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="498" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">OpenAI</text>
+<rect x="602" y="50" width="188" height="32" rx="8" fill="#15202b" stroke="#697684"/>
+<text x="696" y="71" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#f5f7fa">Private OpenTelemetry</text>
+</svg>

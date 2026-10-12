@@ -85,7 +85,7 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
-Current application schema includes ordered migrations 001–005, plus the locked
+Current application schema includes ordered migrations 001–006, plus the locked
 LangGraph checkpoint schema. Migration 004 adds semantic vectors, lexical search,
 embedding identity, freshness state and a single-active-version constraint. Migration 005 persists public embeddings after each successful call for crash-safe
 reuse. Apply both before starting this image. Older images reject unknown applied migrations;
@@ -209,7 +209,7 @@ OpenAI mode accepts only GPT-6 Luna and medium effort. Output/reasoning ceiling:
 8192 tokens; emergency rendered-output bound: 40000 characters. Responses use
 store=False; provider retention is still subject to the account's applicable policy.
 Generation and embeddings share the approved USD 10 monthly ledger. No fallback
-model/provider, automatic billed generation retry or external telemetry exporter.
+model/provider, automatic billed generation retry or external SaaS tracing. Private manual OTLP is optional; see the operational contract.
 
 Frontend handoff: SSE v1 schema/examples remain unchanged. OpenAPI gains the public
 knowledge/suggestions GET endpoint; import the complete committed snapshot before
@@ -291,3 +291,36 @@ compatible artifact selection and restoration remain external owner decisions.
 The [vps-ops dispatch request](vps-ops-request.md) connects these application contracts to the separate operations owner without granting deployment authority.
 
 Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
+
+## Private monitoring handoff (migration 006)
+
+[Private observability](private-observability.md) defines the JSON/Prometheus read API
+and bounded manual OTLP instrumentation. Runtime env requirements are in
+[environment schema](environment.md). Keep `/internal/ops/*` unreachable through
+the public proxy; only authenticated backoffice server and private Prometheus scrape
+clients receive the runtime token. This is independent from visitor sessions/CSRF.
+
+No extra public ports, filesystem persistence or migration controller are introduced.
+SQL observations use existing PostgreSQL; grant runtime SELECT/INSERT after migration
+006. Schedule retention with schema-owner credentials: seven-day phase retention,
+30-day facts. Existing private pool/connection limits apply. An older API image rejects
+the new migration history; rehearse paired rollback or restoration, never assume
+reverting an image undoes schema changes.
+
+OTLP HTTP export is disabled by default. If selected, allow private collector egress
+on its configured port (typically 4318), with no unrestricted internet telemetry.
+The collector, Prometheus, Grafana, persistent volumes/resources/access controls
+and actual image versions belong exclusively to vps-ops. Prometheus 3.13 LTS is the
+reviewed target; choose supported Grafana patches under its own support policy.
+No monitoring stack is deployed by merging this repository.
+
+SIGTERM closes active runs before draining observations and closing SDK/pools. Queue
+drain is limited to two seconds; in-progress SQL writes are joined under short SQL
+limits. SDK network shutdown remains best effort under underlying DNS/socket behavior.
+Readiness checks verify schema/corpus and stores, not paid OpenAI service availability.
+No model request runs on health checks or scrape requests.
+
+Backoffice compatibility reference: `618aa914ced48bf08ba8d613537ecd28ef797d5e`. The
+private v1 schema and synthetic example are in contracts/. Chat HTTP/SSE schemas
+remain unchanged. Effective Coolify routing, exporter connectivity, dashboard
+authentication and production monitoring remain deployment/paired verification gates.

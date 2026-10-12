@@ -218,3 +218,12 @@ the successful run exercised the updated action. This major update received manu
 review, not blanket Dependabot auto-merge permission. Native protection remained
 strict and the current head was matched at merge. Main and publication/deployment
 workflows were not activated.
+
+## PostgreSQL 18 current-head verification
+
+PR #46 passed Actions `38289478519`: static/offline 35 seconds, real-service/container
+168 seconds, aggregate gate 2 seconds. The previous run failed because the scanner
+referenced the old local image tag; the selected 18.6 image is now scanned explicitly.
+No scanner gate or required check was relaxed. The observability suite adds an actual
+loopback OTLP receiver to the existing offline job and SQL persistence to the existing
+real-service job; no new production job/controller is introduced.

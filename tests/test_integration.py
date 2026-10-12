@@ -1007,3 +1007,67 @@ def test_optional_presentation_context_survives_http_graph_and_provider(client_f
         assert 'opened_path' not in history.text
     finally:
         client.delete('/api/v1/session', headers=auth).raise_for_status()
+
+
+def test_private_operations_persist_survive_deletion_and_match_contract(client_factory):
+    import time
+
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+    from app.presentation.operations import OperationalSnapshot
+
+    token = 'isolated-fixture-operations-token-0000'
+    application = create_app(
+        Settings(
+            ops_read_token=token, ops_api_commit='a' * 40, ops_trace_sample_ratio=1
+        )
+    )
+    client = client_factory(application, client=(str(uuid4()), 50000))
+    csrf = bootstrap(client, 'http://localhost:3000')
+    owner_headers = headers('http://localhost:3000', csrf)
+    cid = client.post('/api/v1/conversations', headers=owner_headers, json={}).json()[
+        'id'
+    ]
+    response = client.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**owner_headers, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'What is Filomena?', 'locale': 'en'},
+    )
+    assert 'event: run.completed' in response.text
+    deadline = time.monotonic() + 3
+    ops_headers = {'Authorization': 'Bearer ' + token}
+    while True:
+        snapshot = client.get('/internal/ops/v1/status', headers=ops_headers)
+        assert snapshot.status_code == 200, snapshot.text
+        data = OperationalSnapshot.model_validate(snapshot.json())
+        if data.traces:
+            break
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+    trace = data.traces[0]
+    assert trace.outcome == 'completed' and trace.duration_ms > 0
+    assert data.executions.completed >= 1
+    assert data.executions.first_token_p50_ms is not None
+    assert any(stage.name == 'generation' for stage in trace.stages)
+    assert 'no-store' in snapshot.headers['cache-control']
+    encoded = snapshot.text
+    for secret in (cid, response.headers['x-run-id'], 'What is Filomena?', token):
+        assert secret not in encoded
+    assert (
+        client.delete(f'/api/v1/conversations/{cid}', headers=owner_headers).status_code
+        == 204
+    )
+    retained = client.get('/internal/ops/v1/status', headers=ops_headers).json()
+    assert any(t['id'] == trace.id for t in retained['traces'])
+    with connect() as conn:
+        old_id = uuid4().hex
+        conn.execute(
+            "INSERT INTO operational_executions(trace_id,started_at,outcome,duration_ms,stages,sampled) VALUES (%s,now()-interval '8 days','completed',1,'[]',true)",
+            (old_id,),
+        )
+    assert old_id not in [
+        t['id']
+        for t in client.get('/internal/ops/v1/status', headers=ops_headers).json()[
+            'traces'
+        ]
+    ]

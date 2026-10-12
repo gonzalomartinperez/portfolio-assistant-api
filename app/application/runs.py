@@ -6,11 +6,22 @@ import re
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from time import perf_counter
 from typing import Protocol
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
 from app.application.conversation_context import Turn, bounded_history
+from app.application.observability import (
+    Execution,
+    ExecutionObserver,
+    Outcome,
+    Stage,
+    measurements,
+    phase,
+    stage_origin,
+)
 from app.application.presentation_context import PresentationContext
 from app.domain.errors import (
     BudgetExhaustedError,
@@ -123,7 +134,9 @@ class RunService:
         *,
         fixture: bool,
         timeout_seconds: float = 60,
+        observer: ExecutionObserver | None = None,
     ):
+        self.observer = observer
         self.store = store
         self.workflow = workflow
         self.fixture = fixture
@@ -163,6 +176,75 @@ class RunService:
         return cleanup
 
     async def execute(
+        self,
+        run_id: UUID,
+        conversation_id: UUID,
+        question: str,
+        locale: str,
+        context: PresentationContext | None = None,
+    ) -> AsyncGenerator[RunEvent]:
+        started_at = datetime.now(UTC)
+        started = perf_counter()
+        first_token = None
+        outcome: Outcome = 'cancelled'
+        error_code = None
+        claimed = False
+        stages: list[Stage] = []
+        try:
+            async with aclosing(
+                self._execute(run_id, conversation_id, question, locale, context)
+            ) as stream:
+                while True:
+                    token = measurements.set(stages if self.observer else None)
+                    origin_token = stage_origin.set(started)
+                    try:
+                        event = await anext(stream)
+                    except StopAsyncIteration:
+                        break
+                    finally:
+                        measurements.reset(token)
+                        stage_origin.reset(origin_token)
+                    if event.name == 'run.started':
+                        claimed = True
+                    elif event.name == 'message.delta' and first_token is None:
+                        first_token = (perf_counter() - started) * 1000
+                    elif event.name == 'run.completed':
+                        outcome = 'completed'
+                    elif event.name == 'run.failed':
+                        outcome = 'failed'
+                        code = event.payload.get('code')
+                        error_code = (
+                            str(code)
+                            if code
+                            in {
+                                'provider_unavailable',
+                                'generation_failed',
+                                'budget_exhausted',
+                                'knowledge_updating',
+                                'dependency_unavailable',
+                            }
+                            else 'other'
+                        )
+                    yield event
+        finally:
+            if self.observer and claimed:
+                execution = Execution(
+                    uuid4().hex,
+                    started_at,
+                    outcome,
+                    max(0, (perf_counter() - started) * 1000),
+                    first_token,
+                    tuple(stages),
+                    error_code,
+                )
+                try:
+                    self.observer.record(execution)
+                except Exception:  # noqa: BLE001 - Observational failures must not change a paid run or expose adapter errors.
+                    logging.getLogger('portfolio_assistant').warning(
+                        '{"operation":"observability","status":"record_dropped"}'
+                    )
+
+    async def _execute(
         self,
         run_id: UUID,
         conversation_id: UUID,
@@ -225,12 +307,13 @@ class RunService:
                             yield RunEvent('message.delta', {'text': event.text})
                         elif event.kind == 'answer':
                             answer = event.text
-            refs = citations(sources, answer, self.fixture)
-            if not self.fixture:
-                answer = normalize_citation_markers(answer, len(sources))
-            message_id = await self.store.complete(
-                run_id, conversation_id, answer, refs
-            )
+            with phase('finalization'):
+                refs = citations(sources, answer, self.fixture)
+                if not self.fixture:
+                    answer = normalize_citation_markers(answer, len(sources))
+                message_id = await self.store.complete(
+                    run_id, conversation_id, answer, refs
+                )
             if message_id is None:
                 yield RunEvent('run.cancelled', {})
                 return

@@ -94,3 +94,11 @@ evidence remains independently verified and capped at 19,000 characters. LangGra
 receives plain Turn contracts, not database rows. Retrieval resolves explicit
 follow-ups without a model routing call. The provider receives the current question,
 untrusted history and public evidence separately. See conversation-evaluation.md.
+
+## Operational observation boundary
+
+The pure application observation model accepts bounded scalar measurements only.
+Infrastructure queues/persists them and optionally exports manual private OTLP.
+Presentation owns the versioned bearer-authenticated operational read API.
+No operational payload is sent through public chat/SSE or shares visitor identifiers.
+See [private observability](private-observability.md) for retention and drop semantics.

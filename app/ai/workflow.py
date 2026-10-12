@@ -23,6 +23,7 @@ from app.application.conversation_context import (
     retrieval_question,
 )
 from app.application.language import LanguageDetector, select_locale
+from app.application.observability import phase
 from app.application.presentation_context import PresentationContext
 
 
@@ -92,12 +93,13 @@ class LangGraphWorkflow:
             )
             sources = tuple(Evidence(**s) for s in state['sources'])
             parts = []
-            async with aclosing(
-                generate(command, sources, provider, accounting)
-            ) as stream:
-                async for delta in stream:
-                    parts.append(delta)
-                    writer(delta)
+            with phase('generation'):
+                async with aclosing(
+                    generate(command, sources, provider, accounting)
+                ) as stream:
+                    async for delta in stream:
+                        parts.append(delta)
+                        writer(delta)
             return {'answer': ''.join(parts)}
 
         builder = StateGraph(State)
@@ -111,11 +113,12 @@ class LangGraphWorkflow:
 
     async def stream(self, command: AnswerCommand) -> AsyncGenerator[WorkflowEvent]:
         history = bounded_history(command.history)
-        locale = (
-            select_locale(command.question, history, command.locale, self.detector)
-            if self.detector
-            else command.locale
-        )
+        with phase('language'):
+            locale = (
+                select_locale(command.question, history, command.locale, self.detector)
+                if self.detector
+                else command.locale
+            )
         state: State = {
             'question': command.question,
             'history': bounded_history(command.history),
