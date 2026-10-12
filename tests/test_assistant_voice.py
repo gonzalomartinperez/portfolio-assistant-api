@@ -61,3 +61,28 @@ def test_provider_applies_voice_without_weakening_grounding_or_generation_policy
         assert events.closed
 
     asyncio.run(run())
+
+
+def test_conversational_abstention_has_no_fabricated_citation():
+    from app.application.runs import citations
+    from app.domain.fixture import fixture_message, insufficient_message
+    from tests.test_workflow import SOURCE
+
+    for locale in ('en', 'es'):
+        answer = fixture_message('Unknown fact', '', locale)
+        assert answer == insufficient_message(locale)
+        assert citations((SOURCE,), answer, fixture=True) == []
+
+
+def test_followup_keeps_a_named_topic_when_initial_question_also_requests_explanation():
+    from app.application.conversation_context import Turn, retrieval_question
+
+    history = (Turn('user', '¿Qué construyó en Teamcubation? Explicalo sin jerga.'),)
+    question = 'Ahora explicá técnicamente ese ejemplo, con suficiente profundidad.'
+    query = retrieval_question(question, history)
+    assert 'Teamcubation' in query
+    assert question in query
+    history += (Turn('assistant', 'Invented private employer'), Turn('user', question))
+    query = retrieval_question('Resumilo en tres puntos.', history)
+    assert 'Teamcubation' in query
+    assert 'Invented private employer' not in query

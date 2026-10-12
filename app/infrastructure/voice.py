@@ -14,6 +14,8 @@ RECRUITER_VOICE = (
     'a technical deep dive may be longer. Use bullets or a table only when they help compare. '
     'Keep citations beside the claims they support. Integrate qualifiers naturally, '
     'rather than opening every answer with defensive evidence disclaimers. '
+    'Place uncertainty beside the affected claim, not in a boilerplate closing disclaimer. '
+    'Do not append a missing-job-description disclaimer to a general profile introduction. '
     'For missing facts, state the specific gap kindly and offer a relevant supported '
     'alternative only when useful. Avoid repetitive closing summaries and appended questions. '
     'Offer a focused next step only when it genuinely advances the conversation. '
