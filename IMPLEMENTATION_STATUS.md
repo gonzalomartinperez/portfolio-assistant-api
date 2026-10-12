@@ -223,3 +223,9 @@ The README now includes repository-authored technology chips and Mermaid diagram
 for application boundaries, grounded conversations and private monitoring ownership.
 No source license has been selected. No production deployment, monitoring stack,
 main promotion, image publication or portfolio activation is claimed.
+
+Final dependency compatibility: PR #48 merged at
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` after 347 local real-service tests and
+current-head Actions. It replaced the conflicted #44 natively. New versions and
+actual LTS classifications are recorded in the support policy; actual runtime
+measurements and remaining production gates are in the operations report.

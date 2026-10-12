@@ -106,3 +106,19 @@ build reused dependencies. No build-time secrets or alternate production stack w
 This verifies application artifact/runtime readiness in local Linux fixtures and
 GitHub CI. Residual database/vendor vulnerabilities, real OAuth/browser pairing,
 collector deployment, backup/restore and actual VPS acceptance remain open owner gates.
+
+## Dependabot final compatibility gate
+
+Native Dependabot replaced the conflicted PR #44 with PR #48 after the target
+advanced; no human work was force-pushed. All 14 changes were reviewed, including
+FastAPI's new native telemetry and Neo4j driver 6.4.0. Source
+`95c94291453ce6152de21a6b9748c410f367f3c9` passed frozen install, Ruff, strict mypy,
+**347 local tests in 69.93 seconds** and unchanged exported contracts.
+
+Actions `38295075616` passed static/offline in 35 seconds, real-service/container
+in 239 seconds and the required aggregate gate in 3 seconds. The exact verified
+head merged at `5ff96d3dbd015ddf9f90f83231052f57b7d494c8`. This was an authorized
+manual review/merge, not eligibility for unattended dependency automation. The
+live voice evaluation remains evidence for its recorded earlier SDK revision;
+no paid model replay was made for this dependency refresh. Current container and
+provider-adapter tests are deterministic, not another live OpenAI evaluation.

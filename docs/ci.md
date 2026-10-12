@@ -236,3 +236,10 @@ aggregate `checks` 4 seconds. Both independent jobs ran in parallel. Earlier hea
 were cancelled by the existing concurrency rule after follow-up fixes; their green
 checks were not used for the merge. No coverage, scanner or protection was weakened.
 See the dated private-observability report for exact local/CI artifact limits.
+
+Dependabot PR #48 replaced conflicted #44 through native maintenance, included
+14 reviewed updates and passed Actions `38295075616` at exact head
+`95c94291453ce6152de21a6b9748c410f367f3c9` (35/239/3 seconds). Framework/provider/driver
+updates received manual review. Protections still require strict up-to-date `checks`
+with administrators enforced; no blocking review or gate was bypassed. No open
+Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation.

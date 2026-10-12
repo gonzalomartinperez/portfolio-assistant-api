@@ -113,3 +113,10 @@ question count is coverage, not additional approved biographical facts.
   pairing, collector/Grafana/Prometheus deployment and production readiness.
 - Remaining release gates: vulnerability review, measured VPS resources, effective
   private proxy/egress, encrypted backup/restore and compatible rollback.
+
+- Completed: all currently open Dependabot updates reviewed and integrated through
+  replacement PR #48, with 347 local tests and actual current-head CI. No broad
+  automatic eligibility, protection weakening or default-branch activation.
+- Runtime handoff is committed and application artifacts verified. Publication,
+  paired OAuth/browser acceptance and production infrastructure remain explicit
+  owner gates; source integration does not claim those gates are complete.
