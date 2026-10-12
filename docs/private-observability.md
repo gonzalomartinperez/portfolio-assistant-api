@@ -100,3 +100,15 @@ Backoffice runtime names are `OPERATIONS_API_ORIGIN` (private API origin) and
 `OPERATIONS_READ_TOKEN` (same value as API `OPS_READ_TOKEN`). These are server-only.
 Omit `OPERATIONS_SOURCE_MODE` in production. The deployed API source revision goes
 in `OPS_API_COMMIT`; it is not a secret. No registry credentials are supplied here.
+
+## Framework telemetry compatibility
+
+FastAPI 0.142 introduced native request telemetry; 0.143 made automatic exporter
+setup opt-in. Bootstrap explicitly disables tracing, metrics, exception logs and
+automatic exporter setup through its telemetry configuration. The earlier installed
+FastAPI accepts this as an extra setting; upgraded versions apply the supported
+configuration. A regression attaches a global in-memory exporter and verifies that
+HTTP requests do not export spans. Manual allowlisted application telemetry remains
+separate. Never accept a framework update based only on its version label.
+Official references: [release notes](https://fastapi.tiangolo.com/release-notes/),
+[telemetry settings](https://fastapi.tiangolo.com/advanced/opentelemetry/).

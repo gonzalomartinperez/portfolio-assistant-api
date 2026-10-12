@@ -216,7 +216,17 @@ def create_app(
             await asyncio.to_thread(graph.close)
             await asyncio.to_thread(database.close)
 
-    app = FastAPI(title='Portfolio Assistant API', version='1.0.0', lifespan=lifespan)
+    app = FastAPI(
+        title='Portfolio Assistant API',
+        version='1.0.0',
+        lifespan=lifespan,
+        telemetry={
+            'tracing': False,
+            'metrics': False,
+            'logs': False,
+            'auto_configure': False,
+        },
+    )
     app.state.config = config
     app.add_middleware(BodyLimit)
     app.add_middleware(

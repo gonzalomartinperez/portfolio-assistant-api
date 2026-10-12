@@ -355,3 +355,32 @@ def test_export_shutdown_failure_does_not_escape_or_log_payload(caplog):
         assert 'secret-canary' not in caplog.text
 
     asyncio.run(run())
+
+
+def test_framework_does_not_inherit_global_request_exporter(monkeypatch):
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    from app.bootstrap.container import create_app
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    monkeypatch.setattr(trace, 'get_tracer_provider', lambda: provider)
+    app = create_app(Settings(_env_file=None))
+    client = TestClient(app)
+    assert client.get('/health/live').status_code == 200
+    assert (
+        client.post(
+            '/api/v1/session',
+            json={'private-canary': 'secret'},
+            headers={'Origin': 'https://untrusted.invalid'},
+        ).status_code
+        == 403
+    )
+    assert not exporter.get_finished_spans()
+    provider.shutdown()
