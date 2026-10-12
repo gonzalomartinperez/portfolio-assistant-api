@@ -18,6 +18,24 @@ evidence reported separately. The native portfolio assistant remains disabled.
 Production deployment, image publication and shared monitoring activation are not
 performed here; private vps-ops manages Coolify on the future Hostinger VPS.
 
+## Assistant interface preview
+
+The API powers the native conversation UI owned by the portfolio. These actual
+production-build browser captures show the expanded and compact interfaces replaying
+public answers recorded in the authorized GPT-6 Luna evaluation. The capture harness
+uses deterministic HTTP/SSE fixtures; these are not new live calls or production
+availability proof. The assistant remains disabled on the public portfolio.
+
+![Expanded native assistant in dark mode, showing a response, public source link, answer actions and composer](docs/assets/assistant/expanded-dark-en.png)
+
+![Compact native assistant panel in dark mode, showing the same shared conversation interface](docs/assets/assistant/compact-dark-en.png)
+
+Capture source: [portfolio revision `bcae79e704da`](https://github.com/gonzalomartinperez/portfolio/tree/bcae79e704daca02cfe0ef488377de60b85dfff8),
+with [browser-test provenance](https://github.com/gonzalomartinperez/portfolio/blob/bcae79e704daca02cfe0ef488377de60b85dfff8/docs/verification/native-assistant.md).
+See [recapture details and limitations](docs/verification/readme-captures-2026-10-12.md).
+The UI is maintained in that repository; these documentation images create no runtime
+dependency and do not enable the assistant.
+
 ## Conversation and knowledge flow
 
 ```mermaid
