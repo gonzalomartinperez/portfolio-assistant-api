@@ -6,10 +6,11 @@ no main promotion, artifact publication or production execution is authorized.
 Critical security issues interrupt the sequence below. Paid calls require explicit
 scope/budget; the dated experiment below does not authorize ongoing usage.
 
-Current integrated checkpoint: `a3f9b7ce9fbc9646cec4d6dc17f3ed0d4f371ec1`
-(manually reviewed Dependabot PR #31), including database-image PR #41 at
-`6cc116609acec823314e94b88fe15137ddd96786`. Both passed actual current-head
-Quality runs before merging. Runtime security PR #40 is preserved in this history.
+Latest integrated application checkpoint (2026-10-12):
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` (reviewed Dependabot PR #48),
+including PostgreSQL 18 PR #46 and private operations PR #47. The final security/
+runtime handoff is tracked by PR #49; its required checks and merge remain
+authoritative. Earlier runtime security/database commits are preserved in history.
 Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
 Latest [runtime security evidence](verification/runtime-security-2026-10-10.md) and
 [database evidence](verification/database-images-2026-10-10.md) supersede earlier
@@ -104,11 +105,19 @@ question count is coverage, not additional approved biographical facts.
 - Completed/integrated: final neutral Spanish/US English voice and retained-topic fix
   (PR #45); PostgreSQL 18.6/pgvector 0.8.7 fresh-store upgrade (PR #46).
 - Implemented/locally verified: private status/Prometheus API, manual opt-in OTLP,
-  migration 006 and committed backoffice adapter compatibility; final current-head
-  CI/container evidence gates integration. See the dated operations report.
+  migration 006 and committed backoffice adapter compatibility. PR #47 passed final
+  current-head CI and integrated into develop; actual image/health/SSE evidence is
+  recorded in the dated operations report.
 - Completed research: actual LTS policies for Node/Next/Neo4j/Prometheus/LangGraph/
   LangChain; maintained stable exceptions and Python 3.15 Lingua wheel blocker.
 - Deferred to owners: native assistant activation, actual OAuth/browser dashboard
   pairing, collector/Grafana/Prometheus deployment and production readiness.
 - Remaining release gates: vulnerability review, measured VPS resources, effective
   private proxy/egress, encrypted backup/restore and compatible rollback.
+
+- Completed: all currently open Dependabot updates reviewed and integrated through
+  replacement PR #48, with 347 local tests and actual current-head CI. No broad
+  automatic eligibility, protection weakening or default-branch activation.
+- Runtime handoff is committed and application artifacts verified. Publication,
+  paired OAuth/browser acceptance and production infrastructure remain explicit
+  owner gates; source integration does not claim those gates are complete.

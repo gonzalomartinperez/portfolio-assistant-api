@@ -112,3 +112,10 @@ HTTP requests do not export spans. Manual allowlisted application telemetry rema
 separate. Never accept a framework update based only on its version label.
 Official references: [release notes](https://fastapi.tiangolo.com/release-notes/),
 [telemetry settings](https://fastapi.tiangolo.com/advanced/opentelemetry/).
+
+Private endpoint validation rejects IDNA/unicode-dot host ambiguity, numeric hostname
+aliases, IPv4-mapped link-local metadata addresses and invalid/zero ports. DNS aliases
+must be ASCII labels beginning with a letter, within standard label/hostname lengths;
+use a single Docker service alias or an approved `.internal` namespace. Literal private
+IP/loopback addresses are separately validated. Format validation cannot guarantee
+DNS answers stay private: vps-ops must enforce trusted DNS and private egress.

@@ -227,3 +227,19 @@ referenced the old local image tag; the selected 18.6 image is now scanned expli
 No scanner gate or required check was relaxed. The observability suite adds an actual
 loopback OTLP receiver to the existing offline job and SQL persistence to the existing
 real-service job; no new production job/controller is introduced.
+
+## Private operations final code gate
+
+PR #47 passed current code head `017df0c3036a3a976cf3b016b783f2932be31d7d` in
+Actions `38293707505`: static/offline 30 seconds, real-services/container 186 seconds,
+aggregate `checks` 4 seconds. Both independent jobs ran in parallel. Earlier heads
+were cancelled by the existing concurrency rule after follow-up fixes; their green
+checks were not used for the merge. No coverage, scanner or protection was weakened.
+See the dated private-observability report for exact local/CI artifact limits.
+
+Dependabot PR #48 replaced conflicted #44 through native maintenance, included
+14 reviewed updates and passed Actions `38295075616` at exact head
+`95c94291453ce6152de21a6b9748c410f367f3c9` (35/239/3 seconds). Framework/provider/driver
+updates received manual review. Protections still require strict up-to-date `checks`
+with administrators enforced; no blocking review or gate was bypassed. No open
+Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation.

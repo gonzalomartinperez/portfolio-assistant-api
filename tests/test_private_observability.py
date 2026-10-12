@@ -132,6 +132,12 @@ def test_private_schema_rejects_untrusted_values(mutation):
         'http://169.254.169.254',
         'http://collector:4318/path',
         'http://user:secret@collector:4318',
+        'http://untrusted。com:4318',
+        'http://[::ffff:169.254.169.254]:4318',
+        'http://collector:invalid',
+        'http://collector:0',
+        'http://2852039166:4318',
+        'http://0xA9FEA9FE:4318',
     ],
 )
 def test_private_export_configuration_fails_closed(endpoint):
@@ -412,5 +418,135 @@ def test_cancelled_observer_joins_failed_write_without_resuming_worker():
         assert isinstance(result[0], asyncio.CancelledError)
         assert observer.dropped == 1
         await observer.close()
+
+    asyncio.run(run())
+
+
+def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypatch):
+    import ast
+    from pathlib import Path
+
+    from openai import AsyncOpenAI, OpenAI
+
+    monkeypatch.setenv('OPENAI_BASE_URL', 'https://untrusted.invalid/v1')
+    calls = []
+    for file in Path('app').rglob('*.py'):
+        tree = ast.parse(Path(file).read_text())
+        calls.extend(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in ('OpenAI', 'AsyncOpenAI')
+        )
+    assert len(calls) == 3
+
+    async def run():
+        for call in calls:
+            kwargs = {
+                arg.arg: ast.literal_eval(arg.value)
+                for arg in call.keywords
+                if arg.arg in ('base_url', 'timeout', 'max_retries')
+            }
+            assert kwargs.get('base_url') == 'https://api.openai.com/v1'
+            assert kwargs.get('max_retries') == 0
+            if call.func.id == 'AsyncOpenAI':
+                async with AsyncOpenAI(
+                    api_key='synthetic-fixture-only', **kwargs
+                ) as client:
+                    assert client.base_url.host == 'api.openai.com'
+            else:
+                with OpenAI(api_key='synthetic-fixture-only', **kwargs) as client:
+                    assert client.base_url.host == 'api.openai.com'
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('available', [True, False])
+def test_real_sdk_http_stream_mapping_and_no_generation_retry(available):
+    import httpx
+    from openai import AsyncOpenAI
+
+    from app.application.contracts import Usage
+    from app.domain.budget import MAX_OUTPUT_TOKENS
+    from app.domain.errors import ProviderUnavailableError
+    from app.infrastructure.answer import ResponsesProvider
+
+    requests = []
+
+    def handle(request):
+        requests.append(request)
+        assert str(request.url) == 'https://api.openai.com/v1/responses'
+        body = json.loads(request.content)
+        assert body['model'] == 'gpt-6-luna'
+        assert body['reasoning'] == {'effort': 'medium'}
+        assert body['max_output_tokens'] == MAX_OUTPUT_TOKENS
+        assert body['store'] is False and body['stream'] is True
+        if not available:
+            return httpx.Response(
+                503,
+                json={'error': {'message': 'private-canary', 'type': 'server_error'}},
+            )
+        frames = [
+            {
+                'type': 'response.output_text.delta',
+                'sequence_number': 1,
+                'item_id': 'msg_fixture',
+                'output_index': 0,
+                'content_index': 0,
+                'delta': 'Hello [1].',
+            },
+            {
+                'type': 'response.completed',
+                'sequence_number': 2,
+                'response': {
+                    'id': 'resp_fixture',
+                    'object': 'response',
+                    'created_at': 1,
+                    'model': 'gpt-6-luna',
+                    'status': 'completed',
+                    'output': [],
+                    'usage': {
+                        'input_tokens': 12,
+                        'output_tokens': 8,
+                        'total_tokens': 20,
+                    },
+                },
+            },
+        ]
+        data = ''.join(
+            'event: ' + frame['type'] + '\ndata: ' + json.dumps(frame) + '\n\n'
+            for frame in frames
+        )
+        return httpx.Response(
+            200, headers={'Content-Type': 'text/event-stream'}, content=data
+        )
+
+    async def run():
+        async with AsyncOpenAI(
+            api_key='synthetic-fixture-only',
+            base_url='https://api.openai.com/v1',
+            max_retries=0,
+            http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)),
+        ) as client:
+            provider = ResponsesProvider(client, 'gpt-6-luna')
+            if available:
+                output = [
+                    item
+                    async for item in provider.stream(
+                        'Question', 'Approved public evidence', 'en'
+                    )
+                ]
+                assert output == ['Hello [1].', Usage(12, 8)]
+            else:
+                with pytest.raises(ProviderUnavailableError) as failure:
+                    _ = [
+                        item
+                        async for item in provider.stream(
+                            'Question', 'Approved public evidence', 'en'
+                        )
+                    ]
+                assert 'private-canary' not in str(failure.value)
+        assert len(requests) == 1
 
     asyncio.run(run())

@@ -59,3 +59,8 @@ Support and upgrade decisions: [supported-version policy](support-policy.md). Py
 
 See [private observability](private-observability.md) for auth, data exclusions,
 retention, vendor environment restrictions and measurement limits.
+
+The application pins all OpenAI SDK clients to `https://api.openai.com/v1` and
+sets generation/embedding retries to zero. `OPENAI_BASE_URL` is not a supported
+application override and cannot redirect provider credentials or public corpus
+requests to another provider. Private operational origins are configured separately.

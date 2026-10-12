@@ -324,3 +324,8 @@ Backoffice compatibility reference: `618aa914ced48bf08ba8d613537ecd28ef797d5e`. 
 private v1 schema and synthetic example are in contracts/. Chat HTTP/SSE schemas
 remain unchanged. Effective Coolify routing, exporter connectivity, dashboard
 authentication and production monitoring remain deployment/paired verification gates.
+
+The committed operational contract is available in develop via PR #47, merge
+`8d411d76699c98e512f07127af371e2b6305fd57`. Local image verification and exact limits
+are in [the dated operations report](verification/private-observability-2026-10-12.md).
+Do not promote its local engine ID to a registry digest or production authorization.

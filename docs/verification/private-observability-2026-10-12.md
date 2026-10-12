@@ -77,3 +77,70 @@ OAuth/dashboard pairing, retention scheduling, measured KVM 4 resources, encrypt
 backup/restore and compatible rollback. Model availability is not inferred from
 store readiness; usage is an estimate with incomplete historical token coverage.
 No main promotion, publication, deployment or portfolio assistant activation occurs.
+
+## Final application acceptance
+
+PR #47 passed final code revision `017df0c3036a3a976cf3b016b783f2932be31d7d` in
+Actions `38293707505`: static/offline 30 seconds, real-services/container 186 seconds,
+aggregate gate 4 seconds. It merged into develop at
+`8d411d76699c98e512f07127af371e2b6305fd57`. The added non-UTC connection regression
+passed separately; ledger reservations and snapshot aggregation now explicitly
+truncate the calendar month in UTC, independently of database session timezone.
+
+Local final production image ID:
+`sha256:5d33ab1db6178f930f5860cd70f27b766609812615a20e49c85f4f3182fc3bc6`.
+It is an engine image ID, not a published registry manifest digest. Runtime source
+hashes matched the final operations/ledger/bootstrap files. Size: 272,623,078 bytes;
+the earlier same-environment baseline was 271,706,379 bytes, a 916,699-byte increase
+(about 0.34%). This is container size, not browser bundle or model-quality performance.
+
+The image passed normal SSE and active-stream SIGTERM smoke. A separate private
+Compose-network fixture used the image's default startup command, its actual Docker
+healthcheck, read-only filesystem, UID 65532, dropped capabilities, 512 MiB memory,
+one CPU and 128 PID limits. Readiness and authenticated status returned 200, missing
+bearer returned 401, Prometheus exposition and no-store headers passed, and Docker
+reported healthy. Only the owned test container was stopped/removed; volumes remain.
+The first cold image build downloaded Lingua's 162.4 MiB wheel slowly; the final cached
+build reused dependencies. No build-time secrets or alternate production stack were added.
+
+This verifies application artifact/runtime readiness in local Linux fixtures and
+GitHub CI. Residual database/vendor vulnerabilities, real OAuth/browser pairing,
+collector deployment, backup/restore and actual VPS acceptance remain open owner gates.
+
+## Dependabot final compatibility gate
+
+Native Dependabot replaced the conflicted PR #44 with PR #48 after the target
+advanced; no human work was force-pushed. All 14 changes were reviewed, including
+FastAPI's new native telemetry and Neo4j driver 6.4.0. Source
+`95c94291453ce6152de21a6b9748c410f367f3c9` passed frozen install, Ruff, strict mypy,
+**347 local tests in 69.93 seconds** and unchanged exported contracts.
+
+Actions `38295075616` passed static/offline in 35 seconds, real-service/container
+in 239 seconds and the required aggregate gate in 3 seconds. The exact verified
+head merged at `5ff96d3dbd015ddf9f90f83231052f57b7d494c8`. This was an authorized
+manual review/merge, not eligibility for unattended dependency automation. The
+live voice evaluation remains evidence for its recorded earlier SDK revision;
+no paid model replay was made for this dependency refresh. Current container and
+provider-adapter tests are deterministic, not another live OpenAI evaluation.
+
+After dependency integration, the committed backoffice adapter was replayed against
+actual local HTTP from API revision `5ff96d3dbd015ddf9f90f83231052f57b7d494c8` under
+Node 24.21.0: valid status mapped to available; invalid bearer mapped to authorization
+failure. The runtime `api_commit` matched that revision. This still does not claim
+browser/OAuth or deployed dashboard acceptance.
+
+## Final origin/transport regressions
+
+The final origin hardening pins all three production OpenAI clients to the official
+HTTPS API origin with zero retries. Real SDK sync/async clients resisted a poisoned
+vendor endpoint variable. A real OpenAI SDK/httpx mock transport exercised Responses
+SSE text/usage mapping and provider 503 handling; assertions verified GPT-6 Luna,
+medium reasoning, output allowance, `store=false` and exactly one request. This is
+simulated upstream transport, not a new paid model evaluation.
+
+Private OTLP configuration additionally rejects Unicode-dot host ambiguity, numeric
+hostname aliases, IPv4-mapped metadata addresses and invalid/zero ports. Trusted
+DNS/private egress remains an operational responsibility. Final local suite:
+**356 passed in 154.76 seconds**, including 27 real PostgreSQL/Neo4j tests; focused
+observability/transport/configuration suite: **31 passed in 32.01 seconds**. These
+are measured verification runs under concurrent local work, not claimed speedups.

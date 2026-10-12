@@ -1,3 +1,7 @@
+Latest verified continuation: [2026-10-12 operations/runtime evidence](docs/verification/private-observability-2026-10-12.md).
+It records current application/dependency checks and explicit production limitations.
+The sections below retain dated implementation history, not standing rollout authority.
+
 > Latest local evidence: [244-turn authorized OpenAI evaluation](docs/verification/live-depth-2026-10-10.md),
 > followed by targeted regressions and database cleanup. Older checkpoints below
 > are historical; successful transport is not a universal answer-quality or
@@ -215,9 +219,17 @@ tokens and manual opt-in OTLP are implemented with migration 006. Local full sui
 342 passed in 28.89 seconds against PostgreSQL 18.6/pgvector 0.8.7 and Neo4j 5.26.31.
 Focused tests include an actual loopback OTLP protobuf receiver and runtime redaction,
 stream cleanup, bounded queues, authenticated reads and deletion-independent persistence.
-Final branch CI and container evidence must be recorded before integration acceptance.
+Final application code passed CI and merged through PR #47 at
+`8d411d76699c98e512f07127af371e2b6305fd57`. The dated operations report records
+actual image/default healthcheck/SSE/SIGTERM and frontend-adapter evidence.
 
 The README now includes repository-authored technology chips and Mermaid diagrams
 for application boundaries, grounded conversations and private monitoring ownership.
 No source license has been selected. No production deployment, monitoring stack,
 main promotion, image publication or portfolio activation is claimed.
+
+Final dependency compatibility: PR #48 merged at
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` after 347 local real-service tests and
+current-head Actions. It replaced the conflicted #44 natively. New versions and
+actual LTS classifications are recorded in the support policy; actual runtime
+measurements and remaining production gates are in the operations report.

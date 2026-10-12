@@ -1,4 +1,5 @@
 import ipaddress
+import re
 from decimal import Decimal
 from functools import lru_cache
 from typing import Literal
@@ -82,7 +83,14 @@ class Settings(BaseSettings):
             endpoint = urlparse(self.otel_private_endpoint)
             host = endpoint.hostname or ''
             try:
+                if endpoint.port is not None and endpoint.port == 0:
+                    raise ValueError('invalid_port')
+            except ValueError:
+                raise ValueError('invalid_telemetry_port') from None
+            try:
                 address = ipaddress.ip_address(host)
+                if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+                    address = address.ipv4_mapped
                 private = address.is_loopback or (
                     address.is_private
                     and not address.is_link_local
@@ -90,7 +98,15 @@ class Settings(BaseSettings):
                     and not address.is_multicast
                 )
             except ValueError:
-                private = bool(host) and ('.' not in host or host.endswith('.internal'))
+                labels = host.split('.')
+                private = (
+                    (len(labels) == 1 or labels[-1] == 'internal')
+                    and len(host) <= 253
+                    and all(
+                        re.fullmatch(r'[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?', label)
+                        for label in labels
+                    )
+                )
             if (
                 endpoint.scheme not in ('http', 'https')
                 or not private

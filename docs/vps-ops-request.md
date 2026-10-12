@@ -28,7 +28,7 @@ prebuilt tested immutable image digests after separately authorized publication;
 no source rebuild on the VPS as the normal release path. API image publication
 preparation exists; no registry digest or publication approval is supplied here.
 A separate application-owned Dockerfile.postgres now builds patched PostgreSQL
-17.11 / pgvector 0.8.7. Its publication and package visibility still require
+18.6 / pgvector 0.8.7. Its publication and package visibility still require
 separate authorization. Local image IDs in reports are not registry manifests.
 
 Manage Coolify and its effective proxy through vps-ops. API binds internal 8000;
@@ -55,14 +55,14 @@ URLs, image layers, CI artifacts or logs. PostgreSQL runs UID/GID 999 and skips
 root ownership repair: prepare owned PGDATA and socket tmpfs deliberately. Existing
 bootstrap environment changes do not rotate existing cluster passwords.
 
-Coordinate checksummed API migrations 001–005 and checkpoint setup before readiness;
+Coordinate checksummed API migrations 001–006 and checkpoint setup before readiness;
 these are not one complete atomic operation. Review explicit vector extension
 upgrades independently of application migrations. Schedule approved public-corpus
 sync and retention commands from the exact selected image. Only approved published
 portfolio content enters knowledge; visitor theme/path metadata is untrusted.
 Keep fixture mode until separate model/embedding usage authorization. Authorized
 production model policy is OpenAI-only GPT-6 Luna, medium, no provider fallback,
-with the configured shared budget. The small isolated experiment does not authorize
+with the configured shared budget. The completed isolated evaluation does not authorize
 additional production calls or a full paid question-bank run.
 
 Create encrypted off-server backups and demonstrate restoration into isolated
@@ -74,7 +74,7 @@ database recovery as separate procedures.
 
 ## Security, resources and acceptance
 
-The API scan still has unresolved OS high findings. Patched PostgreSQL removed all
+The API scan still has unresolved OS high findings; use the latest dated image report. Patched PostgreSQL removed all
 fixable findings in the recorded scan but retains three critical findings without
 listed fixes. Neo4j's full OS/Java scan retains an unfixed headers critical finding
 and fixable vendor Jackson highs. Assess runtime applicability and supported vendor
@@ -128,3 +128,11 @@ another controller or publish monitoring dashboards. No health/scrape performs p
 Accept the release only after actual OAuth/dashboard pairing, effective private routing,
 collector connectivity, vulnerability review, backup/restore and compatible rollback.
 Application CI/local fixtures are preparation evidence, not production approval.
+
+Final dependency source merged through PR #48 at
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8`. Use its frozen lock rather than the
+older SDK/driver versions from historical measurements. Public chat wire contracts
+are unchanged; private operations v1 is implemented and accepted by the committed
+backoffice HTTP adapter at `618aa914ced48bf08ba8d613537ecd28ef797d5e`. Actual paired
+OAuth/browser verification and production collector connectivity remain your
+coordinated acceptance gates. Main and the disabled portfolio rollout stay untouched.
