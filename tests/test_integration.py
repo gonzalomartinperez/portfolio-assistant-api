@@ -1,3 +1,4 @@
+import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 
 from app.bootstrap.config import settings
+from app.domain.fixture import insufficient_message
 from app.infrastructure.db import connect
 from app.infrastructure.embedding import embed
 from app.infrastructure.ledger import BudgetExhaustedError, reserve, settle
@@ -149,8 +151,15 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     assert 'access-control-allow-origin' not in denied_preflight.headers
     reserve(sent.headers['x-run-id'], Decimal('0.05'))
     settle(sent.headers['x-run-id'], 1000, 500)
+    with connect() as conn:
+        usage = conn.execute(
+            'SELECT input_tokens,output_tokens,actual_usd FROM spend_ledger WHERE run_id=%s',
+            (sent.headers['x-run-id'],),
+        ).fetchone()
+    assert usage['input_tokens'] == 1000 and usage['output_tokens'] == 500
+    assert usage['actual_usd'] == Decimal('0.000350')
     with pytest.raises(BudgetExhaustedError):
-        reserve(str(uuid4()), Decimal('9.01'))
+        reserve(str(uuid4()), Decimal('10.01'))
     pending_id = str(uuid4())
     with connect() as conn:
         conn.execute(
@@ -190,7 +199,7 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
         json={'content': 'quasar xylophone', 'locale': 'en'},
     )
     assert unsupported.status_code == 200
-    assert 'not find enough public evidence' in unsupported.text
+    assert insufficient_message('en') in unsupported.text
     assert '"citations":[]' in unsupported.text
     assert (
         first.delete(
@@ -276,6 +285,20 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(
         )
         command('add', '.')
         command('commit', '-qm', 'fixture: graph failure')
+        with connect() as conn:
+            conn.execute(
+                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit',
+                ('a' * 40,),
+            )
+        superseded = sync(repo, watched=True)
+        assert superseded['superseded'] is True
+        with connect() as conn:
+            assert (
+                conn.execute(
+                    "SELECT id FROM knowledge_versions WHERE status='active'"
+                ).fetchone()['id']
+                == second['knowledge_version']
+            )
         monkeypatch.setattr(
             'app.infrastructure.indexing.GraphDatabase.driver',
             lambda *args, **kwargs: (_ for _ in ()).throw(
@@ -291,6 +314,7 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(
         assert active == second['knowledge_version']
     finally:
         with connect() as conn:
+            conn.execute('DELETE FROM knowledge_watch')
             conn.execute(
                 "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
             )
@@ -394,6 +418,54 @@ def client_factory():
     yield create
     for client in reversed(clients):
         client.__exit__(None, None, None)
+
+
+def test_canonical_citations_match_stream_final_and_persisted_history(client_factory):
+    import json
+    from dataclasses import replace
+
+    from app.application.contracts import WorkflowEvent
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+    from tests.test_workflow import SOURCE
+
+    sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
+
+    class SyntheticWorkflow:
+        async def stream(self, command):
+            yield WorkflowEvent('evidence', sources=sources)
+            yield WorkflowEvent('delta', text='Claim [5], another [2].')
+            yield WorkflowEvent('answer', text='Claim [5], another [2].')
+
+    application = create_app(Settings(_env_file=None, ai_provider='fixture'))
+    client = client_factory(application, client=(str(uuid4()), 50000))
+    application.state.runs.workflow = SyntheticWorkflow()
+    application.state.runs.fixture = False
+    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
+    try:
+        cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+        response = client.post(
+            f'/api/v1/conversations/{cid}/messages/stream',
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={'content': 'What is Filomena?', 'locale': 'en'},
+        )
+        assert response.status_code == 200
+        events = [
+            json.loads(line[6:])
+            for line in response.text.splitlines()
+            if line.startswith('data: ')
+        ]
+        final = next(
+            event['payload'] for event in events if event['type'] == 'message.completed'
+        )
+        assert final['content'] == 'Claim [2], another [1].'
+        assert [source['id'] for source in final['citations']] == ['2', '5']
+        history = client.get(f'/api/v1/conversations/{cid}/messages').json()['items']
+        answer = next(message for message in history if message['role'] == 'assistant')
+        assert answer['content'] == final['content']
+        assert answer['citations'] == final['citations']
+    finally:
+        client.delete('/api/v1/session', headers=auth).raise_for_status()
 
 
 def test_every_owned_mutation_and_stream_wire_contract(client_factory):
@@ -646,7 +718,7 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
         def __init__(self):
             self.histories = []
 
-        async def stream(self, question, evidence, locale, history=()):
+        async def stream(self, question, evidence, locale, history=(), context=None):
             self.histories.append(history)
             yield 'Public fixture response'
 
@@ -687,3 +759,358 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
         visitor.delete(
             '/api/v1/session', headers=headers('http://localhost:3000', visitor_token)
         )
+
+
+def test_embedding_ledger_shares_atomic_monthly_limit():
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.infrastructure.ledger import EmbeddingAccounting
+
+    with connect() as conn:
+        spent = conn.execute(
+            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+        ).fetchone()['amount']
+    accounting = EmbeddingAccounting(
+        connect, spent + Decimal('0.0002'), Decimal('0.02')
+    )
+    identifiers = []
+
+    def reserve_one():
+        try:
+            return accounting.reserve_embedding(10000, 'index')
+        except BudgetExhaustedError:
+            return None
+
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            identifiers = [
+                identifier
+                for identifier in executor.map(lambda _: reserve_one(), range(2))
+                if identifier
+            ]
+        assert len(identifiers) == 1
+        accounting.settle_embedding(identifiers[0], 100)
+        with connect() as conn:
+            row = conn.execute(
+                'SELECT kind,actual_usd,run_id,input_tokens,output_tokens FROM spend_ledger WHERE id=%s',
+                (identifiers[0],),
+            ).fetchone()
+        assert row['kind'] == 'embedding_index' and row['run_id'] is None
+        assert row['actual_usd'] == Decimal('0.000002')
+        assert row['input_tokens'] == 100 and row['output_tokens'] == 0
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (identifiers,))
+
+
+def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
+    from app.domain.errors import RejectedError
+    from app.infrastructure.knowledge import KnowledgeIndex
+
+    class ForbiddenEmbeddings:
+        provider = 'fixture'
+        model = 'hash64-v1'
+        dimensions = 64
+
+        async def query(self, text):
+            raise AssertionError('stale corpus must not incur query embedding cost')
+
+    index = KnowledgeIndex(connect, None, ForbiddenEmbeddings(), freshness=90)
+    try:
+        with connect() as conn:
+            commit = conn.execute(
+                "SELECT source_commit FROM knowledge_versions WHERE status='active'"
+            ).fetchone()['source_commit']
+            conn.execute(
+                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit,checked_at=now()',
+                ('b' * 40,),
+            )
+        with pytest.raises(RejectedError, match='knowledge_updating'):
+            asyncio.run(index.candidates('question'))
+        with connect() as conn:
+            conn.execute(
+                "UPDATE knowledge_watch SET observed_commit=%s,checked_at=now()-interval '2 minutes'",
+                (commit,),
+            )
+        with pytest.raises(RejectedError, match='knowledge_updating'):
+            asyncio.run(index.candidates('question'))
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM knowledge_watch')
+
+
+def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
+    tmp_path, monkeypatch
+):
+    import hashlib
+    import subprocess
+    from types import SimpleNamespace
+
+    from app.infrastructure import indexing
+
+    repo = tmp_path / 'public-fixture'
+    repo.mkdir()
+
+    def git(*args):
+        return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+
+    git('init', '-q')
+    git('config', 'user.name', 'Fixture Test')
+    git('config', 'user.email', 'fixture@example.invalid')
+    git(
+        'remote', 'add', 'origin', 'https://github.com/gonzalomartinperez/portfolio.git'
+    )
+    content = (
+        '# Public fixture\nA synthetic public embedding cache test ' + uuid4().hex + '.'
+    )
+    (repo / 'README.md').write_text(content)
+    git('add', '.')
+    git('commit', '-qm', 'fixture: cache recovery')
+    revision = git('rev-parse', 'HEAD')
+    version = revision + '-semantic-v7'
+    content_hash = hashlib.sha256(content.encode()).hexdigest()
+    config = settings().model_copy(
+        update={
+            'ai_provider': 'openai',
+            'embeddings_provider': 'openai',
+            'allow_paid_ai': True,
+            'openai_api_key': 'synthetic-fixture-key',
+        }
+    )
+    calls = []
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.embeddings = self
+
+        def create(self, **kwargs):
+            calls.append(kwargs['model'])
+            return SimpleNamespace(
+                data=[SimpleNamespace(embedding=[0.1] * 1536)],
+                usage=SimpleNamespace(total_tokens=2),
+            )
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(indexing, 'OpenAI', FakeOpenAI)
+    monkeypatch.setattr(indexing, 'settings', lambda: config)
+    project = indexing.project
+    with connect() as conn:
+        original = conn.execute(
+            "SELECT id FROM knowledge_versions WHERE status='active'"
+        ).fetchone()['id']
+        before = {
+            row['id'] for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
+        }
+    try:
+        monkeypatch.setattr(
+            indexing,
+            'project',
+            lambda *args, **kwargs: (_ for _ in ()).throw(
+                RuntimeError('synthetic projection failure')
+            ),
+        )
+        with pytest.raises(RuntimeError, match='synthetic projection failure'):
+            indexing.sync(repo)
+        with connect() as conn:
+            assert conn.execute(
+                'SELECT content_hash FROM public_embedding_cache WHERE content_hash=%s',
+                (content_hash,),
+            ).fetchone()
+            assert (
+                conn.execute(
+                    "SELECT id FROM knowledge_versions WHERE status='active'"
+                ).fetchone()['id']
+                == original
+            )
+        monkeypatch.setattr(indexing, 'project', project)
+        assert indexing.sync(repo)['changed'] is True
+        assert calls == ['text-embedding-3-small']
+    finally:
+        with connect() as conn:
+            conn.execute(
+                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
+            )
+            conn.execute(
+                "UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,)
+            )
+            conn.execute('DELETE FROM chunks WHERE knowledge_version=%s', (version,))
+            conn.execute(
+                'DELETE FROM source_files WHERE knowledge_version=%s', (version,)
+            )
+            conn.execute('DELETE FROM knowledge_versions WHERE id=%s', (version,))
+            conn.execute(
+                'DELETE FROM public_embedding_cache WHERE content_hash=%s',
+                (content_hash,),
+            )
+            owned = [
+                row['id']
+                for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
+                if row['id'] not in before
+            ]
+            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (owned,))
+
+
+def test_optional_presentation_context_survives_http_graph_and_provider(client_factory):
+    from app.application.presentation_context import PresentationContext
+    from app.bootstrap.container import create_app
+
+    class CaptureProvider:
+        def __init__(self):
+            self.contexts = []
+
+        async def stream(self, question, evidence, locale, history=(), context=None):
+            self.contexts.append(context)
+            yield 'Public fixture response'
+
+    provider = CaptureProvider()
+    client = client_factory(
+        create_app(provider_override=provider), client=(str(uuid4()), 50000)
+    )
+    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
+    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    path = f'/api/v1/conversations/{cid}/messages/stream'
+    metadata = {
+        'theme': 'dark',
+        'opened_path': '/work',
+        'current_path': '/es/about',
+        'presentation': 'expanded',
+    }
+    try:
+        first = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={'content': 'What did he build at Rampy?', 'locale': 'en'},
+        )
+        assert 'event: run.completed' in first.text
+        assert provider.contexts == [None]
+        key = str(uuid4())
+        payload = {'content': 'Give me an example', 'locale': 'en', 'context': metadata}
+        second = client.post(
+            path, headers={**auth, 'Idempotency-Key': key}, json=payload
+        )
+        assert 'event: run.completed' in second.text
+        assert provider.contexts[-1] == PresentationContext(**metadata)
+        assert 'opened_path' not in second.text
+        conflict = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': key},
+            json={**payload, 'context': {**metadata, 'theme': 'light'}},
+        )
+        assert conflict.status_code == 409
+        invalid = client.post(
+            path,
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={
+                **payload,
+                'context': {**metadata, 'current_path': '/about?secret=sentinel'},
+            },
+        )
+        assert invalid.status_code == 422
+        assert 'sentinel' not in invalid.text
+        assert len(provider.contexts) == 2
+        history = client.get(f'/api/v1/conversations/{cid}/messages')
+        assert history.status_code == 200
+        assert 'opened_path' not in history.text
+    finally:
+        client.delete('/api/v1/session', headers=auth).raise_for_status()
+
+
+def test_private_operations_persist_survive_deletion_and_match_contract(client_factory):
+    import time
+
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+    from app.presentation.operations import OperationalSnapshot
+
+    token = 'isolated-fixture-operations-token-0000'
+    application = create_app(
+        Settings(
+            ops_read_token=token, ops_api_commit='a' * 40, ops_trace_sample_ratio=1
+        )
+    )
+    client = client_factory(application, client=(str(uuid4()), 50000))
+    csrf = bootstrap(client, 'http://localhost:3000')
+    owner_headers = headers('http://localhost:3000', csrf)
+    cid = client.post('/api/v1/conversations', headers=owner_headers, json={}).json()[
+        'id'
+    ]
+    response = client.post(
+        f'/api/v1/conversations/{cid}/messages/stream',
+        headers={**owner_headers, 'Idempotency-Key': str(uuid4())},
+        json={'content': 'What is Filomena?', 'locale': 'en'},
+    )
+    assert 'event: run.completed' in response.text
+    deadline = time.monotonic() + 3
+    ops_headers = {'Authorization': 'Bearer ' + token}
+    while True:
+        snapshot = client.get('/internal/ops/v1/status', headers=ops_headers)
+        assert snapshot.status_code == 200, snapshot.text
+        data = OperationalSnapshot.model_validate(snapshot.json())
+        if data.traces:
+            break
+        assert time.monotonic() < deadline
+        time.sleep(0.02)
+    trace = data.traces[0]
+    assert trace.outcome == 'completed' and trace.duration_ms > 0
+    assert data.executions.completed >= 1
+    assert data.executions.first_token_p50_ms is not None
+    assert any(stage.name == 'generation' for stage in trace.stages)
+    assert 'no-store' in snapshot.headers['cache-control']
+    encoded = snapshot.text
+    for secret in (cid, response.headers['x-run-id'], 'What is Filomena?', token):
+        assert secret not in encoded
+    assert (
+        client.delete(f'/api/v1/conversations/{cid}', headers=owner_headers).status_code
+        == 204
+    )
+    retained = client.get('/internal/ops/v1/status', headers=ops_headers).json()
+    assert any(t['id'] == trace.id for t in retained['traces'])
+    with connect() as conn:
+        old_id = uuid4().hex
+        conn.execute(
+            "INSERT INTO operational_executions(trace_id,started_at,outcome,duration_ms,stages,sampled) VALUES (%s,now()-interval '8 days','completed',1,'[]',true)",
+            (old_id,),
+        )
+    assert old_id not in [
+        t['id']
+        for t in client.get('/internal/ops/v1/status', headers=ops_headers).json()[
+            'traces'
+        ]
+    ]
+
+
+def test_operational_usage_month_is_utc_even_with_non_utc_connection():
+    from contextlib import contextmanager
+
+    from app.bootstrap.config import Settings
+    from app.infrastructure.operations import PostgresOperations
+
+    identifier = uuid4()
+    with connect() as conn:
+        # This precedes the UTC month but falls in Tokyo's local month.
+        boundary = conn.execute(
+            "SELECT date_trunc('month',now(),'UTC')-interval '1 minute' AS value"
+        ).fetchone()['value']
+        conn.execute(
+            "INSERT INTO spend_ledger(id,kind,reserved_usd,actual_usd,input_tokens,output_tokens,created_at) VALUES (%s,'embedding_query',0.00001,0.00001,11,0,%s)",
+            (identifier, boundary),
+        )
+
+    @contextmanager
+    def tokyo_connection():
+        with connect() as conn:
+            conn.execute("SET LOCAL TIME ZONE 'Asia/Tokyo'")
+            yield conn
+
+    config = Settings(
+        ops_read_token='isolated-fixture-operations-token-0000', ops_api_commit='a' * 40
+    )
+    try:
+        utc = PostgresOperations(connect, config).snapshot()['usage']
+        tokyo = PostgresOperations(tokyo_connection, config).snapshot()['usage']
+        assert utc == tokyo
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM spend_ledger WHERE id=%s', (identifier,))

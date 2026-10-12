@@ -107,19 +107,20 @@ exercise routing and streaming requirements; they do not validate Coolify itself
 ## Routing, streams and browser integration
 
 Nginx preserves `/api/v1/...` exactly; FastAPI `root_path` stays empty. `/docs`,
-`/redoc`, `/openapi.json` and health paths reach FastAPI. Browser frontend requests
-use relative `/api` paths; streaming goes directly to FastAPI. Public Next.js
+`/redoc`, `/openapi.json` and health paths reach FastAPI. The native portfolio browser client uses its configured API origin with existing
+`/api/v1` paths; streaming goes directly to FastAPI. Public Next.js
 configuration may be embedded at build time, so the frontend image must be built
 for this contract; internal server URLs must never enter browser configuration.
 
-The primary frontend is `/embed`; `/` remains a demo. Both call the API on their
-own origin, so the deployment target needs only the assistant origin in the API
-allowlist. Actual portfolio integration is deferred. The future parent host's
-framing permission belongs to frontend/vps-ops, not API CORS. Cookie Domain stays
-unset, Secure in production, SameSite=Lax; mutations require Origin and CSRF.
-The retained Nginx global `frame-ancestors 'none'` is an obsolete frontend framing
-assumption, not the production `/embed` policy. See [runtime contract](deployment-contract.md)
-and [frontend coordination](frontend-handoff.md#embedded-experience-contract).
+The current product UI is native to the separate portfolio origin and remains
+disabled. It calls the explicitly configured assistant origin with credentials;
+allow only reviewed origins such as `https://gonzalomartinperez.com`, retain CSRF
+and keep host-only Secure SameSite=Lax cookies. The authenticated backoffice is
+the Next.js service; it does not serve `/embed`. Earlier iframe framing guidance
+is historical. Same-site domains remain cross-origin. Effective CORS, cookies,
+TLS and native browser integration require separate end-to-end verification.
+See the current [runtime contract](deployment-contract.md) and
+[native context handoff](frontend-handoff.md#native-portfolio-presentation-context--2026-10-10).
 
 The edge disables SSE buffering/cache and forwards disconnects; read/send timeout
 is 135 seconds, longer than the maximum 120-second run bound. SSE comment heartbeats

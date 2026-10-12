@@ -8,8 +8,12 @@ from dataclasses import asdict
 
 from app.application.contracts import Evidence
 from app.application.knowledge import KnowledgeIndex
+from app.application.observability import phase
 from app.domain.evidence import (
     EvidenceRecord,
+    asks_spoken_languages,
+    blocks_private_query,
+    comparison_subjects,
     lexical_score,
     requested_affiliation,
     tokens,
@@ -27,19 +31,7 @@ class PublicRetrieval:
     async def search(self, question: str, locale: str) -> tuple[Evidence, ...]:
         started = time.perf_counter()
         terms = tokens(question)
-        if (
-            terms
-            & {
-                'salary',
-                'salario',
-                'compensation',
-                'availability',
-                'disponibilidad',
-                'secrets',
-                'secretos',
-            }
-            or 'career-ops' in question.lower()
-        ):
+        if blocks_private_query(question, terms):
             return ()
         overview = bool(
             re.search(
@@ -54,7 +46,8 @@ class PublicRetrieval:
         )
         if not terms:
             return ()
-        corpus = await self.index.candidates(question)
+        with phase('vector_retrieval'):
+            corpus = await self.index.candidates(question)
         if corpus is None:
             return ()
         # Do not answer an explicit employer/project premise with unrelated evidence.
@@ -100,7 +93,11 @@ class PublicRetrieval:
         scores = {}
         for chunk in corpus.chunks:
             # Editorial/development instructions are not evidence of professional contributions.
-            if not repository_question and not chunk.path.startswith('src/content/'):
+            if (
+                not repository_question
+                and not chunk.path.startswith('src/content/')
+                and chunk.path != 'public/assistant-knowledge.json'
+            ):
                 continue
             row: EvidenceRecord = {
                 'path': chunk.path,
@@ -111,6 +108,12 @@ class PublicRetrieval:
                 'content_hash': chunk.content_hash,
             }
             score = lexical_score(row, terms, locale)
+            if (
+                asks_spoken_languages(terms)
+                and chunk.path.endswith('/profile.ts')
+                and 'language:' in chunk.content
+            ):
+                score += 100
             if (
                 overview
                 and chunk.path.endswith('/profile.ts')
@@ -141,16 +144,24 @@ class PublicRetrieval:
             (key for key in eligible if scores[key] >= 3),
             key=lambda key: (-scores[key], key),
         )
-        vector = [key for key in corpus.nearest if key in eligible and scores[key] >= 3]
+        vector = [
+            key
+            for key in corpus.nearest
+            if key in eligible and (corpus.semantic or scores[key] >= 3)
+        ]
+        lexical = list(
+            dict.fromkeys(lexical + [key for key in corpus.lexical if key in eligible])
+        )
         graph = []
         if self.strategy == 'graph' or (self.strategy == 'hybrid' and relationship):
-            graph = [
-                key
-                for key in await self.index.relationships(
-                    corpus.version, terms, locale, expand=relationship
-                )
-                if key in eligible
-            ]
+            with phase('graph_retrieval'):
+                graph = [
+                    key
+                    for key in await self.index.relationships(
+                        corpus.version, terms, locale, expand=relationship
+                    )
+                    if key in eligible
+                ]
         if self.strategy == 'vector':
             ranked = vector
         elif self.strategy == 'graph':
@@ -159,7 +170,11 @@ class PublicRetrieval:
             ranked = list(dict.fromkeys(graph + lexical + vector))
         else:
             ranks: dict[str, float] = {}
-            for weight, ids in ((3.0, lexical), (0.1, vector), (0.25, graph)):
+            for weight, ids in (
+                (1.0 if corpus.semantic else 3.0, lexical),
+                (1.0 if corpus.semantic else 0.1, vector),
+                (0.5, graph),
+            ):
                 for index, key in enumerate(ids):
                     ranks[key] = ranks.get(key, 0) + weight / (10 + index)
             ranked = sorted(ranks, key=lambda key: (-ranks[key], -scores[key], key))
@@ -216,6 +231,84 @@ class PublicRetrieval:
                         )
                     )
                 )
+        if self.strategy == 'hybrid':
+            if terms & {
+                'degree',
+                'graduated',
+                'graduation',
+                'qualification',
+                'education',
+                'formacion',
+                'formation',
+                'estudou',
+                'titulo',
+                'universidad',
+                'study',
+                'studied',
+                'estudio',
+                'estudios',
+            }:
+                qualification = [
+                    key
+                    for key in eligible
+                    if eligible[key].path.endswith('/education.ts')
+                    and eligible[key].start_line == 1
+                ]
+                ranked = list(dict.fromkeys(qualification + ranked))
+            if relationship:
+                subjects = comparison_subjects(
+                    question, tuple(chunk.content for chunk in eligible.values())
+                )
+                anchors = []
+                for subject in subjects:
+                    matching = [
+                        key
+                        for key in ranked
+                        if tokens(subject) <= tokens(eligible[key].content)
+                    ]
+                    if matching:
+                        anchors.append(max(matching, key=lambda key: scores[key]))
+                if not subjects and terms & {'roles', 'empleos', 'puestos', 'trabajos'}:
+                    dated = []
+                    companies: set[str] = set()
+                    companions = []
+                    by_path: dict[str, list[str]] = {}
+                    for key, chunk in eligible.items():
+                        by_path.setdefault(chunk.path, []).append(key)
+                    for keys in by_path.values():
+                        keys.sort(key=lambda key: eligible[key].start_line)
+                        for index, key in enumerate(keys):
+                            chunk = eligible[key]
+                            company = re.search(
+                                r'company:\s*"([^"\n]+)"', chunk.content
+                            )
+                            if not company:
+                                continue
+                            following = (
+                                keys[index + 1] if index + 1 < len(keys) else None
+                            )
+                            text = chunk.content[company.end() :]
+                            if (
+                                following
+                                and eligible[following].start_line == chunk.end_line + 1
+                            ):
+                                text += '\n' + eligible[following].content
+                            text = text.split('company:', 1)[0]
+                            start_date = re.search(
+                                r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', text
+                            )
+                            if start_date:
+                                dated.append(
+                                    (start_date[1], company[1], key, following)
+                                )
+                    for _, company_name, key, following in sorted(dated, reverse=True):
+                        if company_name not in companies:
+                            anchors.append(key)
+                            companies.add(company_name)
+                            if following and 'startedOn:' not in eligible[key].content:
+                                companions.append(following)
+                    anchors += companions
+                ranked = list(dict.fromkeys(anchors + ranked))
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
                 {

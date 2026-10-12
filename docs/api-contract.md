@@ -75,3 +75,11 @@ are public progress events. Disable proxy buffering/cache for SSE.
 
 Silent streams emit `: keep-alive` SSE comments every 15 seconds. Comments have
 no event name or sequence ID; clients must ignore them while parsing named events.
+
+
+## Optional native presentation metadata
+
+`SendMessage` accepts the optional `context` object defined in OpenAPI. Keep
+`locale` at the request root. Use the exact route/theme/presentation values and
+untrusted-data semantics in the [native frontend handoff](frontend-handoff.md#native-portfolio-presentation-context--2026-10-10).
+Absent or null context remains compatible; invalid objects return safe 422.

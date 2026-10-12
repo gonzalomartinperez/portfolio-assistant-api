@@ -14,6 +14,7 @@ import uvicorn
 
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
+from scripts.evaluation_isolation import validate_targets
 
 SCENARIOS = {
     'overview': ['Tell me about Gonzalo.'],
@@ -55,6 +56,11 @@ CONTINUITY_SCENARIOS = {
         'Give me an example of his work at Teamcubation',
         'Explain that technically',
     ],
+    'spanish-topic-switch': [
+        '¿Qué construyó en Rampy?',
+        'Ahora contame un ejemplo concreto de su trabajo en Teamcubation.',
+        'Explícalo técnicamente',
+    ],
     'refinement': [
         'What did he build at Rampy?',
         'Which technologies did he use there?',
@@ -66,7 +72,14 @@ CONTINUITY_SCENARIOS = {
 @contextmanager
 def fixture_server():
     """Own the actual server/provider; a loopback URL alone cannot prevent paid calls."""
-    config = Settings(ai_provider='fixture', allow_paid_ai=False, openai_api_key=None)
+    config = Settings(
+        _env_file=None,
+        ai_provider='fixture',
+        embeddings_provider='fixture',
+        allow_paid_ai=False,
+        openai_api_key=None,
+    )
+    validate_targets(config)
     server = uvicorn.Server(
         uvicorn.Config(create_app(config), log_level='error', access_log=False)
     )
@@ -123,7 +136,7 @@ def main():
                         headers={**headers, 'Idempotency-Key': str(uuid4())},
                         json={
                             'content': question,
-                            'locale': 'es' if name == 'spanish' else 'en',
+                            'locale': 'es' if name.startswith('spanish') else 'en',
                         },
                     ) as response:
                         response.raise_for_status()
@@ -169,6 +182,8 @@ def main():
         + '\n'
     )
     print(f'{len(results)} turns recorded in {args.output}')
+    if any(result['terminal'] != 'run.completed' for result in results):
+        raise SystemExit('conversation evaluation contains failed or incomplete runs')
 
 
 if __name__ == '__main__':

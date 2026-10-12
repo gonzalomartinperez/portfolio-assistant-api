@@ -1,0 +1,252 @@
+{
+  "$defs": {
+    "PersonalProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "age": {
+          "anyOf": [
+            {
+              "maximum": 120,
+              "minimum": 18,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Age"
+        },
+        "age_as_of": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Age As Of"
+        },
+        "city": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "City",
+          "type": "string"
+        },
+        "country": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Country",
+          "type": "string"
+        },
+        "nationality": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PublicText"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "city",
+        "country"
+      ],
+      "title": "PersonalProfile",
+      "type": "object"
+    },
+    "PublicFact": {
+      "additionalProperties": false,
+      "properties": {
+        "attribution": {
+          "enum": [
+            "personal",
+            "team",
+            "context"
+          ],
+          "title": "Attribution",
+          "type": "string"
+        },
+        "end_line": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "End Line",
+          "type": "integer"
+        },
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PublicMetric"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "source_path": {
+          "pattern": "^src/content/(en|es)/(profile|experience|projects|education)\\.ts$",
+          "title": "Source Path",
+          "type": "string"
+        },
+        "start_line": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Start Line",
+          "type": "integer"
+        },
+        "subject": {
+          "$ref": "#/$defs/PublicText"
+        },
+        "technologies": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Technologies",
+          "type": "array"
+        },
+        "text": {
+          "$ref": "#/$defs/PublicText"
+        },
+        "topic": {
+          "enum": [
+            "profile",
+            "experience",
+            "projects",
+            "education",
+            "achievement",
+            "personal"
+          ],
+          "title": "Topic",
+          "type": "string"
+        },
+        "verified_on": {
+          "format": "date",
+          "title": "Verified On",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "subject",
+        "topic",
+        "text",
+        "verified_on",
+        "source_path",
+        "start_line",
+        "end_line",
+        "attribution"
+      ],
+      "title": "PublicFact",
+      "type": "object"
+    },
+    "PublicMetric": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PublicText"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "qualifier": {
+          "$ref": "#/$defs/PublicText"
+        },
+        "unit": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "qualifier"
+      ],
+      "title": "PublicMetric",
+      "type": "object"
+    },
+    "PublicText": {
+      "additionalProperties": false,
+      "properties": {
+        "en": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "En",
+          "type": "string"
+        },
+        "es": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Es",
+          "type": "string"
+        }
+      },
+      "required": [
+        "en",
+        "es"
+      ],
+      "title": "PublicText",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/PublicFact"
+      },
+      "maxItems": 300,
+      "minItems": 1,
+      "title": "Facts",
+      "type": "array"
+    },
+    "personal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PersonalProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "facts"
+  ],
+  "title": "PublicProjection",
+  "type": "object"
+}

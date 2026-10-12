@@ -2,10 +2,10 @@
 
 ## Implemented boundary changes
 
-The application loads at most six earlier turns after claiming the authorized run.
+The application loads at most 12 earlier turns after claiming the authorized run.
 SQL binds both run and conversation, excludes the newly submitted question, checks
 session expiration, and limits each row to 1,000 characters. Application policy
-keeps at most 3,000 history characters. Prior assistant text and visitor job
+keeps at most 8,000 history characters. Prior assistant text and visitor job
 requirements are untrusted context, never public knowledge. Deletion and checkpoint
 cleanup retain their existing ownership and retention behavior.
 
@@ -18,7 +18,7 @@ increasing budgets or adding routing/model calls. Before provider I/O, the final
 JSON-escaped message text is measured in UTF-8 bytes, including 1,024 bytes of
 framing allowance, against the existing 110,000-token conservative input ceiling.
 Oversized serialized input fails safely without calling the provider; any prior
-reservation remains held under the existing conservative failure policy. Existing 500-token model output
+reservation remains held under the existing conservative failure policy. The 8,192-token model ceiling includes reasoning and visible output; the prior 500-token model output
 and 12,000-character application bounds remain; live completeness needs evaluation.
 
 Profile overview retrieval prioritizes public profile content. Professional
@@ -153,8 +153,8 @@ same-origin Secure host-only cookies with rejected parent-origin mutations and
 missing-CSRF requests. Retrieval evaluation remains hybrid 9/9, graph 8/9, fixture
 vector 5/9. These are deterministic retrieval/contract outcomes, not live intelligence.
 
-The resolver remains a bounded language heuristic: at most six earlier turns,
-3,000 history characters, one latest refinement of at most 1,000 characters plus
+The resolver remains a bounded language heuristic: at most 12 earlier turns,
+8,000 history characters, one latest refinement of at most 1,000 characters plus
 its topic. It cannot resolve arbitrary discourse or recover a topic already outside
 that window. Corrections with explicit new subjects are preferable to guessing.
 Unknown information, nuanced role-fit reasoning, translation and personality retain

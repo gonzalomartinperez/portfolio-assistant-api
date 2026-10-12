@@ -9,7 +9,7 @@ credentials. `AGENTS.md` is the canonical agent guidance.
 ## Python conventions
 
 The [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-is our reference, adapted to Python 3.13, typed application contracts and Ruff:
+is our reference, adapted to Python 3.14, typed application contracts and Ruff:
 
 - Ruff owns formatting: four-space indentation, its 88-column wrapping target,
   single-quoted strings, and triple-double-quoted docstrings. Long SQL and URLs
@@ -75,3 +75,17 @@ changes with `uv run python -m scripts.validate_skills`; CI uses the same comman
 Dependency maintenance follows [the conservative Dependabot policy](docs/dependency-updates.md).
 Passing CI alone does not qualify a dependency update. Review scope, transitive
 changes and activation/required-check state before enabling any automated path.
+
+Application and fixture checks use Python 3.14.8 from the frozen uv environment.
+Use uv 0.13.0: older uv 0.12.10 download metadata cannot provision the pinned
+interpreter on a clean checkout. CI and the Docker builder use the same reviewed
+uv version; no global tool installation or lockfile regeneration is required.
+Privileged stdlib-only dependency/release scripts also support runner Python 3.12;
+Ruff per-file targets and a grammar test preserve that security boundary.
+
+Support and upgrade decisions: [supported-version policy](docs/support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
+
+For private operational changes, preserve the scalar-only application observation
+model and server-to-server authentication boundary. Run the focused observability
+tests plus real-store tests when modifying SQL. Review actual OTLP receiver payloads,
+not only mock exporter calls; never add automatic SDK input/output capture.

@@ -89,8 +89,16 @@ and [stream contract](api-contract.md) for decisions and behavior details.
 ## Bounded conversational context
 
 RunStore loads earlier turns only for the claimed run/conversation and unexpired
-session, before generation. Application policy caps six turns to 3,000 characters;
+session, before generation. Application policy caps 12 turns to 8,000 characters;
 evidence remains independently verified and capped at 19,000 characters. LangGraph
 receives plain Turn contracts, not database rows. Retrieval resolves explicit
 follow-ups without a model routing call. The provider receives the current question,
 untrusted history and public evidence separately. See conversation-evaluation.md.
+
+## Operational observation boundary
+
+The pure application observation model accepts bounded scalar measurements only.
+Infrastructure queues/persists them and optionally exports manual private OTLP.
+Presentation owns the versioned bearer-authenticated operational read API.
+No operational payload is sent through public chat/SSE or shares visitor identifiers.
+See [private observability](private-observability.md) for retention and drop semantics.

@@ -105,3 +105,8 @@ For a separately authorized live check in a disposable clone:
 
 Keep discovery separate from authorization. No skill disables permission prompts,
 selects a production target or treats roadmap entries as approval.
+
+On 2026-10-03, catalog validation and workflow tests were rerun after the knowledge
+sync updates. Available clients report Codex CLI 0.160.0 and Claude Code 2.1.288.
+Those version checks do not establish fresh model invocation or implicit-routing
+compatibility; the earlier client discovery evidence above remains separately dated.

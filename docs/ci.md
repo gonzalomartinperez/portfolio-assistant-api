@@ -12,6 +12,12 @@ the required gate. New commits cancel stale runs for the same PR/ref.
 | Real services and container | Real PostgreSQL/Neo4j migrations/indexing/integration tests; build image once, test non-root SSE/shutdown and actual Nginx routing | None |
 | checks | Required aggregate; fails unless both jobs succeed, including cancelled/skipped failures | Both, with `always()` |
 
+Static checks compile the authored bilingual question bank and reject generated
+drift. The real-service job exercises ten development cases spanning all topics and
+both locale hints through the HTTP/SSE harness; failed terminals fail the job.
+Full 1000-case fixture runs are recorded locally rather than adding that cost to
+every PR. These checks establish executable coverage, not live-model answer quality.
+
 Tests are explicitly marked `integration`. Offline and real-service jobs run
 disjoint selections, retaining all coverage. The container is built once with
 BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the
@@ -37,9 +43,9 @@ then publishes the **tested image archive** without rebuilding it. The artifact
 `release-candidate-manifest` records both image digests, both commits and contract
 version, with `production_authorized: false`. Manual publishing is prepared but
 has not been executed with a frontend release image. GitHub discovers dispatchable
-workflows on the default branch, `main`. The owner has authorized promoting the
-fixture-backed candidate from `develop` after successful CI. Once merged, manual
-publishing becomes discoverable; merging alone neither publishes images nor deploys.
+workflows on the default branch, `main`. Default-branch activation requires separate owner authorization; this increment
+merges into develop only. Discovery of the publisher neither authorizes image
+publication nor production deployment.
 
 ## Deployment belongs to vps-ops
 
@@ -136,6 +142,104 @@ can omit the policy on an ordinary PR after activation. Manual/unverifiable upda
 receive an explicit action-required result, not a permanently pending hidden job.
 API failures leave a blocking hold, recoverable through explicit reevaluation.
 
-Current default-branch activation is pending; automation is not live merely because
-its file exists on develop. Do not add its check to branch protection before the
-trusted workflow can emit it. Production workflows remain absent/disabled.
+As of the 2026-10-04 audit, trusted policy files already exist on main. Required
+policy-check configuration, privileged-token verification and authorized variable
+enablement remain pending; file presence alone does not activate automation.
+Confirm ordinary-PR check emission before making it required. See the dated state
+in dependency-updates.md. Production workflows remain absent/disabled.
+
+## Python 3.14 application compatibility
+
+Frozen installs select Python 3.14.8 from `.python-version` with uv 0.13.0; the
+image uses the same pinned Python patch on Debian slim. Privileged dependency/release scripts intentionally
+remain Python 3.12-compatible because those trusted jobs use the hosted runner
+system interpreter without installing PR dependencies. Ruff per-file targets and
+a grammar test enforce this distinction. They do not fall back for application checks.
+
+
+Current container increment: PR #37, source
+`badf49dd931660fe674073abc70d3a8c696a37f5`, passed
+[Quality run 38021519477](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38021519477).
+Static/offline took 31 s; real services/container 179 s; aggregate 3 s. Integration
+included the updated runtime build, tool-exclusion checks and shutdown/proxy smoke.
+These jobs still run in parallel and retain disjoint suites. The cold security-package
+layer differs from the prior build, so these times are not a controlled speedup claim.
+
+
+## Image security policy
+
+The existing integration job scans the image it already built; there is no second
+build or privileged scan of PR code. Trivy 0.75.0 is fetched from its upstream
+release and verified with a reviewed archive SHA-256 before execution. It produces
+a complete OS/language report without ignore files or severity filtering. The
+maintained `scripts.image_security` gate validates schema, OS inventory and the
+actual Docker image ID; malformed, missing or stale reports fail closed. All
+CRITICAL findings and HIGH findings with an available fixed version fail Quality.
+Unfixed HIGH findings remain counted and visible in the retained full artifact;
+they require assessment before production and are not approved by a green gate.
+This is an added remediation gate, not a clean-image or production-security claim.
+Scanner network failures fail the job. No production secrets or publishing token
+are available to the job. The required aggregate `checks` remains unchanged.
+
+Local policy tests: `uv run pytest -q tests/test_image_security.py`. Full report
+and summary are retained with integration diagnostics even on failure. Scan the
+release digest again at release selection: the vulnerability database changes
+independently of source/image revisions.
+
+
+The integration job now builds Dockerfile.postgres once and uses the tested
+non-root image for its owned Compose fixture. It supplies that exact container ID
+to the existing two-service evaluation guard and stops only its fixture even on
+failure. PostgreSQL logs are captured before artifact upload. The complete database
+scan and matching-image summary are retained; fixable CRITICAL/HIGH findings fail
+the job. Unfixed database CRITICAL/HIGH findings still require explicit production
+assessment. The API's all-CRITICAL gate is unchanged. Full Neo4j Java scanning is
+recorded separately for release assessment because its advisory database is ~936 MiB;
+it is not represented as a green per-PR security gate. No extra API build or paid
+provider call was added. Actual current-head Actions remains the merge gate.
+
+
+## Executed overnight verification
+
+Actual current-head Quality runs on 2026-10-10, before protected develop merges:
+
+| Increment | Run | Static/offline | Real services/container | Aggregate |
+| --- | --- | --- | --- | --- |
+| Runtime security, PR #40 | [38024426083](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38024426083) | 27 s | 133 s | 3 s |
+| PostgreSQL image, PR #41 | [38025993266](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38025993266) | 36 s | 219 s | 3 s |
+| Reviewed artifact action, PR #31 | [38026495119](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38026495119) | 30 s | 148 s | 3 s |
+
+All jobs passed. These are hosted-runner observations, not controlled performance
+comparisons. PR #41 adds the necessary PostgreSQL build and complete scan; no test
+coverage was removed for speed. Its downloaded diagnostics confirmed 25 integration
+tests with zero failures/errors and full image reports. Local combined verification
+passed 291 tests. PR #31 changed four SHA-pinned upload-artifact references to 7.0.2;
+the successful run exercised the updated action. This major update received manual
+review, not blanket Dependabot auto-merge permission. Native protection remained
+strict and the current head was matched at merge. Main and publication/deployment
+workflows were not activated.
+
+## PostgreSQL 18 current-head verification
+
+PR #46 passed Actions `38289478519`: static/offline 35 seconds, real-service/container
+168 seconds, aggregate gate 2 seconds. The previous run failed because the scanner
+referenced the old local image tag; the selected 18.6 image is now scanned explicitly.
+No scanner gate or required check was relaxed. The observability suite adds an actual
+loopback OTLP receiver to the existing offline job and SQL persistence to the existing
+real-service job; no new production job/controller is introduced.
+
+## Private operations final code gate
+
+PR #47 passed current code head `017df0c3036a3a976cf3b016b783f2932be31d7d` in
+Actions `38293707505`: static/offline 30 seconds, real-services/container 186 seconds,
+aggregate `checks` 4 seconds. Both independent jobs ran in parallel. Earlier heads
+were cancelled by the existing concurrency rule after follow-up fixes; their green
+checks were not used for the merge. No coverage, scanner or protection was weakened.
+See the dated private-observability report for exact local/CI artifact limits.
+
+Dependabot PR #48 replaced conflicted #44 through native maintenance, included
+14 reviewed updates and passed Actions `38295075616` at exact head
+`95c94291453ce6152de21a6b9748c410f367f3c9` (35/239/3 seconds). Framework/provider/driver
+updates received manual review. Protections still require strict up-to-date `checks`
+with administrators enforced; no blocking review or gate was bypassed. No open
+Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation.

@@ -2,6 +2,8 @@
 
 import asyncio
 
+import pytest
+
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import AnswerCommand
 from app.application.conversation_context import (
@@ -12,14 +14,48 @@ from app.application.conversation_context import (
 from tests.test_workflow import SOURCE
 
 
+@pytest.mark.parametrize(
+    'question',
+    [
+        'Ahora contame un ejemplo concreto de su trabajo en Teamcubation.',
+        'Un ejemplo específico de su trabajo en Teamcubation',
+        'Dame un ejemplo práctico sobre Teamcubation',
+        'Give me a concrete example of his work at Teamcubation',
+        'A specific technical example at Teamcubation, please',
+    ],
+)
+def test_qualified_named_example_changes_topic_without_old_employer(question):
+    history = (Turn('user', 'What did he build at Rampy?'),)
+    assert retrieval_question(question, history) == question
+    for followup in ('Explícalo técnicamente', 'Explain that technically'):
+        query = retrieval_question(followup, (*history, Turn('user', question)))
+        assert 'Teamcubation' in query and 'Rampy' not in query
+
+
+@pytest.mark.parametrize(
+    'question', ['Dame un ejemplo concreto de eso', 'A specific example of that']
+)
+def test_qualified_referential_example_preserves_topic(question):
+    assert 'Rampy' in retrieval_question(
+        question, (Turn('user', 'What did he build at Rampy?'),)
+    )
+
+
 def test_context_budget_keeps_recent_turns_without_promoting_roles():
     history = tuple(
         Turn('user' if i % 2 else 'assistant', str(i) * 1500) for i in range(10)
     )
     result = bounded_history(history)
-    assert sum(len(turn.content) for turn in result) == 3000
-    assert [turn.content[0] for turn in result] == ['7', '8', '9']
-    assert [turn.role for turn in result] == ['user', 'assistant', 'user']
+    assert sum(len(turn.content) for turn in result) == 8000
+    assert [turn.content[0] for turn in result] == ['4', '5', '6', '7', '8', '9']
+    assert [turn.role for turn in result] == [
+        'assistant',
+        'user',
+        'assistant',
+        'user',
+        'assistant',
+        'user',
+    ]
 
 
 def test_followup_uses_visitor_topic_and_topic_change_drops_it():
@@ -52,7 +88,7 @@ def test_workflow_resolves_retrieval_but_preserves_current_question_and_untruste
             return (SOURCE,)
 
     class Provider:
-        async def stream(self, question, evidence, locale, history=()):
+        async def stream(self, question, evidence, locale, history=(), context=None):
             assert question == 'Give me an example'
             assert history[0].role == 'user'
             assert 'ExampleCompany' not in evidence

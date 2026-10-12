@@ -1,6 +1,6 @@
 # Deterministic local demo
 
-Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv and Python 3.13
+Prerequisites: WSL/Linux filesystem, Git, Docker Compose, uv 0.13.0 and Python 3.14.8
 (`uv` installs the pinned interpreter when needed). No model key is needed.
 All commands run from this repository root. The frontend is independently owned;
 these instructions do not modify its checkout or services.
@@ -8,7 +8,7 @@ these instructions do not modify its checkout or services.
 ```sh
 uv sync --frozen
 source scripts/fixture-env.sh
-docker compose up -d --wait
+docker compose up --build -d --wait
 uv run python -m app.migrate
 uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
@@ -45,7 +45,7 @@ uv run mypy
 uv run pytest -q                         # Pure/contract tests; real-service tests skip.
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.
 uv run python -m contracts.export
-git diff --exit-code contracts/openapi.json contracts/sse.schema.json
+git diff --exit-code contracts
 uv run python -m scripts.evaluate_retrieval
 uv run python -m scripts.benchmark_fixture
 uv run python -m scripts.scan_secrets
@@ -61,9 +61,18 @@ containers. Fixture timing is local evidence, not a production capacity guarante
 
 ## Dependencies and maintenance
 
-`uv.lock` and image digests pin reproducible installs. The Python minor version is
-unchanged. Mypy is the only new development dependency in this migration; it checks
+`uv.lock` and image digests pin reproducible installs. Python 3.14 is checked in the frozen lockfile, tests and production image. Mypy checks
 inner contracts and AI orchestration strictly. No ORM/queue/new service was added.
 Run `uv run python -m app.retention` every minute to prune expired data and retry
 checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
 [operations](deployment.md). Configuration is documented in [environment](environment.md).
+
+
+The root Compose services have bounded memory/CPU/PIDs and rotating logs. See the
+[application database settings](deployment-contract.md#application-owned-database-tuning)
+for tested fixture ceilings; the file is not a production composition. Render
+`docker compose config --quiet` and run `uv run python -m scripts.validate_compose`
+after changing it. Preserve volumes and verify migrations, indexing and real-service
+tests before accepting new constraints. Production allocation belongs to vps-ops.
+
+Support and upgrade decisions: [supported-version policy](support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.

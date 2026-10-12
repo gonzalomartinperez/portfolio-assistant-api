@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.application.presentation_context import PortfolioPath, Presentation, Theme
 
 Locale = Literal['en', 'es']
 
@@ -43,7 +45,7 @@ class MessageView(BaseModel):
     id: UUID
     role: Literal['user', 'assistant']
     content: str
-    citations: list['Citation'] = []
+    citations: list[Citation] = []
     created_at: datetime
 
 
@@ -63,9 +65,19 @@ class Citation(BaseModel):
     end_line: int | None = None
 
 
+class MessageContext(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+
+    theme: Theme
+    opened_path: PortfolioPath
+    current_path: PortfolioPath
+    presentation: Presentation
+
+
 class SendMessage(BaseModel):
     content: str = Field(min_length=1, max_length=4000)
     locale: Locale = 'en'
+    context: MessageContext | None = None
 
 
 class RunView(BaseModel):
@@ -82,3 +94,15 @@ class RunView(BaseModel):
 
 class FeedbackCreate(BaseModel):
     rating: Literal['up', 'down']
+
+
+class StarterPrompt(BaseModel):
+    id: str = Field(pattern=r'^[a-z0-9-]{1,80}$')
+    topic: Literal['profile', 'experience', 'projects', 'education', 'achievement']
+    question: str = Field(min_length=1, max_length=500)
+
+
+class SuggestionsView(BaseModel):
+    corpus_version: str = Field(min_length=1, max_length=100)
+    source_commit: str = Field(pattern=r'^[0-9a-f]{40}$')
+    items: list[StarterPrompt] = Field(max_length=6)

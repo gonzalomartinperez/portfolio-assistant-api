@@ -5,6 +5,11 @@ The single prioritized, three-deliverable checklist is
 Architecture, security, coding, migrations, contracts and CI remain cross-cutting
 gates, with evidence linked from that checklist and IMPLEMENTATION_STATUS.md.
 
+Before a first real-provider test or release claim, review the
+[2026-10-04 audit and closure criteria](live-evaluation-readiness.md). It separates
+implemented fixture evidence from runtime fixes, authorized evaluation and external
+owner gates. The historical records below do not replace this current checkpoint.
+
 The earlier fixture release evidence remains in
 [backend-rc.json](verification/backend-rc.json); current conversational/client/image
 verification is in [ux-release.json](verification/ux-release.json). Historical runs

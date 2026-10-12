@@ -36,7 +36,35 @@ Load these selectively: a citation-policy fix does not require every ingest deta
    fixture authority and a separate Compose project/database.
 
 Report corpus SHA/version, provenance, strategy outcomes, recovery tests and limits.
-Current embeddings are deterministic hashes; a semantic embedding adapter is not
-implemented. Fixture excerpts do not establish real-model quality or prompt-injection
-resistance. Stop for an unapproved source, paid evaluation or shared/live target;
-continue pure policy tests and analysis without those dependencies.
+Fixture embeddings are deterministic hashes. OpenAI semantic embeddings are implemented
+but remain paid and separately authorized. Review [synchronization and public projection](../../../docs/knowledge-sync.md)
+for the continuous worker, superseded-candidate guard, freshness and schema handoff.
+Use the worker only against an isolated target when authorized; it follows the fixed
+public main branch and must not fetch private career-ops. Current source text remains
+supported until the portfolio owner publishes the optional structured projection.
+Never treat fixture results as real-model quality or prompt-injection resistance.
+Stop paid evaluation without explicit authorization; continue offline policy tests.
+
+For broad question coverage, use [the evaluation guide](../../../docs/assistant-evaluation.md)
+and the canonical `evals/assistant-intents.json`; do not load the full generated
+1000-case artifact for ordinary onboarding. Run
+`uv run python -m scripts.build_assistant_bank --check` after edits. Keep all family
+paraphrases in one development/holdout split. The fixture harness supports the full
+bank and representative small samples; record exact corpus revisions and distinguish
+terminal transport success from reviewed factual quality. Never ingest evaluation
+questions as public facts or tune prompts using held-out answers.
+
+For an authorized deep live evaluation, follow the dated methodology and limits in
+[the 244-turn evidence](../../../docs/verification/live-depth-2026-10-10.md). Freeze
+selection and baseline bytes before fixes; label reviewed families as exposed, not
+fresh holdout. Distinguish actual generation from local abstention and recovered
+DB completion from observed HTTP terminals. Validate final/history equality, cited
+span support and cleanup separately. Do not replay paid calls on interruption.
+Comparison and degree regressions belong in `tests/test_live_depth_regressions.py`;
+keep qualification and adjacent role spans verified and bounded. Language guards
+need supported technical/short-prose regressions, not only foreign rejection tests.
+
+For tone/localization changes, load [assistant voice](../../../docs/assistant-voice.md)
+and its small bilingual evaluation manifest. Prompt composition tests cannot prove
+natural tone. Preserve qualifications and real uncertainty, and test plain-language
+to technical followups without losing the named visitor topic.

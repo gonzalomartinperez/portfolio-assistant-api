@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
-          version: '0.9.13'
+          version: '0.13.0'
           enable-cache: true
           cache-dependency-glob: |
             uv.lock
@@ -56,6 +56,8 @@ jobs:
         run: uv run ruff format --check app tests contracts scripts
       - name: Type-check application boundaries
         run: uv run mypy
+      - name: Verify authored bilingual question bank
+        run: uv run python -m scripts.build_assistant_bank --check
       - name: Run offline and contract tests
         run: |
           mkdir -p artifacts
@@ -70,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: static-diagnostics
@@ -81,18 +83,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
-      postgres:
-        image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
-        env:
-          POSTGRES_USER: assistant
-          POSTGRES_PASSWORD: assistant
-          POSTGRES_DB: assistant
-        ports: ['5433:5432']
-        options: >-
-          --health-cmd "pg_isready -U assistant"
-          --health-interval 5s --health-timeout 5s --health-retries 10
       neo4j:
-        image: neo4j:5.26.17-community@sha256:d31525aa50da9215d692e5e824696c63583636398f5f5b60260bb92f94095c70
+        image: neo4j:5.26.31-community@sha256:c7d25c0eeebfe125718d58b72ed5d663c85d0479047733845eb2237c67ce8069
         env:
           NEO4J_AUTH: neo4j/change-me
         ports: ['7688:7687']
@@ -111,7 +103,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
         with:
-          version: '0.9.13'
+          version: '0.13.0'
           save-cache: false
           enable-cache: true
           cache-dependency-glob: |
@@ -137,6 +129,14 @@ jobs:
           PY
       - name: Validate private networks and container limits
         run: uv run python -m scripts.validate_compose
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build and start the isolated non-root PostgreSQL fixture
+        id: postgres
+        run: |
+          docker compose -p assistant-ci up --build -d --wait --wait-timeout 90 postgres
+          postgres_id=$(docker compose -p assistant-ci ps -q postgres)
+          test -n "$postgres_id"
+          echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
       - name: Apply and verify migrations
         run: uv run python -m app.migrate
       - name: Index the pinned approved public corpus
@@ -147,7 +147,11 @@ jobs:
           uv run pytest -q -m integration --junitxml=artifacts/integration.xml
         env:
           TEST_INTEGRATION: '1'
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Exercise representative bilingual question families
+        run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
+        env:
+          EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+          EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -155,6 +159,36 @@ jobs:
           tags: portfolio-assistant-api:ci
           cache-from: type=gha,scope=api-linux-amd64
           cache-to: type=gha,mode=max,scope=api-linux-amd64
+      - name: Verify pinned image scanner
+        run: |
+          mkdir -p /tmp/image-scanner artifacts
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+            https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz \
+            --output /tmp/image-scanner/trivy.tar.gz
+          echo 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f  /tmp/image-scanner/trivy.tar.gz' | sha256sum --check
+          tar -xzf /tmp/image-scanner/trivy.tar.gz -C /tmp/image-scanner trivy
+      - name: Inventory the tested image and reject critical or fixable high findings
+        run: |
+          /tmp/image-scanner/trivy --config '' image --image-src docker \
+            --ignorefile '' --scanners vuln --format json \
+            --output artifacts/image-vulnerabilities.json portfolio-assistant-api:ci
+          image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
+          uv run python -m scripts.image_security \
+            --report artifacts/image-vulnerabilities.json --image-id "$image_id" > artifacts/image-security-summary.json
+      - name: Inventory PostgreSQL and reject fixable critical or high findings
+        run: |
+          /tmp/image-scanner/trivy --config '' image --image-src docker \
+            --ignorefile '' --scanners vuln --format json \
+            --output artifacts/postgres-vulnerabilities.json portfolio-assistant-postgres:18.6
+          docker image inspect portfolio-assistant-postgres:18.6 --format '{{.Id}}' > artifacts/postgres-image-id.txt
+          uv run python - <<'PY' > artifacts/postgres-security-summary.json
+          import json
+          from pathlib import Path
+          from scripts.image_security import evaluate
+          result = evaluate(Path('artifacts/postgres-vulnerabilities.json').read_text(), Path('artifacts/postgres-image-id.txt').read_text().strip())
+          print(json.dumps(result))
+          raise SystemExit(bool(result['fixable_critical'] or result['fixable_high']))
+          PY
       - name: Verify image streaming and graceful shutdown
         run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
       - name: Verify proxy routing and stream cancellation
@@ -164,19 +198,27 @@ jobs:
       - name: Export the tested image for manual publishing
         if: inputs.export_image && github.event_name == 'workflow_dispatch'
         run: docker save portfolio-assistant-api:ci -o artifacts/tested-image.tar
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: inputs.export_image && github.event_name == 'workflow_dispatch'
         with:
           name: tested-api-image
           path: artifacts/tested-image.tar
           retention-days: 1
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - name: Stop only the owned PostgreSQL fixture
+        if: always()
+        run: |
+          mkdir -p artifacts
+          docker compose -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
+          docker compose -p assistant-ci stop postgres
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: integration-diagnostics
           path: |
             artifacts/*.xml
             artifacts/*.json
+            artifacts/assistant-smoke-*.log
+            artifacts/postgres-fixture.log
           retention-days: 7
   checks:
     permissions: {}

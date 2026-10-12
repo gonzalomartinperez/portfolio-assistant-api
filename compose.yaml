@@ -1,29 +1,59 @@
+# Isolated local development/test services; production composition belongs to vps-ops.
 services:
   postgres:
-    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: portfolio-assistant-postgres:18.6
     environment:
       POSTGRES_USER: assistant
       POSTGRES_PASSWORD: assistant
       POSTGRES_DB: assistant
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "work_mem=4MB", "-c", "max_connections=50"]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 0.75
+    pids_limit: 128
+    stop_grace_period: 30s
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=16m
+      - /var/run/postgresql:rw,nosuid,nodev,uid=999,gid=999,mode=3775,size=8m
+    logging:
+      driver: local
+      options: {max-size: "10m", max-file: "3"}
     ports: ["127.0.0.1:${POSTGRES_PORT:-5433}:5432"]
-    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    volumes: ["postgres18_data:/var/lib/postgresql"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U assistant"]
       interval: 5s
       retries: 10
   neo4j:
-    image: neo4j:5.26.17-community@sha256:d31525aa50da9215d692e5e824696c63583636398f5f5b60260bb92f94095c70
+    image: neo4j:5.26.31-community@sha256:c7d25c0eeebfe125718d58b72ed5d663c85d0479047733845eb2237c67ce8069
     environment:
       NEO4J_AUTH: neo4j/change-me
       NEO4J_server_memory_heap_initial__size: 256m
       NEO4J_server_memory_heap_max__size: 256m
       NEO4J_server_memory_pagecache_size: 256m
+    mem_limit: 1536m
+    memswap_limit: 1536m
+    cpus: 1.0
+    pids_limit: 192
+    stop_grace_period: 60s
+    security_opt: ["no-new-privileges:true"]
+    logging:
+      driver: local
+      options: {max-size: "10m", max-file: "3"}
     ports: ["127.0.0.1:${NEO4J_HTTP_PORT:-7475}:7474", "127.0.0.1:${NEO4J_PORT:-7688}:7687"]
     volumes: ["neo4j_data:/data"]
     healthcheck:
       test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "change-me", "RETURN 1"]
-      interval: 10s
-      retries: 20
+      interval: 30s
+      timeout: 15s
+      start_period: 60s
+      retries: 10
 volumes:
-  postgres_data:
+  postgres18_data:
   neo4j_data:

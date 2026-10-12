@@ -1,4 +1,53 @@
-# Implementation status · 2026-09-27
+Latest verified continuation: [2026-10-12 operations/runtime evidence](docs/verification/private-observability-2026-10-12.md).
+It records current application/dependency checks and explicit production limitations.
+The sections below retain dated implementation history, not standing rollout authority.
+
+> Latest local evidence: [244-turn authorized OpenAI evaluation](docs/verification/live-depth-2026-10-10.md),
+> followed by targeted regressions and database cleanup. Older checkpoints below
+> are historical; successful transport is not a universal answer-quality or
+> production-readiness claim. Main and the portfolio assistant remain unchanged.
+
+# Implementation status · current checkpoint 2026-10-04
+
+Current implementation: PR #34 merged into develop at
+`15b6943f741ac80498a5fee611aa74d24250eb6b`. The fresh audit passed **196 tests in
+11.10 seconds** with isolated real databases; hybrid retrieval passed nine cases
+and the existing non-root image passed SSE/SIGTERM smoke. The 1000-question bank
+is implemented and fixture-executed, not reviewed live-model answer quality.
+Current-head implementation CI passed
+[Quality 37160535949](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37160535949).
+
+Read [the dated audit and closure criteria](docs/live-evaluation-readiness.md)
+before paid evaluation or future release work. Harness isolation, paired frontend
+adoption, workflow enforcement/activation, corpus retention and operational
+verification remain explicit gates. This checkpoint documents them; it does not
+implement fixes or authorize paid calls, publication, main promotion or deployment.
+
+## Historical public-knowledge increment · 2026-10-03
+
+The sections below retain historical verification. The current increment adds
+continuous published-portfolio synchronization, semantic/lexical retrieval adapters,
+public structured facts and starter-question contracts, local language detection,
+Python 3.14, OpenAI-only GPT-6 Luna/medium configuration and migration 004/005.
+See [current acceptance checkpoint](docs/work-checklist.md),
+[knowledge synchronization](docs/knowledge-sync.md), and
+[evaluation limitations](docs/assistant-evaluation.md).
+
+PR [#32](https://github.com/gonzalomartinperez/portfolio-assistant-api/pull/32)
+merged at `3f57202cb80392a60e311ec10a95d2363656f83a` after final-head
+[Actions 37156892280](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/37156892280)
+passed; static 34s, integration/image 112s, aggregate 2s. Diagnostic artifacts exist.
+No paid model calls, portfolio edits, image publication, main merge or production
+action occurred. Verification at that increment: **183 passed in 9.93 seconds** with real isolated databases;
+Ruff, strict mypy (22 files), contract export and skill validation pass. The final
+non-root image passes SSE/SIGTERM and proxy/disconnect smoke. See
+[bounded evidence](docs/verification/grounded-current.json). Local fixture evaluation
+covered 120 questions, 40 adversarial inputs and 27 multi-turn turns with no terminal
+failures; this does not establish real model answer quality. A detached clean
+checkout at 0cab0a6 passed frozen installation, 159 offline tests (23 integration
+deselected), lint, typing, skill validation and contract drift.
+
+# Historical implementation status · 2026-09-27
 
 ## Scope and reconciled history
 
@@ -136,3 +185,51 @@ registry publication, paid model evaluation or production readiness claim is mad
   live-model conversational quality remain unverified.
 - Latest mandate permits PR integration into develop only. Historical main merges
   do not authorize further promotion. Actual portfolio integration is deferred.
+
+
+## Bilingual question coverage increment (2026-10-03)
+
+1000 questions across 100 intent families are implemented with a canonical authored
+source, deterministic generation and family-level development/holdout isolation.
+The original 120 questions and 40 adversarial prompts remain. The bank is evaluation
+input, not runtime facts; active immutable public knowledge remains authoritative.
+
+All 1000 final fixture cases completed (670 development + 330 holdout), against
+public portfolio `0b363684fd1bafacafbba3924488f51cbc011a5c`. Development cases exposed
+a spoken-language retrieval gap; ranking and fixture excerpts now retain both
+published proficiency levels without confusing programming or response language.
+Local full suite: 196 passed (173 offline, 23 integration). Frozen clean-snapshot
+installation, lint/format, strict mypy, skills, workflow syntax, contract drift and
+redacted scan passed. The non-root image passed SSE/SIGTERM and proxy cancellation.
+See [aggregate evidence](docs/verification/question-coverage.json).
+
+CI checks generated-bank drift and runs ten representative real-store fixture
+cases; current-head Actions remains the merge gate. No paid model evaluation,
+registry publication, main promotion or production deployment. Fixture completion
+does not establish real-model answer quality.
+
+## Current continuation · 2026-10-12
+
+Voice polish PR #45 and PostgreSQL 18 PR #46 are integrated into develop. Python
+remains 3.14.8 because Lingua 2.2.0 lacks CP315 wheels; official support classifications
+are corrected in docs/support-policy.md, including LangChain/LangGraph 1.x LTS.
+
+Private operational status/Prometheus exposition, anonymous durable facts, actual usage
+tokens and manual opt-in OTLP are implemented with migration 006. Local full suite:
+342 passed in 28.89 seconds against PostgreSQL 18.6/pgvector 0.8.7 and Neo4j 5.26.31.
+Focused tests include an actual loopback OTLP protobuf receiver and runtime redaction,
+stream cleanup, bounded queues, authenticated reads and deletion-independent persistence.
+Final application code passed CI and merged through PR #47 at
+`8d411d76699c98e512f07127af371e2b6305fd57`. The dated operations report records
+actual image/default healthcheck/SSE/SIGTERM and frontend-adapter evidence.
+
+The README now includes repository-authored technology chips and Mermaid diagrams
+for application boundaries, grounded conversations and private monitoring ownership.
+No source license has been selected. No production deployment, monitoring stack,
+main promotion, image publication or portfolio activation is claimed.
+
+Final dependency compatibility: PR #48 merged at
+`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` after 347 local real-service tests and
+current-head Actions. It replaced the conflicted #44 natively. New versions and
+actual LTS classifications are recorded in the support policy; actual runtime
+measurements and remaining production gates are in the operations report.

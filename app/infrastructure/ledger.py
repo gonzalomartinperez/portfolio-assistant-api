@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 from uuid import UUID, uuid4
 
 from app.application.contracts import Usage
@@ -19,7 +19,7 @@ def reserve(
     with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472019)')
         spent = conn.execute(
-            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
+            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
         ).fetchone()['amount']
         if spent + amount > cutoff:
             raise BudgetExhaustedError()
@@ -53,10 +53,11 @@ def settle(
     cost = (
         Decimal(input_tokens) * input_price + Decimal(output_tokens) * output_price
     ) / Decimal(1000000)
+    cost = cost.quantize(Decimal('0.000001'), rounding=ROUND_CEILING)
     with connection() as conn:
         conn.execute(
-            'UPDATE spend_ledger SET actual_usd=%s WHERE run_id=%s',
-            (cost, UUID(run_id)),
+            'UPDATE spend_ledger SET actual_usd=%s,input_tokens=%s,output_tokens=%s WHERE run_id=%s',
+            (cost, input_tokens, output_tokens, UUID(run_id)),
         )
     logging.getLogger('portfolio_assistant').info(
         json.dumps(
@@ -94,3 +95,50 @@ class PostgresAccounting:
             input_price=self.budget.input_price,
             output_price=self.budget.output_price,
         )
+
+
+class EmbeddingAccounting:
+    """Independent ledger entries also cover indexing without a conversation run."""
+
+    def __init__(self, connection, monthly: Decimal, price: Decimal):
+        if not price.is_finite() or price <= 0:
+            raise ValueError('embedding price must be positive')
+        self.connection = connection
+        self.monthly = monthly
+        self.price = price
+
+    def reserve_embedding(self, maximum_tokens: int, purpose: str) -> UUID:
+        if purpose not in ('query', 'index') or maximum_tokens <= 0:
+            raise ValueError('invalid embedding reservation')
+        amount = max(
+            Decimal(maximum_tokens) * self.price / Decimal(1000000), Decimal('0.000001')
+        )
+        amount = amount.quantize(Decimal('0.000001'), rounding=ROUND_CEILING)
+        identifier = uuid4()
+        with self.connection() as conn:
+            conn.execute('SELECT pg_advisory_xact_lock(472019)')
+            spent = conn.execute(
+                "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
+            ).fetchone()['amount']
+            if spent + amount > self.monthly:
+                raise BudgetExhaustedError()
+            conn.execute(
+                'INSERT INTO spend_ledger(id,kind,reserved_usd) VALUES (%s,%s,%s)',
+                (identifier, 'embedding_' + purpose, amount),
+            )
+        return identifier
+
+    def settle_embedding(self, identifier: UUID, tokens: int) -> None:
+        if tokens < 0:
+            raise ValueError('invalid embedding usage')
+        with self.connection() as conn:
+            conn.execute(
+                'UPDATE spend_ledger SET actual_usd=%s,input_tokens=%s,output_tokens=0 WHERE id=%s AND actual_usd IS NULL',
+                (
+                    (Decimal(tokens) * self.price / Decimal(1000000)).quantize(
+                        Decimal('0.000001'), rounding=ROUND_CEILING
+                    ),
+                    tokens,
+                    identifier,
+                ),
+            )

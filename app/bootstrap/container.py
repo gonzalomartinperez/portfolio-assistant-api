@@ -2,14 +2,14 @@
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from decimal import Decimal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from neo4j import GraphDatabase
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -28,12 +28,16 @@ from app.infrastructure.answer import (
 from app.infrastructure.checkpoints import drain_cleanup
 from app.infrastructure.conversations import PostgresConversations
 from app.infrastructure.db import pool, translated
+from app.infrastructure.embedding import FixtureEmbeddings, OpenAIEmbeddings
 from app.infrastructure.knowledge import KnowledgeIndex
-from app.infrastructure.ledger import PostgresAccounting
+from app.infrastructure.language import LocalLanguageDetector
+from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
 from app.infrastructure.migrations import check_schema
+from app.infrastructure.operations import OperationalObserver, PostgresOperations
 from app.infrastructure.runs import PostgresRuns
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
+from app.presentation.operations import router as operations_router
 
 
 def create_app(
@@ -70,6 +74,9 @@ def create_app(
             max_transaction_retry_time=0,
         )
         client = None
+        embedding_client = None
+        runs = None
+        observer = None
         try:
             await asyncio.to_thread(database.open, wait=True, timeout=10)
             await checkpoints.open(wait=True, timeout=10)
@@ -79,9 +86,14 @@ def create_app(
             if config.ai_provider == 'openai':
                 # Paid authorization was validated by Settings. Never retry a possibly billed run.
                 client = AsyncOpenAI(
-                    api_key=config.openai_api_key, timeout=45, max_retries=0
+                    api_key=config.openai_api_key,
+                    base_url='https://api.openai.com/v1',
+                    timeout=45,
+                    max_retries=0,
                 )
-                provider = ResponsesProvider(client, config.openai_model)
+                provider = ResponsesProvider(
+                    client, config.openai_model, LocalLanguageDetector().rejects_output
+                )
                 accounting = PostgresAccounting(
                     connection,
                     Budget(
@@ -97,31 +109,88 @@ def create_app(
                         )
                     ),
                 )
+            embeddings = FixtureEmbeddings()
+            if config.embeddings_provider == 'openai':
+                embedding_client = OpenAI(
+                    api_key=config.openai_api_key,
+                    base_url='https://api.openai.com/v1',
+                    timeout=20,
+                    max_retries=0,
+                )
+                embeddings = OpenAIEmbeddings(
+                    embedding_client,
+                    EmbeddingAccounting(
+                        connection,
+                        Decimal(config.reserve_cutoff_usd),
+                        Decimal(config.embedding_usd_per_million),
+                    ),
+                    async_client=client,
+                )
+            index = KnowledgeIndex(
+                connection,
+                graph,
+                embeddings,
+                database=config.neo4j_database,
+                freshness=config.knowledge_freshness_seconds
+                if config.require_fresh_knowledge
+                else None,
+            )
+            app.state.knowledge = index
             saver = AsyncPostgresSaver(checkpoints)
             workflow = LangGraphWorkflow(
-                PublicRetrieval(KnowledgeIndex(connection, graph)),
+                PublicRetrieval(index),
                 provider,
                 accounting,
                 saver,
+                detector=LocalLanguageDetector(),
             )
             app.state.conversations = Conversations(
                 PostgresConversations(connection),
                 config.retention_days,
                 config.rate_hash_key,
             )
-            app.state.runs = RunService(
+            if config.ops_read_token:
+
+                @contextmanager
+                def operational_connection():
+                    with database.connection(timeout=0.5) as conn:
+                        yield conn
+
+                operations = PostgresOperations(operational_connection, config)
+                exporter = None
+                if not config.otel_sdk_disabled:
+                    from app.infrastructure.telemetry import PrivateTelemetry
+
+                    exporter = PrivateTelemetry(
+                        config.otel_private_endpoint,
+                        config.ops_api_commit,
+                        config.ops_trace_sample_ratio,
+                    )
+                observer = OperationalObserver(
+                    operations,
+                    sample_ratio=config.ops_trace_sample_ratio,
+                    exporter=exporter,
+                )
+                observer.start()
+                app.state.operations = operations
+                app.state.observer = observer
+
+            runs = RunService(
                 PostgresRuns(connection),
                 workflow,
                 fixture=config.ai_provider == 'fixture',
                 timeout_seconds=config.run_timeout_seconds,
+                observer=observer,
             )
+            app.state.runs = runs
 
             def ready():
                 check_schema(connection)
                 with database.connection() as conn:
                     conn.execute('SELECT 1 FROM schema_migrations LIMIT 1')
                     if not conn.execute(
-                        "SELECT id FROM knowledge_versions WHERE status='active' LIMIT 1"
+                        "SELECT id FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                        (embeddings.provider, embeddings.model),
                     ).fetchone():
                         raise RuntimeError('corpus_unavailable')
                 graph.verify_connectivity()
@@ -141,13 +210,29 @@ def create_app(
             app.state.cleanup = cleanup
             yield
         finally:
+            if runs:
+                await runs.drain_cleanup()
+            if observer:
+                await observer.close()
             if client:
                 await client.close()
+            if embedding_client:
+                await asyncio.to_thread(embedding_client.close)
             await checkpoints.close()
             await asyncio.to_thread(graph.close)
             await asyncio.to_thread(database.close)
 
-    app = FastAPI(title='Portfolio Assistant API', version='1.0.0', lifespan=lifespan)
+    app = FastAPI(
+        title='Portfolio Assistant API',
+        version='1.0.0',
+        lifespan=lifespan,
+        telemetry={
+            'tracing': False,
+            'metrics': False,
+            'logs': False,
+            'auto_configure': False,
+        },
+    )
     app.state.config = config
     app.add_middleware(BodyLimit)
     app.add_middleware(
@@ -165,4 +250,5 @@ def create_app(
     )
     install(app, config.origins)
     app.include_router(router)
+    app.include_router(operations_router)
     return app

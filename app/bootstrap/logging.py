@@ -1,14 +1,14 @@
 import json
 import logging
 
-from app.application.telemetry import request_id
+from app.application.request_context import request_id
 
 
 class RedactedJSON(logging.Formatter):
     def format(self, record):
         try:
             fields = json.loads(record.getMessage())
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             # Non-structured messages cannot accidentally serialize exception text.
             fields = {'operation': 'unstructured_event'}
         fields.setdefault('request_id', request_id.get())

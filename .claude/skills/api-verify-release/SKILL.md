@@ -44,12 +44,20 @@ Report findings with file locations, commands actually run and results, fixture 
 live evidence, compatible revisions and unresolved gates. Stop when the scoped
 acceptance criteria are met; do not extend verification into cosmetic refactoring.
 
+For real-provider preparation, load the [dated audit and closure criteria](../../../docs/live-evaluation-readiness.md).
+Recheck open findings against the requested revision; especially do not treat the
+historical PostgreSQL-only check as validation of Neo4j isolation. The maintained
+harness now checks both configured destinations against owned Docker identities;
+read the evaluation procedure for prerequisites and remaining quality limitations.
+Keep documented follow-up work distinct from implemented and tested fixes.
+
 Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.
 
-The frontend's primary `/embed` and demo `/` call same-origin `/api`. Actual
-portfolio integration is deferred. Read only committed sibling handoffs; do not
-broaden API CORS or cookie scope for the iframe parent. Frontend/vps-ops own framing
-permissions and paired browser verification. Keep pending coordination explicit.
+The current user-facing UI is native to the portfolio and remains disabled;
+the separate web repository is the authenticated backoffice. Read only committed
+sibling handoffs. Native cross-origin requests need explicit credentialed CORS and
+unchanged CSRF, not wider cookie scope. The runtime contract supersedes historical
+iframe guidance. Keep paired browser verification and pending coordination explicit.
 
 For dependency automation, use [the maintenance policy](../../../docs/dependency-updates.md)
 and `uv run pytest -q tests/test_dependabot_policy.py`. Read-only audits use
@@ -57,3 +65,44 @@ and `uv run pytest -q tests/test_dependabot_policy.py`. Read-only audits use
 enable merging. Check actual protections and activation state, not labels/titles.
 Default-branch activation and repository-setting changes require current authority;
 this skill does not grant it or permit main promotion. Preserve manual opt-outs.
+
+The selected secret mechanism is Coolify runtime environment delivery. Do not add
+Infisical, Redis, a secret SDK or a deployment controller without a concrete new
+request. Read the updated runtime contract before changing worker/grants/migrations.
+Python 3.14 and model GPT-6 Luna with medium reasoning are validated defaults; paid
+calls and real answer-quality claims remain separate from fixture acceptance.
+
+
+For application Docker/database tuning, root `compose.yaml` is local/CI only.
+Validate its loopback ports, bounded resources/logs and existing image digests with
+`uv run python -m scripts.validate_compose`. Verify migrations/indexing plus active
+SSE shutdown under those ceilings. Keep build tools out of the runtime image;
+retain Git for the corpus worker. Never equate a successful build with a clean
+vulnerability scan or validated VPS capacity. Shared production settings remain
+vps-ops-owned; record unresolved scanner/image availability findings in the handoff.
+
+
+Runtime patch verification uses Python 3.14.8 with uv 0.13.0; the older uv download
+metadata cannot provision that interpreter. Confirm frozen installation on a clean
+environment, then run the maintained commands. Image verification includes a full
+Trivy report and `scripts.image_security`: any CRITICAL or fixable HIGH finding
+blocks CI. Unfixed HIGH findings remain visible and require production assessment;
+a green remediation gate is not deployment approval. Check base-interpreter pip
+and ensurepip exclusion as well as the application venv in container smoke tests.
+
+
+Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`
+with an isolated project. It runs UID 999, so existing PGDATA ownership must match;
+never silently chown shared volumes. Verify both fresh initialization and a copy of
+owned stopped data, and explicitly review vector extension metadata upgrades. Read
+the database artifact section of deployment-contract.md before publishing/selecting
+an image. Database scan policy rejects fixable CRITICAL/HIGH; unresolved critical
+findings and vendor Java updates remain production gates. Do not patch vendor jars
+or equate local counts with complete recovery verification.
+
+For operational/dashboard changes, load [private observability](../../../docs/private-observability.md).
+Verify the isolated OTLP receiver, auth/schema and cancellation regressions with
+`uv run pytest -q tests/test_private_observability.py`, then real persistence when
+services are authorized. Keep provider health, observed execution totals, sampled
+traces and configured cost estimates distinct. Do not deploy monitoring or expose
+internal endpoints based on this skill.

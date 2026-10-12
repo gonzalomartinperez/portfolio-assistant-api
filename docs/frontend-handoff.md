@@ -1,12 +1,18 @@
 # Frontend integration handoff
 
-Immutable API snapshot: **`57429618cf487b78842dd460411a72da45728ba0`**.
+Current immutable API snapshot: **`61da393520014ed2c8b1f8a0635b3b4e615f9e53`**.
 Contract version **1**, API version **1.0.0**. Import from this committed revision:
 
-- `contracts/openapi.json` — unchanged public HTTP surface.
+- `contracts/openapi.json` — compatible v1 HTTP surface plus the public starter catalog.
 - `contracts/sse.schema.json` — discriminated event payloads for the existing seven events.
 - `contracts/sse.examples.json` — success/abstention, failure and cancellation.
 - `contracts/manifest.json` — deterministic artifact hashes.
+
+Earlier snapshot `5742961` remains historical compatibility evidence, not the
+snapshot for importing the new catalog. The 2026-10-04 audit observed frontend
+develop `aed8ea710c8b847ddc9066aaef5ce48d3793b494` still pinned to API `6b1e65f`;
+new catalog/error-state adoption and paired browser verification remain pending.
+See [A3 closure criteria](live-evaluation-readiness.md#findings-and-closure-criteria).
 
 The frontend owner imports this snapshot and regenerates types in its own PR.
 No frontend working-tree files are dependencies of this handoff. Requests/events,
@@ -39,9 +45,9 @@ configuration, writable paths and health endpoint. Private vps-ops owns producti
 composition and Coolify execution. This repository supplies the API runtime contract.
 No DNS/deployment is authorized.
 
-Actual portfolio integration is deferred. The consolidated mandate supersedes the
-previous direct-panel integration plan; see the embedded-experience contract below.
-No portfolio or frontend working-tree change is part of this handoff.
+Current integration: native portfolio UI, disabled until separately approved;
+authenticated backoffice at the assistant origin. The native context section below
+supersedes earlier iframe guidance. No sibling source is part of this handoff.
 
 Frontend commit `c374aeb95484904ebdbe731a5659dc4b145d6eaf` now publishes its
 standalone image/configuration handoff. The retained transfer template includes its UID 1000
@@ -74,7 +80,8 @@ root_path. This revision does not authorize image publication or deployment.
 
 ## Embedded-experience contract
 
-The primary UI is frontend `/embed`; `/` is a secondary testing/demo surface.
+This section records the former iframe plan, not current deployment requirements.
+The then-primary UI was frontend `/embed`; `/` was a secondary testing/demo surface.
 Both use same-origin relative `/api/v1/...` through the vps-ops-owned proxy, which
 preserves the prefix. A parent iframe host neither receives the session credential
 nor needs API CORS permission. Keep the assistant origin as the target allowlist;
@@ -114,3 +121,101 @@ Role-fit wording no longer becomes an employer filter merely because it contains
 "for". Fixture attribution excludes visible neighboring employer records. These
 are backend behavior changes, not new request fields or SSE events. Existing
 consumers and persisted conversations need no migration or type regeneration.
+
+## Current-knowledge increment
+
+This increment retains SSE v1 event names and payloads. OpenAPI adds
+`GET /api/v1/knowledge/suggestions?locale=en|es` with corpus_version, source_commit
+and bilingual section-backed items. The web owner must import a committed snapshot,
+regenerate types and validate the catalog payload; do not read this working tree.
+The endpoint is public and does not create a session or charge model use.
+
+Handle `knowledge_updating` as a recoverable availability state and
+`provider_unavailable` as an OpenAI outage. Neither permits automatic paid generation
+retry. Existing clients still receive the v1 run.failed envelope and can use their
+safe generic unknown-code behavior until localization is added. Session/cookie/CSRF,
+run ownership, cancellation and source record shapes are retained. Cited real answers
+now attach only the supplied references actually used as [1]…[5]. Fixture behavior
+remains separately identified. Real-model citation support requires paid evaluation.
+
+The source public projection and personal facts need the portfolio-owner handoff
+in knowledge-sync.md. This repository does not implement the portfolio launcher,
+CSP, frontend preferences or production deployment.
+
+
+## Native portfolio presentation context · 2026-10-10
+
+This current native integration supersedes the historical iframe deployment sections
+above. The portfolio owns the native UI and keeps it disabled; the renamed
+portfolio-assistant-backoffice owns the authenticated administration surface.
+The runtime contract defines CORS/proxy requirements; no host source was changed.
+
+
+Contract implementation: `61da393520014ed2c8b1f8a0635b3b4e615f9e53`.
+`SendMessage.context` is optional; omission or JSON null preserves existing clients
+and the legacy idempotency fingerprint. `locale` remains top-level `en`/`es`.
+When present, all four fields are required and extra keys are rejected:
+
+```json
+{
+  "content": "What is his experience?",
+  "locale": "en",
+  "context": {
+    "theme": "dark",
+    "opened_path": "/work",
+    "current_path": "/about",
+    "presentation": "compact"
+  }
+}
+```
+
+Theme: `dark`/`light`; presentation: `compact`/`expanded`/`page`.
+Paths are exact values: `/`, `/about`, `/work`, `/work/filomena`, `/education`,
+`/cv`, `/contact`, `/stack`, `/assistant`, and their `/es` equivalents (`/es`
+for the home page). Assistant pages are supported conditional public routes;
+accepting them as metadata does not enable the rollout. The allowlist references
+portfolio commit `ccd4dd3b0a7d222b2fed384578cc847b7dddd93b`.
+Queries, fragments, absolute/protocol-relative URLs, encoding tricks, traversal,
+trailing slashes and arbitrary project slugs return the existing safe HTTP 422.
+Future public routes require an explicit additive catalog update.
+
+The HTTP adapter maps to a framework-free immutable `PresentationContext`;
+application/LangGraph transport it separately from evidence and history. The
+provider receives it under `untrusted_presentation_context` in user data, never
+in developer instructions or retrieval evidence. It cannot change the language
+policy, authorization, source provenance or system instructions. Fixture answers
+ignore these hints; real answer quality is not guaranteed by prompt separation.
+No context fields are returned in SSE/history or operational logs. Checkpoint
+state can contain the bounded metadata and follows existing retention/deletion.
+
+The complete request, including non-null context, binds the idempotency key;
+changing context with the same key returns 409 and never starts another generation.
+Paths are visitor claims, not proof that the host visited a page. Do not add
+credentials, full URLs, transcripts or private parameters to the object.
+
+Import OpenAPI and its regenerated manifest from the implementation SHA above;
+SSE schemas/examples are unchanged. Generate TypeScript in the frontend's existing
+isolated `openapi-typescript` toolchain. A local generated declaration was checked
+with generator 7.13.0; API Python models remain the runtime validator, not generated
+TypeScript. Request examples: [send-message.examples.json](../contracts/send-message.examples.json).
+
+Verification: strict mypy; all 235 then-current tests with isolated PostgreSQL/
+pgvector and Neo4j; 38 new offline validation/propagation cases plus HTTP integration
+covering omission, valid context, rejection before provider calls, idempotency and
+no SSE/history leakage. A subsequent example/fingerprint test also passed. No
+paid calls were needed for this contract change; no deployment/activation occurred.
+
+
+## Canonical final citations · 2026-10-10
+
+No HTTP/SSE schema or source-record shape changes. Provider deltas remain truly
+incremental and can contain original retrieval indices. After the answer is
+complete, prose markers are normalized to the compact, used-source order before
+persistence and `message.completed`. For retrieved sources 1–5, using original
+[2] and [5] returns those two records in that order and canonical markers [1]/[2].
+Code spans/fences and inline numeric Markdown link labels are preserved. Invalid
+references fail the run rather than fabricating sources. The UI must treat the
+completed payload as authoritative, replacing provisional streamed text; do not
+merge its content as another delta. History returns the same canonical content and
+citations. Partial/interrupted output has no verified final-source association.
+This mapping guarantees consistent references, not that every claim is true.

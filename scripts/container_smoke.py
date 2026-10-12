@@ -17,8 +17,8 @@ SLOW_APP = """import asyncio
 from app.bootstrap.container import create_app
 from app.infrastructure.answer import FixtureProvider
 class SlowFixture(FixtureProvider):
-    async def stream(self, question, evidence, locale, history=()):
-        async for item in super().stream(question, evidence, locale, history):
+    async def stream(self, question, evidence, locale, history=(), context=None):
+        async for item in super().stream(question, evidence, locale, history, context):
             yield item
             await asyncio.sleep(2)
 app = create_app(provider_override=SlowFixture())
@@ -126,6 +126,23 @@ def main():
                     assert client.get('/health/live').status_code == 200
                     uid = docker('exec', name, 'id', '-u')
                     assert uid == '65532'
+                    docker(
+                        'exec',
+                        name,
+                        'python',
+                        '-c',
+                        'import shutil; assert shutil.which("git"); '
+                        'assert not shutil.which("uv"); assert not shutil.which("uvx")',
+                    )
+                    docker(
+                        'exec',
+                        name,
+                        '/usr/local/bin/python',
+                        '-c',
+                        'import importlib.util; '
+                        'assert importlib.util.find_spec("pip") is None; '
+                        'assert importlib.util.find_spec("ensurepip") is None',
+                    )
                     response = client.post(
                         '/api/v1/session',
                         headers={
@@ -197,6 +214,15 @@ def main():
                         }
                     )
             finally:
+                log = subprocess.run(
+                    ['docker', 'logs', '--tail', '80', name],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=10,
+                )
+                Path('artifacts').mkdir(exist_ok=True)
+                Path('artifacts', f'{name}.log').write_text(log.stdout + log.stderr)
                 docker('rm', '-f', name)
     print(json.dumps({'image': args.image, 'checks': reports}, indent=2))
 

@@ -1,0 +1,42 @@
+{
+  "api_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "availability": "ready",
+  "executions": {
+    "cancelled": 1,
+    "completed": 1,
+    "failed": 1,
+    "first_token_p50_ms": 100.0,
+    "first_token_p95_ms": 200.0,
+    "total": 3
+  },
+  "knowledge": {
+    "corpus_version": "fixture-v1",
+    "indexed_at": "2026-10-12T11:00:00+00:00",
+    "source_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "state": "fresh"
+  },
+  "observed_at": "2026-10-12T12:00:00+00:00",
+  "schema_version": 1,
+  "traces": [
+    {
+      "duration_ms": 200.0,
+      "id": "cccccccccccccccccccccccccccccccc",
+      "outcome": "completed",
+      "stages": [
+        {
+          "duration_ms": 150.0,
+          "name": "generation"
+        }
+      ],
+      "started_at": "2026-10-12T12:00:00+00:00"
+    }
+  ],
+  "usage": {
+    "budget_usd": 10.0,
+    "input_tokens": 100,
+    "output_tokens": 20,
+    "pricing_revision": "configured-fixture",
+    "reserved_usd": 0.05,
+    "settled_usd": 0.01
+  }
+}

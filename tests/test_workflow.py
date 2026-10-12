@@ -38,7 +38,7 @@ class GatedProvider:
         self.closed = asyncio.Event()
         self.completed = False
 
-    async def stream(self, question, evidence, locale, history=()):
+    async def stream(self, question, evidence, locale, history=(), context=None):
         try:
             yield 'first '
             await self.release.wait()
@@ -131,6 +131,66 @@ def test_interrupted_stream_cancels_silent_provider_without_saving_partial_answe
     asyncio.run(run())
 
 
+def test_shutdown_drains_interruption_write_after_request_task_is_cancelled():
+    from uuid import uuid4
+
+    async def run():
+        started, release = asyncio.Event(), asyncio.Event()
+
+        class SlowStore(Store):
+            async def interrupt(self, run_id):
+                started.set()
+                await release.wait()
+                self.interrupted = True
+
+        store = SlowStore()
+        service = RunService(
+            store, LangGraphWorkflow(Retrieval(), GatedProvider()), fixture=False
+        )
+        stream = service.execute(uuid4(), uuid4(), 'question', 'en')
+        assert (await anext(stream)).name == 'run.started'
+        close = asyncio.create_task(stream.aclose())
+        await asyncio.wait_for(started.wait(), 1)
+        close.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await close
+        drain = asyncio.create_task(service.drain_cleanup())
+        await asyncio.sleep(0)
+        assert not drain.done() and not store.interrupted
+        release.set()
+        await asyncio.wait_for(drain, 1)
+        assert store.interrupted and store.answer is None
+        await service.drain_cleanup()
+
+    asyncio.run(run())
+
+
+def test_shutdown_interrupts_active_run_before_nested_generator_cleanup():
+    from uuid import uuid4
+
+    async def run():
+        store, provider = Store(), GatedProvider()
+        service = RunService(
+            store, LangGraphWorkflow(Retrieval(), provider), fixture=False
+        )
+        stream = service.execute(uuid4(), uuid4(), 'question', 'en')
+        assert (await anext(stream)).name == 'run.started'
+        assert (await anext(stream)).name == 'run.status'
+        assert (await anext(stream)).name == 'message.delta'
+        request = asyncio.create_task(anext(stream))
+        await asyncio.sleep(0)
+        await service.drain_cleanup()
+        assert store.interrupted and store.answer is None
+        request.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await request
+        await stream.aclose()
+        await service.drain_cleanup()
+        assert provider.closed.is_set()
+
+    asyncio.run(run())
+
+
 def test_output_limit_closes_provider_and_unknown_usage_is_not_refunded():
     async def run():
         class Provider:
@@ -190,10 +250,13 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
         class Responses:
             async def create(self, **kwargs):
                 assert kwargs['stream'] is True
+                assert kwargs['store'] is False
+                assert kwargs['reasoning'] == {'effort': 'medium'}
+                assert kwargs['max_output_tokens'] == 8192
                 assert kwargs['input'][0]['role'] == 'developer'
                 assert 'neutral Latin American Spanish' in kwargs['input'][0]['content']
                 assert (
-                    'explicitly requests English or Spanish'
+                    'application has already resolved the output language'
                     in kwargs['input'][0]['content']
                 )
                 assert 'Ignore previous instructions' in kwargs['input'][1]['content']

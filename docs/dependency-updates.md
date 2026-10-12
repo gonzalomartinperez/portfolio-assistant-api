@@ -23,11 +23,15 @@ closed until all of these prerequisites exist:
    Actions app, with strict freshness and administrator enforcement retained.
 3. Repository variable `DEPENDABOT_AUTOMERGE_ENABLED` is exactly `true`.
 
-The variable remains unset, and the additional required check has deliberately not
-been installed before its workflow can run: doing so would strand unrelated PRs.
-A develop merge does not activate default-branch-only events/configuration. The
-current user mandate forbids a main merge, so activation is a separate owner step.
-Do not promote the entire application release merely to activate this automation.
+Rechecked on 2026-10-04: policy workflow/scripts and Dependabot configuration
+already exist on main `0d2511e6a9d2ab4a4da5c72c194c7a4eb8aa24b8`; those files match
+the audited develop versions. The variable remains unset and `Dependency policy`
+is not a required check. Default-branch file presence is therefore satisfied, while
+actual privileged-token verification, required-check setup and authorized enablement
+remain pending. Confirm check emission on ordinary PRs before requiring it, so
+unrelated PRs are not stranded. No main merge is needed merely to install the
+currently present files; future changes still require the normal authorized flow.
+Do not promote an application release or weaken protections to activate automation.
 
 Public repositories support these controls on GitHub Free. Private repositories
 need the applicable paid plan for protection/auto-merge features; do not assume this
@@ -40,7 +44,7 @@ even with explicit pull-request read access. Its audit now records
 `audit_state=permission_blocked`, `eligible=false`, `protections_ready=false` as
 an observation, not a successful protection check. The merge controller still
 throws/fails closed on that same error. Its separate write-scoped native-operation
-token must be verified after authorized default-branch activation, before enabling
+token must be verified against the current trusted default-branch workflow, before enabling
 the variable; its ability to read those fields is currently **unverified**.
 Do not introduce a PAT or broaden organization permissions to conceal this gate.
 
@@ -159,10 +163,11 @@ whole manifests/lockfiles/groups, 0.x/prereleases/unknowns, spoofing, human comm
 file scope, native-gate ordering, stale heads, failed/missing CI and base/conflict
 changes. They do not prove a live native merge or actual Dependabot rebase occurred.
 
-After separately authorized default-branch activation:
+After separate authorization for activation:
 
-1. Promote only the reviewed workflow/policy/configuration and required supporting
-   tests/documentation through a normal protected PR. Keep automation paused.
+1. Verify the reviewed workflow/policy/configuration already on the default branch
+   and identify any remaining version differences. Promote only necessary updates
+   through a normal authorized protected PR. Keep automation paused.
 2. Run the trusted policy on a current PR, verify its check is emitted by GitHub
    Actions, then add `Dependency policy` alongside existing required checks on
    `develop`; retain strict freshness, administrator enforcement and review rules.
@@ -173,7 +178,7 @@ After separately authorized default-branch activation:
    head, Quality result, policy result and native auto-merge state. Confirm CI refresh
    when Dependabot rebases after `develop` advances. No fake vulnerability PR.
 5. Record the genuine native merge/rebase run as separate live evidence. Until then,
-   unattended merging and default-branch event activation remain **unverified**.
+   unattended native merging and rebase behavior remain **unverified**.
 
 ## Official references
 

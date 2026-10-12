@@ -2,16 +2,34 @@
 
 import asyncio
 import logging
+import re
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from time import perf_counter
 from typing import Protocol
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
 from app.application.conversation_context import Turn, bounded_history
-from app.domain.errors import BudgetExhaustedError, DependencyUnavailableError
-from app.domain.fixture import fixture_supports
+from app.application.observability import (
+    Execution,
+    ExecutionObserver,
+    Outcome,
+    Stage,
+    measurements,
+    phase,
+    stage_origin,
+)
+from app.application.presentation_context import PresentationContext
+from app.domain.errors import (
+    BudgetExhaustedError,
+    DependencyUnavailableError,
+    ProviderUnavailableError,
+    RejectedError,
+)
+from app.domain.fixture import fixture_supports, insufficient_message
 
 
 @dataclass(frozen=True)
@@ -56,11 +74,34 @@ class RunStore(Protocol):
         ...
 
 
+_MARKDOWN_REFERENCE = re.compile(
+    r'```[\s\S]*?```|`[^`\n]*`|(?<![\w])\[([0-9]+)\](?!\()'
+)
+
+
+def referenced_sources(answer: str, count: int) -> tuple[int, ...]:
+    used = {int(match[1]) for match in _MARKDOWN_REFERENCE.finditer(answer) if match[1]}
+    if any(number < 1 or number > count for number in used):
+        raise ValueError('invalid source reference')
+    return tuple(sorted(used))
+
+
+def normalize_citation_markers(answer: str, count: int) -> str:
+    """Map prose markers to the compact citation list; leave code and links intact."""
+    mapping = {
+        source: index
+        for index, source in enumerate(referenced_sources(answer, count), 1)
+    }
+    return _MARKDOWN_REFERENCE.sub(
+        lambda match: f'[{mapping[int(match[1])]}]' if match[1] else match[0], answer
+    )
+
+
 def citations(
     sources: tuple[Evidence, ...], answer: str, fixture: bool
 ) -> list[dict[str, object]]:
     if fixture:
-        if answer.startswith(('I could not find enough', 'No encontré evidencia')):
+        if answer in (insufficient_message('en'), insufficient_message('es')):
             sources = ()
         else:
             # Fixture quotes identify actual excerpt support, not every retrieved candidate.
@@ -69,6 +110,11 @@ def citations(
                 for source in sources[:2]
                 if fixture_supports(source.content, answer, source.path)
             )
+    else:
+        used = referenced_sources(answer, len(sources))
+        sources = tuple(
+            source for index, source in enumerate(sources, 1) if index in used
+        )
     result: list[dict[str, object]] = []
     for source in sources:
         record = asdict(source)
@@ -88,19 +134,129 @@ class RunService:
         *,
         fixture: bool,
         timeout_seconds: float = 60,
+        observer: ExecutionObserver | None = None,
     ):
+        self.observer = observer
         self.store = store
         self.workflow = workflow
         self.fixture = fixture
         self.timeout_seconds = timeout_seconds
+        self._cleanup_tasks: set[asyncio.Task[None]] = set()
+        self._active_runs: set[UUID] = set()
+
+    async def drain_cleanup(self) -> None:
+        """Keep storage open for interruption writes after ASGI cancellation."""
+        # Lifespan can resume before nested stream generators reach their finally.
+        for run_id in tuple(self._active_runs):
+            self._schedule_interrupt(run_id)
+        if self._cleanup_tasks:
+            _, pending = await asyncio.wait(tuple(self._cleanup_tasks), timeout=5)
+            if pending:
+                logging.getLogger('portfolio_assistant').warning(
+                    '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
+                )
+
+    def _cleanup_finished(self, task: asyncio.Task[None]) -> None:
+        self._cleanup_tasks.discard(task)
+        if not task.cancelled():
+            task.exception()
+
+    def _schedule_interrupt(self, run_id: UUID) -> asyncio.Task[None]:
+        async def interrupt() -> None:
+            try:
+                await self.store.interrupt(run_id)
+            except DependencyUnavailableError:
+                logging.getLogger('portfolio_assistant').warning(
+                    '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
+                )
+
+        cleanup = asyncio.create_task(interrupt())
+        self._cleanup_tasks.add(cleanup)
+        cleanup.add_done_callback(self._cleanup_finished)
+        return cleanup
 
     async def execute(
-        self, run_id: UUID, conversation_id: UUID, question: str, locale: str
+        self,
+        run_id: UUID,
+        conversation_id: UUID,
+        question: str,
+        locale: str,
+        context: PresentationContext | None = None,
+    ) -> AsyncGenerator[RunEvent]:
+        started_at = datetime.now(UTC)
+        started = perf_counter()
+        first_token = None
+        outcome: Outcome = 'cancelled'
+        error_code = None
+        claimed = False
+        stages: list[Stage] = []
+        try:
+            async with aclosing(
+                self._execute(run_id, conversation_id, question, locale, context)
+            ) as stream:
+                while True:
+                    token = measurements.set(stages if self.observer else None)
+                    origin_token = stage_origin.set(started)
+                    try:
+                        event = await anext(stream)
+                    except StopAsyncIteration:
+                        break
+                    finally:
+                        measurements.reset(token)
+                        stage_origin.reset(origin_token)
+                    if event.name == 'run.started':
+                        claimed = True
+                    elif event.name == 'message.delta' and first_token is None:
+                        first_token = (perf_counter() - started) * 1000
+                    elif event.name == 'run.completed':
+                        outcome = 'completed'
+                    elif event.name == 'run.failed':
+                        outcome = 'failed'
+                        code = event.payload.get('code')
+                        error_code = (
+                            str(code)
+                            if code
+                            in {
+                                'provider_unavailable',
+                                'generation_failed',
+                                'budget_exhausted',
+                                'knowledge_updating',
+                                'dependency_unavailable',
+                            }
+                            else 'other'
+                        )
+                    yield event
+        finally:
+            if self.observer and claimed:
+                execution = Execution(
+                    uuid4().hex,
+                    started_at,
+                    outcome,
+                    max(0, (perf_counter() - started) * 1000),
+                    first_token,
+                    tuple(stages),
+                    error_code,
+                )
+                try:
+                    self.observer.record(execution)
+                except Exception:  # noqa: BLE001 - Observational failures must not change a paid run or expose adapter errors.
+                    logging.getLogger('portfolio_assistant').warning(
+                        '{"operation":"observability","status":"record_dropped"}'
+                    )
+
+    async def _execute(
+        self,
+        run_id: UUID,
+        conversation_id: UUID,
+        question: str,
+        locale: str,
+        context: PresentationContext | None = None,
     ) -> AsyncGenerator[RunEvent]:
         """Yield v1 events; cancel silent providers and never save partial answers."""
         answer = ''
         sources: tuple[Evidence, ...] = ()
         pending: asyncio.Task[WorkflowEvent] | None = None
+        self._active_runs.add(run_id)
         try:
             if not await self.store.start(run_id):
                 yield RunEvent('run.cancelled', {})
@@ -116,6 +272,7 @@ class RunService:
                             bounded_history(
                                 await self.store.history(run_id, conversation_id)
                             ),
+                            context,
                         )
                     )
                 ) as stream:
@@ -150,10 +307,13 @@ class RunService:
                             yield RunEvent('message.delta', {'text': event.text})
                         elif event.kind == 'answer':
                             answer = event.text
-            refs = citations(sources, answer, self.fixture)
-            message_id = await self.store.complete(
-                run_id, conversation_id, answer, refs
-            )
+            with phase('finalization'):
+                refs = citations(sources, answer, self.fixture)
+                if not self.fixture:
+                    answer = normalize_citation_markers(answer, len(sources))
+                message_id = await self.store.complete(
+                    run_id, conversation_id, answer, refs
+                )
             if message_id is None:
                 yield RunEvent('run.cancelled', {})
                 return
@@ -166,6 +326,10 @@ class RunService:
             code = (
                 'budget_exhausted'
                 if isinstance(error, BudgetExhaustedError)
+                else 'provider_unavailable'
+                if isinstance(error, ProviderUnavailableError)
+                else error.code
+                if isinstance(error, RejectedError)
                 else 'generation_failed'
             )
             try:
@@ -179,25 +343,10 @@ class RunService:
                 else RunEvent('run.cancelled', {})
             )
         finally:
+            # The cleanup task survives cancellation from an ASGI task-group scope.
+            cleanup = self._schedule_interrupt(run_id)
+            self._active_runs.discard(run_id)
             if pending and not pending.done():
                 pending.cancel()
                 await asyncio.gather(pending, return_exceptions=True)
-
-            # The cleanup task survives cancellation from an ASGI task-group scope.
-            async def interrupt() -> None:
-                try:
-                    await self.store.interrupt(run_id)
-                except DependencyUnavailableError:
-                    logging.getLogger('portfolio_assistant').warning(
-                        '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
-                    )
-
-            cleanup = asyncio.create_task(interrupt())
-            try:
-                await asyncio.shield(cleanup)
-            except asyncio.CancelledError:
-                # Keep a strong reference until completion; SQL has its own timeout.
-                cleanup.add_done_callback(
-                    lambda task: task.exception() if not task.cancelled() else None
-                )
-                raise
+            await asyncio.shield(cleanup)

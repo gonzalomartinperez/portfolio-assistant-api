@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 MAX_INPUT_TOKENS = 110000
-MAX_OUTPUT_TOKENS = 500
+MAX_OUTPUT_TOKENS = 8192
 
 
 @dataclass(frozen=True)
