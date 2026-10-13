@@ -304,3 +304,53 @@ def test_known_attribution_is_removed_from_summary_and_reference_urls():
         assert 'utm_source' not in result.text
 
     asyncio.run(run())
+
+
+def test_external_documentation_cannot_acquire_career_source_marker_ids():
+    from app.infrastructure.answer import ResponsesProvider
+
+    async def run():
+        class Search:
+            async def search(self, topic):
+                return WebSupplement(
+                    topic.name,
+                    'General technical context',
+                    (WebReference('LangGraph', 'https://docs.langchain.com/oss/'),),
+                )
+
+        class Events:
+            def __aiter__(self):
+                return self.iterate()
+
+            async def iterate(self):
+                yield SimpleNamespace(
+                    type='response.completed', response=SimpleNamespace(usage=None)
+                )
+
+            async def close(self):
+                pass
+
+        class Responses:
+            async def create(self, **kwargs):
+                assert 'never [6]' in kwargs['input'][0]['content']
+                assert 'tools' not in kwargs and kwargs['stream'] is True
+                payload = __import__('json').loads(kwargs['input'][1]['content'])
+                assert (
+                    payload['untrusted_external_technical_context']['references'][0][
+                        'url'
+                    ]
+                    == 'https://docs.langchain.com/oss/'
+                )
+                return Events()
+
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=Responses()), 'gpt-6-luna', web_search=Search()
+        )
+        assert [
+            item
+            async for item in provider.stream(
+                'Explain Gonzalo LangGraph', 'PUBLIC SOURCE [1] LangGraph', 'en'
+            )
+        ] == []
+
+    asyncio.run(run())
