@@ -261,3 +261,5 @@ See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECUR
 Optional [official-documentation context](docs/bounded-web-context.md) complements
 portfolio evidence through closed technical topics; no autonomous browsing or career
 facts from general search. It defaults off and shares the application spend ceiling.
+
+Shared runtime/version acceptance: [runtime baseline](docs/runtime-baseline.md).
