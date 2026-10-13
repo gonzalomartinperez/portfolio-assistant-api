@@ -257,3 +257,7 @@ separately authorized deployment. Main promotion does not authorize publication 
 
 **License:** no source license has been selected; public visibility does not grant one.
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
+
+Optional [official-documentation context](docs/bounded-web-context.md) complements
+portfolio evidence through closed technical topics; no autonomous browsing or career
+facts from general search. It defaults off and shares the application spend ceiling.

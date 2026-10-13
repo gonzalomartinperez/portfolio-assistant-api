@@ -58,6 +58,15 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
     # A deterministic excerpt viewer, not a model-quality simulation.
     insufficient = insufficient_message(locale)
     if not evidence:
+        if re.search(
+            r'(?i)^\s*(?:repeat\s+generation\s+automatically|repite\s+(?:autom[aá]ticamente\s+)?(?:la\s+)?generaci[oó]n\s+autom[aá]ticamente)',
+            question,
+        ):
+            return (
+                'No reintento generaciones automáticamente. Puedes volver a enviar la consulta de forma explícita; una nueva generación puede tener costo.'
+                if locale == 'es'
+                else "I don't retry generations automatically. You can explicitly submit the question again; a new generation may incur a cost."
+            )
         return insufficient
     if 'PUBLIC SOURCE ' in evidence:
         from .evidence import (

@@ -1,0 +1,279 @@
+{
+  "date": "2026-10-13",
+  "environment": "WSL/Linux; sequential local HTTP/SSE and remote OpenAI; isolated PostgreSQL18.6/pgvector0.8.7 and Neo4j5.26.31",
+  "model_requested": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "public_portfolio_revision": "f2fca923a4d109937378e0f12779f817688fd537",
+  "corpus_version": "f2fca923a4d109937378e0f12779f817688fd537-semantic-v7",
+  "experiment_ceiling_usd": "2.00",
+  "runs": [
+    {
+      "phase": "web-context-20261013",
+      "api_revision": "885ab539dc52089b8e8d124cfc17fe69521b1570",
+      "raw_artifact_sha256": "b65e0edb3133dc9c2e752e3b039e7eca68ad60bb0f9d208999ef558d020ece23",
+      "turns": 33,
+      "generation_calls_with_reported_usage": 33,
+      "local_policy_responses": 0,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 4698.09,
+        "p95_ms": 21382.35
+      },
+      "completion": {
+        "p50_ms": 9812.22,
+        "p95_ms": 25010.09
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-final-20261013",
+      "api_revision": "ab737c52a6b988d971f61ddcbd9a6b2ba7513612",
+      "raw_artifact_sha256": "677cf4fe852a88320674dd553dd65e8f269f58d1110ce2b1168422e9ae20497a",
+      "turns": 58,
+      "generation_calls_with_reported_usage": 58,
+      "local_policy_responses": 0,
+      "terminal_failures": [
+        {
+          "id": "web-neo4j-es",
+          "turn": 1,
+          "terminal": "run.failed",
+          "code": "generation_failed"
+        }
+      ],
+      "first_delta": {
+        "p50_ms": 4044.51,
+        "p95_ms": 17531.66
+      },
+      "completion": {
+        "p50_ms": 6628.42,
+        "p95_ms": 21427.1
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-acceptance-20261013",
+      "api_revision": "e3b1781ac11728dafd3cd2e51aa35fe7c97c5d6c",
+      "raw_artifact_sha256": "e1137ad9450f561d3d09be0cce8e33095046ec4596cd9aa7b9b131a755077ca9",
+      "turns": 264,
+      "generation_calls_with_reported_usage": 256,
+      "local_policy_responses": 8,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 3674.73,
+        "p95_ms": 8667.52
+      },
+      "completion": {
+        "p50_ms": 5236.62,
+        "p95_ms": 14407.57
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-revalidation-20261013",
+      "api_revision": "7414cdc82f8876a8b65ebb2f44d6762a4e1e4b66",
+      "raw_artifact_sha256": "be24bf51566d822f4c6292d87efa75d3288d87e1558948e4019b1c5958a0d2c7",
+      "turns": 24,
+      "generation_calls_with_reported_usage": 24,
+      "local_policy_responses": 0,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 6695.67,
+        "p95_ms": 13199.77
+      },
+      "completion": {
+        "p50_ms": 10447.67,
+        "p95_ms": 21505.11
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-cache-revalidation-20261013",
+      "api_revision": "722efda22e721bb1aa44a300cac9c9e1ed8538f2",
+      "raw_artifact_sha256": "32e71702559b1273ef42a2169747a4c614bfe9456bb9086950d57c685f40277d",
+      "turns": 2,
+      "generation_calls_with_reported_usage": 2,
+      "local_policy_responses": 0,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 6703.09,
+        "p95_ms": 7037.03
+      },
+      "completion": {
+        "p50_ms": 12397.74,
+        "p95_ms": 13865.72
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-continuity-revalidation-20261013",
+      "api_revision": "4514c24fc935161e74e5296183792909154c3a19",
+      "raw_artifact_sha256": "c463481a80b3d726f10012f1ca9c00e548631c7eaaf16339ad31750e0c32f2c0",
+      "turns": 4,
+      "generation_calls_with_reported_usage": 4,
+      "local_policy_responses": 0,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 6992.5,
+        "p95_ms": 8344.8
+      },
+      "completion": {
+        "p50_ms": 12647.1,
+        "p95_ms": 15089.67
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-metrics-revalidation-20261013",
+      "api_revision": "3bec2e9d6f2cb335ef78ee9f59d1ebaee9770733",
+      "raw_artifact_sha256": "ca9b84f5d851cbdb2450719d796c93856806db47da50a20449e0995d911d84e6",
+      "turns": 4,
+      "generation_calls_with_reported_usage": 4,
+      "local_policy_responses": 0,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 6425.78,
+        "p95_ms": 7479.02
+      },
+      "completion": {
+        "p50_ms": 8827.81,
+        "p95_ms": 10951.39
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    },
+    {
+      "phase": "web-final-regressions-20261013",
+      "api_revision": "af6f142fb0c279ff0fcb222ef94fe5388f3019c0",
+      "raw_artifact_sha256": "a97219cb6d79df1b2623af5cdc0f485b15aca4dfe5b76b4c8f49615f4c9883d6",
+      "turns": 16,
+      "generation_calls_with_reported_usage": 15,
+      "local_policy_responses": 1,
+      "terminal_failures": [],
+      "first_delta": {
+        "p50_ms": 3771.16,
+        "p95_ms": 14250.51
+      },
+      "completion": {
+        "p50_ms": 4929.88,
+        "p95_ms": 18415.58
+      },
+      "history_mismatches": 0,
+      "invalid_markers": 0,
+      "provenance_mismatches": 0
+    }
+  ],
+  "final_storage": {
+    "active": [
+      {
+        "id": "f2fca923a4d109937378e0f12779f817688fd537-semantic-v7",
+        "source_commit": "f2fca923a4d109937378e0f12779f817688fd537",
+        "embedding_provider": "openai",
+        "embedding_model": "text-embedding-3-small"
+      }
+    ],
+    "chunks": {
+      "total": 89,
+      "semantic": 89,
+      "unique_hashes": 88
+    },
+    "cache": {
+      "total": 88
+    },
+    "ledger": [
+      {
+        "kind": "embedding_index",
+        "entries": 88,
+        "accounted": "0.000569"
+      },
+      {
+        "kind": "inference",
+        "entries": 398,
+        "accounted": "0.248992"
+      },
+      {
+        "kind": "web_search",
+        "entries": 43,
+        "accounted": "1.490364"
+      },
+      {
+        "kind": "embedding_query",
+        "entries": 402,
+        "accounted": "0.000405"
+      }
+    ],
+    "sessions": {
+      "total": 0
+    },
+    "messages": {
+      "total": 0
+    },
+    "orphan_checkpoints": {
+      "threads": 0
+    },
+    "pending_cleanup": {
+      "total": 0
+    },
+    "graph_labels": [
+      {
+        "labels": [
+          "Document"
+        ],
+        "count": 89
+      },
+      {
+        "labels": [
+          "Entity"
+        ],
+        "count": 141
+      }
+    ],
+    "graph_edges": {
+      "count": 442,
+      "all_supporting_documents_in_active_pg": true,
+      "valid_source_spans": true
+    }
+  },
+  "findings": [
+    {
+      "case": "role-depth.4",
+      "finding": "Editorial/language refinement lost retrieval topic and falsely denied documented RAG experience",
+      "resolution": "Fixed and revalidated four-turn sequence; prior completed HTTP outcome is not a factual-quality pass"
+    },
+    {
+      "case": "metrics-depth.2",
+      "finding": "Classification missed a documented infrastructure design goal",
+      "resolution": "Metric anaphora and goal evidence slot fixed; four-turn revalidation included the goal without presenting it as measured capacity"
+    },
+    {
+      "case": "projects-20-en",
+      "finding": "Model lacked canonical source URLs that the API possessed",
+      "resolution": "Explicit source requests receive verified URLs; live targeted revalidation supplied immutable source links"
+    },
+    {
+      "case": "projects-19-en",
+      "finding": "Some broad project/role-overlap answers emphasize roles rather than named projects",
+      "resolution": "Residual relevance limitation; no universal semantic-completeness claim"
+    }
+  ],
+  "limitations": [
+    "Exposed exploratory regressions; not independent holdout or calibrated factual-accuracy scores",
+    "Raw transcripts remain ignored; no real key, credentials or hidden reasoning published",
+    "Main acceptance wrapper returned143 after all264 observed HTTP terminals and final ledger; short revalidations exited0, so normal long-wrapper shutdown is not claimed",
+    "FastAPI post-fix live generation used public cache seeded from an actual already-billed diagnostic; not a fresh cold lookup",
+    "Initial local integration attempt used the paid corpus in fixture mode and was stopped; later dedicated integration database passed407 tests",
+    "No production, physical-device, live OAuth, proxy/TLS or registry-publication verification"
+  ]
+}

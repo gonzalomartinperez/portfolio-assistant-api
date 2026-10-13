@@ -329,3 +329,13 @@ The committed operational contract is available in develop via PR #47, merge
 `8d411d76699c98e512f07127af371e2b6305fd57`. Local image verification and exact limits
 are in [the dated operations report](verification/private-observability-2026-10-12.md).
 Do not promote its local engine ID to a registry digest or production authorization.
+
+## Optional official-documentation complement
+
+`WEB_SEARCH_ENABLED` defaults to false. `WEB_SEARCH_TIMEOUT_SECONDS` defaults to 12
+(1–15); `WEB_SEARCH_USD_PER_CALL` defaults to USD0.01 and must cover the reviewed fee.
+These are runtime configuration, not credentials. Enabling also requires authorized
+OpenAI mode and paid allowance. The existing backend-only OpenAI key is reused.
+No new service, volume or migration is needed. See [bounded web policy](bounded-web-context.md)
+for exact routing, privacy, cache, accounting and failure semantics. Production
+activation remains separately authorized and vps-ops-owned.

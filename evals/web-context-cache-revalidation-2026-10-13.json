@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "bank_revision": "be47979d302471121144a9bf53f23229de9190de",
+  "selection": "one direct question per each of the 100 intent families in both locales; one per each 20 adversarial families; six four-turn conversations",
+  "scenarios": [
+    {
+      "id": "web-fastapi-en",
+      "topic": "bounded-web",
+      "split": "development",
+      "turns": [
+        {
+          "question": "Explain how FastAPI relates to Gonzalo’s portfolio assistant, complementing his documented work with current official technical documentation.",
+          "locale": "en"
+        }
+      ]
+    },
+    {
+      "id": "web-fastapi-es",
+      "topic": "bounded-web",
+      "split": "development",
+      "turns": [
+        {
+          "question": "Explica cómo FastAPI se relaciona con el asistente del portfolio de Gonzalo; complementa su trabajo documentado con documentación técnica oficial actual.",
+          "locale": "es"
+        }
+      ]
+    }
+  ],
+  "note": "Live generation with a public cache seeded from an actual already-billed OpenAI FastAPI diagnostic response, not a new cold lookup."
+}
