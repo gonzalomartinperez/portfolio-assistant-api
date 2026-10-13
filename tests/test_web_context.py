@@ -418,3 +418,23 @@ def test_explicit_source_request_receives_verified_canonical_url_without_rewriti
     assert SOURCE.url not in ordinary and SOURCE.url in linked
     assert linked.endswith(SOURCE.content) and ordinary.endswith(SOURCE.content)
     assert 'PUBLIC SOURCE [1]' in linked
+
+
+def test_known_tracking_annotation_is_removed_without_allowing_unknown_parameters():
+    from app.domain.web_policy import canonical_web_url
+
+    topic = TOPICS[4]
+    url = 'https://fastapi.tiangolo.com/advanced/async-tests/?trk=article-ssr-frontend-pulse_little-text-block&utm_source=openai'
+    assert (
+        canonical_web_url(url, topic)
+        == 'https://fastapi.tiangolo.com/advanced/async-tests/'
+    )
+    assert canonical_web_url(url + '&token=x', topic) is None
+    assert canonical_web_url(url + '&utm_source=openai', topic) is None
+    assert (
+        canonical_web_url(
+            url.replace('article-ssr-frontend-pulse_little-text-block', 'unknown'),
+            topic,
+        )
+        is None
+    )

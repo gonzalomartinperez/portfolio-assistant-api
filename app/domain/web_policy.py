@@ -121,18 +121,19 @@ def canonical_web_url(url: str, topic: WebTopic) -> str | None:
         query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
     except ValueError:
         return None
-    allowed = [[], [('utm_source', 'openai')]]
+    allowed = {
+        ('utm_source', 'openai'),
+        ('trk', 'article-ssr-frontend-pulse_little-text-block'),
+    }
     if topic.name == 'pgvector' and re.fullmatch(
         r'/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md', parsed.path
     ):
-        allowed.extend(
-            [
-                [('plain', '1')],
-                [('plain', '1'), ('utm_source', 'openai')],
-                [('utm_source', 'openai'), ('plain', '1')],
-            ]
-        )
-    if query not in allowed:
+        allowed.add(('plain', '1'))
+    if (
+        len(query) > 3
+        or len({key for key, _ in query}) != len(query)
+        or any(pair not in allowed for pair in query)
+    ):
         return None
     if parsed.fragment and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', parsed.fragment):
         return None

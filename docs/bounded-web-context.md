@@ -113,3 +113,10 @@ Explicit requests for sources/code/links now include the verified immutable sour
 URL in the evidence heading. Ordinary prompts retain their previous framing.
 This fixes a live answer that claimed source URLs were absent although the API had
 verified citations. It does not invent public page URLs or replace source cards.
+
+A provider diagnostic also returned the exact public tracking value
+`trk=article-ssr-frontend-pulse_little-text-block` on an approved FastAPI document.
+That exact attribution pair is stripped alongside `utm_source=openai`; duplicate
+keys, unknown values and arbitrary parameters remain rejected. Revalidation can
+seed the public cache from that already-billed recorded response, explicitly labelled
+as cache replay, to avoid a redundant lookup while testing real generation.
