@@ -141,7 +141,7 @@ def test_lookup_has_one_tool_no_visitor_data_and_coalesces_public_cache():
         request = captured[0]
         assert request['model'] == 'gpt-6-luna'
         assert request['reasoning'] == {'effort': 'medium'}
-        assert request['max_tool_calls'] == 1 and request['store'] is False
+        assert request['max_tool_calls'] == 2 and request['store'] is False
         assert request['tools'] == [
             {
                 'type': 'web_search',
@@ -212,6 +212,95 @@ def test_feature_configuration_fails_closed_and_full_window_reservation():
         Settings(_env_file=None, web_search_enabled=True)
     config = Settings(_env_file=None)
     ledger = WebAccounting(None, config)
-    assert ledger.maximum == Decimal('0.221536')
+    assert ledger.maximum == Decimal('0.231536')
     assert ledger.cost(100, 50, 1) == Decimal('0.010035')
     assert not config.web_search_enabled
+
+
+def test_source_canonicalization_removes_only_known_attribution():
+    from app.domain.web_policy import canonical_web_url
+
+    topic = TOPICS[0]
+    assert (
+        canonical_web_url(
+            'https://docs.langchain.com/oss/?utm_source=openai#overview', topic
+        )
+        == 'https://docs.langchain.com/oss/'
+    )
+    for url in (
+        'https://docs.langchain.com/a?token=secret',
+        'https://docs.langchain.com/a?utm_source=evil',
+        'https://docs.langchain.com/a?utm_source=openai&token=x',
+        'https://github.com/pgvector/pgvector/../../evil',
+        'https://github.com/pgvector/pgvector/%2e%2e/evil',
+    ):
+        assert canonical_web_url(url, TOPICS[2] if 'github' in url else topic) is None
+
+
+def test_named_technology_span_survives_generic_portfolio_document_crowding():
+    import hashlib
+
+    from app.ai.retrieval import PublicRetrieval
+    from app.application.knowledge import Chunk, Corpus
+
+    commit = 'a' * 40
+    path = 'src/content/en/experience.ts'
+    chunks = []
+    for i in range(6):
+        content = (
+            'Gonzalo portfolio assistant HTTP SSE integration'
+            if i < 5
+            else 'Teamcubation GraphRAG implementation uses LangGraph to orchestrate retrieval.'
+        )
+        chunks.append(
+            Chunk(
+                str(i),
+                str(i),
+                f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L2',
+                'code',
+                path,
+                1,
+                2,
+                content,
+                hashlib.sha256(content.encode()).hexdigest(),
+            )
+        )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'v',
+                commit,
+                tuple(chunks),
+                frozenset({path}),
+                tuple(str(i) for i in range(5)),
+                semantic=True,
+            )
+
+        async def relationships(self, *args, **kwargs):
+            return ()
+
+    sources = asyncio.run(
+        PublicRetrieval(Index()).search(
+            'Explain LangGraph in Gonzalo portfolio assistant using current official documentation.',
+            'en',
+        )
+    )
+    assert len(sources) == 5
+    assert 'LangGraph' in sources[0].content
+
+
+def test_known_attribution_is_removed_from_summary_and_reference_urls():
+    async def run():
+        class Responses:
+            async def create(self, **kwargs):
+                result = response('https://docs.langchain.com/oss/?utm_source=openai')
+                result.output_text = 'Technical context https://docs.langchain.com/oss/?utm_source=openai'
+                return result
+
+        search = OpenAIWebSearch(SimpleNamespace(responses=Responses()), Ledger())
+        result = await search.search(TOPICS[0])
+        assert result and result.references[0].url == 'https://docs.langchain.com/oss/'
+        assert 'utm_source' not in result.text
+
+    asyncio.run(run())

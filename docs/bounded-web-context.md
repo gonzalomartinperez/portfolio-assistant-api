@@ -12,7 +12,7 @@ establishes career facts, personal details, availability or achievements.
 | Graph relationships | Parameterized bounded Neo4j queries over source-backed active-version relations; no model-generated Cypher |
 | Conversation continuity | Owned session/history, at most twelve prior turns / 8,000 characters; visitor text is not evidence |
 | Language | Local detection, server-resolved English/Spanish, supported output guard; no extra routing model |
-| Web complement | One fixed technical query, one built-in search call, exact approved domain and validated document URLs |
+| Web complement | One fixed technical query, at most two built-in calls for one fixed topic, exact approved domain and validated document URLs |
 | Generation | GPT-6 Luna, medium effort, streaming, no automatic retry or alternate model/provider |
 | Actions | No model shell, browser navigation, email, writes, private-document lookup or arbitrary database tools |
 
@@ -40,11 +40,11 @@ The public v1/SSE schemas are unchanged. A citation/link does not independently 
 an answer, and prompt instructions are not a proof against all injection attempts.
 
 Search uses the same authorized OpenAI account/model with medium effort, `store=false`,
-a low search context, one tool call, 2,048 output-token ceiling and no automatic retry.
+a low search context, at most two tool calls, 2,048 output-token ceiling and no automatic retry.
 The account-level fee and input/output tokens share the atomic monthly spend ledger,
 including semantic embeddings and normal generation. Before I/O, the search reserves
 its full 1,050,000-token model-window cost at the documented long-context multipliers
-plus one call fee. With the current standard prices this is USD0.221536. Known usage
+plus two call fees. With the current standard prices this is USD0.231536. Known usage
 settles actual cost; cancellation, timeout or absent usage retains the reservation.
 This conservative amount can skip optional search near the budget ceiling.
 
@@ -82,3 +82,10 @@ Official references checked 2026-10-13:
 [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna),
 [pricing](https://developers.openai.com/api/docs/pricing) and
 [agent safety](https://developers.openai.com/api/docs/guides/agent-builder-safety).
+
+Live exploration exposed OpenAI attribution parameters in citation URLs. Only the
+exact `utm_source=openai` pair and a bounded document anchor are removed before
+revalidating the canonical HTTPS authority/path; arbitrary query parameters remain
+rejected. Named public technology spans now retain a retrieval slot when generic
+portfolio documents crowd the top five. This does not establish technology expertise
+from a mere mention; the answer must preserve the actual source attribution.

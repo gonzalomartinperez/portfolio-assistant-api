@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit, urlunsplit
 
 from app.domain.evidence import blocks_private_query, tokens
 
@@ -85,7 +85,7 @@ def technical_topic(question: str, evidence: str) -> WebTopic | None:
 
 def approved_web_url(url: str, topic: WebTopic) -> bool:
     """Exact HTTPS authority, bounded document URL; pgvector is one upstream repo."""
-    if len(url) > 1024 or any(ord(char) < 33 for char in url):
+    if '\\' in url or len(url) > 1024 or any(ord(char) < 33 for char in url):
         return False
     try:
         parsed = urlsplit(url)
@@ -100,9 +100,25 @@ def approved_web_url(url: str, topic: WebTopic) -> bool:
         and not parsed.password
         and not parsed.query
         and not parsed.fragment
+        and not any(part in ('.', '..') for part in unquote(parsed.path).split('/'))
         and (
             topic.name != 'pgvector'
             or parsed.path == '/pgvector/pgvector'
             or parsed.path.startswith('/pgvector/pgvector/')
         )
     )
+
+
+def canonical_web_url(url: str, topic: WebTopic) -> str | None:
+    """Remove only OpenAI's known attribution parameter and safe document anchors."""
+    try:
+        parsed = urlsplit(url)
+        query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
+    except ValueError:
+        return None
+    if query not in ([], [('utm_source', 'openai')]):
+        return None
+    if parsed.fragment and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', parsed.fragment):
+        return None
+    canonical = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, '', ''))
+    return canonical if approved_web_url(canonical, topic) else None

@@ -19,6 +19,7 @@ from app.domain.evidence import (
     tokens,
     verified,
 )
+from app.domain.web_policy import TOPICS
 
 
 class PublicRetrieval:
@@ -309,6 +310,34 @@ class PublicRetrieval:
                                 companions.append(following)
                     anchors += companions
                 ranked = list(dict.fromkeys(anchors + ranked))
+        if self.strategy == 'hybrid' and not overview:
+            technical_anchors = []
+            for topic in TOPICS:
+                if topic.name.casefold() not in question.casefold():
+                    continue
+                matching = [
+                    key
+                    for key in eligible
+                    if topic.name.casefold() in eligible[key].content.casefold()
+                ]
+                if affiliation:
+                    matching = [
+                        key
+                        for key in matching
+                        if tokens(affiliation) <= tokens(eligible[key].content)
+                    ]
+                if matching:
+                    technical_anchors.append(
+                        min(
+                            matching,
+                            key=lambda key: (
+                                not eligible[key].path.startswith('src/content/'),
+                                -scores[key],
+                                key,
+                            ),
+                        )
+                    )
+            ranked = list(dict.fromkeys(technical_anchors + ranked))
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
                 {

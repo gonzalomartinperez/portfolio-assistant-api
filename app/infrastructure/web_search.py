@@ -1,4 +1,4 @@
-"""One bounded OpenAI search, with public-only topic cache and separate accounting."""
+"""A bounded OpenAI lookup, with public-only topic cache and separate accounting."""
 
 import asyncio
 import time
@@ -10,7 +10,7 @@ from openai import APIError
 
 from app.application.web_context import WebReference, WebSupplement
 from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError
-from app.domain.web_policy import TOPICS, WebTopic, approved_web_url
+from app.domain.web_policy import TOPICS, WebTopic, canonical_web_url
 
 
 class SearchAccounting(Protocol):
@@ -78,7 +78,7 @@ class OpenAIWebSearch:
                             }
                         ],
                         tool_choice='required',
-                        max_tool_calls=1,
+                        max_tool_calls=2,
                         max_output_tokens=2048,
                         store=False,
                     )
@@ -94,9 +94,10 @@ class OpenAIWebSearch:
                     response.usage.output_tokens,
                     calls,
                 )
-            if response.status != 'completed' or calls != 1:
+            if response.status != 'completed' or not 1 <= calls <= 2:
                 return None
             references: list[WebReference] = []
+            text = response.output_text
             for item in response.output:
                 if item.type != 'message':
                     continue
@@ -104,15 +105,15 @@ class OpenAIWebSearch:
                     if content.type != 'output_text':
                         continue
                     for annotation in content.annotations:
-                        if annotation.type == 'url_citation' and approved_web_url(
-                            annotation.url, topic
-                        ):
-                            reference = WebReference(
-                                annotation.title[:160], annotation.url
-                            )
-                            if reference not in references and reference.title:
-                                references.append(reference)
-            text = response.output_text
+                        if annotation.type != 'url_citation':
+                            continue
+                        canonical = canonical_web_url(annotation.url, topic)
+                        if canonical is None:
+                            return None
+                        text = text.replace(annotation.url, canonical)
+                        reference = WebReference(annotation.title[:160], canonical)
+                        if reference not in references and reference.title:
+                            references.append(reference)
             if not references or not 1 <= len(text) <= 6000:
                 return None
             value = WebSupplement(topic.name, text, tuple(references[:4]))

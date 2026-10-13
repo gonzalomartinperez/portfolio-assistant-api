@@ -16,7 +16,7 @@ class WebAccounting:
         self.output_price = Decimal(config.output_usd_per_million)
         self.fee = Decimal(config.web_search_usd_per_call)
         # Built-in retrieval can add input beyond our fixed query. Cover the full model window at long-context rates.
-        self.maximum = self.cost(1050000, 2048, 1)
+        self.maximum = self.cost(1050000, 2048, 2)
 
     def cost(self, inputs: int, outputs: int, calls: int) -> Decimal:
         if min(inputs, outputs, calls) < 0:
