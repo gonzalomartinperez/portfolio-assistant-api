@@ -37,6 +37,20 @@ def is_followup(question: str) -> bool:
         question,
     ) or re.match(r'(?i)^\s*(?:instead|en cambio)\b', question):
         return False
+    if re.search(
+        r'(?i)\b(?:based on (?:his|her|their|that|this|the (?:previous|documented)) (?:documented )?work|'
+        r'basad[ao]s? en (?:su|ese|este) (?:trabajo|experiencia))\b',
+        question,
+    ) or re.fullmatch(
+        r'(?i)\s*(?:(?:now|ahora)\s+)?(?:'
+        r'(?:(?:in|en)\s+)?(?:english|spanish|ingl[eé]s|español)(?:\s+(?:please|por favor))?|'
+        r'(?:switch to|cambia a|habla|hablá)\s+(?:english|spanish|ingl[eé]s|español)|'
+        r'(?:answer|respond|reply|responde|contesta)\s+(?:in|en)\s+(?:english|spanish|ingl[eé]s|español)'
+        r'(?:\s+(?:and|y)\s+(?:separate|separa|distinguish|distingue|preserve|preserva)\b[^:?!]*)?'
+        r')[.!?]?\s*',
+        question,
+    ):
+        return True
     return bool(
         re.search(
             r'(?i)\b(example|shorter|brief|technically|translate|rephrase|summarize|that|it|those|there|'

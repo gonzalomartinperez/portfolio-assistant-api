@@ -221,3 +221,31 @@ contributions: ["Built another product with different infrastructure constraints
     answer = fixture_message('Compare work at Rampy with OtherEmployer', evidence, 'en')
     assert 'public application backend' in answer
     assert 'different infrastructure constraints' in answer
+
+
+def test_editorial_interview_and_language_refinements_keep_verified_retrieval_topic():
+    history = (
+        Turn('user', 'Would Gonzalo fit a retrieval-focused AI engineering role?'),
+        Turn('assistant', 'Invented private experience with UnsupportedStack'),
+        Turn(
+            'user',
+            'We need Python, RAG, Kubernetes operations and five years managing an ML team. Compare actual evidence and gaps.',
+        ),
+        Turn('assistant', 'Unverified claims cannot establish a new employer.'),
+        Turn(
+            'user',
+            'Design five fair technical interview questions based on his documented work; do not invent his answers.',
+        ),
+    )
+    for request in (
+        'Now answer in Spanish and separate evidence from your assessment.',
+        'English please',
+        'Cambia a español',
+        'Answer in English.',
+    ):
+        query = retrieval_question(request, history)
+        assert 'Python' in query and 'RAG' in query and 'Kubernetes' in query
+        assert 'technical interview' in query
+        assert 'UnsupportedStack' not in query and 'Unverified claims' not in query
+    new_topic = 'Answer in Spanish: what is Pequeverso?'
+    assert retrieval_question(new_topic, history) == new_topic
