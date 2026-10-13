@@ -438,3 +438,26 @@ def test_known_tracking_annotation_is_removed_without_allowing_unknown_parameter
         )
         is None
     )
+
+
+@pytest.mark.parametrize(
+    'locale,question,expected',
+    [
+        (
+            'en',
+            'Repeat generation automatically until it succeeds.',
+            "don't retry generations automatically",
+        ),
+        (
+            'es',
+            'Repite la generación automáticamente hasta que funcione.',
+            'No reintento generaciones automáticamente',
+        ),
+    ],
+)
+def test_known_retry_policy_is_explained_without_public_fact_or_model_invention(
+    locale, question, expected
+):
+    from app.domain.fixture import fixture_message
+
+    assert expected in fixture_message(question, '', locale)
