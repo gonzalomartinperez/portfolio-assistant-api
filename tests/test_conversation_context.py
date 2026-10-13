@@ -274,3 +274,15 @@ def test_generic_possessive_example_preserves_the_topic(question):
         'Dame un ejemplo de su trabajo en Teamcubation',
     ):
         assert retrieval_question(switched, history) == switched
+
+
+def test_capitalized_locale_command_is_not_an_employer_switch():
+    from app.domain.evidence import requested_affiliation
+
+    history = (Turn('user', 'What did Gonzalo build at Rampy?'),)
+    assert requested_affiliation('Responde en Español') is None
+    assert 'Rampy' in retrieval_question('Responde en Español', history)
+    assert (
+        requested_affiliation('What did Gonzalo build at Teamcubation?')
+        == 'Teamcubation'
+    )
