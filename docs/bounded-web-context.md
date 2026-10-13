@@ -103,3 +103,8 @@ names preserve the supported locale hint; explicit English/Spanish requests reta
 priority. The frozen 264-question replay produced only six intentional language
 switches relative to hints, in 710ms including initialization on the local WSL host.
 This is tool-policy evidence, not a universal language-detection guarantee.
+
+GitHub `plain=1` is additionally stripped only for the reviewed pgvector README
+(`main`, `master`, or an immutable SHA). Issues, arbitrary repo files, query keys
+and path traversal remain rejected. This adaptation was based on an actual provider
+annotation, not a general relaxation of URL validation.

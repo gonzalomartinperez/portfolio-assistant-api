@@ -388,3 +388,22 @@ def test_ambiguous_proper_names_preserve_supported_locale_hint():
         )
         == 'en'
     )
+
+
+def test_pgvector_plain_readme_parameter_is_canonicalized_only_for_reviewed_file():
+    from app.domain.web_policy import canonical_web_url
+
+    topic = TOPICS[2]
+    assert (
+        canonical_web_url(
+            'https://github.com/pgvector/pgvector/blob/master/README.md?plain=1&utm_source=openai',
+            topic,
+        )
+        == 'https://github.com/pgvector/pgvector/blob/master/README.md'
+    )
+    for url in (
+        'https://github.com/pgvector/pgvector/issues/1?plain=1',
+        'https://github.com/pgvector/pgvector?plain=1',
+        'https://github.com/pgvector/pgvector/blob/master/README.md?plain=1&token=x',
+    ):
+        assert canonical_web_url(url, topic) is None

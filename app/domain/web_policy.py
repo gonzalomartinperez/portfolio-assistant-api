@@ -104,7 +104,12 @@ def approved_web_url(url: str, topic: WebTopic) -> bool:
         and (
             topic.name != 'pgvector'
             or parsed.path == '/pgvector/pgvector'
-            or parsed.path.startswith('/pgvector/pgvector/')
+            or bool(
+                re.fullmatch(
+                    r'/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md',
+                    parsed.path,
+                )
+            )
         )
     )
 
@@ -116,7 +121,18 @@ def canonical_web_url(url: str, topic: WebTopic) -> str | None:
         query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True)
     except ValueError:
         return None
-    if query not in ([], [('utm_source', 'openai')]):
+    allowed = [[], [('utm_source', 'openai')]]
+    if topic.name == 'pgvector' and re.fullmatch(
+        r'/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md', parsed.path
+    ):
+        allowed.extend(
+            [
+                [('plain', '1')],
+                [('plain', '1'), ('utm_source', 'openai')],
+                [('utm_source', 'openai'), ('plain', '1')],
+            ]
+        )
+    if query not in allowed:
         return None
     if parsed.fragment and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', parsed.fragment):
         return None
