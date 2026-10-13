@@ -484,3 +484,55 @@ def test_rejected_lookup_has_short_public_cooldown_without_duplicate_charges():
         assert search.cache[TOPICS[0].name].value is None
 
     asyncio.run(run())
+
+
+def test_design_goal_evidence_survives_measured_metric_crowding():
+    import hashlib
+
+    from app.ai.retrieval import PublicRetrieval
+    from app.application.knowledge import Chunk, Corpus
+
+    commit = 'a' * 40
+    path = 'src/content/en/experience.ts'
+    chunks = []
+    for i in range(6):
+        text = (
+            'Reported performance metrics measured estimates value: "1 second", qualifier: "measured"'
+            if i < 5
+            else 'Rampy prepared infrastructure to support thousands of users as a design goal, not a measured result.'
+        )
+        chunks.append(
+            Chunk(
+                str(i),
+                str(i),
+                f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L2',
+                'code',
+                path,
+                1,
+                2,
+                text,
+                hashlib.sha256(text.encode()).hexdigest(),
+            )
+        )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'v',
+                commit,
+                tuple(chunks),
+                frozenset({path}),
+                tuple(str(i) for i in range(5)),
+                semantic=True,
+            )
+
+        async def relationships(self, *args, **kwargs):
+            return ()
+
+    sources = asyncio.run(
+        PublicRetrieval(Index()).search(
+            'Which performance metrics are measurements, estimates and design goals?',
+            'en',
+        )
+    )
+    assert len(sources) == 5 and 'design goal' in sources[0].content

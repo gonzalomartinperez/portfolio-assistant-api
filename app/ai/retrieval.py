@@ -338,6 +338,34 @@ class PublicRetrieval:
                         )
                     )
             ranked = list(dict.fromkeys(technical_anchors + ranked))
+        if (
+            self.strategy == 'hybrid'
+            and terms & {'goals', 'targets', 'metas', 'objetivos'}
+            and terms
+            & {
+                'metrics',
+                'measurements',
+                'measured',
+                'estimated',
+                'mediciones',
+                'medidas',
+                'estimaciones',
+                'rendimiento',
+            }
+        ):
+            goals = [
+                key
+                for key in eligible
+                if eligible[key].path.startswith('src/content/')
+                and re.search(
+                    r'(?i)\b(?:design goal|design target|objetivo de|meta de)\b',
+                    eligible[key].content,
+                )
+            ]
+            if goals:
+                ranked = list(
+                    dict.fromkeys([max(goals, key=lambda key: scores[key])] + ranked)
+                )
         logging.getLogger('portfolio_assistant').info(
             json.dumps(
                 {

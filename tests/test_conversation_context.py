@@ -249,3 +249,15 @@ def test_editorial_interview_and_language_refinements_keep_verified_retrieval_to
         assert 'UnsupportedStack' not in query and 'Unverified claims' not in query
     new_topic = 'Answer in Spanish: what is Pequeverso?'
     assert retrieval_question(new_topic, history) == new_topic
+
+
+def test_metric_classification_and_attribution_refinements_keep_the_original_topic():
+    history = (Turn('user', '¿Qué mejoras de rendimiento reportó Gonzalo?'),)
+    query = retrieval_question(
+        '¿Cuáles son mediciones, estimaciones y metas de diseño?', history
+    )
+    assert 'rendimiento' in query and 'Gonzalo' in query
+    history = (Turn('user', 'Give me a specific example from Teamcubation instead.'),)
+    assert 'Teamcubation' in retrieval_question(
+        'Which parts were his contribution and which were team outcomes?', history
+    )

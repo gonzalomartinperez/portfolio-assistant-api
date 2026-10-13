@@ -39,7 +39,9 @@ def is_followup(question: str) -> bool:
         return False
     if re.search(
         r'(?i)\b(?:based on (?:his|her|their|that|this|the (?:previous|documented)) (?:documented )?work|'
-        r'basad[ao]s? en (?:su|ese|este) (?:trabajo|experiencia))\b',
+        r'basad[ao]s? en (?:su|ese|este) (?:trabajo|experiencia)|'
+        r'which (?:parts|of (?:those|them)|are (?:measured|estimated))|'
+        r'cu[aá]les (?:son|fueron) (?:mediciones|medid[ao]s?|estimaciones|estimad[ao]s?))\b',
         question,
     ) or re.fullmatch(
         r'(?i)\s*(?:(?:now|ahora)\s+)?(?:'
