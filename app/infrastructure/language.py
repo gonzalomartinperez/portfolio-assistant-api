@@ -1,4 +1,4 @@
-"""Offline detection; low-accuracy mode bounds memory without a provider call."""
+"""Shared bounded offline language models; no provider routing call."""
 
 import re
 from functools import lru_cache
@@ -6,11 +6,6 @@ from functools import lru_cache
 from lingua import Language, LanguageDetectorBuilder
 
 from app.application.language import Locale
-
-
-@lru_cache(maxsize=1)
-def detector():
-    return LanguageDetectorBuilder.from_all_languages().with_low_accuracy_mode().build()
 
 
 @lru_cache(maxsize=1)
@@ -30,8 +25,12 @@ class LocalLanguageDetector:
         cleaned = re.sub(r'https?://\S+|`[^`]*`', '', text)
         if len(re.findall(r'[^\W\d_]+', cleaned)) < 3:
             return None
-        confidence = detector().compute_language_confidence_values(cleaned)
-        if len(confidence) < 2 or confidence[0].value - confidence[1].value < 0.15:
+        confidence = output_detector().compute_language_confidence_values(cleaned)
+        if (
+            len(confidence) < 2
+            or confidence[0].value < 0.75
+            or confidence[0].value - confidence[1].value < 0.15
+        ):
             return None
         if confidence[0].language == Language.ENGLISH:
             return 'en'

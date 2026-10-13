@@ -101,7 +101,15 @@ def requested_affiliation(question: str) -> str | None:
         r'([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})',
         question,
     )
-    return match[1] if match else None
+    if match and match[1].casefold() not in {
+        'english',
+        'spanish',
+        'inglés',
+        'ingles',
+        'español',
+    }:
+        return match[1]
+    return None
 
 
 def tokens(text: str) -> set[str]:

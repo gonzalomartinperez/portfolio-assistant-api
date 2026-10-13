@@ -64,3 +64,13 @@ The application pins all OpenAI SDK clients to `https://api.openai.com/v1` and
 sets generation/embedding retries to zero. `OPENAI_BASE_URL` is not a supported
 application override and cannot redirect provider credentials or public corpus
 requests to another provider. Private operational origins are configured separately.
+
+## Optional official-documentation complement
+
+`WEB_SEARCH_ENABLED` defaults to false. `WEB_SEARCH_TIMEOUT_SECONDS` defaults to 12
+(1–15); `WEB_SEARCH_USD_PER_CALL` defaults to USD0.01 and must cover the reviewed fee.
+These are runtime configuration, not credentials. Enabling also requires authorized
+OpenAI mode and paid allowance. The existing backend-only OpenAI key is reused.
+No new service, volume or migration is needed. See [bounded web policy](bounded-web-context.md)
+for exact routing, privacy, cache, accounting and failure semantics. Production
+activation remains separately authorized and vps-ops-owned.

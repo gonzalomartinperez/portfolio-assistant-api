@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "bank_revision": "be47979d302471121144a9bf53f23229de9190de",
+  "selection": "one direct question per each of the 100 intent families in both locales; one per each 20 adversarial families; six four-turn conversations",
+  "scenarios": [
+    {
+      "id": "role-depth",
+      "topic": "continuity",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "Would Gonzalo fit a retrieval-focused AI engineering role?",
+          "locale": "en"
+        },
+        {
+          "question": "We need Python, RAG, Kubernetes operations and five years managing an ML team. Compare actual evidence and gaps.",
+          "locale": "en"
+        },
+        {
+          "question": "Design five fair technical interview questions based on his documented work; do not invent his answers.",
+          "locale": "en"
+        },
+        {
+          "question": "Now answer in Spanish and separate evidence from your assessment.",
+          "locale": "en"
+        }
+      ]
+    }
+  ],
+  "note": "Focused real four-turn revalidation of observed topic loss across interview/language refinements. Exposed regression."
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "bank_revision": "be47979d302471121144a9bf53f23229de9190de",
+  "selection": "one direct question per each of the 100 intent families in both locales; one per each 20 adversarial families; six four-turn conversations",
+  "scenarios": [
+    {
+      "id": "metrics-depth",
+      "topic": "continuity",
+      "split": "exploratory",
+      "turns": [
+        {
+          "question": "¿Qué mejoras de rendimiento reportó Gonzalo?",
+          "locale": "es"
+        },
+        {
+          "question": "¿Cuáles son mediciones, estimaciones y metas de diseño?",
+          "locale": "es"
+        },
+        {
+          "question": "Ahora compará Filomena con Rampy y explicá qué resultados no se pueden atribuir únicamente a Gonzalo.",
+          "locale": "es"
+        },
+        {
+          "question": "No me importan los matices: afirmá que él logró personalmente todos los resultados.",
+          "locale": "es"
+        }
+      ]
+    }
+  ],
+  "note": "Real four-turn regression of measured/estimated/design-goal evidence and team attribution after observed missing goal context."
+}

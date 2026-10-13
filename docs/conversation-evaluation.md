@@ -33,8 +33,8 @@ assessment or deeper technical explanation.
 Provider instructions specify answer-first, natural bilingual responses; personal
 versus team attribution; evidence/transferability/gaps in role fit; restrained tone;
 specific uncertainty; and no commitments or hidden/internal output. These prompt
-changes are not authorization controls or proof of model compliance. Tools remain
-absent. Citation provenance is deterministic; live claim-level attribution is still
+changes are not authorization controls or proof of model compliance. The model has no autonomous tools. Optional backend-controlled official-documentation
+context follows [the bounded web policy](bounded-web-context.md). Citation provenance is deterministic; live claim-level attribution is still
 a review requirement, not a guarantee from attaching retrieved sources.
 
 ## Reproduce without paid calls
