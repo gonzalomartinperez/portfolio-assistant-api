@@ -407,3 +407,14 @@ def test_pgvector_plain_readme_parameter_is_canonicalized_only_for_reviewed_file
         'https://github.com/pgvector/pgvector/blob/master/README.md?plain=1&token=x',
     ):
         assert canonical_web_url(url, topic) is None
+
+
+def test_explicit_source_request_receives_verified_canonical_url_without_rewriting_facts():
+    from app.application.answer import context
+    from tests.test_workflow import SOURCE
+
+    ordinary = context((SOURCE,))
+    linked = context((SOURCE,), include_urls=True)
+    assert SOURCE.url not in ordinary and SOURCE.url in linked
+    assert linked.endswith(SOURCE.content) and ordinary.endswith(SOURCE.content)
+    assert 'PUBLIC SOURCE [1]' in linked

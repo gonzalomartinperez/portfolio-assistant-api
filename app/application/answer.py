@@ -1,5 +1,6 @@
 """Answer policy shared by orchestration adapters."""
 
+import re
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 
@@ -25,9 +26,11 @@ def bounded_sources(sources: tuple[Evidence, ...]) -> tuple[Evidence, ...]:
     return tuple(result)
 
 
-def context(sources: tuple[Evidence, ...]) -> str:
+def context(sources: tuple[Evidence, ...], *, include_urls: bool = False) -> str:
     return '\n'.join(
-        f'PUBLIC SOURCE [{index}] {source.path} lines {source.start_line}-{source.end_line}:\n{source.content}'
+        f'PUBLIC SOURCE [{index}] {source.path} lines {source.start_line}-{source.end_line}'
+        + (f' canonical_url={source.url}' if include_urls else '')
+        + f':\n{source.content}'
         for index, source in enumerate(sources[:5], 1)
     )
 
@@ -45,7 +48,16 @@ async def generate(
     async with aclosing(
         provider.stream(
             command.question,
-            context(sources),
+            context(
+                sources,
+                include_urls=bool(
+                    re.search(
+                        r'\b(?:sources?|fuentes?|links?|enlaces?|verify|verificar|consultar|leer|read|c[oó]digo|code)\b',
+                        command.question,
+                        re.IGNORECASE,
+                    )
+                ),
+            ),
             command.locale,
             command.history,
             command.context,

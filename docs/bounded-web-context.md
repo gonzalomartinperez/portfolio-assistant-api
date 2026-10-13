@@ -108,3 +108,8 @@ GitHub `plain=1` is additionally stripped only for the reviewed pgvector README
 (`main`, `master`, or an immutable SHA). Issues, arbitrary repo files, query keys
 and path traversal remain rejected. This adaptation was based on an actual provider
 annotation, not a general relaxation of URL validation.
+
+Explicit requests for sources/code/links now include the verified immutable source
+URL in the evidence heading. Ordinary prompts retain their previous framing.
+This fixes a live answer that claimed source URLs were absent although the API had
+verified citations. It does not invent public page URLs or replace source cards.
