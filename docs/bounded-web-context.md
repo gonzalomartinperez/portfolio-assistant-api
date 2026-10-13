@@ -89,3 +89,17 @@ revalidating the canonical HTTPS authority/path; arbitrary query parameters rema
 rejected. Named public technology spans now retain a retrieval slot when generic
 portfolio documents crowd the top five. This does not establish technology expertise
 from a mere mention; the answer must preserve the actual source attribution.
+
+The search request allows automatic tool choice but explicitly requests one search
+and no follow-up browsing; results exceeding two reported built-in calls are rejected.
+Live observations showed that a requested call ceiling alone is insufficient evidence
+of the returned sequence. Actual reported usage/call count is validated and charged,
+including rejected results. Search results can be unavailable without changing
+portfolio facts.
+
+Input detection now reuses the bounded six-language normal-accuracy model used by
+the output guard, rather than an all-language low-accuracy model. Ambiguous proper
+names preserve the supported locale hint; explicit English/Spanish requests retain
+priority. The frozen 264-question replay produced only six intentional language
+switches relative to hints, in 710ms including initialization on the local WSL host.
+This is tool-policy evidence, not a universal language-detection guarantee.

@@ -354,3 +354,37 @@ def test_external_documentation_cannot_acquire_career_source_marker_ids():
         ] == []
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    'question,expected',
+    [
+        ('What is the weather tomorrow in Buenos Aires?', 'en'),
+        ('Tell me about Gonzalo and his work in Bahia Blanca.', None),
+        ('Cuéntame sobre Gonzalo y su trabajo en Bahía Blanca.', 'es'),
+        ('Bonjour, expliquez son expérience professionnelle.', None),
+        ('Gonzalo trabalhou em projetos de software para empresas.', None),
+        ('Neo4j pgvector LangGraph', None),
+    ],
+)
+def test_named_places_and_technical_names_do_not_change_output_language(
+    question, expected
+):
+    from app.infrastructure.language import LocalLanguageDetector
+
+    assert LocalLanguageDetector().supported(question) == expected
+
+
+def test_ambiguous_proper_names_preserve_supported_locale_hint():
+    from app.application.language import select_locale
+    from app.infrastructure.language import LocalLanguageDetector
+
+    assert (
+        select_locale(
+            'Tell me about Gonzalo and his work in Bahia Blanca.',
+            (),
+            'en',
+            LocalLanguageDetector(),
+        )
+        == 'en'
+    )
