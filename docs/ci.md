@@ -1,3 +1,8 @@
+> Current privacy boundary (2026-10-13): CI no longer uploads image archives or diagnostic
+> artifacts from this public repository. The unsafe legacy candidate publisher was removed, along with its
+> package-write permission. A private accepted publishing path is a separate release gate.
+> Historical artifact instructions below do not authorize reactivation.
+
 # CI and release preparation
 
 ## Active workflows

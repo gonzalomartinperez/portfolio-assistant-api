@@ -5,9 +5,6 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      export_image:
-        type: boolean
-        default: false
       frontend_image:
         type: string
         default: ''
@@ -72,12 +69,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
-        with:
-          name: static-diagnostics
-          path: artifacts/
-          retention-days: 7
   integration:
     name: Real services and container
     runs-on: ubuntu-latest
@@ -195,31 +186,12 @@ jobs:
         run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
         env:
           FRONTEND_IMAGE: ${{ inputs.frontend_image }}
-      - name: Export the tested image for manual publishing
-        if: inputs.export_image && github.event_name == 'workflow_dispatch'
-        run: docker save portfolio-assistant-api:ci -o artifacts/tested-image.tar
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: inputs.export_image && github.event_name == 'workflow_dispatch'
-        with:
-          name: tested-api-image
-          path: artifacts/tested-image.tar
-          retention-days: 1
       - name: Stop only the owned PostgreSQL fixture
         if: always()
         run: |
           mkdir -p artifacts
           docker compose -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
           docker compose -p assistant-ci stop postgres
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        if: always()
-        with:
-          name: integration-diagnostics
-          path: |
-            artifacts/*.xml
-            artifacts/*.json
-            artifacts/assistant-smoke-*.log
-            artifacts/postgres-fixture.log
-          retention-days: 7
   checks:
     permissions: {}
     name: checks
