@@ -219,3 +219,13 @@ completed payload as authoritative, replacing provisional streamed text; do not
 merge its content as another delta. History returns the same canonical content and
 citations. Partial/interrupted output has no verified final-source association.
 This mapping guarantees consistent references, not that every claim is true.
+
+## Optional bounded technical web context
+
+Public v1/SSE shapes and session/CSRF policies remain unchanged. External context
+uses descriptive HTTPS document links in Markdown; career-source cards retain the
+existing immutable citation model. No generated UI/actions, credentials or internal
+tool traces enter the wire. Runtime flag defaults off. See
+[tool policy](bounded-web-context.md) and [live evidence](verification/web-context-2026-10-13.md).
+The frontend should retain safe Markdown/URL handling; no backend contract refresh
+is required solely for these unchanged schemas. Production remains disabled.

@@ -125,3 +125,9 @@ Timeouts and rejected lookup results receive a 60-second public-topic cooldown.
 Concurrent visitors reuse that unavailable result instead of generating duplicate
 lookup charges. Cancellation and provider API failures are not cached as success;
 no background retry or fallback generation is introduced.
+
+Implemented continuity refinements preserve original visitor topics across interview,
+metric classification, generic possessive examples and locale-only changes. Explicit
+employer/project changes still replace the topic. Goal-classification queries retain
+a verified design-goal span, respecting explicit affiliation. Assistant history is
+never promoted to evidence. Live findings and corrections: [evaluation evidence](verification/web-context-2026-10-13.md).
