@@ -178,6 +178,7 @@ def test_cancellation_and_timeout_preserve_unknown_cost_without_retry():
         assert cancelled.is_set() and ledger.reserved == 1 and ledger.settled == []
         cancelled.clear()
         entered.clear()
+        search.cache.clear()
         task = asyncio.create_task(search.search(TOPICS[0]))
         await entered.wait()
         task.cancel()
@@ -198,7 +199,10 @@ def test_search_rejects_outside_sources_but_accounts_actual_usage():
         ledger = Ledger()
         search = OpenAIWebSearch(SimpleNamespace(responses=Responses()), ledger)
         assert await search.search(TOPICS[0]) is None
-        assert ledger.settled == [(100, 50, 1)] and not search.cache
+        assert (
+            ledger.settled == [(100, 50, 1)]
+            and search.cache[TOPICS[0].name].value is None
+        )
 
     asyncio.run(run())
 
@@ -461,3 +465,22 @@ def test_known_retry_policy_is_explained_without_public_fact_or_model_invention(
     from app.domain.fixture import fixture_message
 
     assert expected in fixture_message(question, '', locale)
+
+
+def test_rejected_lookup_has_short_public_cooldown_without_duplicate_charges():
+    async def run():
+        class Responses:
+            async def create(self, **kwargs):
+                await asyncio.sleep(0)
+                return response('https://evil.test')
+
+        ledger = Ledger()
+        search = OpenAIWebSearch(SimpleNamespace(responses=Responses()), ledger)
+        assert (
+            await asyncio.gather(*(search.search(TOPICS[0]) for _ in range(4)))
+            == [None] * 4
+        )
+        assert ledger.reserved == 1 and len(ledger.settled) == 1
+        assert search.cache[TOPICS[0].name].value is None
+
+    asyncio.run(run())

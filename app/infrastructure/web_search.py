@@ -28,7 +28,7 @@ class SearchAccounting(Protocol):
 @dataclass(frozen=True)
 class CacheEntry:
     expires: float
-    value: WebSupplement
+    value: WebSupplement | None
 
 
 class OpenAIWebSearch:
@@ -85,7 +85,7 @@ class OpenAIWebSearch:
             except APIError:
                 raise ProviderUnavailableError('provider_unavailable') from None
             except TimeoutError:
-                return None
+                return self.unavailable(topic)
             calls = sum(item.type == 'web_search_call' for item in response.output)
             if response.usage is not None:
                 await self.accounting.settle(
@@ -95,7 +95,7 @@ class OpenAIWebSearch:
                     calls,
                 )
             if response.status != 'completed' or not 1 <= calls <= 2:
-                return None
+                return self.unavailable(topic)
             references: list[WebReference] = []
             text = response.output_text
             for item in response.output:
@@ -109,15 +109,18 @@ class OpenAIWebSearch:
                             continue
                         canonical = canonical_web_url(annotation.url, topic)
                         if canonical is None:
-                            return None
+                            return self.unavailable(topic)
                         text = text.replace(annotation.url, canonical)
                         reference = WebReference(annotation.title[:160], canonical)
                         if reference not in references and reference.title:
                             references.append(reference)
             if not references or not 1 <= len(text) <= 6000:
-                return None
+                return self.unavailable(topic)
             value = WebSupplement(topic.name, text, tuple(references[:4]))
             self.cache[topic.name] = CacheEntry(time.monotonic() + 3600, value)
             return value
         finally:
             lock.release()
+
+    def unavailable(self, topic: WebTopic) -> None:
+        self.cache[topic.name] = CacheEntry(time.monotonic() + 60, None)

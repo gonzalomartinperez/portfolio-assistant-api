@@ -84,7 +84,7 @@ Official references checked 2026-10-13:
 [agent safety](https://developers.openai.com/api/docs/guides/agent-builder-safety).
 
 Live exploration exposed OpenAI attribution parameters in citation URLs. Only the
-exact `utm_source=openai` pair and a bounded document anchor are removed before
+explicitly documented attribution pairs and a bounded document anchor are removed before
 revalidating the canonical HTTPS authority/path; arbitrary query parameters remain
 rejected. Named public technology spans now retain a retrieval slot when generic
 portfolio documents crowd the top five. This does not establish technology expertise
@@ -120,3 +120,8 @@ That exact attribution pair is stripped alongside `utm_source=openai`; duplicate
 keys, unknown values and arbitrary parameters remain rejected. Revalidation can
 seed the public cache from that already-billed recorded response, explicitly labelled
 as cache replay, to avoid a redundant lookup while testing real generation.
+
+Timeouts and rejected lookup results receive a 60-second public-topic cooldown.
+Concurrent visitors reuse that unavailable result instead of generating duplicate
+lookup charges. Cancellation and provider API failures are not cached as success;
+no background retry or fallback generation is introduced.
