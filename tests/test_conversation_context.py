@@ -261,3 +261,16 @@ def test_metric_classification_and_attribution_refinements_keep_the_original_top
     assert 'Teamcubation' in retrieval_question(
         'Which parts were his contribution and which were team outcomes?', history
     )
+
+
+@pytest.mark.parametrize(
+    'question', ['Give me an example of his work', 'Dame un ejemplo de su trabajo']
+)
+def test_generic_possessive_example_preserves_the_topic(question):
+    history = (Turn('user', 'What did Gonzalo build at Rampy?'),)
+    assert 'Rampy' in retrieval_question(question, history)
+    for switched in (
+        'Give me an example of his work at Teamcubation',
+        'Dame un ejemplo de su trabajo en Teamcubation',
+    ):
+        assert retrieval_question(switched, history) == switched

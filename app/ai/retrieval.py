@@ -362,6 +362,12 @@ class PublicRetrieval:
                     eligible[key].content,
                 )
             ]
+            if affiliation:
+                goals = [
+                    key
+                    for key in goals
+                    if tokens(affiliation) <= tokens(eligible[key].content)
+                ]
             if goals:
                 ranked = list(
                     dict.fromkeys([max(goals, key=lambda key: scores[key])] + ranked)
