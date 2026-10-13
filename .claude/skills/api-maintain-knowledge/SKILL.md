@@ -68,3 +68,10 @@ For tone/localization changes, load [assistant voice](../../../docs/assistant-vo
 and its small bilingual evaluation manifest. Prompt composition tests cannot prove
 natural tone. Preserve qualifications and real uncertainty, and test plain-language
 to technical followups without losing the named visitor topic.
+
+For technical internet complements, read [bounded web policy](../../../docs/bounded-web-context.md).
+Keep fixed public queries separate from visitor questions/history, exact approved
+reference authorities, portfolio-only career facts, cache/cancellation bounds and
+shared cost accounting. The model has no general shell/database/navigation tools.
+Use `tests/test_web_context.py`; actual quality requires separately authorized live
+evaluation, never a claim inferred from mocked requests.

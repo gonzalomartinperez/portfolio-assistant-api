@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     embeddings_provider: Literal['fixture', 'openai'] = 'fixture'
     allow_paid_ai: bool = False
     openai_api_key: str | None = Field(default=None, repr=False)
+    web_search_enabled: bool = False
+    web_search_timeout_seconds: float = Field(default=12, ge=1, le=15)
+    web_search_usd_per_call: str = Field(default='0.01', pattern=r'^\d+(?:\.\d+)?$')
     openai_model: Literal['gpt-6-luna'] = 'gpt-6-luna'
     openai_reasoning_effort: Literal['medium'] = 'medium'
     neo4j_database: str = 'neo4j'
@@ -119,6 +122,12 @@ class Settings(BaseSettings):
                 raise ValueError(
                     'telemetry endpoint must be a private origin without credentials'
                 )
+        if self.web_search_enabled and (
+            self.ai_provider != 'openai' or not self.allow_paid_ai
+        ):
+            raise ValueError('web search requires explicitly authorized OpenAI')
+        if Decimal(self.web_search_usd_per_call) < Decimal('0.01'):
+            raise ValueError('web search price must cover the reviewed fee')
         if Decimal(self.monthly_budget_usd) > 10:
             raise ValueError('monthly budget must not exceed the approved USD 10')
         Budget(

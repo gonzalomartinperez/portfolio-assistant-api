@@ -35,6 +35,8 @@ from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
 from app.infrastructure.migrations import check_schema
 from app.infrastructure.operations import OperationalObserver, PostgresOperations
 from app.infrastructure.runs import PostgresRuns
+from app.infrastructure.web_ledger import WebAccounting
+from app.infrastructure.web_search import OpenAIWebSearch
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 from app.presentation.operations import router as operations_router
@@ -92,7 +94,16 @@ def create_app(
                     max_retries=0,
                 )
                 provider = ResponsesProvider(
-                    client, config.openai_model, LocalLanguageDetector().rejects_output
+                    client,
+                    config.openai_model,
+                    LocalLanguageDetector().rejects_output,
+                    web_search=OpenAIWebSearch(
+                        client,
+                        WebAccounting(connection, config),
+                        config.web_search_timeout_seconds,
+                    )
+                    if config.web_search_enabled
+                    else None,
                 )
                 accounting = PostgresAccounting(
                     connection,
