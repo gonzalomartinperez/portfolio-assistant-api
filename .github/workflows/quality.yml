@@ -5,9 +5,6 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      export_image:
-        type: boolean
-        default: false
       frontend_image:
         type: string
         default: ''
