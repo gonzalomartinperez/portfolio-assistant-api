@@ -61,7 +61,7 @@ configuration objects or structured validation details into logs or CI artifacts
 
 ## Services and migrations
 
-Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j 5.26.31 Community.
+Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j5.26.32 Community Trixie candidate (current patch in the5.26 LTS line).
 The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
@@ -260,7 +260,7 @@ authorized tested digest; local image IDs are not registry manifests.
 
 The inherited entrypoint/docker command initializes a fresh cluster only when
 PGDATA is empty, then execs postgres. It binds internal TCP 5432 and exposes no
-production host port. UID/GID 999 needs ownership of /var/lib/postgresql/data; an
+production host port. UID/GID 999 needs ownership of the /var/lib/postgresql parent mount (PGDATA=/var/lib/postgresql/18/docker); an
 existing volume is not automatically chowned. Mount only the reviewed data volume
 and writable /tmp plus /var/run/postgresql (UID/GID 999, mode 3775). Read-only root,
 dropped capabilities and no-new-privileges were tested. pg_isready checks server
@@ -339,3 +339,9 @@ OpenAI mode and paid allowance. The existing backend-only OpenAI key is reused.
 No new service, volume or migration is needed. See [bounded web policy](bounded-web-context.md)
 for exact routing, privacy, cache, accounting and failure semantics. Production
 activation remains separately authorized and vps-ops-owned.
+
+## Shared runtime baseline
+
+See [runtime-baseline.md](runtime-baseline.md) for the2026-10-13 shared cohort and image
+acceptance. Actual committed locks and Dockerfiles supersede historical version/size samples;
+no production publication, deployment or live OAuth/provider check is implied.
