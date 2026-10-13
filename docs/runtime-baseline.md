@@ -43,3 +43,9 @@ See [deployment contract](deployment-contract.md) for ports, health, secrets, da
 The shared baseline does not promise zero downtime, production capacity or an advisory-free
 image. Current unfixed OS findings remain visible; no package is removed or scanner weakened
 merely to change a vulnerability count.
+
+## CI privacy boundary
+
+Public-repository CI runs synthetic checks without publishing images, raw diagnostic artifacts
+or browser reports. Review results in the bounded redacted job output. Private release artifact
+publication needs a separately accepted access/visibility path; passing CI never activates it.
