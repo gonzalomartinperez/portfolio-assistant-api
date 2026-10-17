@@ -50,3 +50,16 @@ not pixel parity with GitHub’s current theme. Local Markdown and HTML referenc
 resolve and no image forces height or distorts aspect ratio. Structural skill validation
 and the redacted tracked-content/history secret scan passed. Full application CI remains
 the authority for merging these documentation changes.
+
+## Actual GitHub diagram verification — 2026-10-17
+
+A fresh read-only Chromium156.0.8078.4 context opened the public GitHub README
+at API `fa3acf079077633a12eb8afb4aae2af52aa76d03`. GitHub's own
+`viewscreen.githubusercontent.com/markdown/mermaid` rendered all three diagrams
+without syntax/parse errors. The check inspected actual SVG labels for the knowledge
+flow, Bootstrap/layer dependencies and OAuth-protected operations, not renderer icons.
+GitHub did not expose a semantic Mermaid version; none is claimed. The companion
+backoffice's two diagrams also rendered. No private ops document, credential or
+conversation was uploaded, and no Mermaid dependency or browser install was added.
+Source diagram bodies remain unchanged in this increment; this is dated rendering
+evidence, not a guarantee about every future GitHub renderer release.

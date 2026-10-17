@@ -13,7 +13,10 @@ owns the reasoning, contracts and persistence behind it.
 
 > **Current state:** implemented and verified locally with deterministic fixtures and
 > separately documented real-model evaluations. The public portfolio assistant remains
-> disabled. Image publication, production deployment and monitoring activation are separate approvals.
+> disabled. Production release remains blocked by the
+> [dated Neo4j vendor findings](docs/verification/neo4j-release-blocker-2026-10-17.md).
+> Source validation does not waive that hold. Publication, deployment and monitoring
+> activation require separate approval.
 
 ## What this backend does
 
@@ -25,6 +28,8 @@ owns the reasoning, contracts and persistence behind it.
 | Current portfolio knowledge | A synchronization worker observes approved public revisions and activates complete, versioned indexes. |
 | Reliable streaming | Explicit completion, interruption and cancellation; owned sessions/history and CSRF protection. |
 | Private operations | Availability, corpus freshness, execution outcomes, latency and estimated usage without exposing transcripts. |
+| Optional website counts | Default-off, bounded accepted interactions with quotas and seven-day aggregates; no visitor journeys. |
+| Answer feedback | Default-off private current-rating counts and a reviewed improvement process; no raw-chat export or automatic training. |
 
 The live provider is **OpenAI only**, using **GPT-6 Luna with medium reasoning effort**.
 There is no alternate-model fallback or automatic billed generation retry. An unavailable

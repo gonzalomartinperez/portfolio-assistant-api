@@ -262,3 +262,11 @@ an accepted database assessment. Selected-digest OS/Java assessment and every un
 critical finding remain mandatory **external release-selection gates** for vps-ops.
 No publication/deployment controller is activated here. The rejected candidate run and
 known baseline findings remain recorded; no source tag waives them.
+
+The optional `workflow_call` inputs retain their historical `frontend_commit` /
+`frontend_image` names for caller compatibility. The selected source is now canonical
+`portfolio-backoffice`, and pairing compares the actual private operations, product
+and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
+chat consumer and cannot establish native portfolio compatibility. Current native
+browser/API verification belongs to the portfolio. This opt-in source comparison is
+not live OAuth/HTTPS pairing or a release-controller/deployment authorization.

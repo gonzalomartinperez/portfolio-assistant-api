@@ -34,3 +34,32 @@ def test_deployment_probe_cannot_retrieve_or_invoke_provider():
         )
         == ()
     )
+
+
+def test_optional_backoffice_pairing_checks_current_private_contracts():
+    from pathlib import Path
+
+    import yaml
+
+    workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    steps = workflow['jobs']['integration']['steps']
+    checkout = next(
+        step
+        for step in steps
+        if step.get('with', {}).get('path') == 'frontend-contract'
+    )
+    assert checkout['with']['repository'] == 'gonzalomartinperez/portfolio-backoffice'
+    assert checkout['with']['persist-credentials'] is False
+    guard = next(
+        step
+        for step in steps
+        if step.get('name') == 'Verify the paired backoffice private contract bytes'
+    )
+    for name in (
+        'operations.schema.json',
+        'product-analytics.schema.json',
+        'feedback.schema.json',
+    ):
+        assert name in guard['run']
+    assert 'sse.schema.json' not in guard['run']
+    assert guard['if'] == "inputs.frontend_commit != ''"

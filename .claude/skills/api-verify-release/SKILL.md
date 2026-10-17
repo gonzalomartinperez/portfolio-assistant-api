@@ -131,3 +131,7 @@ record scanner/DB times; normal PR API/PG scans do not establish Neo4j acceptanc
 Use [the release receipt procedure](../../../docs/verification/neo4j-vendor-refresh-2026-10-17.md).
 Keep unfixed critical applicability visible. A pre-007 image fails schema readiness
 after analytics007; a rollback reader must retain applied migration history/checksums.
+
+Dependency maintenance is manual by owner decision. Use the read-only audit; never
+activate old merge flags, grant writer permissions or arm native auto-merge. Preserve
+normal review/required CI and security-update visibility on the default branch.

@@ -429,7 +429,7 @@ def test_manual_choice_survives_quality_completion_and_a_failed_prior_attempt(
     assert api.checks[0]['external_id'].endswith(':manual')
 
 
-def test_privileged_workflow_never_checks_out_or_executes_pr_code():
+def test_manual_workflow_never_executes_pr_code_or_grants_writer_permissions():
     import yaml
 
     workflow = yaml.safe_load(
@@ -443,9 +443,8 @@ def test_privileged_workflow_never_checks_out_or_executes_pr_code():
     assert 'pull_request.head' not in json.dumps(job)
     assert workflow['permissions'] == {}
     assert job['permissions'] == {
-        'contents': 'write',
-        'pull-requests': 'write',
-        'checks': 'write',
+        'contents': 'read',
+        'pull-requests': 'read',
     }
 
 
@@ -462,7 +461,7 @@ def test_api_failure_diagnostics_never_include_remote_text(monkeypatch):
         ),
     )
     with pytest.raises(GitHubRequestError) as failure:
-        GitHub().request('graphql', 'POST', {'query': 'trusted query'})
+        GitHub().request('graphql', 'POST', {'query': 'query { repository { name } }'})
     assert str(failure.value) == 'graphql; HTTP 403'
     assert 'private-sentinel' not in str(failure.value)
 
@@ -489,3 +488,49 @@ def test_read_only_audit_reports_permission_blocker_without_authorizing_merge(
     report = json.loads(capsys.readouterr().out)
     assert report['audit_state'] == 'permission_blocked'
     assert report['eligible'] is False and report['protections_ready'] is False
+
+
+def test_manual_profile_has_no_write_entrypoint(monkeypatch, capsys):
+    import sys
+
+    import scripts.dependabot_automation as automation
+
+    class API:
+        def request(self, path, method='GET', data=None):
+            assert method == 'GET'
+            return pull_request()
+
+    monkeypatch.setattr(automation, 'GitHub', API)
+    monkeypatch.setattr(automation, 'controls', lambda api: {})
+    monkeypatch.setattr(automation, 'protected_for_automation', lambda value: False)
+    monkeypatch.setattr(
+        automation, 'inspect_candidate', lambda api, pr: Decision(True, 'low_risk')
+    )
+    monkeypatch.setattr(sys, 'argv', ['policy', '--audit-pr', '1'])
+    automation.main()
+    report = json.loads(capsys.readouterr().out)
+    assert report['merge_mode'] == 'manual' and report['eligible'] is True
+    monkeypatch.setenv('DEPENDABOT_AUTOMERGE_ENABLED', 'true')
+    with pytest.raises(ValueError, match='manual_profile'):
+        automation.main()
+
+
+@pytest.mark.parametrize(
+    'path,method,data',
+    [
+        ('graphql', 'POST', {'query': 'mutation { unsafe }'}),
+        ('repos/owner/repo/pulls/1/merge', 'PUT', {}),
+        ('repos/owner/repo', 'PATCH', {'allow_auto_merge': True}),
+    ],
+)
+def test_real_manual_transport_rejects_writes_before_subprocess(
+    monkeypatch, path, method, data
+):
+    import scripts.dependabot_automation as automation
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('must not launch gh for a mutation')
+
+    monkeypatch.setattr(automation.subprocess, 'run', forbidden)
+    with pytest.raises(ValueError, match='rejects_mutations'):
+        automation.GitHub().request(path, method, data)
