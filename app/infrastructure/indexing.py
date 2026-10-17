@@ -14,7 +14,6 @@ from threading import Event
 from urllib.parse import quote
 
 from neo4j import GraphDatabase
-from openai import OpenAI
 
 from app.bootstrap.config import settings
 from app.infrastructure.db import connect
@@ -26,6 +25,7 @@ from app.infrastructure.embedding import (
 )
 from app.infrastructure.graph import project
 from app.infrastructure.ledger import EmbeddingAccounting
+from app.infrastructure.provider_http import create_sync_client
 from app.infrastructure.public_projection import PublicProjection, graph_facts
 
 ROOT_PATTERNS = (
@@ -291,12 +291,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
     embedding_client = None
     encoder = FixtureEmbeddings()
     if config.embeddings_provider == 'openai':
-        embedding_client = OpenAI(
-            api_key=config.openai_api_key,
-            base_url='https://api.openai.com/v1',
-            timeout=20,
-            max_retries=0,
-        )
+        embedding_client = create_sync_client(api_key=config.openai_api_key)
         encoder = OpenAIEmbeddings(
             embedding_client,
             EmbeddingAccounting(

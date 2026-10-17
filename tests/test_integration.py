@@ -893,7 +893,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
         def close(self):
             pass
 
-    monkeypatch.setattr(indexing, 'OpenAI', FakeOpenAI)
+    monkeypatch.setattr(indexing, 'create_sync_client', FakeOpenAI)
     monkeypatch.setattr(indexing, 'settings', lambda: config)
     project = indexing.project
     with connect() as conn:

@@ -426,38 +426,37 @@ def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypat
     import ast
     from pathlib import Path
 
-    from openai import AsyncOpenAI, OpenAI
+    from app.infrastructure.provider_http import create_async_client, create_sync_client
 
     monkeypatch.setenv('OPENAI_BASE_URL', 'https://untrusted.invalid/v1')
     calls = []
     for file in Path('app').rglob('*.py'):
-        tree = ast.parse(Path(file).read_text())
+        tree = ast.parse(file.read_text())
         calls.extend(
-            node
+            (file, node)
             for node in ast.walk(tree)
             if isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
             and node.func.id in ('OpenAI', 'AsyncOpenAI')
         )
-    assert len(calls) == 3
+    assert len(calls) == 2
+    for file, call in calls:
+        assert file == Path('app/infrastructure/provider_http.py')
+        kwargs = {
+            arg.arg: ast.literal_eval(arg.value)
+            for arg in call.keywords
+            if arg.arg in ('base_url', 'max_retries')
+        }
+        assert kwargs == {'base_url': 'https://api.openai.com/v1', 'max_retries': 0}
 
     async def run():
-        for call in calls:
-            kwargs = {
-                arg.arg: ast.literal_eval(arg.value)
-                for arg in call.keywords
-                if arg.arg in ('base_url', 'timeout', 'max_retries')
-            }
-            assert kwargs.get('base_url') == 'https://api.openai.com/v1'
-            assert kwargs.get('max_retries') == 0
-            if call.func.id == 'AsyncOpenAI':
-                async with AsyncOpenAI(
-                    api_key='synthetic-fixture-only', **kwargs
-                ) as client:
-                    assert client.base_url.host == 'api.openai.com'
-            else:
-                with OpenAI(api_key='synthetic-fixture-only', **kwargs) as client:
-                    assert client.base_url.host == 'api.openai.com'
+        client = await create_async_client(api_key='synthetic-fixture-only')
+        try:
+            assert client.base_url.host == 'api.openai.com'
+        finally:
+            await client.close()
+        with create_sync_client(api_key='synthetic-fixture-only') as client:
+            assert client.base_url.host == 'api.openai.com'
 
     asyncio.run(run())
 

@@ -157,3 +157,9 @@ For licensing changes run `uv run python -m scripts.check_license` and the licen
 regressions. Preserve the standard MIT grant and the separate content/dependency
 scope in [third-party notices](../../../THIRD_PARTY_NOTICES.md). This is consistency
 verification, not a dependency-license or legal audit; do not alter historical tags.
+
+For provider HTTP/lifecycle changes, load [transport policy and evidence](../../../docs/verification/provider-transport-2026-10-17.md)
+and run `uv run pytest -q tests/test_provider_http.py tests/test_provider_lifecycle.py`.
+Keep SDK-native and compatibility transports distinct; verify redirect rejection,
+explicit TLS/environment policy, constructor ownership and failure/cancellation
+cleanup. Synthetic tests do not establish real TLS negotiation or VPS throughput.

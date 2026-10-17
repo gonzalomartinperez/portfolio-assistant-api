@@ -70,6 +70,10 @@ The application pins all OpenAI SDK clients to `https://api.openai.com/v1` and
 sets generation/embedding retries to zero. `OPENAI_BASE_URL` is not a supported
 application override and cannot redirect provider credentials or public corpus
 requests to another provider. Private operational origins are configured separately.
+The native SDK transport verifies TLS and disables redirects and proxy/certificate
+environment discovery (`trust_env=False`). A corporate proxy or custom trust store
+needs an explicit reviewed implementation; inherited environment variables are not
+a supported override. See [transport policy and evidence](verification/provider-transport-2026-10-17.md).
 
 ## Optional official-documentation complement
 
