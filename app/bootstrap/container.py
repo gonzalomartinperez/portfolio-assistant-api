@@ -22,6 +22,7 @@ from app.bootstrap.config import Settings, settings
 from app.bootstrap.logging import configure
 from app.domain.budget import Budget
 from app.domain.web_budget import WebBudget
+from app.infrastructure.analytics import PostgresProductAnalytics
 from app.infrastructure.answer import (
     FixtureProvider,
     ResponsesProvider,
@@ -38,6 +39,7 @@ from app.infrastructure.operations import OperationalObserver, PostgresOperation
 from app.infrastructure.runs import PostgresRuns
 from app.infrastructure.web_ledger import WebAccounting
 from app.infrastructure.web_search import OpenAIWebSearch
+from app.presentation.analytics import router as analytics_router
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 from app.presentation.operations import router as operations_router
@@ -155,6 +157,7 @@ def create_app(
                 if config.require_fresh_knowledge
                 else None,
             )
+            app.state.product_analytics = PostgresProductAnalytics(connection)
             app.state.knowledge = index
             saver = AsyncPostgresSaver(checkpoints)
             workflow = LangGraphWorkflow(
@@ -271,4 +274,5 @@ def create_app(
     install(app, config.origins)
     app.include_router(router)
     app.include_router(operations_router)
+    app.include_router(analytics_router)
     return app

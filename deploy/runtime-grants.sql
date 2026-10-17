@@ -15,3 +15,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON sessions, conversations, messages, runs,
 
 -- Operational facts contain no session/conversation content; API may append/read only.
 GRANT SELECT, INSERT ON operational_executions TO assistant_runtime;
+
+-- Anonymous bounded product counts; no shared conversation identifiers.
+GRANT SELECT, INSERT, DELETE ON product_event_dedupe TO assistant_runtime;
+GRANT SELECT, INSERT, UPDATE, DELETE ON product_event_counts TO assistant_runtime;

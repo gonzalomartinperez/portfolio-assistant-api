@@ -91,6 +91,11 @@ class BodyLimit:
             await self.app(scope, receive, send)
             return
         # Bounded buffering also covers chunked requests and lying Content-Length.
+        maximum = (
+            min(self.maximum, 1024)
+            if scope.get('path') == '/api/v1/analytics/events'
+            else self.maximum
+        )
         chunks = []
         size = 0
         deadline = asyncio.get_running_loop().time() + self.timeout
@@ -114,7 +119,7 @@ class BodyLimit:
             if message['type'] == 'http.disconnect':
                 return
             size += len(message.get('body', b''))
-            if size > self.maximum:
+            if size > maximum:
                 request_id = uuid4().hex
                 response = JSONResponse(
                     {

@@ -1,0 +1,93 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_name": {
+      "enum": [
+        "page_view",
+        "navigation_click",
+        "section_open",
+        "cv_link_open",
+        "contact_link_open",
+        "company_link_open"
+      ],
+      "title": "Event Name",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "project": {
+      "const": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "section": {
+      "enum": [
+        "home",
+        "about",
+        "work",
+        "filomena",
+        "stack",
+        "education",
+        "cv",
+        "contact"
+      ],
+      "title": "Section",
+      "type": "string"
+    },
+    "source": {
+      "const": "site",
+      "title": "Source",
+      "type": "string"
+    },
+    "target": {
+      "anyOf": [
+        {
+          "enum": [
+            "en",
+            "es",
+            "email",
+            "linkedin",
+            "github",
+            "rampy",
+            "teamcubation",
+            "cooperativa-obrera",
+            "independent"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "source",
+    "event_id",
+    "event_name",
+    "section",
+    "locale"
+  ],
+  "title": "ProductEventBody",
+  "type": "object"
+}

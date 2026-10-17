@@ -175,6 +175,19 @@
         "title": "FeedbackCreate",
         "type": "object"
       },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "MessageContext": {
         "additionalProperties": false,
         "properties": {
@@ -347,6 +360,98 @@
           "items"
         ],
         "title": "Page",
+        "type": "object"
+      },
+      "ProductEventBody": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_name": {
+            "enum": [
+              "page_view",
+              "navigation_click",
+              "section_open",
+              "cv_link_open",
+              "contact_link_open",
+              "company_link_open"
+            ],
+            "title": "Event Name",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "project": {
+            "const": "portfolio",
+            "title": "Project",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "section": {
+            "enum": [
+              "home",
+              "about",
+              "work",
+              "filomena",
+              "stack",
+              "education",
+              "cv",
+              "contact"
+            ],
+            "title": "Section",
+            "type": "string"
+          },
+          "source": {
+            "const": "site",
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "enum": [
+                  "en",
+                  "es",
+                  "email",
+                  "linkedin",
+                  "github",
+                  "rampy",
+                  "teamcubation",
+                  "cooperativa-obrera",
+                  "independent"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "schema_version",
+          "project",
+          "source",
+          "event_id",
+          "event_name",
+          "section",
+          "locale"
+        ],
+        "title": "ProductEventBody",
         "type": "object"
       },
       "RunView": {
@@ -537,6 +642,46 @@
         ],
         "title": "SuggestionsView",
         "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -546,6 +691,37 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/analytics/events": {
+      "post": {
+        "operationId": "recordProductEvent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductEventBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Record"
+      }
+    },
     "/api/v1/conversations": {
       "get": {
         "operationId": "listConversations",
