@@ -87,7 +87,7 @@ are included. The portfolio working tree and disabled rollout were not changed.
 ## How it works
 
 <p align="center">
-  <a href="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries — click for the full-size diagram"></a>
+  <a href="docs/assets/architecture-overview.svg"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview.svg"><source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries — click for the full-size diagram"></picture></a>
 </p>
 
 Solid arrows show requests or synchronization; dashed arrows show returned data.
@@ -98,9 +98,9 @@ explain the symbols and review procedure.
 
 
 <details>
-<summary>Editable Mermaid view</summary>
+<summary>Editable Mermaid source</summary>
 
-```mermaid
+```text
 flowchart LR
     subgraph Knowledge[Versioned public knowledge]
         P[Approved portfolio revision] --> W[Observe and index]
@@ -132,7 +132,10 @@ evaluation questions never enter the runtime corpus.
 
 ### Boundaries and ownership
 
-```mermaid
+<details>
+<summary>Editable Mermaid source · Dependency directions</summary>
+
+```text
 flowchart TB
     B[Bootstrap · composition and lifecycle] --> P[Presentation · HTTP and SSE]
     P --> A[Application · use cases and ports]
@@ -143,6 +146,8 @@ flowchart TB
     I --> A
     I --> D
 ```
+
+</details>
 
 | Location | Responsibility |
 | --- | --- |
@@ -205,7 +210,10 @@ explains private `.env.local` configuration and authorized real-provider setup.
 | Operational snapshot | `/internal/ops/v1/status`, authenticated server-to-server, excluded from public OpenAPI. |
 | Operational metrics | `/internal/ops/v1/metrics`, private bearer access and cache exclusion. |
 
-```mermaid
+<details>
+<summary>Editable Mermaid source · Private operations flow</summary>
+
+```text
 flowchart LR
     API[Bounded anonymous measurements] --> DB[(PostgreSQL operational facts)]
     DB --> OPS[Private status + metrics]
@@ -213,6 +221,8 @@ flowchart LR
     API -. Opt-in manual OTLP .-> COL[Private collector · vps-ops]
     COL -. Deployment-owned .-> OBS[Prometheus + Grafana]
 ```
+
+</details>
 
 No prompts, transcripts, session credentials or visitor identities enter operational
 payloads. Manual OTLP export is opt-in; exporter failures do not retry chat generation.
@@ -264,6 +274,9 @@ docker build --platform linux/amd64 -t portfolio-assistant-api:local .
 It runs non-root on private port **8000**. Startup does not migrate or ingest knowledge;
 those are explicit operations. vps-ops selects reviewed prebuilt image digests and performs
 separately authorized deployment. Main promotion does not authorize publication or deployment.
+
+Within-project PostgreSQL consolidation is a [proposed compatibility blueprint](docs/adrs/005-project-postgres-consolidation.md),
+not an implemented or tested production topology. API and IAM remain separate databases/identities.
 
 ## Documentation map
 
