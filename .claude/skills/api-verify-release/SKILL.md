@@ -146,3 +146,9 @@ and run `uv run pytest -q tests/test_evaluation_export.py tests/test_architectur
 The CLI validates offline by default; `--authorize-export` requires separate current
 external-export authority and a synthetic aggregate, never a raw answer report.
 Keep automatic tracing rejected and record post-tag source separately from v1.1.0.
+
+For database access-path work, use [the measured query procedure](../../../docs/verification/database-queries-2026-10-17.md).
+Run `TEST_INTEGRATION=1 uv run pytest -q tests/test_database_queries.py` only on owned
+fixtures. The optional benchmark requires a fresh project and explicit fixture-seed
+flag; it is never a production maintenance command. Retain migration008/checksum
+in any rollback reader and keep synthetic plan evidence separate from model recall.

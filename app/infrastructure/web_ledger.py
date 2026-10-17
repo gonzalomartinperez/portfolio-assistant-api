@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from app.domain.errors import BudgetExhaustedError
 from app.domain.web_budget import WebBudget
+from app.infrastructure.ledger import MONTHLY_SPEND_SQL
 
 
 class WebAccounting:
@@ -17,9 +18,7 @@ class WebAccounting:
             identifier = uuid4()
             with self.connection() as conn:
                 conn.execute('SELECT pg_advisory_xact_lock(472019)')
-                spent = conn.execute(
-                    "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
-                ).fetchone()['amount']
+                spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()['amount']
                 if spent + self.budget.maximum > self.budget.cutoff:
                     raise BudgetExhaustedError()
                 conn.execute(

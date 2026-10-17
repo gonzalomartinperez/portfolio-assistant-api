@@ -247,6 +247,7 @@ Frozen dependencies, pinned actions, current-head checks and image scans remain 
 | [Manual synthetic evaluation export](docs/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after the immutable v1.1.0 tag. |
 | [Private operations](docs/verification/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
 | [PostgreSQL 18](docs/verification/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
+| [Versioned query plans](docs/verification/database-queries-2026-10-17.md) | Measured ledger/graph access paths, migration 008, source-hashed synthetic receipts and structural CI regressions; no VPS latency claim. |
 
 These are local/test-environment results, not field performance or production guarantees.
 Known vendor image findings, effective proxy behavior, backup/restore, live OAuth pairing

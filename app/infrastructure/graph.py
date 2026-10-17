@@ -88,4 +88,9 @@ def project(graph, version, records, documents, *, explicit_facts=None):
             raise RuntimeError('graph projection incomplete')
         return count
 
-    return graph.execute_write(write)
+    count = graph.execute_write(write)
+    graph.run(
+        'CREATE INDEX entity_version_normalized IF NOT EXISTS FOR (e:Entity) ON (e.version,e.normalized)'
+    ).consume()
+    graph.run('CALL db.awaitIndexes(30)').consume()
+    return count

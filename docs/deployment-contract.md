@@ -385,3 +385,27 @@ global tracing. A separately approved manual export uses that server-side proces
 environment credential and the fixed HTTPS LangSmith endpoint/project documented
 there. No account or external export has been activated or tested. Existing OTLP/OPS
 runtime delivery remains unchanged; public/SSE/private schemas are unchanged.
+
+## Query-index migration and rollback
+
+Migration 008 adds `spend_ledger_created_at`, a normal B-tree used by the unchanged
+UTC monthly cost predicate. It changes no row/ownership, quota, reservation or
+idempotency semantics. The transactional runner deliberately uses normal index
+creation, not `CONCURRENTLY`: schedule a reviewed maintenance window for writes and
+measure larger datasets before production. Existing statement/lock timeouts can
+abort the migration safely; do not disable them to force completion.
+
+The knowledge writer also creates the idempotent Neo4j range index
+`entity_version_normalized(version, normalized)` after the projection transaction,
+then waits at most 30 seconds for indexes before activating knowledge. It uses existing schema-writing
+privileges; the API runtime reader gains no DDL privilege. No new container, port,
+extension, plugin, environment variable or secret is required. The application
+retains its two-second graph-read limit and exact vector search.
+
+After applying 008, a pre-008 checkout fails strict migration-history readiness.
+Do not roll back to the immutable v1.1.0 image expecting it to start. A forward-fix
+or prepared compatible rollback image must retain migration 008 and its checksum;
+application rollback does not remove the index or reverse the database history.
+Restore/recovery procedures remain vps-ops-owned. Read the
+[measured query evidence](verification/database-queries-2026-10-17.md) before release
+selection; synthetic local measurements are not VPS capacity acceptance.
