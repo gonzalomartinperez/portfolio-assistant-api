@@ -15,7 +15,11 @@ The previous pinned index
 `sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082`
 has a different amd64 manifest
 `sha256:57ecb62bbb0c41c98fb69e08ee014c959926f3bd16ee8ef466c4a1e298f6157c`.
-Same version/tag is not proof of identical or repaired package bytes. Compose and
+The reviewed config/image ID is
+`sha256:4e4837b1c3649f458cc4ff43f8b47eb5ab4dc2f84e79beb82685f063f04b576a`.
+`deploy/neo4j-image.json` records this descriptor. Index and platform manifest raw
+bytes were independently SHA256-verified against official registry responses;
+the manifest links to this configuration. Same version/tag is not proof of identical or repaired package bytes. Compose and
 CI select the new immutable index together; real-service verification is required.
 
 Ops supplied the exact old-image scan from 2026-10-13T11:18:37Z, Trivy0.75.0,
@@ -40,7 +44,9 @@ pinned Trivy0.75.0, current advisory metadata, no ignore file, all packages and 
 bounded ten-minute scanner timeout. It uses the hosted ephemeral runner, not
 another agent's VM/services. It does not add another image build/server lifecycle.
 
-`scripts.database_security_receipt` binds the report to the tested image ID,
+`scripts.database_security_receipt` binds the report to the reviewed config ID, exact artifact name and approved repo
+digests. It also re-fetches bounded official index/platform metadata and verifies
+SHA256 plus the amd64→configuration chain; a caller-supplied image ID alone is insufficient. It
 requires OS+jar inventories and scanner/DB provenance, shows relevant Jackson
 versions/header findings plus complete severity counts, and fails on fixable
 critical/high findings. Unresolved critical findings are still production release

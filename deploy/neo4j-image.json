@@ -1,0 +1,6 @@
+{
+  "reference": "neo4j:5.26.32-community-trixie@sha256:0a6e7aedf54a531f76286032d4365ead65b11cca05e4a15cdf23b8e53d6db02b",
+  "platform": "linux/amd64",
+  "manifest_digest": "sha256:47ea172cbd3eb5c5128c3117233dbe567af795d916f3fa48814716c50986b1af",
+  "config_digest": "sha256:4e4837b1c3649f458cc4ff43f8b47eb5ab4dc2f84e79beb82685f063f04b576a"
+}
