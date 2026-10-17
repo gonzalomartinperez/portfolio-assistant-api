@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.infrastructure.public_projection import PublicProjection
 from app.main import app
+from app.presentation.analytics import ProductEventBody, ProductSnapshot
 from app.presentation.events import events
 from app.presentation.operations import OperationalSnapshot
 
@@ -13,6 +14,8 @@ from app.presentation.operations import OperationalSnapshot
 def artifacts():
     return {
         'openapi.json': app.openapi(),
+        'product-event.schema.json': ProductEventBody.model_json_schema(),
+        'product-analytics.schema.json': ProductSnapshot.model_json_schema(),
         'operations.schema.json': {
             '$schema': 'https://json-schema.org/draft/2020-12/schema',
             **OperationalSnapshot.model_json_schema(),

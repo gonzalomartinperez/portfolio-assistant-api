@@ -22,6 +22,12 @@ def prune() -> dict[str, int]:
         conn.execute(
             "UPDATE operational_executions SET stages='[]'::jsonb,sampled=false WHERE started_at<now()-interval '7 days' AND (sampled OR stages<>'[]'::jsonb)"
         )
+        conn.execute(
+            "DELETE FROM product_event_dedupe WHERE received_at<now()-interval '1 day'"
+        )
+        conn.execute(
+            "DELETE FROM product_event_counts WHERE day < (now() AT TIME ZONE 'UTC')::date-6"
+        )
         removed = conn.execute(
             'DELETE FROM sessions WHERE expires_at<=now() RETURNING id'
         ).fetchall()

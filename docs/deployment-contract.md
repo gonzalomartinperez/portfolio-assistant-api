@@ -345,3 +345,12 @@ activation remains separately authorized and vps-ops-owned.
 See [runtime-baseline.md](runtime-baseline.md) for the2026-10-13 shared cohort and image
 acceptance. Actual committed locks and Dockerfiles supersede historical version/size samples;
 no production publication, deployment or live OAuth/provider check is implied.
+
+## Optional product analytics (not activated)
+
+`PRODUCT_ANALYTICS_ENABLED=false` by default. Migration 007 and runtime grants are
+additive; no new port, volume, collector or secret. The existing PostgreSQL holds
+bounded anonymous event dedupe/daily aggregates. See [product analytics](product-analytics.md)
+for quotas, provisional local retention and private route exclusion. The maintenance
+job must continue expiry when collection is off; backup expiry/restore, lawful basis,
+notice and production resource acceptance remain owner/ops gates.
