@@ -320,6 +320,13 @@ limits. SDK network shutdown remains best effort under underlying DNS/socket beh
 Readiness checks verify schema/corpus and stores, not paid OpenAI service availability.
 No model request runs on health checks or scrape requests.
 
+Provider HTTPS uses verified TLS, no redirects, no inherited proxy/CA settings and
+no automatic retries. Native SDK pool defaults are unchanged and are not a measured
+VPS concurrency budget. All owned cleanup is attempted; failures remain visible.
+Read [the transport handoff](verification/provider-transport-2026-10-17.md) before
+changing egress, certificates or termination settings. No HTTP/2 dependency or
+server protocol change is required for this increment.
+
 Backoffice compatibility reference: `618aa914ced48bf08ba8d613537ecd28ef797d5e`. The
 private v1 schema and synthetic example are in contracts/. Chat HTTP/SSE schemas
 remain unchanged. Effective Coolify routing, exporter connectivity, dashboard
