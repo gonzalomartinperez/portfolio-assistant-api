@@ -51,6 +51,14 @@ class GitHub:
     """Use gh's existing scoped authentication; never extract or print its token."""
 
     def request(self, path: str, method: str = 'GET', data: dict | None = None):
+        query = data.get('query', '') if isinstance(data, dict) else ''
+        if method != 'GET' and not (
+            path == 'graphql'
+            and isinstance(query, str)
+            and query.lstrip().startswith('query ')
+            and not re.search(r'\bmutation\b', query)
+        ):
+            raise ValueError('manual_github_client_rejects_mutations')
         command = ['gh', 'api', '--method', method, path]
         if data is not None:
             command += ['--input', '-']

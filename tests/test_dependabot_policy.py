@@ -461,7 +461,7 @@ def test_api_failure_diagnostics_never_include_remote_text(monkeypatch):
         ),
     )
     with pytest.raises(GitHubRequestError) as failure:
-        GitHub().request('graphql', 'POST', {'query': 'trusted query'})
+        GitHub().request('graphql', 'POST', {'query': 'query { repository { name } }'})
     assert str(failure.value) == 'graphql; HTTP 403'
     assert 'private-sentinel' not in str(failure.value)
 
@@ -513,3 +513,24 @@ def test_manual_profile_has_no_write_entrypoint(monkeypatch, capsys):
     monkeypatch.setenv('DEPENDABOT_AUTOMERGE_ENABLED', 'true')
     with pytest.raises(ValueError, match='manual_profile'):
         automation.main()
+
+
+@pytest.mark.parametrize(
+    'path,method,data',
+    [
+        ('graphql', 'POST', {'query': 'mutation { unsafe }'}),
+        ('repos/owner/repo/pulls/1/merge', 'PUT', {}),
+        ('repos/owner/repo', 'PATCH', {'allow_auto_merge': True}),
+    ],
+)
+def test_real_manual_transport_rejects_writes_before_subprocess(
+    monkeypatch, path, method, data
+):
+    import scripts.dependabot_automation as automation
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('must not launch gh for a mutation')
+
+    monkeypatch.setattr(automation.subprocess, 'run', forbidden)
+    with pytest.raises(ValueError, match='rejects_mutations'):
+        automation.GitHub().request(path, method, data)
