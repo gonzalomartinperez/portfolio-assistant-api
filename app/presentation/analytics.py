@@ -4,7 +4,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.application.analytics import accept_event
 from app.domain.analytics import EventName, ProductEvent, Section, Target
@@ -25,6 +25,13 @@ class ProductEventBody(BaseModel):
     section: Section
     locale: Literal['en', 'es']
     target: Target | None = None
+
+    @field_validator('schema_version', mode='before')
+    @classmethod
+    def exact_version(cls, value: object) -> int:
+        if type(value) is not int or value != 1:
+            raise ValueError('invalid_analytics_version')
+        return 1
 
     def event(self) -> ProductEvent:
         return ProductEvent(

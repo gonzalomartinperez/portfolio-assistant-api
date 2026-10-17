@@ -30,7 +30,42 @@ def test_product_counts_atomic_duplicate_replay_and_no_raw_payload():
             outcomes = list(executor.map(lambda _: store.record(event), range(12)))
         assert outcomes.count('accepted') == 1
         assert outcomes.count('duplicate') == 11
-        data = store.snapshot()
+        from fastapi.testclient import TestClient
+
+        from app.bootstrap.config import Settings
+        from app.bootstrap.container import create_app
+
+        token = 'synthetic-private-product-token-0000'
+        application = create_app(
+            Settings(
+                _env_file=None,
+                product_analytics_enabled=True,
+                ops_read_token=token,
+                ops_api_commit='a' * 40,
+            )
+        )
+        application.state.product_analytics = store
+        client = TestClient(application)
+        replay = client.post(
+            '/api/v1/analytics/events',
+            headers={'Origin': 'http://localhost:3000'},
+            json={
+                'schema_version': 1,
+                'project': 'portfolio',
+                'source': 'site',
+                'event_id': event.event_id,
+                'event_name': event.name,
+                'section': event.section,
+                'locale': event.locale,
+            },
+        )
+        assert replay.status_code == 204
+        response = client.get(
+            '/internal/ops/v1/product-analytics',
+            headers={'Authorization': 'Bearer ' + token},
+        )
+        assert response.status_code == 200
+        data = response.json()
         rows = [
             row
             for row in data['counts']
@@ -91,3 +126,28 @@ def test_product_global_quota_rollback_and_expiry():
                 'DELETE FROM product_event_dedupe WHERE event_id=ANY(%s::uuid[])',
                 (ids,),
             )
+
+
+def test_product_daily_ceiling_does_not_record_a_rejected_event():
+    from contextlib import contextmanager
+
+    event = ProductEvent(str(uuid4()), 'page_view', 'stack', 'es')
+    with connect() as conn, conn.transaction(force_rollback=True):
+        conn.execute(
+            "INSERT INTO product_event_counts(day,event_name,section,locale,target,count) VALUES ((now() AT TIME ZONE 'UTC')::date,'page_view','stack','es','',10000) ON CONFLICT (day,event_name,section,locale,target) DO UPDATE SET count=10000"
+        )
+
+        @contextmanager
+        def transaction_connection():
+            yield conn
+
+        assert (
+            PostgresProductAnalytics(transaction_connection).record(event) == 'limited'
+        )
+        assert (
+            conn.execute(
+                'SELECT 1 FROM product_event_dedupe WHERE event_id=%s',
+                (event.event_id,),
+            ).fetchone()
+            is None
+        )

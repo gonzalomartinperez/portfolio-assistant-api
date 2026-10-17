@@ -67,6 +67,8 @@ def client(enabled=True):
     [
         {'email': 'synthetic@example.invalid'},
         {'country': 'AR'},
+        {'schema_version': True},
+        {'schema_version': 1.0},
         {'occurred_at': '2026-01-01'},
         {'properties': {}},
         {'source': 'assistant'},

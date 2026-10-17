@@ -23,6 +23,10 @@ class PostgresProductAnalytics:
             conn.execute(
                 "DELETE FROM product_event_counts WHERE day < (now() AT TIME ZONE 'UTC')::date-6"
             )
+            conn.execute(
+                "DELETE FROM product_event_dedupe WHERE event_id=%s AND received_at<now()-interval '1 day'",
+                (event.event_id,),
+            )
             if conn.execute(
                 'SELECT 1 FROM product_event_dedupe WHERE event_id=%s',
                 (event.event_id,),
