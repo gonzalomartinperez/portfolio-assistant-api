@@ -7,9 +7,15 @@ provider calls, inherited application environment or external OAuth are accepted
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import socket
 import subprocess
+import tempfile
+import time
+import urllib.error
+import urllib.request
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
@@ -17,11 +23,163 @@ from uuid import uuid4
 import psycopg
 from fastapi.testclient import TestClient
 from psycopg.rows import dict_row
+from pydantic import BaseModel, Field
 
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
 from app.infrastructure import migrations
-from scripts.project_postgres_fixture import project_fixture
+from scripts.project_postgres_fixture import (
+    LABEL,
+    ProjectPostgres,
+    docker,
+    project_fixture,
+    remove_owned,
+)
+
+
+class ImageConfiguration(BaseModel):
+    user: str = Field(alias='User')
+    labels: dict[str, str] = Field(alias='Labels')
+
+
+class FixtureImage(BaseModel):
+    identity: str = Field(alias='Id', pattern=r'^sha256:[a-f0-9]{64}$')
+    configuration: ImageConfiguration = Field(alias='Config')
+
+
+def verify_image(target: ProjectPostgres, image: str) -> dict[str, object]:
+    if not re.fullmatch(r'portfolio-backoffice:[a-zA-Z0-9_.-]+', image):
+        raise ValueError('expected an explicitly built local backoffice image')
+    target.port()
+    metadata = FixtureImage.model_validate_json(
+        docker('image', 'inspect', '--format', '{{json .}}', image)
+    )
+    if (
+        metadata.configuration.user != '65532:65532'
+        or metadata.configuration.labels.get('org.opencontainers.image.source')
+        != 'https://github.com/gonzalomartinperez/portfolio-backoffice'
+    ):
+        raise ValueError('backoffice image provenance or non-root identity is invalid')
+    network = 'portfolio-project-pg-' + target.fixture[:12]
+    with ExitStack() as cleanup:
+        directory = Path(cleanup.enter_context(tempfile.TemporaryDirectory()))
+        common = {
+            'BACKOFFICE_ORIGIN': 'https://iam.fixture.invalid',
+            'BETTER_AUTH_SECRET': 'disposable-fixture-auth-secret-32-characters',
+            'BACKOFFICE_OWNER_EMAIL': 'owner@example.invalid',
+            'GOOGLE_CLIENT_ID': 'fixture',
+            'GOOGLE_CLIENT_SECRET': 'fixture',
+            'GITHUB_CLIENT_ID': 'fixture',
+            'GITHUB_CLIENT_SECRET': 'fixture',
+        }
+
+        def create(name: str, role: str, *command: str, publish: bool = False) -> None:
+            environment = directory / (name + '.env')
+            environment.touch(mode=0o600)
+            uri = target.connection_uri(role).replace(
+                '@127.0.0.1:' + str(target.port()), '@' + network + ':5432'
+            )
+            environment.write_text(
+                '\n'.join(
+                    key + '=' + value
+                    for key, value in {**common, 'BACKOFFICE_DATABASE_URL': uri}.items()
+                )
+                + '\n'
+            )
+            cleanup.callback(remove_owned, 'container', name, target.fixture)
+            publication = ('--publish', '127.0.0.1::3000') if publish else ()
+            docker(
+                'create',
+                '--name',
+                name,
+                '--network',
+                network,
+                '--label',
+                LABEL + '=' + target.fixture,
+                '--env-file',
+                str(environment),
+                '--read-only',
+                '--cap-drop',
+                'ALL',
+                '--security-opt',
+                'no-new-privileges',
+                '--memory',
+                '512m',
+                '--memory-swap',
+                '512m',
+                '--cpus',
+                '0.75',
+                '--pids-limit',
+                '128',
+                '--tmpfs',
+                '/tmp:uid=65532,gid=65532,mode=0700,size=32m',
+                '--tmpfs',
+                '/app/.next/cache:uid=65532,gid=65532,mode=0700,size=32m',
+                *publication,
+                image,
+                *command,
+            )
+
+        for attempt in range(2):
+            name = (
+                'portfolio-project-migration-'
+                + target.fixture[:12]
+                + '-'
+                + str(attempt)
+            )
+            create(
+                name,
+                'portfolio_iam_migrator',
+                'node',
+                'scripts/auth-migrate.ts',
+                '--project-grants',
+            )
+            docker('start', '--attach', name)
+            if (
+                docker('inspect', '--format', '{{.State.ExitCode}}', name).strip()
+                != b'0'
+            ):
+                raise ValueError('exact backoffice image IAM migration failed')
+        name = 'portfolio-project-bo-' + target.fixture[:12]
+        create(name, 'portfolio_iam_runtime', publish=True)
+        docker('start', name)
+        port = (
+            docker(
+                'inspect',
+                '--format',
+                '{{(index (index .NetworkSettings.Ports "3000/tcp") 0).HostPort}}',
+                name,
+            )
+            .decode()
+            .strip()
+        )
+        if not port.isdecimal() or not 1024 <= int(port) <= 65535:
+            raise ValueError('backoffice fixture port is invalid')
+        deadline = time.monotonic() + 30
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        while True:
+            try:
+                with opener.open(
+                    'http://127.0.0.1:' + port + '/api/ready', timeout=3
+                ) as response:
+                    assert response.status == 200
+                    assert json.load(response) == {'status': 'ready'}
+                    cache_control = response.headers['Cache-Control']
+                    assert cache_control and 'no-store' in {
+                        value.strip().lower() for value in cache_control.split(',')
+                    }
+                break
+            except OSError, urllib.error.URLError:
+                if time.monotonic() >= deadline:
+                    raise ValueError(
+                        'restricted backoffice image did not become ready'
+                    ) from None
+                time.sleep(0.2)
+        return {
+            'image_id': metadata.identity,
+            'two_migrations_and_restricted_runtime_readiness': True,
+            'readiness_cache_control': cache_control,
+        }
 
 
 def revision(directory: Path) -> dict[str, str | bool]:
@@ -44,6 +202,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--backoffice-path', required=True, type=Path)
     parser.add_argument('--postgres-image', required=True)
+    parser.add_argument('--backoffice-image')
     parser.add_argument('--authorize-fixture', action='store_true')
     parser.add_argument(
         '--output', type=Path, default=Path('artifacts/project-databases.json')
@@ -68,6 +227,7 @@ def main() -> None:
         parser.error('Node.js 24 must be available on PATH')
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     with socket.socket() as check:
+        check.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         check.bind(('127.0.0.1', 3972))
     with project_fixture(
         arguments.postgres_image, authorized=arguments.authorize_fixture
@@ -170,6 +330,11 @@ def main() -> None:
             raise ValueError(
                 'owned restricted IAM integration failed; inspect private synthetic fixture log'
             )
+        image_result = (
+            verify_image(target, arguments.backoffice_image)
+            if arguments.backoffice_image
+            else None
+        )
 
         def fingerprint(role, tables, database_target=target):
             from psycopg import sql
@@ -289,6 +454,7 @@ def main() -> None:
             'api_snapshot': api_before,
             'iam_snapshot': iam_before,
             'archive_bytes': {'api': len(api_dump), 'iam': len(iam_dump)},
+            'backoffice_image': image_result,
             'fixture': target.snapshot(),
             'source': {'api': revision(root), 'backoffice': revision(backoffice)},
             'scope': 'local fixture model/no corpus; no production acceptance',

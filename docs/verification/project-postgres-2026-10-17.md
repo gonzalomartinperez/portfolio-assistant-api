@@ -78,3 +78,17 @@ backup encryption/off-server restoration, simultaneous application load, actual 
 resource limits and upgrade/rollback rehearsals belong to the joint deployment gate.
 The Neo4j Community credential boundary and vendor-image security blocker remain.
 No high availability, zero downtime, live OAuth or production readiness is implied.
+
+## Exact backoffice image extension
+
+The same runner additionally accepted
+`--backoffice-image portfolio-backoffice:project-iam-20261017-c49` and verified its
+non-root source-labelled local artifact, two successful image migration tasks with
+`--project-grants`, and `/api/ready` returning 200 as `portfolio_iam_runtime`.
+Effective cache control was `private, no-store`; the test checks directives rather
+than assuming an exact serialization. This run also repeated independent restore,
+restart and fresh-cluster recovery successfully. Local manifest-list identity:
+`sha256:327a103983da52228f6d52734ec8b9a468cbd748b3f38b6443fee8e7e7698f57`;
+this is not a published registry digest or VPS proof. Receipt:
+`artifacts/project-image-databases.json`. Images were built from the recorded task
+working tree, including the pending package-version metadata change.

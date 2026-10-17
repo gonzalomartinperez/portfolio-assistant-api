@@ -270,3 +270,12 @@ and feedback schema bytes. Its archived public chat/SSE snapshot is not a curren
 chat consumer and cannot establish native portfolio compatibility. Current native
 browser/API verification belongs to the portfolio. This opt-in source comparison is
 not live OAuth/HTTPS pairing or a release-controller/deployment authorization.
+
+The real-services job also reads an exact committed backoffice revision, installs
+its frozen dependencies with a lock-keyed Node cache, and exercises both applications'
+actual migrations/authentication against a fresh restricted project engine. The
+owned fixture runner verifies independent recovery, restart and fresh-cluster
+restore; it never uses the job's corpus fixture for destructive recovery. Only its
+synthetic aggregate receipt is retained, not IAM logs, credentials or archives.
+The required `checks` gate still requires both existing jobs. This adds application
+compatibility coverage without a second API image build or privileged PR execution.
