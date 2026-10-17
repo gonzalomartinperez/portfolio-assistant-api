@@ -1,4 +1,4 @@
-"""Trusted-base Dependabot controller. PR contents are parsed as data, never run."""
+"""Manual dependency assessment; PR contents are parsed as data, never run."""
 
 import argparse
 import base64
