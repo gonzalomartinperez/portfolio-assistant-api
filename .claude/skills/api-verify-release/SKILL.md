@@ -124,3 +124,10 @@ For public README/gallery changes, use [capture provenance](../../../docs/verifi
 Publish actual interface captures with supported states and intrinsic proportions, never
 private fixtures/credentials or screenshots presented as production evidence. Verify
 Markdown and HTML image links; keep deployment and provider claims tied to recorded checks.
+
+For a database image refresh, compare immutable index/platform bytes, not only tags.
+Manually dispatch the existing Quality workflow with `verify_vendor_image=true` for full Neo4j OS/Java inventory and
+record scanner/DB times; normal PR API/PG scans do not establish Neo4j acceptance.
+Use [the release receipt procedure](../../../docs/verification/neo4j-vendor-refresh-2026-10-17.md).
+Keep unfixed critical applicability visible. A pre-007 image fails schema readiness
+after analytics007; a rollback reader must retain applied migration history/checksums.

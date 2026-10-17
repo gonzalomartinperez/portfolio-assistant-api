@@ -39,8 +39,10 @@ DownloadedAt2026-10-17T18:49:56Z. These are dated observations, not perpetual fr
 The same-version vendor changelog advertises Jackson2.22.3; that does not prove that
 all shaded copies in immutable distribution bytes are fixed.
 
-[Draft PR71](https://github.com/gonzalomartinperez/portfolio-assistant-api/pull/71)
-preserves the rejected candidate and strict reproducible scan/manifest-receipt work.
+[Verification PR71](https://github.com/gonzalomartinperez/portfolio-assistant-api/pull/71)
+preserves the rejected candidate evidence and strict reproducible scan/manifest-receipt
+work, while retaining the old runtime pin. Its explicit assessment input does not
+turn ordinary source checks into vendor release acceptance.
 It must not be merged as a successful security repair. A compatible vendor fix,
 full updated OS/Java rescan and isolated runtime/store/recovery evidence are required
 before selecting a replacement. No later5.26 patch was confirmed during this audit.

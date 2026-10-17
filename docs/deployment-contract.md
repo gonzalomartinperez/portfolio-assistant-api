@@ -61,7 +61,7 @@ configuration objects or structured validation details into logs or CI artifacts
 
 ## Services and migrations
 
-Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j5.26.32 Community Trixie candidate (current patch in the5.26 LTS line).
+Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j5.26.32 Community Trixie retained baseline (current patch in the5.26 LTS line).
 The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
@@ -355,6 +355,17 @@ for quotas, provisional local retention and private route exclusion. The mainten
 job must continue expiry when collection is off; backup expiry/restore, lawful basis,
 notice and production resource acceptance remain owner/ops gates.
 
+## Neo4j immutable vendor refresh
+
+The same-version5.26.32 candidate was rejected after deep scanning; runtime retains
+the prior pin, which also has unresolved findings. Equal version labels do not mean
+equal bytes or a repaired image. See [exact references, historical issues and release scan
+procedure](verification/neo4j-vendor-refresh-2026-10-17.md). Normal API/PG CI alone
+does not scan the complete Neo4j Java inventory. Manually dispatch Quality with
+`verify_vendor_image=true` for the reviewed source and preserve the full scanner receipt
+before release selection. A normal green dispatch or source tag is not this assessment.
+Unresolved critical applicability, store recovery and actual VPS acceptance remain
+release gates; no clean-stack or production-approval claim is made.
 ## Current release hold and feedback read
 
 The [dated Neo4j security assessment](verification/neo4j-release-blocker-2026-10-17.md)
