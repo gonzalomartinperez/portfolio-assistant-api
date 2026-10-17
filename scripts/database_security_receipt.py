@@ -10,7 +10,7 @@ from scripts.image_security import evaluate
 
 def database_metadata(value: object) -> dict:
     if not isinstance(value, dict) or not isinstance(value.get('Version'), int):
-        raise ValueError('missing database provenance')
+        raise TypeError('missing database provenance')
     updated = value.get('UpdatedAt')
     if (
         not isinstance(updated, str)
@@ -101,7 +101,7 @@ def main() -> None:
             args.reference,
             json.loads(args.scanner_version.read_text()),
         )
-    except OSError, ValueError:
+    except OSError, ValueError, TypeError:
         raise SystemExit(
             'Missing, incomplete or mismatched vendor security receipt'
         ) from None
