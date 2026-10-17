@@ -5,6 +5,19 @@ fixture vectors and the active corpus pointer. Neo4j is a rebuildable projection
 Conversation/checkpoint tables are separate from this approved public corpus;
 chat history never becomes retrieval knowledge or long-term memory.
 
+## Authorization boundary
+
+Neo4j Community does not provide role-based reader authorization: its users have
+implicit administrative privileges, as documented in the
+[official user-management manual](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-users/).
+The API's fixed, parameterized read queries constrain application behavior; they do
+not prevent a compromised graph credential from writing data or schema. Treat that
+credential as privileged and keep Neo4j on private project-isolated networks with
+only the approved public, rebuildable projection. Conversations, checkpoints and
+other private/project data must remain outside this graph. PostgreSQL grants are a
+separate enforced boundary and apply only to PostgreSQL. No Enterprise authorization
+capability is claimed or introduced.
+
 ## Model and provenance
 
 `Entity` nodes carry a kind: Project, Role (a public employment entry named by
