@@ -131,6 +131,15 @@ def main():
                         name,
                         'python',
                         '-c',
+                        'from pathlib import Path; '
+                        'assert Path("/app/LICENSE").read_text().startswith("MIT License\\n"); '
+                        'assert "## Scope" in Path("/app/THIRD_PARTY_NOTICES.md").read_text()',
+                    )
+                    docker(
+                        'exec',
+                        name,
+                        'python',
+                        '-c',
                         'import shutil; assert shutil.which("git"); '
                         'assert not shutil.which("uv"); assert not shutil.which("uvx")',
                     )

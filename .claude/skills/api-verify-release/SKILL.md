@@ -152,3 +152,8 @@ Run `TEST_INTEGRATION=1 uv run pytest -q tests/test_database_queries.py` only on
 fixtures. The optional benchmark requires a fresh project and explicit fixture-seed
 flag; it is never a production maintenance command. Retain migration008/checksum
 in any rollback reader and keep synthetic plan evidence separate from model recall.
+
+For licensing changes run `uv run python -m scripts.check_license` and the license
+regressions. Preserve the standard MIT grant and the separate content/dependency
+scope in [third-party notices](../../../THIRD_PARTY_NOTICES.md). This is consistency
+verification, not a dependency-license or legal audit; do not alter historical tags.

@@ -67,8 +67,9 @@ and executed on 2026-10-10; production and further paid scope are separate decis
   encrypted off-server restoration and deployment belong to private vps-ops.
   Runtime contract is ready for its review; no registry digest exists until an
   explicitly authorized publication. Default planned package visibility is private.
-- **Owner decision:** source license remains unspecified. No new infrastructure,
-  framework or optional action protocol is needed to finish this increment.
+- **Selected by owner:** application software uses [MIT](../LICENSE); personal
+  content and third-party materials retain [separate scope](../THIRD_PARTY_NOTICES.md).
+  This does not authorize infrastructure changes or public-assistant activation.
 
 Backend UX, repository skills and runtime handoff are the three deliverables.
 Security, architecture, testing, coding style and CI are acceptance criteria across
