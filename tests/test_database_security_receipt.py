@@ -229,3 +229,26 @@ def test_large_unfixed_header_inventory_keeps_all_counts_without_unbounded_detai
     assert result['counts']['total'] == 1001
     assert result['counts']['critical'] == 1
     assert len(result['relevant_findings']) == 1
+
+
+def test_vendor_assessment_is_explicit_and_cannot_be_softened():
+    from pathlib import Path
+
+    import yaml
+
+    workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    triggers = workflow.get('on', workflow.get(True))
+    option = triggers['workflow_dispatch']['inputs']['verify_vendor_image']
+    assert option['type'] == 'boolean' and option['default'] is False
+    steps = workflow['jobs']['integration']['steps']
+    deep = next(step for step in steps if 'Deep-scan' in step.get('name', ''))
+    assert (
+        deep['if']
+        == "github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image"
+    )
+    assert not deep.get('continue-on-error', False)
+    assert '--ignorefile' in deep['run'] and '--list-all-pkgs' in deep['run']
+    assert 'scripts.database_security_receipt' in deep['run']
+    selected = json.loads(Path('deploy/neo4j-image.json').read_text())
+    compose = yaml.safe_load(Path('compose.yaml').read_text())
+    assert selected['reference'] == compose['services']['neo4j']['image']

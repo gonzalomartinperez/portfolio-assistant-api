@@ -251,8 +251,14 @@ Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation
 
 ## Vendor database release assessment
 
-An explicit manual Quality dispatch additionally scans the exact pinned Neo4j OS
+An explicit manual Quality dispatch with `verify_vendor_image=true` additionally scans the exact pinned Neo4j OS
 and Java inventory without adding a second build or server lifecycle. Normal PR
 coverage is unchanged; it does not claim this expensive Java release assessment ran.
 See [receipt and unresolved release gates](verification/neo4j-vendor-refresh-2026-10-17.md).
 Implicit Docker build-record artifact upload is disabled; build logs/summaries remain.
+
+The default false input runs ordinary complete source/runtime validation; it is not
+an accepted database assessment. Selected-digest OS/Java assessment and every unresolved
+critical finding remain mandatory **external release-selection gates** for vps-ops.
+No publication/deployment controller is activated here. The rejected candidate run and
+known baseline findings remain recorded; no source tag waives them.

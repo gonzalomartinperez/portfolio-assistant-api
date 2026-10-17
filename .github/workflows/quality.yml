@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [develop, main]
   workflow_dispatch:
+    inputs:
+      verify_vendor_image:
+        description: 'Deep OS/Java vendor assessment; required separately before release selection'
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       frontend_image:
@@ -75,7 +80,7 @@ jobs:
     timeout-minutes: 20
     services:
       neo4j:
-        image: neo4j:5.26.32-community-trixie@sha256:0a6e7aedf54a531f76286032d4365ead65b11cca05e4a15cdf23b8e53d6db02b
+        image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
         env:
           NEO4J_AUTH: neo4j/change-me
         ports: ['7688:7687']
@@ -181,7 +186,7 @@ jobs:
           raise SystemExit(bool(result['fixable_critical'] or result['fixable_high']))
           PY
       - name: Deep-scan the exact Neo4j vendor image for release assessment
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image
         run: |
           reference=$(uv run python -c "import yaml; from pathlib import Path; print(yaml.safe_load(Path('compose.yaml').read_text())['services']['neo4j']['image'])")
           /tmp/image-scanner/trivy --config '' image --image-src docker \
