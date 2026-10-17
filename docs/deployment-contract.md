@@ -354,3 +354,12 @@ bounded anonymous event dedupe/daily aggregates. See [product analytics](product
 for quotas, provisional local retention and private route exclusion. The maintenance
 job must continue expiry when collection is off; backup expiry/restore, lawful basis,
 notice and production resource acceptance remain owner/ops gates.
+
+## Current release hold and feedback read
+
+The [dated Neo4j security assessment](verification/neo4j-release-blocker-2026-10-17.md)
+blocks production selection; ordinary API/PG CI is not vendor Java acceptance.
+`FEEDBACK_OVERVIEW_ENABLED=false` gates the optional private current-rating read
+using existing OPS_READ_TOKEN. No migration, service or new volume is required.
+See [privacy and feedback](feedback-and-improvement.md); no raw conversations or
+automatic learning are exposed. Original history retention is unchanged.

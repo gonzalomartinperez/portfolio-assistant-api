@@ -1,5 +1,6 @@
 {
   "artifacts": {
+    "feedback.schema.json": "efe765fd1aec41abf608b0d4f2963dbf83a7cbaa8b8f281aa8cf320cb4943de0",
     "knowledge.schema.json": "2489d6ff589e4bdfa50891ed8c110fb8e93371feda9db84818572bf9c4d387d0",
     "openapi.json": "5da3128b1994869aebe4aeab73204a067dbd235aa123e3225b99e848de150bec",
     "operations.schema.json": "6fbf28e2900dfbd6afe59f8fadcb56de2c223efcbcfc8bfccf43c2116e20d834",

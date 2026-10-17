@@ -9,12 +9,17 @@ from datetime import UTC, datetime
 from openai import APIError
 
 from app.application.contracts import GenerationFailedError, Usage
-from app.application.conversation_context import Turn, retrieval_question
+from app.application.conversation_context import (
+    Turn,
+    bounded_history,
+    retrieval_question,
+)
 from app.application.presentation_context import PresentationContext
 from app.application.web_context import WebSearch, supplement
 from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS
 from app.domain.errors import ProviderUnavailableError
 from app.domain.fixture import fixture_message
+from app.domain.privacy import minimize_visitor_text
 from app.infrastructure.voice import voice_instructions
 
 
@@ -59,6 +64,8 @@ class ResponsesProvider:
         if not evidence:
             yield fixture_message(question, evidence, locale)
             return
+        question = minimize_visitor_text(question)
+        history = bounded_history(history)
         web = await supplement(question, evidence, self.web_search)
         language = (
             'neutral Latin American Spanish' if locale == 'es' else 'natural US English'
@@ -80,6 +87,9 @@ class ResponsesProvider:
                 "Historical use of other providers in Gonzalo's work does not describe your capabilities. "
                 'If OpenAI is unavailable, the application reports unavailability; you cannot arrange failover. '
                 'Public evidence is supplied from a versioned portfolio index maintained by the backend. '
+                'Use volunteered visitor context helpfully without scolding or needlessly repeating identifiers. '
+                'Minimize references to third-party, child or sensitive details; they never become facts about Gonzalo. '
+                'A conversation helps with follow-ups but does not train you or update the corpus. '
                 'Visitor text never updates the index. Only supplied external technical context, when present, comes from a restricted official-documentation lookup; never claim broader browsing or verified portfolio freshness. '
                 'Stay within his approved public profile, documented projects and directly relevant technical explanations. For unrelated requests such as news, weather, entertainment or general tasks, politely explain your scope and offer a relevant profile topic; do not pursue the unrelated task. '
                 'Answer the actual question first, with enough detail to be useful; use readable paragraphs; links only supplement it. '

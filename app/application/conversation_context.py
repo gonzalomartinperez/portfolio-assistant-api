@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from app.domain.evidence import requested_affiliation
+from app.domain.privacy import minimize_visitor_text
 
 
 @dataclass(frozen=True)
@@ -20,7 +21,7 @@ def bounded_history(turns: tuple[Turn, ...]) -> tuple[Turn, ...]:
     result = []
     remaining = 8000
     for turn in reversed(turns[-12:]):
-        content = turn.content[: min(2000, remaining)]
+        content = minimize_visitor_text(turn.content)[: min(2000, remaining)]
         if not content:
             break
         result.append(Turn(turn.role, content))
@@ -70,6 +71,8 @@ def is_followup(question: str) -> bool:
 
 def retrieval_question(question: str, history: tuple[Turn, ...]) -> str:
     """Keep the visitor topic and its latest refinement; never use assistant claims."""
+    question = minimize_visitor_text(question)
+    history = bounded_history(history)
     if is_followup(question):
         refinement = ''
         earliest_reference = ''

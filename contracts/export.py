@@ -8,12 +8,14 @@ from app.infrastructure.public_projection import PublicProjection
 from app.main import app
 from app.presentation.analytics import ProductEventBody, ProductSnapshot
 from app.presentation.events import events
+from app.presentation.feedback import FeedbackView
 from app.presentation.operations import OperationalSnapshot
 
 
 def artifacts():
     return {
         'openapi.json': app.openapi(),
+        'feedback.schema.json': FeedbackView.model_json_schema(),
         'product-event.schema.json': ProductEventBody.model_json_schema(),
         'product-analytics.schema.json': ProductSnapshot.model_json_schema(),
         'operations.schema.json': {

@@ -1114,3 +1114,65 @@ def test_operational_usage_month_is_utc_even_with_non_utc_connection():
     finally:
         with connect() as conn:
             conn.execute('DELETE FROM spend_ledger WHERE id=%s', (identifier,))
+
+
+def test_feedback_summary_tracks_rating_replacement_and_owned_deletion(client_factory):
+    from app.bootstrap.config import Settings
+    from app.bootstrap.container import create_app
+
+    token = 'synthetic-private-feedback-token-0000'
+    client = client_factory(
+        create_app(
+            Settings(
+                _env_file=None,
+                ops_read_token=token,
+                ops_api_commit='a' * 40,
+                feedback_overview_enabled=True,
+            )
+        ),
+        client=(str(uuid4()), 50000),
+    )
+    csrf = bootstrap(client, 'http://localhost:3000')
+    auth = headers('http://localhost:3000', csrf)
+    private = {'Authorization': 'Bearer ' + token}
+    before = client.get('/internal/ops/v1/feedback', headers=private).json()
+    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    try:
+        stream = client.post(
+            f'/api/v1/conversations/{cid}/messages/stream',
+            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            json={'content': 'What is Filomena?', 'locale': 'en'},
+        )
+        assert 'event: run.completed' in stream.text
+        history = client.get(f'/api/v1/conversations/{cid}/messages').json()
+        mid = next(
+            message['id']
+            for message in history['items']
+            if message['role'] == 'assistant'
+        )
+        for rating in ('up', 'up', 'down'):
+            assert (
+                client.post(
+                    f'/api/v1/messages/{mid}/feedback',
+                    headers=auth,
+                    json={'rating': rating},
+                ).status_code
+                == 204
+            )
+            response = client.get('/internal/ops/v1/feedback', headers=private)
+            current = response.json()
+            assert current['up'] == before['up'] + int(rating == 'up')
+            assert current['down'] == before['down'] + int(rating == 'down')
+            assert (
+                cid not in response.text
+                and mid not in response.text
+                and 'Filomena' not in response.text
+            )
+        assert (
+            client.delete(f'/api/v1/conversations/{cid}', headers=auth).status_code
+            == 204
+        )
+        after = client.get('/internal/ops/v1/feedback', headers=private).json()
+        assert (after['up'], after['down']) == (before['up'], before['down'])
+    finally:
+        client.delete('/api/v1/session', headers=auth).raise_for_status()
