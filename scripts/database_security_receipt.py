@@ -158,10 +158,15 @@ def receipt(
     relevant = []
     for result in report['Results']:
         for item in result.get('Vulnerabilities', []):
-            if (
+            relevant_package = (
                 item.get('PkgName') == 'linux-libc-dev'
                 or 'jackson' in item.get('PkgName', '').lower()
-            ):
+            )
+            actionable = item.get('Severity') == 'CRITICAL' or (
+                item.get('Severity') == 'HIGH'
+                and bool(item.get('FixedVersion', '').strip())
+            )
+            if relevant_package and actionable:
                 relevant.append(
                     {
                         key: item.get(key)
@@ -189,6 +194,7 @@ def receipt(
         'jackson_packages': packages,
         'counts': summary,
         'relevant_findings': relevant,
+        'relevant_selection': 'Critical or fixable high findings in linux-libc-dev/Jackson; complete severity totals include every package and finding.',
         'production_accepted': False,
         'scope': 'Full OS and Java inventory; header findings do not identify the running host kernel.',
     }

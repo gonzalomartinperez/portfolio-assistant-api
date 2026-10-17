@@ -212,3 +212,20 @@ def test_registry_chain_checks_actual_content_and_amd64_configuration():
     ]:
         with pytest.raises(ValueError):
             verify_manifest_chain(first, second, descriptor)
+
+
+def test_large_unfixed_header_inventory_keeps_all_counts_without_unbounded_detail():
+    value = report()
+    value['Results'][0]['Vulnerabilities'] += [
+        {
+            'VulnerabilityID': f'CVE-synthetic-{index}',
+            'PkgName': 'linux-libc-dev',
+            'Severity': 'LOW',
+            'FixedVersion': '',
+        }
+        for index in range(1000)
+    ]
+    result = receipt(json.dumps(value), ID, REFERENCE, SCANNER, EXPECTED)
+    assert result['counts']['total'] == 1001
+    assert result['counts']['critical'] == 1
+    assert len(result['relevant_findings']) == 1
