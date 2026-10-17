@@ -134,7 +134,7 @@ Import-boundary tests enforce this direction. Strict mypy covers the inner layer
 contracts. Cancellation, deadlines and cleanup are part of application behavior.
 
 The [portfolio](https://github.com/gonzalomartinperez/portfolio) owns the public UI and
-approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-assistant-backoffice)
+approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-backoffice)
 owns authenticated operations. Private **vps-ops** owns Coolify, proxy/TLS, production
 composition, secrets, release selection and recovery. This repository owns its application
 image, migrations and runtime contract.
@@ -263,3 +263,12 @@ portfolio evidence through closed technical topics; no autonomous browsing or ca
 facts from general search. It defaults off and shares the application spend ceiling.
 
 Shared runtime/version acceptance: [runtime baseline](docs/runtime-baseline.md).
+
+## Privacy and release gates
+
+Volunteered context supports useful follow-ups; it is not automatic model training.
+[Context minimization and the human improvement loop](docs/feedback-and-improvement.md)
+describe actual patterns, original-history retention, private rating aggregates and limits.
+The [current Neo4j security blocker](docs/verification/neo4j-release-blocker-2026-10-17.md)
+prevents a production-ready claim; the rebuilt vendor candidate did not resolve its
+fixable Jackson findings. No deployment or collection activation is authorized.

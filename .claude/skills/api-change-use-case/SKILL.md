@@ -50,3 +50,8 @@ For product metrics use [the separate analytics contract](../../../docs/product-
 Keep the runtime flag off by default, global transactional quotas and event-specific
 closed dimensions. No visitor identity, IP, prompts or new arbitrary properties.
 Existing operational observations remain best effort, not reliable visitor/run totals.
+
+For volunteered context and quality signals use [privacy and human improvement](../../../docs/feedback-and-improvement.md).
+Minimize common visitor patterns at outbound boundaries, preserve public evidence,
+and never label context/rating retention as training. No raw-chat export is authorized
+by aggregate feedback. Keep the [Neo4j release hold](../../../docs/verification/neo4j-release-blocker-2026-10-17.md) visible.
