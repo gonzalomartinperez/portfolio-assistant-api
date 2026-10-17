@@ -243,6 +243,8 @@ Frozen dependencies, pinned actions, current-head checks and image scans remain 
 | [Deep model evaluation](docs/verification/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
 | [Bilingual voice](docs/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
 | [1000-question bank](docs/assistant-evaluation.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
+| [Bounded v1.1.0 live smoke](docs/verification/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling. |
+| [Manual synthetic evaluation export](docs/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after the immutable v1.1.0 tag. |
 | [Private operations](docs/verification/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
 | [PostgreSQL 18](docs/verification/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
 

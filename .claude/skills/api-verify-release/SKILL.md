@@ -140,3 +140,9 @@ For README overview diagrams read [the owned diagram source and review rules](..
 Keep the first-party SVG and Mermaid semantics aligned. Inspect both palettes, card
 text bounds and narrow/full-size rendering; never substitute a deployment claim for
 an architecture view or add scripts/remote resources to the documentation graphic.
+
+For manual LangSmith evaluation work, load [the synthetic export contract](../../../docs/synthetic-evaluation-export.md)
+and run `uv run pytest -q tests/test_evaluation_export.py tests/test_architecture.py`.
+The CLI validates offline by default; `--authorize-export` requires separate current
+external-export authority and a synthetic aggregate, never a raw answer report.
+Keep automatic tracing rejected and record post-tag source separately from v1.1.0.
