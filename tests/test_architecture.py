@@ -1,51 +1,83 @@
-"""Executable dependency direction, including relative imports and cycles."""
+"""Dependency direction and regression probes for ways around architectural rules."""
 
-import ast
 from pathlib import Path
 
+import pytest
+
+from scripts.check_architecture import (
+    architecture_errors,
+    cycle_errors,
+    dependencies,
+    dependency_errors,
+)
+
 ROOT = Path(__file__).parents[1] / 'app'
-LAYERS = {'domain', 'application', 'ai', 'infrastructure', 'presentation', 'bootstrap'}
-ALLOWED = {
-    'domain': {'domain'},
-    'application': {'application', 'domain'},
-    'ai': {'ai', 'application', 'domain'},
-    'infrastructure': {'infrastructure', 'application', 'domain', 'bootstrap'},
-    'presentation': {'presentation', 'application', 'domain'},
-    'bootstrap': LAYERS,
-}
 
 
-def test_layer_dependencies():
-    import sys
+def test_architecture():
+    assert architecture_errors(ROOT) == []
 
-    for layer in LAYERS:
-        for path in (ROOT / layer).rglob('*.py'):
-            for node in ast.walk(ast.parse(path.read_text())):
-                if isinstance(node, ast.Import):
-                    modules = [alias.name for alias in node.names]
-                elif isinstance(node, ast.ImportFrom):
-                    prefix = '.'.join(path.relative_to(ROOT.parent).parts[:-1])
-                    if node.level:
-                        prefix = '.'.join(
-                            prefix.split('.')[: len(prefix.split('.')) - node.level + 1]
-                        )
-                        modules = [prefix + '.' + (node.module or '')]
-                    else:
-                        modules = [node.module or '']
-                else:
-                    continue
-                for module in modules:
-                    parts = module.split('.')
-                    if parts[0] == 'app':
-                        assert len(parts) > 1 and parts[1] in ALLOWED[layer], (
-                            path,
-                            module,
-                        )
-                        # Infrastructure may consume the immutable settings adapter, never composition.
-                        if layer == 'infrastructure' and parts[1] == 'bootstrap':
-                            assert module == 'app.bootstrap.config', (path, module)
-                    elif layer in ('domain', 'application'):
-                        assert parts[0] in sys.stdlib_module_names, (path, module)
+
+@pytest.mark.parametrize(
+    ('module', 'source'),
+    [
+        ('app.domain.example', 'from app import infrastructure'),
+        ('app.domain.example', 'from ..infrastructure import db'),
+        ('app.application.example', 'import app.presentation.http'),
+        ('app.application.example', 'from fastapi import Request'),
+        (
+            'app.application.example',
+            'if TYPE_CHECKING:\n    from fastapi import Request',
+        ),
+        ('app.ai.example', 'from app.infrastructure.db import connect'),
+        ('app.presentation.example', 'from app.bootstrap.container import create_app'),
+        ('app.infrastructure.example', 'from app.bootstrap.config import Settings'),
+        ('app.infrastructure.db', 'from app.bootstrap.container import create_app'),
+        ('app.domain.example', 'import os'),
+        ('app.domain.example', 'import urllib.request'),
+        ('app.application.example', '__import__("app.infrastructure.db")'),
+        ('app.application.example', 'import importlib as i; i.import_module(name)'),
+        (
+            'app.application.example',
+            'from importlib import import_module as load; load(name)',
+        ),
+        ('app.domain.example', 'exec(source)'),
+    ],
+)
+def test_rejects_dependency_bypasses(module, source):
+    assert dependency_errors(module, source), (module, source)
+
+
+@pytest.mark.parametrize(
+    ('module', 'source'),
+    [
+        ('app.domain.example', 'from .evidence import tokens'),
+        ('app.domain.example', 'from urllib.parse import urlsplit'),
+        ('app.application.example', 'from app.domain import budget'),
+        ('app.infrastructure.db', 'from app.bootstrap.config import settings'),
+        (
+            'app.infrastructure.example',
+            'from app.application.web_context import SearchAccounting',
+        ),
+    ],
+)
+def test_allows_owned_ports_and_narrow_legacy_cli_exception(module, source):
+    assert dependency_errors(module, source) == []
+
+
+def test_cycles_include_relative_imports_and_from_package_imports():
+    assert dependencies('app.domain', 'from . import b', package=True) == {
+        'app.domain.b'
+    }
+    assert 'app.domain.b' in dependencies('app.domain.a', 'from . import b')
+    assert 'app.domain.a' in dependencies('app.domain.b', 'import app.domain.a')
+    assert cycle_errors(
+        {
+            'app.domain.a': dependencies('app.domain.a', 'from . import b'),
+            'app.domain.b': dependencies('app.domain.b', 'import app.domain.a'),
+        }
+    )
+    assert cycle_errors({'a': {'b'}, 'b': {'c'}, 'c': set()}) == []
 
 
 def test_inner_and_http_layers_do_not_execute_queries():
@@ -56,26 +88,3 @@ def test_inner_and_http_layers_do_not_execute_queries():
                 sql in source
                 for sql in ('SELECT ', 'INSERT INTO ', 'UPDATE runs ', 'MATCH (')
             ), path
-
-
-def test_modules_have_no_import_cycles():
-    graph = {}
-    for path in ROOT.rglob('*.py'):
-        module = '.'.join(path.relative_to(ROOT.parent).with_suffix('').parts)
-        edges = set()
-        for node in ast.walk(ast.parse(path.read_text())):
-            if (
-                isinstance(node, ast.ImportFrom)
-                and node.module
-                and node.module.startswith('app.')
-            ):
-                edges.add(node.module)
-        graph[module] = edges
-
-    def walk(module, stack):
-        assert module not in stack, stack + [module]
-        for child in graph.get(module, ()):
-            walk(child, stack + [module])
-
-    for module in graph:
-        walk(module, [])

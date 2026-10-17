@@ -21,6 +21,7 @@ from app.application.runs import RunService
 from app.bootstrap.config import Settings, settings
 from app.bootstrap.logging import configure
 from app.domain.budget import Budget
+from app.domain.web_budget import WebBudget
 from app.infrastructure.answer import (
     FixtureProvider,
     ResponsesProvider,
@@ -99,7 +100,15 @@ def create_app(
                     LocalLanguageDetector().rejects_output,
                     web_search=OpenAIWebSearch(
                         client,
-                        WebAccounting(connection, config),
+                        WebAccounting(
+                            connection,
+                            WebBudget(
+                                cutoff=Decimal(config.reserve_cutoff_usd),
+                                input_price=Decimal(config.input_usd_per_million),
+                                output_price=Decimal(config.output_usd_per_million),
+                                fee=Decimal(config.web_search_usd_per_call),
+                            ),
+                        ),
                         config.web_search_timeout_seconds,
                     )
                     if config.web_search_enabled

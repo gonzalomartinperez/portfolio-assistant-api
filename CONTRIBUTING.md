@@ -89,3 +89,14 @@ For private operational changes, preserve the scalar-only application observatio
 model and server-to-server authentication boundary. Run the focused observability
 tests plus real-store tests when modifying SQL. Review actual OTLP receiver payloads,
 not only mock exporter calls; never add automatic SDK input/output capture.
+
+## Architectural review
+
+Use Microsoft's dependency-inversion guidance and Google/Microsoft review practices as
+references, with [explicit repository adaptations](docs/engineering-coordination.md).
+Application/domain rules belong behind owned ports; composition injects concrete adapters.
+Review invariants, cancellation and transaction ownership rather than folder names.
+`uv run python -m scripts.check_architecture` provides fast standalone feedback; normal
+`uv run pytest -q` includes both the guard and its negative regression probes in CI.
+Adding a layer exception requires a concrete compatibility reason, focused tests and an
+architecture documentation update. Do not broaden an allowlist to silence a violation.

@@ -3,26 +3,12 @@
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import Protocol
-from uuid import UUID
 
 from openai import APIError
 
-from app.application.web_context import WebReference, WebSupplement
+from app.application.web_context import SearchAccounting, WebReference, WebSupplement
 from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError
 from app.domain.web_policy import TOPICS, WebTopic, canonical_web_url
-
-
-class SearchAccounting(Protocol):
-    async def reserve(self) -> UUID:
-        """Reserve search fee plus bounded model tokens before network I/O."""
-        ...
-
-    async def settle(
-        self, identifier: UUID, input_tokens: int, output_tokens: int, calls: int
-    ) -> None:
-        """Unknown/interrupted usage retains its reservation."""
-        ...
 
 
 @dataclass(frozen=True)
