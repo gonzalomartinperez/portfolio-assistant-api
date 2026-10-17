@@ -86,6 +86,20 @@ are included. The portfolio working tree and disabled rollout were not changed.
 
 ## How it works
 
+<p align="center">
+  <a href="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries — click for the full-size diagram"></a>
+</p>
+
+Solid arrows show requests or synchronization; dashed arrows show returned data.
+Frames identify trust boundaries. This overview describes implemented responsibilities,
+not production deployment or a security certification. Open the original to zoom. [Diagram source and visual conventions](docs/diagrams.md)
+explain the symbols and review procedure.
+
+
+
+<details>
+<summary>Editable Mermaid view</summary>
+
 ```mermaid
 flowchart LR
     subgraph Knowledge[Versioned public knowledge]
@@ -103,6 +117,8 @@ flowchart LR
     E --> U
     S --> C[(Owned conversation history)]
 ```
+
+</details>
 
 **Retrieve → ground → generate → validate → persist.** Vector retrieval and graph facts
 provide public evidence. The application validates citations against that evidence and
