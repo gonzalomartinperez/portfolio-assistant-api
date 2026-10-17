@@ -1,6 +1,6 @@
 # ADR 005: proposed PostgreSQL consolidation within Portfolio
 
-Status: **proposed, not implemented or accepted** (2026-10-17). The owner permits
+Status: **application implementation verified locally; production adoption pending** (2026-10-17). The owner permits
 reuse within one project and prohibits sharing containers or data across projects.
 This records the application-owned compatibility blueprint; it does not configure
 production or replace the vps-ops composition. Existing separate fixtures remain.
@@ -10,7 +10,7 @@ production or replace the vps-ops composition. Existing separate fixtures remain
 Inspected application sources: API `814d04d09a276f09b52e032b0d86b8a1e4985b04` and
 backoffice `d4a030a4c9a0eb0ee8161b62b8128558f22609b1`. Both use PostgreSQL 18.6;
 the API image includes pgvector 0.8.7 and the IAM migration needs no vector extension.
-This makes a common engine plausible, not verified. The existing API Compose
+The new isolated application proof is recorded below. The existing API Compose
 initializes one assistant database; the backoffice tests use separate fresh fixtures.
 Their fixture superuser credentials are not a production permission model.
 
@@ -31,7 +31,7 @@ replacement and ownership handoff are accepted; do not remove a working fallback
 
 ## Required database and identity boundary
 
-Names below are proposed identifiers, not provisioned resources.
+Names below are implemented by the owned fixture bootstrap; they are not provisioned production resources.
 
 | Database | Credentials and responsibilities | Runtime access |
 | --- | --- | --- |
@@ -104,7 +104,9 @@ security blocker; PostgreSQL consolidation does not resolve it.
 
 ## Acceptance before changing the runtime handoff
 
-All items remain pending for this proposed topology:
+The local proof below covers bootstrap, identities, real migrations, recovery and restart.
+Grounded retrieval under the direct role is also a required real-service CI case.
+Effective production routing/TLS, readiness, shared capacity and upgrade approval remain gates:
 
 - Fresh non-root engine bootstrap, exact server/extension versions, distinct
   databases and isolated application identities, with no production credentials.
@@ -127,3 +129,31 @@ instance was tested or update production allocation from this proposal.
 References: PostgreSQL 18 [HBA rules](https://www.postgresql.org/docs/18/auth-pg-hba-conf.html),
 [privileges](https://www.postgresql.org/docs/18/ddl-priv.html) and
 [logical backup limits](https://www.postgresql.org/docs/18/backup-dump.html).
+
+## Implemented application artifacts and local proof
+
+The API image recipe now includes the idempotent
+[bootstrap](../../deploy/project-postgres-bootstrap.psql) and
+[ordered HBA template](../../deploy/project-pg_hba.conf). Bootstrap runs explicitly
+as the local-socket-only `portfolio_bootstrap` provisioning identity; it neither
+assigns passwords nor executes automatically at normal startup. Five restricted
+logins receive credentials through the operator's secret-delivery procedure.
+Unexpected roles, memberships, databases or owners fail closed. Re-running it
+preserves existing data and passwords. The worker has its own
+[exact grants](../../deploy/knowledge-worker-grants.sql).
+
+The maintained [dual-application runner](../../scripts/verify_project_databases.py)
+requires an explicit backoffice checkout and fixture authorization. It creates its
+own labelled engine, volume and bridge, binds only a dynamic loopback test port,
+rejects provider configuration and always removes only its verified resources.
+It executes both applications' real migrations and fake-OAuth tests, runs an API
+session/fixture response/history flow under the restricted identity, then tests
+independent logical recovery while the other database connection remains usable.
+It compares table counts/hashes after restart and after recovery into a second fresh
+cluster with regenerated fixture passwords and reapplied runtime grants. No raw
+auth records or archives become public artifacts. Logical dumps are not a shared
+cross-database snapshot and this test does not establish recovery-time guarantees.
+
+See [the bounded evidence and commands](../verification/project-postgres-2026-10-17.md).
+The backoffice legacy PostgreSQL recipe remains intact. vps-ops must explicitly
+accept this application handoff before replacing any production allocation.

@@ -651,7 +651,10 @@ def test_atomic_run_slot_and_abuse_limits(client_factory):
     assert client.delete('/api/v1/session', headers=auth).status_code == 204
 
 
-def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write():
+@pytest.mark.parametrize('project_identity', [False, True])
+def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
+    project_identity,
+):
     from pathlib import Path
 
     import psycopg
@@ -659,16 +662,29 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write():
     from psycopg.conninfo import make_conninfo
 
     from app.bootstrap.container import create_app
+    from scripts.evaluation_isolation import validate_targets
 
-    role = 'fixture_runtime_' + uuid4().hex
+    validate_targets(settings())
+    role = (
+        'portfolio_api_runtime'
+        if project_identity
+        else 'fixture_runtime_' + uuid4().hex
+    )
     password = uuid4().hex
     with connect() as conn:
         conn.execute(Path('deploy/runtime-grants.sql').read_text())
-        conn.execute(
-            sql.SQL(
-                'CREATE ROLE {} LOGIN PASSWORD {} IN ROLE assistant_runtime'
-            ).format(sql.Identifier(role), sql.Literal(password))
-        )
+        if project_identity:
+            conn.execute(
+                sql.SQL('ALTER ROLE {} LOGIN NOINHERIT PASSWORD {}').format(
+                    sql.Identifier(role), sql.Literal(password)
+                )
+            )
+        else:
+            conn.execute(
+                sql.SQL(
+                    'CREATE ROLE {} LOGIN PASSWORD {} IN ROLE assistant_runtime'
+                ).format(sql.Identifier(role), sql.Literal(password))
+            )
     try:
         config = settings().model_copy(
             update={
@@ -708,7 +724,14 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write():
             assert client.delete('/api/v1/session', headers=auth).status_code == 204
     finally:
         with connect() as conn:
-            conn.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
+            if project_identity:
+                conn.execute(
+                    sql.SQL('ALTER ROLE {} NOLOGIN PASSWORD NULL').format(
+                        sql.Identifier(role)
+                    )
+                )
+            else:
+                conn.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
 
 
 def test_generation_receives_only_its_owned_prior_turns(client_factory):

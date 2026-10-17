@@ -14,3 +14,9 @@
 **/__pycache__/
 **/*.pyc
 **/.env*
+
+# Public project bootstrap resources used only by the PostgreSQL artifact.
+!deploy/
+deploy/*
+!deploy/project-postgres-bootstrap.psql
+!deploy/project-pg_hba.conf

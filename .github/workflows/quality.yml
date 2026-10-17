@@ -145,6 +145,8 @@ jobs:
           uv run pytest -q -m integration --junitxml=artifacts/integration.xml
         env:
           TEST_INTEGRATION: '1'
+          EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+          EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
       - name: Exercise representative bilingual question families
         run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
         env:
