@@ -92,7 +92,7 @@ def test_real_sdk_partial_stream_closes_without_replaying_generation(termination
                 with pytest.raises(expected) as failure:
                     await anext(stream)
                 assert 'private-transport-canary' not in str(failure.value)
+            assert closed
         assert len(requests) == 1
-        assert closed
 
     asyncio.run(run())
