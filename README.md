@@ -322,4 +322,3 @@ to reuse personal data. The production image includes both notice files.
 and document links in CI. It is a consistency check, not a dependency-license or
 legal audit. Existing `v1.1.0` tags remain immutable; use the actual later source
 revision when identifying this licensing change.
-
