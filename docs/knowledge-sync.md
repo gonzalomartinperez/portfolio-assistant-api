@@ -80,11 +80,15 @@ until that separate content review is integrated; no sibling files are edited he
 
 ## Security and maintenance
 
-The API runtime role needs read access to `knowledge_watch`, not write access. The
-worker needs separate narrowly scoped writes to knowledge tables, graph projection
-and spend ledger. Schema creation stays with migration credentials. No admin HTTP
-endpoint starts indexing. Runtime grants are in `deploy/runtime-grants.sql`; exact
-worker login/secret delivery belongs to vps-ops.
+The PostgreSQL API runtime role needs read access to `knowledge_watch`, not write
+access. The worker needs separately scoped PostgreSQL writes to knowledge tables
+and the spend ledger; PostgreSQL schema creation stays with migration credentials.
+These grants are in `deploy/runtime-grants.sql` and do not restrict Neo4j Community
+credentials. Graph projection writes use a privileged credential; fixed API read
+queries do not create a database-enforced reader role. See the
+[graph authorization boundary](graph-retrieval.md#authorization-boundary).
+No admin HTTP endpoint starts indexing. Exact worker login/secret delivery and
+private-network isolation belong to vps-ops.
 
 Retired/staging versions are currently retained for recovery. vps-ops must measure
 disk growth and define a reviewed pruning policy before long-running production;
