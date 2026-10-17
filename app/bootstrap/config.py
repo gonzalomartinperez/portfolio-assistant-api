@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     ops_api_commit: str | None = Field(default=None, pattern=r'^[a-f0-9]{40}$')
     otel_private_endpoint: str | None = None
     ops_trace_sample_ratio: float = Field(default=0.1, ge=0, le=1)
+    feedback_overview_enabled: bool = False
     product_analytics_enabled: bool = False
     secure_cookies: bool = False
     retention_days: int = Field(default=7, ge=1, le=30)
