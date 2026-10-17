@@ -9,6 +9,11 @@ from app.bootstrap.config import settings
 from app.domain.errors import BudgetExhaustedError
 from app.infrastructure.db import connect
 
+MONTHLY_SPEND_SQL = (
+    'SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount '
+    "FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
+)
+
 
 def reserve(
     run_id: str, amount: Decimal, *, connection=connect, cutoff: Decimal | None = None
@@ -18,9 +23,7 @@ def reserve(
     cutoff = cutoff if cutoff is not None else Decimal(settings().reserve_cutoff_usd)
     with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472019)')
-        spent = conn.execute(
-            "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
-        ).fetchone()['amount']
+        spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()['amount']
         if spent + amount > cutoff:
             raise BudgetExhaustedError()
         conn.execute(
@@ -117,9 +120,7 @@ class EmbeddingAccounting:
         identifier = uuid4()
         with self.connection() as conn:
             conn.execute('SELECT pg_advisory_xact_lock(472019)')
-            spent = conn.execute(
-                "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
-            ).fetchone()['amount']
+            spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()['amount']
             if spent + amount > self.monthly:
                 raise BudgetExhaustedError()
             conn.execute(

@@ -9,6 +9,12 @@ from app.application.knowledge import Chunk, Corpus
 from app.domain.errors import RejectedError
 from app.infrastructure.embedding import FixtureEmbeddings, vector
 
+DIRECT_RELATIONSHIPS_QUERY = (
+    'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
+    'WHERE p.normalized IN $names AND (d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/") '
+    'RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12'
+)
+
 
 class KnowledgeIndex:
     def __init__(
@@ -110,8 +116,7 @@ class KnowledgeIndex:
                 with self.graph.session(database=self.database) as graph:
                     direct = graph.run(
                         Query(
-                            'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
-                            'WHERE p.normalized IN $names AND (d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/") RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12',
+                            DIRECT_RELATIONSHIPS_QUERY,
                             timeout=2,
                         ),
                         version=version,
