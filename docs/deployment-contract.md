@@ -409,3 +409,11 @@ application rollback does not remove the index or reverse the database history.
 Restore/recovery procedures remain vps-ops-owned. Read the
 [measured query evidence](verification/database-queries-2026-10-17.md) before release
 selection; synthetic local measurements are not VPS capacity acceptance.
+
+## Software licensing files
+
+The application source uses MIT. `/app/LICENSE` and `/app/THIRD_PARTY_NOTICES.md`
+are shipped read-only and checked by the existing non-root container smoke.
+The OCI MIT label identifies this application's source; dependencies/base images
+keep their own packaged licenses, and personal/career content is outside that grant.
+No package publication, production approval or change to immutable tags follows.

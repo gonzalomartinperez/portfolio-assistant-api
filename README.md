@@ -279,7 +279,7 @@ separately authorized deployment. Main promotion does not authorize publication 
 | Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/agent-skills.md) |
 | Review support and remaining work | [Supported versions](docs/support-policy.md) · [Acceptance checklist](docs/work-checklist.md) |
 
-**License:** no source license has been selected; public visibility does not grant one.
+Software licensing and content scope are documented [below](#software-license).
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
 
 Optional [official-documentation context](docs/bounded-web-context.md) complements
@@ -296,3 +296,16 @@ describe actual patterns, original-history retention, private rating aggregates 
 The [current Neo4j security blocker](docs/verification/neo4j-release-blocker-2026-10-17.md)
 prevents a production-ready claim; the rebuilt vendor candidate did not resolve its
 fixable Jackson findings. No deployment or collection activation is authorized.
+
+## Software license
+
+Application code and first-party engineering documentation use the
+[MIT license](LICENSE). Personal identity, portfolio/career content, screenshots
+and third-party materials retain their separate [scope and notices](THIRD_PARTY_NOTICES.md).
+The software grant does not imply rights over employer/client work or permission
+to reuse personal data. The production image includes both notice files.
+
+`uv run python -m scripts.check_license` validates the standard grant, SPDX metadata
+and document links in CI. It is a consistency check, not a dependency-license or
+legal audit. Existing `v1.1.0` tags remain immutable; use the actual later source
+revision when identifying this licensing change.
