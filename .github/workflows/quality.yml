@@ -110,17 +110,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: inputs.frontend_commit != ''
         with:
-          repository: gonzalomartinperez/portfolio-assistant-web
+          repository: gonzalomartinperez/portfolio-backoffice
           ref: ${{ inputs.frontend_commit }}
           path: frontend-contract
           sparse-checkout: contracts
           persist-credentials: false
-      - name: Verify the paired frontend contract bytes
+      - name: Verify the paired backoffice private contract bytes
         if: inputs.frontend_commit != ''
         run: |
           python - <<'PY'
           from pathlib import Path
-          for name in ('openapi.json', 'sse.schema.json', 'sse.examples.json'):
+          for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
               assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
           PY
       - name: Validate private networks and container limits
