@@ -95,6 +95,14 @@ The stdlib scanner's real Git-history safety cases run in
 `uv run pytest -q tests/test_secret_scanner.py`; fixtures use synthetic markers only.
 Never print matches or treat a passing known-pattern scan as a complete secret audit.
 
+For provider/configuration dependency upgrades, review the exact cumulative release
+notes and required transitive changes before resolving the lock. Run
+`uv run pytest -q tests/test_runtime_compatibility.py tests/test_private_observability.py`
+for real SDK parsing/EOF/timeout/close with synthetic transport, env precedence and safe
+errors. These checks never need a real key. Keep full service/image CI mandatory;
+the [fixed-cohort review](../../../docs/verification/runtime-compatibility-2026-10-17.md)
+records the distinction between compatibility tests and live model evaluation.
+
 
 Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`
 with an isolated project. It runs UID 999, so existing PGDATA ownership must match;

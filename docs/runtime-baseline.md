@@ -6,11 +6,11 @@ baseline/routing/release policy; Coolify remains the sole deployment executor.
 
 | Applicable component | Exact committed lock version |
 | --- | --- |
-| `fastapi` | `0.143.0` |
+| `fastapi` | `0.143.3` |
 | `uvicorn` | `0.54.0` |
-| `openai` | `3.29.0` |
+| `openai` | `3.33.0` |
 | `pydantic` | `2.14.1` |
-| `pydantic-settings` | `2.15.0` |
+| `pydantic-settings` | `2.16.0` |
 | `opentelemetry-sdk` | `1.45.1` |
 | `mypy` | `2.4.0` |
 | `ruff` | `0.17.1` |
@@ -59,3 +59,13 @@ HTTP runtime. The Dockerfile pins its OCI index digest; Ruff is the only changed
 Python package. Neither tool has a declared LTS channel. Python, model, database engines,
 wire contracts and operational payloads remain unchanged. See
 [verification](verification/toolchain-security-2026-10-17.md) for executed checks and limits.
+
+## Fixed runtime compatibility review — October 17, 17:35 UTC
+
+Reviewed the explicit cohort FastAPI0.143.3, OpenAI3.33.0, pydantic-settings2.16.0,
+LangGraph1.2.16, LangChain Core1.6.12 and Neo4j driver6.4.1. LangSmith0.14.9 is the
+minimum required transitive update for Core and remains tracing-disabled; the resolver's
+optional0.14.11 selection was not retained. No checkpoint, database engine, image base,
+model, pricing or public/private contract change is part of this cohort. The older
+October17 toolchain result remains historical evidence. See
+[runtime compatibility evidence](verification/runtime-compatibility-2026-10-17.md).
