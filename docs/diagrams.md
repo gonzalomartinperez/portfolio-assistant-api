@@ -32,7 +32,11 @@ Review at full intrinsic size and in a390px README context, both themes. Check t
 fits its card, connectors do not cross labels, title/legend are legible, original-image
 zoom works and accompanying prose/alt text explains the flow without depending on the
 figure. The compact inline preview is an overview; open the original for small labels.
-Mermaid remains editable and must render on GitHub, not only parse locally. A graphical
+README diagram presentation uses a centered `<p align="center">` and `<picture>`
+with meaningful image alt text; the owned SVG handles both palettes in one asset.
+Captions and Markdown links stay outside the HTML paragraph. Editable Mermaid
+semantics are labeled text-code in collapsed details, not additional uncentered
+rendered diagrams. Inner documentation may render Mermaid; verify it on GitHub. A graphical
 edit is documentation work, never authority to alter contracts or infrastructure.
 
 Local visual evidence is ignored under `.artifacts/architecture-review` in the backoffice
