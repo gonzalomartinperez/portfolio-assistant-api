@@ -429,3 +429,10 @@ are shipped read-only and checked by the existing non-root container smoke.
 The OCI MIT label identifies this application's source; dependencies/base images
 keep their own packaged licenses, and personal/career content is outside that grant.
 No package publication, production approval or change to immutable tags follows.
+
+## Proposed within-project PostgreSQL reuse
+
+[ADR005](adrs/005-project-postgres-consolidation.md) records a proposed single Portfolio
+engine with separate assistant/IAM databases and credentials. It is not implemented
+or tested as a combined topology. Keep existing artifacts/fixtures until its isolation,
+migration, recovery and resource gates pass; vps-ops owns production selection.
