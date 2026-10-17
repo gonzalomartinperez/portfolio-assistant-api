@@ -82,13 +82,18 @@ vulnerability scan or validated VPS capacity. Shared production settings remain
 vps-ops-owned; record unresolved scanner/image availability findings in the handoff.
 
 
-Runtime patch verification uses Python 3.14.8 with uv 0.13.0; the older uv download
+Runtime patch verification uses Python 3.14.8 with uv 0.13.1; the older uv download
 metadata cannot provision that interpreter. Confirm frozen installation on a clean
 environment, then run the maintained commands. Image verification includes a full
 Trivy report and `scripts.image_security`: any CRITICAL or fixable HIGH finding
 blocks CI. Unfixed HIGH findings remain visible and require production assessment;
 a green remediation gate is not deployment approval. Check base-interpreter pip
 and ensurepip exclusion as well as the application venv in container smoke tests.
+
+Use the [dated baseline](../../../docs/runtime-baseline.md) for exact tool versions.
+The stdlib scanner's real Git-history safety cases run in
+`uv run pytest -q tests/test_secret_scanner.py`; fixtures use synthetic markers only.
+Never print matches or treat a passing known-pattern scan as a complete secret audit.
 
 
 Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`

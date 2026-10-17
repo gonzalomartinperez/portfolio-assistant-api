@@ -1,5 +1,10 @@
 # Contributing
 
+Developed and maintained exclusively by Gonzalo Martín Pérez. Suggestions, bug reports
+and constructive feedback are welcome through the repository’s available channels.
+Development priorities, implementation, reviews and releases remain the maintainer’s
+responsibility. Security reports use the private channel in [SECURITY.md](SECURITY.md).
+
 Start with the [local fixture guide](docs/local-development.md),
 [architecture](docs/architecture.md) and [acceptance checklist](docs/release-checklist.md).
 Use a task branch and PR into `develop`. Preserve the public v1 contract and add
@@ -77,7 +82,7 @@ Passing CI alone does not qualify a dependency update. Review scope, transitive
 changes and activation/required-check state before enabling any automated path.
 
 Application and fixture checks use Python 3.14.8 from the frozen uv environment.
-Use uv 0.13.0: older uv 0.12.10 download metadata cannot provision the pinned
+Use uv 0.13.1: older uv 0.12.10 download metadata cannot provision the pinned
 interpreter on a clean checkout. CI and the Docker builder use the same reviewed
 uv version; no global tool installation or lockfile regeneration is required.
 Privileged stdlib-only dependency/release scripts also support runner Python 3.12;
