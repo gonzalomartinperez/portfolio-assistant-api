@@ -62,7 +62,7 @@ configuration objects or structured validation details into logs or CI artifacts
 ## Services and migrations
 
 Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j5.26.32 Community Trixie retained baseline (current patch in the5.26 LTS line).
-The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
+The application uses Python 3.14.8 and the build uses uv 0.13.1, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
 restoration before replacing a Neo4j image; no zero-downtime or reverse store
@@ -374,3 +374,14 @@ blocks production selection; ordinary API/PG CI is not vendor Java acceptance.
 using existing OPS_READ_TOKEN. No migration, service or new volume is required.
 See [privacy and feedback](feedback-and-improvement.md); no raw conversations or
 automatic learning are exposed. Original history retention is unchanged.
+
+## Optional manual evaluation export (not part of API deployment)
+
+The [synthetic-summary CLI](synthetic-evaluation-export.md) is a separately invoked
+development operator tool. It needs no port, migration, writable application path,
+daemon or backoffice feature. The API never creates its client. Do not provision
+`EVALUATION_LANGSMITH_API_KEY` in normal API/worker/Coolify environments or enable
+global tracing. A separately approved manual export uses that server-side process
+environment credential and the fixed HTTPS LangSmith endpoint/project documented
+there. No account or external export has been activated or tested. Existing OTLP/OPS
+runtime delivery remains unchanged; public/SSE/private schemas are unchanged.
