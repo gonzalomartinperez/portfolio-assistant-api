@@ -14,11 +14,15 @@ def license_findings(root: Path) -> list[str]:
     try:
         source = (root / 'LICENSE').read_text()
         start = source.find('Permission is hereby granted, free of charge,')
+        header = [line.strip() for line in source[:start].splitlines() if line.strip()]
         grant = re.sub(r'\s+', ' ', source[start:]).strip()
         if (
-            not source.startswith('MIT License\n')
-            or not re.search(
-                r'^Copyright \(c\) \d{4}(?:-\d{4})? \S.+$', source, re.MULTILINE
+            not header
+            or header[0] != 'MIT License'
+            or len(header) < 2
+            or any(
+                not re.fullmatch(r'Copyright \(c\) \d{4}(?:-\d{4})? \S.+', line)
+                for line in header[1:]
             )
             or re.search(r'<[^>]+>', source[:start])
             or start < 0

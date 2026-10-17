@@ -35,6 +35,7 @@ def test_actual_repository_and_complete_fixture_are_consistent(licensed_fixture)
     'mutation',
     [
         'restriction',
+        'preface-restriction',
         'year-placeholder',
         'holder-placeholder',
         'manifest',
@@ -47,7 +48,15 @@ def test_actual_repository_and_complete_fixture_are_consistent(licensed_fixture)
 )
 def test_invalid_licensing_is_rejected(licensed_fixture, mutation):
     root = licensed_fixture
-    if mutation == 'restriction':
+    if mutation == 'preface-restriction':
+        source = (root / 'LICENSE').read_text()
+        (root / 'LICENSE').write_text(
+            source.replace(
+                'Permission is hereby granted,',
+                'No commercial use.\n\nPermission is hereby granted,',
+            )
+        )
+    elif mutation == 'restriction':
         with (root / 'LICENSE').open('a') as source:
             source.write('\nNo commercial use.\n')
     elif mutation in ('year-placeholder', 'holder-placeholder'):
