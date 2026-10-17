@@ -20,12 +20,18 @@ frontend builds or command output. Fixture mode performs no paid model calls.
 | EMBEDDINGS_PROVIDER | fixture | fixture hash64-v1 (64D) or authorized openai text-embedding-3-small (1536D) |
 | ALLOW_PAID_AI | false | Requires openai provider, a key and separate owner authorization |
 | OPENAI_API_KEY | unset | Server-only; never read/use a real key without authorization |
-| OPENAI_MODEL | gpt-6-luna | Only gpt-6-luna accepted; account access remains unverified |
+| OPENAI_MODEL | gpt-6-luna | Only gpt-6-luna accepted; [bounded live verification](verification/bounded-live-smoke-2026-10-17.md) does not guarantee ongoing account availability or authorize further spending |
 | MONTHLY_BUDGET_USD | 10.00 | Positive finite ceiling, at most approved USD 10; not spending authorization |
 | RESERVE_CUTOFF_USD | 10.00 | Atomic admission ceiling, at most monthly budget |
 | RESERVATION_USD | 0.05 | Must conservatively cover bounded maximum input/output at configured prices |
 | INPUT_USD_PER_MILLION / OUTPUT_USD_PER_MILLION | 0.10 / 0.50 | Fixture configuration examples, **not a current model price claim**; explicitly configure for production paid mode |
-| LANGSMITH_TRACING / LANGCHAIN_TRACING_V2 | disabled by fixture script/image | Enabling either is rejected; external tracing is out of scope |
+| LANGSMITH_TRACING / LANGCHAIN_TRACING_V2 | disabled by fixture script/image | Automatic tracing is rejected; the separate manual synthetic-summary tool is not API tracing |
+
+`EVALUATION_LANGSMITH_API_KEY` belongs only to a separately authorized development
+operator process, not application Settings, `.env.local` auto-loading or normal
+API/worker/Coolify provisioning. There is no exporter startup switch. The manual
+CLI validates offline unless explicitly authorized; see its complete
+[configuration and data boundary](synthetic-evaluation-export.md).
 
 Compose-only variables: `COMPOSE_PROJECT_NAME`, `POSTGRES_PORT`, `NEO4J_PORT`,
 `NEO4J_HTTP_PORT`. `ASSISTANT_PROJECT` sets the project selected by the fixture

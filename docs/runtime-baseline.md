@@ -69,3 +69,10 @@ optional0.14.11 selection was not retained. No checkpoint, database engine, imag
 model, pricing or public/private contract change is part of this cohort. The older
 October17 toolchain result remains historical evidence. See
 [runtime compatibility evidence](verification/runtime-compatibility-2026-10-17.md).
+
+Subsequent to the immutable v1.1.0 tag, the
+[manual synthetic-summary exporter](synthetic-evaluation-export.md) promotes the
+same LangSmith0.14.9 to a direct dependency; all 79 resolved package names/versions
+remain identical. This is source behavior after the cohort above, not an SDK upgrade
+or activation of global tracing. Record the actual later source commit in any release
+manifest; do not relabel or move the existing tag.

@@ -1,7 +1,9 @@
-> Latest local evidence: [244-turn authorized OpenAI evaluation](verification/live-depth-2026-10-10.md),
-> followed by targeted regressions and database cleanup. Older checkpoints below
-> are historical; successful transport is not a universal answer-quality or
-> production-readiness claim. Main and the portfolio assistant remain unchanged.
+> Latest bounded evidence: [six-case v1.1.0 smoke](verification/bounded-live-smoke-2026-10-17.md).
+> The larger [244-turn authorized evaluation](verification/live-depth-2026-10-10.md)
+> remains historical evidence. The audit below describes its dated source, including
+> older service versions and telemetry policy; current configuration is documented
+> in [the runtime contract](deployment-contract.md). Successful transport is not a
+> universal answer-quality or production-readiness claim. The public assistant remains off.
 
 # Audit and live-evaluation readiness · 2026-10-04
 
