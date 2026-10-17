@@ -9,7 +9,6 @@ import pytest
 from app.application.web_context import WebReference, WebSupplement, supplement
 from app.bootstrap.config import Settings
 from app.domain.web_policy import TOPICS, approved_web_url, technical_topic
-from app.infrastructure.web_ledger import WebAccounting
 from app.infrastructure.web_search import OpenAIWebSearch
 
 
@@ -215,9 +214,11 @@ def test_feature_configuration_fails_closed_and_full_window_reservation():
     with pytest.raises(ValidationError):
         Settings(_env_file=None, web_search_enabled=True)
     config = Settings(_env_file=None)
-    ledger = WebAccounting(None, config)
-    assert ledger.maximum == Decimal('0.231536')
-    assert ledger.cost(100, 50, 1) == Decimal('0.010035')
+    from app.domain.web_budget import WebBudget
+
+    budget = WebBudget(Decimal(9), Decimal('0.10'), Decimal('0.50'), Decimal('0.01'))
+    assert budget.maximum == Decimal('0.231536')
+    assert budget.cost(100, 50, 1) == Decimal('0.010035')
     assert not config.web_search_enabled
 
 

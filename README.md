@@ -246,7 +246,7 @@ separately authorized deployment. Main promotion does not authorize publication 
 | Work | Start here |
 | --- | --- |
 | Install, configure and connect | [Local development](docs/local-development.md) · [Environment](docs/environment.md) |
-| Understand policy and boundaries | [Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) |
+| Understand policy and boundaries | [Architecture](docs/architecture.md) · [Engineering coordination](docs/engineering-coordination.md) · [Threat model](docs/threat-model.md) |
 | Integrate a client or refresh types | [API contract](docs/api-contract.md) · [Frontend handoff](docs/frontend-handoff.md) |
 | Maintain public knowledge | [Knowledge synchronization](docs/knowledge-sync.md) |
 | Operate private measurements | [Observability](docs/private-observability.md) |
