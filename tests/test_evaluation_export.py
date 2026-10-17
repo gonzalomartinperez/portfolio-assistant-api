@@ -197,3 +197,24 @@ def test_opt_in_uses_only_explicit_evaluation_key(monkeypatch, tmp_path, summary
     monkeypatch.setenv('ENVIRONMENT', 'production')
     with pytest.raises(ValueError):
         run(path, authorize_export=True)
+
+
+@pytest.mark.parametrize(
+    'name',
+    ['LANGSMITH_USE_PYO3_CLIENT', 'LANGSMITH_RUNS_ENDPOINTS', 'LANGCHAIN_ENDPOINT'],
+)
+def test_false_string_does_not_authorize_other_sdk_environment_hooks(
+    monkeypatch, tmp_path, summary, name
+):
+    path = tmp_path / 'summary.json'
+    path.write_text(json.dumps(asdict(summary)))
+    monkeypatch.setenv(name, 'false')
+    with pytest.raises(ValueError, match='clean development'):
+        run(path, authorize_export=True)
+
+
+def test_deep_json_is_rejected_safely(tmp_path):
+    path = tmp_path / 'summary.json'
+    path.write_text('[' * 1000 + '0' + ']' * 1000)
+    with pytest.raises(ValueError):
+        run(path)

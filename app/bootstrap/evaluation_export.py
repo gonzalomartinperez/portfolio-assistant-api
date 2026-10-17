@@ -8,13 +8,23 @@ from pathlib import Path
 from app.application.evaluation_export import EvaluationSummary, export_evaluation
 from app.infrastructure.evaluation_export import LangSmithEvaluationExporter
 
+DISABLED_TRACING_FLAGS = {
+    'LANGSMITH_TRACING',
+    'LANGSMITH_TRACING_V2',
+    'LANGCHAIN_TRACING',
+    'LANGCHAIN_TRACING_V2',
+}
+
 
 def run(path: Path, *, authorize_export: bool = False) -> str:
     with path.open('rb') as source:
         data = source.read(2049)
     if len(data) > 2048:
         raise ValueError('summary exceeds input limit')
-    payload = json.loads(data)
+    try:
+        payload = json.loads(data)
+    except ValueError, RecursionError:
+        raise ValueError('invalid evaluation summary JSON') from None
     fields = {'source_commit', 'cases', 'completed', 'failed', 'total_ms', 'scope'}
     if not isinstance(payload, dict) or set(payload) != fields:
         raise ValueError('summary requires exactly the documented aggregate fields')
@@ -23,7 +33,9 @@ def run(path: Path, *, authorize_export: bool = False) -> str:
         return export_evaluation(summary, authorized=False)
     # Explicit keys only. Reject SDK environment overrides, profiles and tracing modes.
     if os.environ.get('ENVIRONMENT', 'development') != 'development' or any(
-        name.startswith(('LANGSMITH_', 'LANGCHAIN_')) and value not in ('', 'false')
+        name.startswith(('LANGSMITH_', 'LANGCHAIN_'))
+        and value != ''
+        and not (name in DISABLED_TRACING_FLAGS and value == 'false')
         for name, value in os.environ.items()
     ):
         raise ValueError('export requires a clean development evaluation environment')
