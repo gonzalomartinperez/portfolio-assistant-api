@@ -31,7 +31,7 @@ services:
       interval: 5s
       retries: 10
   neo4j:
-    image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
+    image: neo4j:5.26.32-community-trixie@sha256:0a6e7aedf54a531f76286032d4365ead65b11cca05e4a15cdf23b8e53d6db02b
     environment:
       NEO4J_AUTH: neo4j/change-me
       NEO4J_server_memory_heap_initial__size: 256m

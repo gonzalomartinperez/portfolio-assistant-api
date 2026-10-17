@@ -354,3 +354,13 @@ bounded anonymous event dedupe/daily aggregates. See [product analytics](product
 for quotas, provisional local retention and private route exclusion. The maintenance
 job must continue expiry when collection is off; backup expiry/restore, lawful basis,
 notice and production resource acceptance remain owner/ops gates.
+
+## Neo4j immutable vendor refresh
+
+The current5.26.32 candidate is a republished vendor index; equal version labels do
+not mean equal bytes. See [exact references, historical issues and release scan
+procedure](verification/neo4j-vendor-refresh-2026-10-17.md). Normal API/PG CI alone
+does not scan the complete Neo4j Java inventory. Manually dispatch Quality for the
+candidate source and preserve the full scanner receipt before release selection.
+Unresolved critical applicability, store recovery and actual VPS acceptance remain
+release gates; no clean-stack or production-approval claim is made.
