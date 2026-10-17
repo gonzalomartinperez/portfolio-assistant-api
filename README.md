@@ -13,7 +13,10 @@ owns the reasoning, contracts and persistence behind it.
 
 > **Current state:** implemented and verified locally with deterministic fixtures and
 > separately documented real-model evaluations. The public portfolio assistant remains
-> disabled. Image publication, production deployment and monitoring activation are separate approvals.
+> disabled. Production release remains blocked by the
+> [dated Neo4j vendor findings](docs/verification/neo4j-release-blocker-2026-10-17.md).
+> Source validation does not waive that hold. Publication, deployment and monitoring
+> activation require separate approval.
 
 ## What this backend does
 
@@ -25,6 +28,8 @@ owns the reasoning, contracts and persistence behind it.
 | Current portfolio knowledge | A synchronization worker observes approved public revisions and activates complete, versioned indexes. |
 | Reliable streaming | Explicit completion, interruption and cancellation; owned sessions/history and CSRF protection. |
 | Private operations | Availability, corpus freshness, execution outcomes, latency and estimated usage without exposing transcripts. |
+| Optional website counts | Default-off, bounded accepted interactions with quotas and seven-day aggregates; no visitor journeys. |
+| Answer feedback | Default-off private current-rating counts and a reviewed improvement process; no raw-chat export or automatic training. |
 
 The live provider is **OpenAI only**, using **GPT-6 Luna with medium reasoning effort**.
 There is no alternate-model fallback or automatic billed generation retry. An unavailable
@@ -134,7 +139,7 @@ Import-boundary tests enforce this direction. Strict mypy covers the inner layer
 contracts. Cancellation, deadlines and cleanup are part of application behavior.
 
 The [portfolio](https://github.com/gonzalomartinperez/portfolio) owns the public UI and
-approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-assistant-backoffice)
+approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-backoffice)
 owns authenticated operations. Private **vps-ops** owns Coolify, proxy/TLS, production
 composition, secrets, release selection and recovery. This repository owns its application
 image, migrations and runtime contract.
@@ -263,3 +268,12 @@ portfolio evidence through closed technical topics; no autonomous browsing or ca
 facts from general search. It defaults off and shares the application spend ceiling.
 
 Shared runtime/version acceptance: [runtime baseline](docs/runtime-baseline.md).
+
+## Privacy and release gates
+
+Volunteered context supports useful follow-ups; it is not automatic model training.
+[Context minimization and the human improvement loop](docs/feedback-and-improvement.md)
+describe actual patterns, original-history retention, private rating aggregates and limits.
+The [current Neo4j security blocker](docs/verification/neo4j-release-blocker-2026-10-17.md)
+prevents a production-ready claim; the rebuilt vendor candidate did not resolve its
+fixable Jackson findings. No deployment or collection activation is authorized.

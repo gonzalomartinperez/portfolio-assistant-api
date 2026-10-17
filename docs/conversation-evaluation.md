@@ -18,8 +18,8 @@ increasing budgets or adding routing/model calls. Before provider I/O, the final
 JSON-escaped message text is measured in UTF-8 bytes, including 1,024 bytes of
 framing allowance, against the existing 110,000-token conservative input ceiling.
 Oversized serialized input fails safely without calling the provider; any prior
-reservation remains held under the existing conservative failure policy. The 8,192-token model ceiling includes reasoning and visible output; the prior 500-token model output
-and 12,000-character application bounds remain; live completeness needs evaluation.
+reservation remains held under the existing conservative failure policy. The 8,192-token model ceiling includes reasoning and visible output; the application independently caps visible output at40,000 characters. Live
+completeness still needs evaluation.
 
 Profile overview retrieval prioritizes public profile content. Professional
 questions exclude repository editorial/development instructions. Explicit employer
@@ -159,3 +159,7 @@ its topic. It cannot resolve arbitrary discourse or recover a topic already outs
 that window. Corrections with explicit new subjects are preferable to guessing.
 Unknown information, nuanced role-fit reasoning, translation and personality retain
 the live-evaluation gate above. Do not describe fixture success as production quality.
+
+Common visitor identifier patterns are minimized before retrieval/provider requests,
+without filtering approved public evidence. Stored original history retains its existing
+policy. See [privacy and improvement](feedback-and-improvement.md) for exact limits.

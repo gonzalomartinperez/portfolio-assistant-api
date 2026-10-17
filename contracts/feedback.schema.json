@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "basis": {
+      "const": "retained_answer_creation",
+      "default": "retained_answer_creation",
+      "title": "Basis",
+      "type": "string"
+    },
+    "down": {
+      "maximum": 1000000000000,
+      "minimum": 0,
+      "title": "Down",
+      "type": "integer"
+    },
+    "observed_at": {
+      "maxLength": 40,
+      "title": "Observed At",
+      "type": "string"
+    },
+    "project": {
+      "const": "portfolio",
+      "default": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "up": {
+      "maximum": 1000000000000,
+      "minimum": 0,
+      "title": "Up",
+      "type": "integer"
+    },
+    "window_days": {
+      "const": 7,
+      "default": 7,
+      "title": "Window Days",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "observed_at",
+    "up",
+    "down"
+  ],
+  "title": "FeedbackView",
+  "type": "object"
+}

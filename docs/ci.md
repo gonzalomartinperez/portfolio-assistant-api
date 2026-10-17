@@ -248,3 +248,25 @@ Dependabot PR #48 replaced conflicted #44 through native maintenance, included
 updates received manual review. Protections still require strict up-to-date `checks`
 with administrators enforced; no blocking review or gate was bypassed. No open
 Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation.
+
+## Vendor database release assessment
+
+An explicit manual Quality dispatch with `verify_vendor_image=true` additionally scans the exact pinned Neo4j OS
+and Java inventory without adding a second build or server lifecycle. Normal PR
+coverage is unchanged; it does not claim this expensive Java release assessment ran.
+See [receipt and unresolved release gates](verification/neo4j-vendor-refresh-2026-10-17.md).
+Implicit Docker build-record artifact upload is disabled; build logs/summaries remain.
+
+The default false input runs ordinary complete source/runtime validation; it is not
+an accepted database assessment. Selected-digest OS/Java assessment and every unresolved
+critical finding remain mandatory **external release-selection gates** for vps-ops.
+No publication/deployment controller is activated here. The rejected candidate run and
+known baseline findings remain recorded; no source tag waives them.
+
+The optional `workflow_call` inputs retain their historical `frontend_commit` /
+`frontend_image` names for caller compatibility. The selected source is now canonical
+`portfolio-backoffice`, and pairing compares the actual private operations, product
+and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
+chat consumer and cannot establish native portfolio compatibility. Current native
+browser/API verification belongs to the portfolio. This opt-in source comparison is
+not live OAuth/HTTPS pairing or a release-controller/deployment authorization.

@@ -74,3 +74,14 @@ OpenAI mode and paid allowance. The existing backend-only OpenAI key is reused.
 No new service, volume or migration is needed. See [bounded web policy](bounded-web-context.md)
 for exact routing, privacy, cache, accounting and failure semantics. Production
 activation remains separately authorized and vps-ops-owned.
+
+## Optional product interaction counts
+
+`PRODUCT_ANALYTICS_ENABLED` is a runtime boolean, default false. See
+[product analytics](product-analytics.md) for the separate v1 schema, global quotas,
+local retention, no-cookie ingestion and private aggregate boundary. No browser
+secret or additional service is required. Enabling production is not authorized.
+
+`FEEDBACK_OVERVIEW_ENABLED` is a runtime boolean, default false, gating a private
+current-rating aggregate only. It does not enable public collection, raw message
+review or training. See [feedback and improvement](feedback-and-improvement.md).

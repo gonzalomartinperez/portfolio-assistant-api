@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [develop, main]
   workflow_dispatch:
+    inputs:
+      verify_vendor_image:
+        description: 'Deep OS/Java vendor assessment; required separately before release selection'
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       frontend_image:
@@ -20,7 +25,7 @@ env:
   AI_PROVIDER: fixture
   ALLOW_PAID_AI: 'false'
   LANGSMITH_TRACING: 'false'
-  DOCKER_BUILD_RECORD_RETENTION_DAYS: '7'
+  DOCKER_BUILD_RECORD_UPLOAD: 'false'
 jobs:
   static:
     name: Static and offline
@@ -105,17 +110,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: inputs.frontend_commit != ''
         with:
-          repository: gonzalomartinperez/portfolio-assistant-web
+          repository: gonzalomartinperez/portfolio-backoffice
           ref: ${{ inputs.frontend_commit }}
           path: frontend-contract
           sparse-checkout: contracts
           persist-credentials: false
-      - name: Verify the paired frontend contract bytes
+      - name: Verify the paired backoffice private contract bytes
         if: inputs.frontend_commit != ''
         run: |
           python - <<'PY'
           from pathlib import Path
-          for name in ('openapi.json', 'sse.schema.json', 'sse.examples.json'):
+          for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
               assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
           PY
       - name: Validate private networks and container limits
@@ -180,6 +185,19 @@ jobs:
           print(json.dumps(result))
           raise SystemExit(bool(result['fixable_critical'] or result['fixable_high']))
           PY
+      - name: Deep-scan the exact Neo4j vendor image for release assessment
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image
+        run: |
+          reference=$(uv run python -c "import yaml; from pathlib import Path; print(yaml.safe_load(Path('compose.yaml').read_text())['services']['neo4j']['image'])")
+          /tmp/image-scanner/trivy --config '' image --image-src docker \
+            --ignorefile '' --scanners vuln --list-all-pkgs --timeout 10m --format json \
+            --output artifacts/neo4j-vulnerabilities.json "$reference"
+          docker image inspect "$reference" --format '{{.Id}}' > artifacts/neo4j-image-id.txt
+          /tmp/image-scanner/trivy --config '' version --format json > artifacts/scanner-version.json
+          uv run python -m scripts.database_security_receipt \
+            --report artifacts/neo4j-vulnerabilities.json \
+            --image-id-file artifacts/neo4j-image-id.txt \
+            --scanner-version artifacts/scanner-version.json --reference "$reference"
       - name: Verify image streaming and graceful shutdown
         run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
       - name: Verify proxy routing and stream cancellation

@@ -121,3 +121,10 @@ question count is coverage, not additional approved biographical facts.
 - Runtime handoff is committed and application artifacts verified. Publication,
   paired OAuth/browser acceptance and production infrastructure remain explicit
   owner gates; source integration does not claim those gates are complete.
+
+## October17 closeout
+
+- Completed: default-off product-event contract/SQL bounds in PR70;451offline+30real-service tests passed.
+- In progress: voluntary-context minimization, private current-rating summary and typed BO consumer; no automatic training or raw export.
+- Blocked: vendor Neo4j release, four fixable Jackson HIGH findings and unresolved header CRITICAL; rejected same-version candidate is preserved in draft PR71.
+- Deferred to explicit approval/ops: production, collection activation, live OAuth/provider testing, capacity and off-server recovery.

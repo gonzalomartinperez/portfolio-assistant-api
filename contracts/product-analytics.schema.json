@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "ProductCount": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "day": {
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "title": "Day",
+          "type": "string"
+        },
+        "event_name": {
+          "enum": [
+            "page_view",
+            "navigation_click",
+            "section_open",
+            "cv_link_open",
+            "contact_link_open",
+            "company_link_open"
+          ],
+          "title": "Event Name",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "en",
+            "es"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "section": {
+          "enum": [
+            "home",
+            "about",
+            "work",
+            "filomena",
+            "stack",
+            "education",
+            "cv",
+            "contact"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 32,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "day",
+        "event_name",
+        "section",
+        "locale",
+        "target",
+        "count"
+      ],
+      "title": "ProductCount",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "country": {
+      "const": "unknown",
+      "title": "Country",
+      "type": "string"
+    },
+    "counts": {
+      "items": {
+        "$ref": "#/$defs/ProductCount"
+      },
+      "maxItems": 4000,
+      "title": "Counts",
+      "type": "array"
+    },
+    "project": {
+      "const": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "window_days": {
+      "const": 7,
+      "title": "Window Days",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "window_days",
+    "country",
+    "counts"
+  ],
+  "title": "ProductSnapshot",
+  "type": "object"
+}
