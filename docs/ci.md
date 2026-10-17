@@ -13,7 +13,7 @@ the required gate. New commits cancel stale runs for the same PR/ref.
 
 | Job | Purpose | Dependencies |
 | --- | --- | --- |
-| Static and offline | Pinned actionlint, frozen install, Ruff format/lint, strict mypy, pure tests, redacted history scan, deterministic contract drift | None |
+| Static and offline | Pinned actionlint, frozen install, licensing consistency, Ruff format/lint, strict mypy, pure tests, redacted history scan, deterministic contract drift | None |
 | Real services and container | Real PostgreSQL/Neo4j migrations/indexing/integration tests; build image once, test non-root SSE/shutdown and actual Nginx routing | None |
 | checks | Required aggregate; fails unless both jobs succeed, including cancelled/skipped failures | Both, with `always()` |
 

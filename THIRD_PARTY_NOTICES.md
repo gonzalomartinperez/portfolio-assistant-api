@@ -37,3 +37,8 @@ not a hosted service or tracking widget. Locked vendor semantic conventions incl
 a beta version; support decisions are explicit in docs/support-policy.md.
 The README technology chips are repository-authored SVG text/surfaces, with no
 external logo/font assets or network badge service.
+
+The software grant follows the [standard MIT text](https://opensource.org/license/mit).
+Project metadata uses the [Python SPDX/license-file specification](https://packaging.python.org/en/latest/specifications/pyproject-toml/#license).
+Scope notices stay separate rather than changing the grant. The first repository
+commit is dated 2026; the license preserves the owner's established 2026 copyright.
