@@ -2,8 +2,21 @@
 
 from dataclasses import dataclass
 from typing import Protocol
+from uuid import UUID
 
 from app.domain.web_policy import WebTopic, approved_web_url, technical_topic
+
+
+class SearchAccounting(Protocol):
+    async def reserve(self) -> UUID:
+        """Reserve search fee plus bounded model tokens before network I/O."""
+        ...
+
+    async def settle(
+        self, identifier: UUID, input_tokens: int, output_tokens: int, calls: int
+    ) -> None:
+        """Unknown/interrupted usage retains its reservation."""
+        ...
 
 
 @dataclass(frozen=True)

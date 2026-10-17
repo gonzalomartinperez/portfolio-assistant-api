@@ -36,9 +36,11 @@ is verified and capped before a fixture or Responses provider generates text.
 Only intentionally public progress and deltas reach SSE. Completion atomically
 persists the assistant message/citations and run state before terminal delivery.
 
-There are no assistant tools, browsing, shell capabilities, arbitrary queries or
-indexing HTTP endpoints. Indexing is an operator CLI over approved public sources.
-No conversation text is copied into knowledge or a long-term memory store.
+The final answer model has no autonomous tools, shell capabilities, arbitrary queries
+or indexing HTTP endpoints. Optional official-documentation context uses a closed-topic
+search adapter with separate accounting; see [its boundaries](bounded-web-context.md).
+Indexing is an operator CLI over approved public sources. No conversation text is
+copied into knowledge or a long-term memory store.
 
 ## Transactions and concurrency
 
@@ -102,3 +104,47 @@ Infrastructure queues/persists them and optionally exports manual private OTLP.
 Presentation owns the versioned bearer-authenticated operational read API.
 No operational payload is sent through public chat/SSE or shares visitor identifiers.
 See [private observability](private-observability.md) for retention and drop semantics.
+
+## Enforced architectural contracts
+
+`tests/test_architecture.py` exercises the real stdlib AST checker in
+`scripts/check_architecture.py`, including negative examples. Run it alone with
+`uv run python -m scripts.check_architecture`; the existing required Quality job
+runs the same guard through the offline test suite. No extra build or service is needed.
+
+The guard resolves absolute, relative and `from package import module` dependencies,
+checks module cycles, rejects unclassified application packages and prevents dynamic
+import/code-loading bypasses. Domain/application reject third-party dependencies and
+selected direct platform I/O imports. This is a regression guard, not a Python sandbox
+or proof that arbitrary standard-library code is side-effect free; review still checks
+behavior and capability ownership.
+
+Five existing operator modules (`db`, `ledger`, `migrations`, `indexing`, `checkpoints`)
+retain explicit `bootstrap.config` defaults for compatibility with documented CLI
+commands. The allowlist names these modules individually; it grants no general
+infrastructure-to-bootstrap permission. New adapters receive their inputs explicitly.
+
+Search pricing now belongs to immutable `domain.web_budget.WebBudget`. Application owns
+`SearchAccounting`; the OpenAI search adapter consumes that port, and PostgreSQL
+implements it. Bootstrap converts validated configuration into decimal policy values
+and injects them. The database adapter owns atomic reservation/settlement; the policy
+owns the full-window ceiling, long-context rates and rounding. Neither pricing nor
+its tests require Pydantic, OpenAI, PostgreSQL or environment variables. Existing wire
+contracts, billed-call cancellation policy and runtime defaults remain unchanged.
+
+```mermaid
+flowchart LR
+    HTTP[HTTP / SSE adapter] --> APP[Application use cases and ports]
+    AI[Injected AI orchestration] --> APP
+    SQL[PostgreSQL accounting adapter] --> APP
+    OPENAI[OpenAI adapter] --> APP
+    APP --> DOMAIN[Pure domain policies]
+    SQL --> DOMAIN
+    ROOT[Bootstrap composition] --> HTTP
+    ROOT --> AI
+    ROOT --> SQL
+    ROOT --> OPENAI
+```
+
+See [engineering coordination](engineering-coordination.md) for cross-session ownership
+and the primary references behind these adaptations.

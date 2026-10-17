@@ -1,36 +1,16 @@
 """Search shares the atomic monthly ledger; no unknown usage is treated as free."""
 
 import asyncio
-from decimal import ROUND_CEILING, Decimal
 from uuid import UUID, uuid4
 
-from app.bootstrap.config import Settings
 from app.domain.errors import BudgetExhaustedError
+from app.domain.web_budget import WebBudget
 
 
 class WebAccounting:
-    def __init__(self, connection, config: Settings):
+    def __init__(self, connection, budget: WebBudget):
         self.connection = connection
-        self.cutoff = Decimal(config.reserve_cutoff_usd)
-        self.input_price = Decimal(config.input_usd_per_million)
-        self.output_price = Decimal(config.output_usd_per_million)
-        self.fee = Decimal(config.web_search_usd_per_call)
-        # Built-in retrieval can add input beyond our fixed query. Cover the full model window at long-context rates.
-        self.maximum = self.cost(1050000, 2048, 2)
-
-    def cost(self, inputs: int, outputs: int, calls: int) -> Decimal:
-        if min(inputs, outputs, calls) < 0:
-            raise ValueError('invalid web usage')
-        input_multiplier = 2 if inputs > 272000 else 1
-        output_multiplier = Decimal('1.5') if inputs > 272000 else Decimal(1)
-        return (
-            (
-                Decimal(inputs) * self.input_price * input_multiplier
-                + Decimal(outputs) * self.output_price * output_multiplier
-            )
-            / Decimal(1000000)
-            + self.fee * calls
-        ).quantize(Decimal('0.000001'), rounding=ROUND_CEILING)
+        self.budget = budget
 
     async def reserve(self) -> UUID:
         def operation():
@@ -40,11 +20,11 @@ class WebAccounting:
                 spent = conn.execute(
                     "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now(),'UTC')"
                 ).fetchone()['amount']
-                if spent + self.maximum > self.cutoff:
+                if spent + self.budget.maximum > self.budget.cutoff:
                     raise BudgetExhaustedError()
                 conn.execute(
                     'INSERT INTO spend_ledger(id,kind,reserved_usd) VALUES (%s,%s,%s)',
-                    (identifier, 'web_search', self.maximum),
+                    (identifier, 'web_search', self.budget.maximum),
                 )
             return identifier
 
@@ -53,7 +33,7 @@ class WebAccounting:
     async def settle(
         self, identifier: UUID, input_tokens: int, output_tokens: int, calls: int
     ) -> None:
-        cost = self.cost(input_tokens, output_tokens, calls)
+        cost = self.budget.cost(input_tokens, output_tokens, calls)
 
         def operation():
             with self.connection() as conn:

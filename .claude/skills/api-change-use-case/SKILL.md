@@ -17,8 +17,9 @@ for information the repository already supplies.
    read [coding conventions](../../../CONTRIBUTING.md) when changing code.
 2. Put invariants in domain and orchestration/consumed ports in application.
    Neither imports ai, infrastructure, presentation or bootstrap. AI must use
-   injected capabilities. The sole existing infrastructure exception is the CLI
-   settings import from bootstrap.config; do not generalize it into a service locator.
+   injected capabilities. Only the five documented legacy CLI modules may import bootstrap.config;
+   new adapters receive inputs explicitly. Run `uv run python -m scripts.check_architecture`
+   for fast feedback; its negative probes run in the normal offline suite.
 3. For session or abuse-limit changes, inspect [conversation policy](../../../app/application/conversations.py),
    [atomic storage](../../../app/infrastructure/conversations.py) and the relevant
    [threat-model](../../../docs/threat-model.md) section. Ownership is checked on
