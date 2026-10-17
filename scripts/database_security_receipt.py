@@ -219,7 +219,7 @@ def main() -> None:
             json.loads(args.scanner_version.read_text()),
             expected,
         )
-    except OSError, ValueError, TypeError:
+    except OSError, ValueError, TypeError, KeyError, IndexError, AttributeError:
         raise SystemExit(
             'Missing, incomplete or mismatched vendor security receipt'
         ) from None

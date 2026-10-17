@@ -252,3 +252,45 @@ def test_vendor_assessment_is_explicit_and_cannot_be_softened():
     selected = json.loads(Path('deploy/neo4j-image.json').read_text())
     compose = yaml.safe_load(Path('compose.yaml').read_text())
     assert selected['reference'] == compose['services']['neo4j']['image']
+
+
+@pytest.mark.parametrize(
+    'failure',
+    [
+        KeyError('synthetic-private'),
+        IndexError('synthetic-private'),
+        AttributeError('synthetic-private'),
+    ],
+)
+def test_malformed_registry_descriptor_has_bounded_cli_diagnostics(
+    monkeypatch, capsys, failure
+):
+    import sys
+
+    import scripts.database_security_receipt as module
+
+    def invalid(expected):
+        raise failure
+
+    monkeypatch.setattr(module, 'verify_registry', invalid)
+    monkeypatch.setattr(
+        sys,
+        'argv',
+        [
+            'receipt',
+            '--report',
+            'unused',
+            '--image-id-file',
+            'unused',
+            '--scanner-version',
+            'unused',
+            '--reference',
+            REFERENCE,
+        ],
+    )
+    with pytest.raises(SystemExit) as result:
+        module.main()
+    assert (
+        str(result.value) == 'Missing, incomplete or mismatched vendor security receipt'
+    )
+    assert 'synthetic-private' not in capsys.readouterr().out
