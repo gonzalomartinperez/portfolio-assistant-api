@@ -3,6 +3,8 @@
 !Dockerfile
 !pyproject.toml
 !uv.lock
+!LICENSE
+!THIRD_PARTY_NOTICES.md
 !app/
 !app/**
 !migrations/

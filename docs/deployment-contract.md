@@ -62,7 +62,7 @@ configuration objects or structured validation details into logs or CI artifacts
 ## Services and migrations
 
 Tested services: PostgreSQL 18.6 with pgvector 0.8.7; Neo4j5.26.32 Community Trixie retained baseline (current patch in the5.26 LTS line).
-The application uses Python 3.14.8 and the build uses uv 0.13.0, each pinned by
+The application uses Python 3.14.8 and the build uses uv 0.13.1, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
 restoration before replacing a Neo4j image; no zero-downtime or reverse store
@@ -320,6 +320,13 @@ limits. SDK network shutdown remains best effort under underlying DNS/socket beh
 Readiness checks verify schema/corpus and stores, not paid OpenAI service availability.
 No model request runs on health checks or scrape requests.
 
+Provider HTTPS uses verified TLS, no redirects, no inherited proxy/CA settings and
+no automatic retries. Native SDK pool defaults are unchanged and are not a measured
+VPS concurrency budget. All owned cleanup is attempted; failures remain visible.
+Read [the transport handoff](verification/provider-transport-2026-10-17.md) before
+changing egress, certificates or termination settings. No HTTP/2 dependency or
+server protocol change is required for this increment.
+
 Backoffice compatibility reference: `618aa914ced48bf08ba8d613537ecd28ef797d5e`. The
 private v1 schema and synthetic example are in contracts/. Chat HTTP/SSE schemas
 remain unchanged. Effective Coolify routing, exporter connectivity, dashboard
@@ -374,3 +381,46 @@ blocks production selection; ordinary API/PG CI is not vendor Java acceptance.
 using existing OPS_READ_TOKEN. No migration, service or new volume is required.
 See [privacy and feedback](feedback-and-improvement.md); no raw conversations or
 automatic learning are exposed. Original history retention is unchanged.
+
+## Optional manual evaluation export (not part of API deployment)
+
+The [synthetic-summary CLI](synthetic-evaluation-export.md) is a separately invoked
+development operator tool. It needs no port, migration, writable application path,
+daemon or backoffice feature. The API never creates its client. Do not provision
+`EVALUATION_LANGSMITH_API_KEY` in normal API/worker/Coolify environments or enable
+global tracing. A separately approved manual export uses that server-side process
+environment credential and the fixed HTTPS LangSmith endpoint/project documented
+there. No account or external export has been activated or tested. Existing OTLP/OPS
+runtime delivery remains unchanged; public/SSE/private schemas are unchanged.
+
+## Query-index migration and rollback
+
+Migration 008 adds `spend_ledger_created_at`, a normal B-tree used by the unchanged
+UTC monthly cost predicate. It changes no row/ownership, quota, reservation or
+idempotency semantics. The transactional runner deliberately uses normal index
+creation, not `CONCURRENTLY`: schedule a reviewed maintenance window for writes and
+measure larger datasets before production. Existing statement/lock timeouts can
+abort the migration safely; do not disable them to force completion.
+
+The knowledge writer also creates the idempotent Neo4j range index
+`entity_version_normalized(version, normalized)` after the projection transaction,
+then waits at most 30 seconds for indexes before activating knowledge. It uses existing schema-writing
+privileges; the API runtime reader gains no DDL privilege. No new container, port,
+extension, plugin, environment variable or secret is required. The application
+retains its two-second graph-read limit and exact vector search.
+
+After applying 008, a pre-008 checkout fails strict migration-history readiness.
+Do not roll back to the immutable v1.1.0 image expecting it to start. A forward-fix
+or prepared compatible rollback image must retain migration 008 and its checksum;
+application rollback does not remove the index or reverse the database history.
+Restore/recovery procedures remain vps-ops-owned. Read the
+[measured query evidence](verification/database-queries-2026-10-17.md) before release
+selection; synthetic local measurements are not VPS capacity acceptance.
+
+## Software licensing files
+
+The application source uses MIT. `/app/LICENSE` and `/app/THIRD_PARTY_NOTICES.md`
+are shipped read-only and checked by the existing non-root container smoke.
+The OCI MIT label identifies this application's source; dependencies/base images
+keep their own packaged licenses, and personal/career content is outside that grant.
+No package publication, production approval or change to immutable tags follows.

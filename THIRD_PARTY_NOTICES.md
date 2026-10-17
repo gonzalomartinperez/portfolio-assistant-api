@@ -1,12 +1,24 @@
 # Third-party notices
 
-Application source has no selected license. Dependency licenses apply to their
-own code and do not license this repository's source. No third-party image or
-visual asset is bundled here.
+## Scope
+
+Application source and first-party engineering documentation use the standard
+[MIT license](LICENSE). The software grant does not relicense personal identity,
+portfolio/career content, employer/client marks or third-party materials.
+In particular, source excerpts/reference data in `evals/` and identity/content
+visible in screenshots under `docs/assets/` retain their original rights. Owned
+engineering diagrams and evaluation harness code are software documentation;
+they do not grant rights to extract a portrait or imply endorsement. A software
+license is not consent to process personal data.
+
+Dependencies and container/base-image components retain their own licenses;
+the image's MIT label describes this application's source, not a relicensing of
+every included component. The runtime image carries this notice and `LICENSE`.
 
 Runtime dependencies are recorded exactly in `uv.lock`; this project uses
 FastAPI, Pydantic/Pydantic Settings, LangGraph and its PostgreSQL checkpointer,
-LangChain Core (required by LangGraph), psycopg/psycopg-pool, Neo4j's Python driver,
+LangChain Core (required by LangGraph), LangSmith (manual synthetic-summary export),
+psycopg/psycopg-pool, Neo4j's Python driver,
 OpenAI's Python SDK and Uvicorn. PostgreSQL/pgvector and Neo4j Community container
 images are pinned separately in `compose.yaml`. Consult each project's packaged
 license and image notices when redistributing a build; transitive dependencies
@@ -25,3 +37,8 @@ not a hosted service or tracking widget. Locked vendor semantic conventions incl
 a beta version; support decisions are explicit in docs/support-policy.md.
 The README technology chips are repository-authored SVG text/surfaces, with no
 external logo/font assets or network badge service.
+
+The software grant follows the [standard MIT text](https://opensource.org/license/mit).
+Project metadata uses the [Python SPDX/license-file specification](https://packaging.python.org/en/latest/specifications/pyproject-toml/#license).
+Scope notices stay separate rather than changing the grant. The first repository
+commit is dated 2026; the license preserves the owner's established 2026 copyright.

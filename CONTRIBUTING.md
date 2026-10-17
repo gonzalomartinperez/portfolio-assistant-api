@@ -66,9 +66,11 @@ migration history immutable. Do not alter CI gates merely to obtain a pass.
 
 ## Legal and security
 
-Public visibility is not an open-source license. No source license has been
-selected; the owner must decide before granting reuse rights. See
-[third-party notices](THIRD_PARTY_NOTICES.md) for dependency attribution and
+Application software and first-party engineering documentation use the standard
+[MIT license](LICENSE). Keep its grant/copyright notice intact and run
+`uv run python -m scripts.check_license` when editing licensing metadata.
+Personal content, identity assets and dependencies are separate; see
+[third-party notices](THIRD_PARTY_NOTICES.md) for scope/attribution and
 [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 ## Agent skills

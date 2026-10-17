@@ -140,3 +140,26 @@ For README overview diagrams read [the owned diagram source and review rules](..
 Keep the first-party SVG and Mermaid semantics aligned. Inspect both palettes, card
 text bounds and narrow/full-size rendering; never substitute a deployment claim for
 an architecture view or add scripts/remote resources to the documentation graphic.
+
+For manual LangSmith evaluation work, load [the synthetic export contract](../../../docs/synthetic-evaluation-export.md)
+and run `uv run pytest -q tests/test_evaluation_export.py tests/test_architecture.py`.
+The CLI validates offline by default; `--authorize-export` requires separate current
+external-export authority and a synthetic aggregate, never a raw answer report.
+Keep automatic tracing rejected and record post-tag source separately from v1.1.0.
+
+For database access-path work, use [the measured query procedure](../../../docs/verification/database-queries-2026-10-17.md).
+Run `TEST_INTEGRATION=1 uv run pytest -q tests/test_database_queries.py` only on owned
+fixtures. The optional benchmark requires a fresh project and explicit fixture-seed
+flag; it is never a production maintenance command. Retain migration008/checksum
+in any rollback reader and keep synthetic plan evidence separate from model recall.
+
+For licensing changes run `uv run python -m scripts.check_license` and the license
+regressions. Preserve the standard MIT grant and the separate content/dependency
+scope in [third-party notices](../../../THIRD_PARTY_NOTICES.md). This is consistency
+verification, not a dependency-license or legal audit; do not alter historical tags.
+
+For provider HTTP/lifecycle changes, load [transport policy and evidence](../../../docs/verification/provider-transport-2026-10-17.md)
+and run `uv run pytest -q tests/test_provider_http.py tests/test_provider_lifecycle.py`.
+Keep SDK-native and compatibility transports distinct; verify redirect rejection,
+explicit TLS/environment policy, constructor ownership and failure/cancellation
+cleanup. Synthetic tests do not establish real TLS negotiation or VPS throughput.

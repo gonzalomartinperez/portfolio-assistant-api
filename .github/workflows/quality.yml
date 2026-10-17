@@ -52,6 +52,8 @@ jobs:
         run: uv sync --frozen
       - name: Validate portable repository skills
         run: uv run python -m scripts.validate_skills
+      - name: Validate software licensing and separate content scope
+        run: uv run python -m scripts.check_license
       - name: Lint Python
         run: uv run ruff check app tests contracts scripts
       - name: Check Python formatting

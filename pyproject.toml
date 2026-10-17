@@ -1,10 +1,13 @@
 [project]
 name = "portfolio-assistant-api"
 version = "0.1.0"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 requires-python = ">=3.14,<3.15"
 dependencies = [
     "fastapi>=0.143.3",
     "langchain-core>=1.6.12,<2",
+    "langsmith==0.14.9",
     "langgraph>=1.2.16,<2",
     "langgraph-checkpoint-postgres>=3.1.2,<4",
     "lingua-language-detector==2.2.0",

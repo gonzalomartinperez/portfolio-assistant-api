@@ -1,0 +1,1020 @@
+{
+  "schema_version": 1,
+  "synthetic_only": true,
+  "paid_calls": 0,
+  "rows": 100000,
+  "versions": 100,
+  "entities_per_version": 200,
+  "repeats": 20,
+  "warmups": 5,
+  "graph_diagnostic_warmup_timeout_seconds": 30,
+  "graph_sample_timeout_seconds": 2,
+  "source_sha256": {
+    "scripts/benchmark_database_queries.py": "93c41538fd836a12a2fbced1e5d235bbd6241bdd5b7a9cb2c4a5807e73b7dc2d",
+    "app/infrastructure/graph.py": "c8cab967530a473260c419005307e6b63dfbcf8d82a0bf7c4c849ee2683b5485",
+    "app/infrastructure/knowledge.py": "a12e4a4c8d91a37b511c5417c18b5587b05889bb1297e19c9c0dc09aed6a1385",
+    "app/infrastructure/ledger.py": "4d807c39e7487e8b4114805d406d18c951aa722895e24e9796f645ed778f674b",
+    "migrations/008_spend_ledger_time_index.sql": "52395616951ddfe21b406b919aff6ec769591f312f7bb2f93cff2237cf421ed1"
+  },
+  "pg_baseline": {
+    "read": {
+      "median_ms": 69.819,
+      "p95_ms": 81.187,
+      "min_ms": 48.336,
+      "max_ms": 86.41,
+      "samples_ms": [
+        72.966,
+        48.336,
+        51.841,
+        68.771,
+        81.187,
+        73.312,
+        65.589,
+        53.099,
+        49.311,
+        65.795,
+        71.417,
+        68.422,
+        86.41,
+        78.494,
+        50.263,
+        48.949,
+        73.703,
+        70.867,
+        73.022,
+        74.589
+      ]
+    },
+    "write_1000": {
+      "median_ms": 10.9875,
+      "p95_ms": 27.946,
+      "min_ms": 8.848,
+      "max_ms": 30.058,
+      "samples_ms": [
+        11.428,
+        27.694,
+        8.848,
+        9.75,
+        9.38,
+        11.647,
+        10.538,
+        27.946,
+        11.027,
+        10.629,
+        10.671,
+        12.491,
+        14.696,
+        13.43,
+        30.058,
+        10.948,
+        10.095,
+        9.629,
+        8.966,
+        11.536
+      ]
+    },
+    "read_plan": {
+      "Plan": {
+        "Node Type": "Aggregate",
+        "Strategy": "Plain",
+        "Partial Mode": "Simple",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 3581.66,
+        "Total Cost": 3581.67,
+        "Plan Rows": 1,
+        "Plan Width": 32,
+        "Actual Startup Time": 74.566,
+        "Actual Total Time": 74.568,
+        "Actual Rows": 1.0,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 1410,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "WAL Records": 0,
+        "WAL FPI": 0,
+        "WAL Bytes": 0,
+        "WAL Buffers Full": 0,
+        "Plans": [
+          {
+            "Node Type": "Seq Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Relation Name": "spend_ledger",
+            "Alias": "spend_ledger",
+            "Startup Cost": 0.0,
+            "Total Cost": 3580.19,
+            "Plan Rows": 587,
+            "Plan Width": 10,
+            "Actual Startup Time": 0.015,
+            "Actual Total Time": 74.392,
+            "Actual Rows": 500.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Filter": "(created_at >= date_trunc('month'::text, now(), 'UTC'::text))",
+            "Rows Removed by Filter": 99500,
+            "Shared Hit Blocks": 1410,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "WAL Records": 0,
+            "WAL FPI": 0,
+            "WAL Bytes": 0,
+            "WAL Buffers Full": 0
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.112,
+      "Triggers": [],
+      "Execution Time": 74.589
+    },
+    "write_plan": {
+      "Plan": {
+        "Node Type": "ModifyTable",
+        "Operation": "Insert",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Relation Name": "spend_ledger",
+        "Alias": "spend_ledger",
+        "Startup Cost": 0.0,
+        "Total Cost": 30.0,
+        "Plan Rows": 0,
+        "Plan Width": 0,
+        "Actual Startup Time": 10.836,
+        "Actual Total Time": 10.837,
+        "Actual Rows": 0.0,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 6036,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 18,
+        "Shared Written Blocks": 18,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "WAL Records": 3011,
+        "WAL FPI": 0,
+        "WAL Bytes": 280720,
+        "WAL Buffers Full": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Alias": "*SELECT*",
+            "Startup Cost": 0.0,
+            "Total Cost": 30.0,
+            "Plan Rows": 1000,
+            "Plan Width": 120,
+            "Actual Startup Time": 0.086,
+            "Actual Total Time": 3.565,
+            "Actual Rows": 1000.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Shared Hit Blocks": 0,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "WAL Records": 0,
+            "WAL FPI": 0,
+            "WAL Bytes": 0,
+            "WAL Buffers Full": 0,
+            "Plans": [
+              {
+                "Node Type": "Function Scan",
+                "Parent Relationship": "Subquery",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Function Name": "generate_series",
+                "Alias": "generate_series",
+                "Startup Cost": 0.0,
+                "Total Cost": 12.5,
+                "Plan Rows": 1000,
+                "Plan Width": 112,
+                "Actual Startup Time": 0.085,
+                "Actual Total Time": 3.23,
+                "Actual Rows": 1000.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Shared Hit Blocks": 0,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "WAL Records": 0,
+                "WAL FPI": 0,
+                "WAL Bytes": 0,
+                "WAL Buffers Full": 0
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.045,
+      "Triggers": [
+        {
+          "Trigger Name": "RI_ConstraintTrigger_c_16892",
+          "Constraint Name": "spend_ledger_run_id_fkey",
+          "Relation": "spend_ledger",
+          "Time": 0.622,
+          "Calls": 1000
+        }
+      ],
+      "Execution Time": 11.536
+    },
+    "index_bytes": 5775360,
+    "amount": "0.005000"
+  },
+  "pg_index_build_ms": 133.11498899929575,
+  "pg_candidate": {
+    "read": {
+      "median_ms": 1.2775,
+      "p95_ms": 2.659,
+      "min_ms": 0.604,
+      "max_ms": 30.152,
+      "samples_ms": [
+        0.604,
+        0.687,
+        0.829,
+        0.808,
+        0.872,
+        0.951,
+        0.948,
+        1.166,
+        1.249,
+        1.457,
+        1.122,
+        30.152,
+        1.33,
+        1.387,
+        1.306,
+        2.659,
+        1.517,
+        2.31,
+        1.67,
+        2.143
+      ]
+    },
+    "write_1000": {
+      "median_ms": 13.35,
+      "p95_ms": 27.242,
+      "min_ms": 10.548,
+      "max_ms": 151.21,
+      "samples_ms": [
+        20.395,
+        10.849,
+        13.071,
+        12.725,
+        13.629,
+        20.43,
+        11.422,
+        12.371,
+        14.031,
+        151.21,
+        17.72,
+        17.24,
+        13.916,
+        10.994,
+        10.548,
+        11.423,
+        10.633,
+        11.303,
+        27.242,
+        15.679
+      ]
+    },
+    "read_plan": {
+      "Plan": {
+        "Node Type": "Aggregate",
+        "Strategy": "Plain",
+        "Partial Mode": "Simple",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 1244.7,
+        "Total Cost": 1244.71,
+        "Plan Rows": 1,
+        "Plan Width": 32,
+        "Actual Startup Time": 2.109,
+        "Actual Total Time": 2.111,
+        "Actual Rows": 1.0,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 406,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "WAL Records": 0,
+        "WAL FPI": 0,
+        "WAL Bytes": 0,
+        "WAL Buffers Full": 0,
+        "Plans": [
+          {
+            "Node Type": "Bitmap Heap Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Relation Name": "spend_ledger",
+            "Alias": "spend_ledger",
+            "Startup Cost": 9.1,
+            "Total Cost": 1243.15,
+            "Plan Rows": 620,
+            "Plan Width": 10,
+            "Actual Startup Time": 0.995,
+            "Actual Total Time": 2.011,
+            "Actual Rows": 500.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Recheck Cond": "(created_at >= date_trunc('month'::text, now(), 'UTC'::text))",
+            "Rows Removed by Index Recheck": 0,
+            "Exact Heap Blocks": 384,
+            "Lossy Heap Blocks": 0,
+            "Shared Hit Blocks": 406,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "WAL Records": 0,
+            "WAL FPI": 0,
+            "WAL Bytes": 0,
+            "WAL Buffers Full": 0,
+            "Plans": [
+              {
+                "Node Type": "Bitmap Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Index Name": "spend_ledger_created_at",
+                "Startup Cost": 0.0,
+                "Total Cost": 8.95,
+                "Plan Rows": 620,
+                "Plan Width": 0,
+                "Actual Startup Time": 0.813,
+                "Actual Total Time": 0.814,
+                "Actual Rows": 24500.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Index Cond": "(created_at >= date_trunc('month'::text, now(), 'UTC'::text))",
+                "Index Searches": 1,
+                "Shared Hit Blocks": 22,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "WAL Records": 0,
+                "WAL FPI": 0,
+                "WAL Bytes": 0,
+                "WAL Buffers Full": 0
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.188,
+      "Triggers": [],
+      "Execution Time": 2.143
+    },
+    "write_plan": {
+      "Plan": {
+        "Node Type": "ModifyTable",
+        "Operation": "Insert",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Relation Name": "spend_ledger",
+        "Alias": "spend_ledger",
+        "Startup Cost": 0.0,
+        "Total Cost": 30.0,
+        "Plan Rows": 0,
+        "Plan Width": 0,
+        "Actual Startup Time": 14.538,
+        "Actual Total Time": 14.539,
+        "Actual Rows": 0.0,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 8039,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 19,
+        "Shared Written Blocks": 19,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "WAL Records": 4024,
+        "WAL FPI": 0,
+        "WAL Bytes": 342488,
+        "WAL Buffers Full": 0,
+        "Plans": [
+          {
+            "Node Type": "Subquery Scan",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Alias": "*SELECT*",
+            "Startup Cost": 0.0,
+            "Total Cost": 30.0,
+            "Plan Rows": 1000,
+            "Plan Width": 120,
+            "Actual Startup Time": 0.106,
+            "Actual Total Time": 4.447,
+            "Actual Rows": 1000.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Shared Hit Blocks": 0,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "WAL Records": 0,
+            "WAL FPI": 0,
+            "WAL Bytes": 0,
+            "WAL Buffers Full": 0,
+            "Plans": [
+              {
+                "Node Type": "Function Scan",
+                "Parent Relationship": "Subquery",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Function Name": "generate_series",
+                "Alias": "generate_series",
+                "Startup Cost": 0.0,
+                "Total Cost": 12.5,
+                "Plan Rows": 1000,
+                "Plan Width": 112,
+                "Actual Startup Time": 0.104,
+                "Actual Total Time": 4.06,
+                "Actual Rows": 1000.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Shared Hit Blocks": 0,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "WAL Records": 0,
+                "WAL FPI": 0,
+                "WAL Bytes": 0,
+                "WAL Buffers Full": 0
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.053,
+      "Triggers": [
+        {
+          "Trigger Name": "RI_ConstraintTrigger_c_16892",
+          "Constraint Name": "spend_ledger_run_id_fkey",
+          "Relation": "spend_ledger",
+          "Time": 1.044,
+          "Calls": 1000
+        }
+      ],
+      "Execution Time": 15.679
+    },
+    "index_bytes": 7634944,
+    "amount": "0.005000"
+  },
+  "neo_baseline": {
+    "read": {
+      "median_ms": 97.35913949953101,
+      "p95_ms": 187.9375809985504,
+      "min_ms": 37.57079600109137,
+      "max_ms": 192.12568000148167,
+      "samples_ms": [
+        187.9375809985504,
+        121.40308699963498,
+        109.64078899996821,
+        102.58008999880985,
+        99.0766889990482,
+        100.97328999836463,
+        95.0828899985936,
+        81.69949199873372,
+        192.12568000148167,
+        112.11838799863472,
+        186.27948100038338,
+        103.75818999818875,
+        91.37799000018276,
+        54.72329500116757,
+        92.64109000287135,
+        92.80279100130429,
+        95.64159000001382,
+        74.78789199740277,
+        90.47359100077301,
+        37.57079600109137
+      ]
+    },
+    "profile": {
+      "args": {
+        "Order": "id ASC",
+        "GlobalMemory": 1712,
+        "planner-impl": "IDP",
+        "Memory": 0,
+        "string-representation": "Cypher 5\n\nPlanner COST\n\nRuntime SLOTTED\n\nRuntime version 5.26.32\n\n+------------------+----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| Operator         | Id | Details                                                                                              | Estimated Rows | Rows  | DB Hits | Memory (Bytes) | Page Cache Hits/Misses | Ordered by |\n+------------------+----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +ProduceResults  |  0 | id                                                                                                   |              7 |     5 |       0 |              0 |                    0/0 |            |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+            |\n| +Top             |  1 | id ASC LIMIT 12                                                                                      |              7 |     5 |       0 |           1320 |                    0/0 | id ASC     |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +Distinct        |  2 | d.id AS id                                                                                           |              7 |     5 |       5 |            552 |                    0/0 |            |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +Filter          |  3 | d.version = $version AND (cache[d.path] STARTS WITH $prefix OR NOT cache[d.path] STARTS WITH $autost |              7 |     5 |      15 |                |                    0/0 |            |\n| |                |    | ring_0) AND d:Document                                                                               |                |       |         |                |                        |            |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +Expand(All)     |  4 | (p)-[anon_0:SUPPORTED_BY]->(d)                                                                       |            326 |     5 |      10 |                |                    0/0 |            |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +Filter          |  5 | p.version = $version AND p.normalized IN $names                                                      |            326 |     5 |   20200 |              0 |                    0/0 |            |\n| |                +----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n| +NodeByLabelScan |  6 | p:Entity                                                                                             |          20000 | 20000 |   20001 |                |                    0/0 |            |\n+------------------+----+------------------------------------------------------------------------------------------------------+----------------+-------+---------+----------------+------------------------+------------+\n\nTotal database accesses: 40231, total allocated memory: 1712\n",
+        "runtime": "SLOTTED",
+        "runtime-impl": "SLOTTED",
+        "version": "5",
+        "DbHits": 0,
+        "Details": "id",
+        "planner-version": "5.26.32",
+        "runtime-version": "5.26.32",
+        "Id": 0,
+        "EstimatedRows": 6.965702486538081,
+        "planner": "COST",
+        "PageCacheMisses": 0,
+        "Rows": 5,
+        "PageCacheHits": 0
+      },
+      "pageCacheMisses": 0,
+      "children": [
+        {
+          "args": {
+            "Order": "id ASC",
+            "Details": "id ASC LIMIT 12",
+            "Memory": 1320,
+            "Id": 1,
+            "EstimatedRows": 6.965702486538081,
+            "PageCacheMisses": 0,
+            "DbHits": 0,
+            "Rows": 5,
+            "PageCacheHits": 0
+          },
+          "pageCacheMisses": 0,
+          "children": [
+            {
+              "args": {
+                "Details": "d.id AS id",
+                "Memory": 552,
+                "Id": 2,
+                "EstimatedRows": 6.965702486538081,
+                "PageCacheMisses": 0,
+                "DbHits": 5,
+                "Rows": 5,
+                "PageCacheHits": 0
+              },
+              "pageCacheMisses": 0,
+              "children": [
+                {
+                  "args": {
+                    "Details": "d.version = $version AND (cache[d.path] STARTS WITH $prefix OR NOT cache[d.path] STARTS WITH $autostring_0) AND d:Document",
+                    "Id": 3,
+                    "PageCacheMisses": 0,
+                    "EstimatedRows": 7.332318406882191,
+                    "DbHits": 15,
+                    "Rows": 5,
+                    "PageCacheHits": 0
+                  },
+                  "pageCacheMisses": 0,
+                  "children": [
+                    {
+                      "args": {
+                        "Details": "(p)-[anon_0:SUPPORTED_BY]->(d)",
+                        "Id": 4,
+                        "PageCacheMisses": 0,
+                        "EstimatedRows": 325.66077995,
+                        "DbHits": 10,
+                        "Rows": 5,
+                        "PageCacheHits": 0
+                      },
+                      "pageCacheMisses": 0,
+                      "children": [
+                        {
+                          "args": {
+                            "Details": "p.version = $version AND p.normalized IN $names",
+                            "Memory": 0,
+                            "Id": 5,
+                            "EstimatedRows": 325.66077995,
+                            "PageCacheMisses": 0,
+                            "DbHits": 20200,
+                            "Rows": 5,
+                            "PageCacheHits": 0
+                          },
+                          "pageCacheMisses": 0,
+                          "children": [
+                            {
+                              "args": {
+                                "Details": "p:Entity",
+                                "Id": 6,
+                                "PageCacheMisses": 0,
+                                "EstimatedRows": 20000.0,
+                                "DbHits": 20001,
+                                "Rows": 20000,
+                                "PageCacheHits": 0
+                              },
+                              "pageCacheMisses": 0,
+                              "dbHits": 20001,
+                              "identifiers": [
+                                "p"
+                              ],
+                              "operatorType": "NodeByLabelScan@neo4j",
+                              "rows": 20000,
+                              "pageCacheHitRatio": 0.0,
+                              "pageCacheHits": 0
+                            }
+                          ],
+                          "dbHits": 20200,
+                          "identifiers": [
+                            "p"
+                          ],
+                          "operatorType": "Filter@neo4j",
+                          "rows": 5,
+                          "pageCacheHitRatio": 0.0,
+                          "pageCacheHits": 0
+                        }
+                      ],
+                      "dbHits": 10,
+                      "identifiers": [
+                        "p",
+                        "anon_0",
+                        "d"
+                      ],
+                      "operatorType": "Expand(All)@neo4j",
+                      "rows": 5,
+                      "pageCacheHitRatio": 0.0,
+                      "pageCacheHits": 0
+                    }
+                  ],
+                  "dbHits": 15,
+                  "identifiers": [
+                    "p",
+                    "anon_0",
+                    "d"
+                  ],
+                  "operatorType": "Filter@neo4j",
+                  "rows": 5,
+                  "pageCacheHitRatio": 0.0,
+                  "pageCacheHits": 0
+                }
+              ],
+              "dbHits": 5,
+              "identifiers": [
+                "id"
+              ],
+              "operatorType": "Distinct@neo4j",
+              "rows": 5,
+              "pageCacheHitRatio": 0.0,
+              "pageCacheHits": 0
+            }
+          ],
+          "dbHits": 0,
+          "identifiers": [
+            "id"
+          ],
+          "operatorType": "Top@neo4j",
+          "rows": 5,
+          "pageCacheHitRatio": 0.0,
+          "pageCacheHits": 0
+        }
+      ],
+      "dbHits": 0,
+      "identifiers": [
+        "id"
+      ],
+      "operatorType": "ProduceResults@neo4j",
+      "rows": 5,
+      "pageCacheHitRatio": 0.0,
+      "pageCacheHits": 0
+    },
+    "db_hits": 40231,
+    "ids": [
+      "benchmark-v099-doc-13",
+      "benchmark-v099-doc-25",
+      "benchmark-v099-doc-3",
+      "benchmark-v099-doc-42",
+      "benchmark-v099-doc-8"
+    ],
+    "diagnostic_warmup_ms": [
+      791.4990190001845,
+      376.8761610008369,
+      290.24516999925254,
+      200.18287900165888,
+      216.61337800105684
+    ]
+  },
+  "neo_index_build_ms": 997.4498970004788,
+  "neo_candidate": {
+    "read": {
+      "median_ms": 40.3434460004064,
+      "p95_ms": 96.00839100312442,
+      "min_ms": 14.408997998543782,
+      "max_ms": 112.72288899999694,
+      "samples_ms": [
+        17.707498001982458,
+        22.486698002467165,
+        82.40969100006623,
+        17.33529900229769,
+        14.408997998543782,
+        55.670294001174625,
+        96.00839100312442,
+        39.23159600162762,
+        53.32059399734135,
+        27.274496998870745,
+        112.72288899999694,
+        38.93689599863137,
+        43.25349499777076,
+        42.27609599911375,
+        41.45529599918518,
+        31.287996000173735,
+        62.345893999008695,
+        30.653896999865538,
+        66.77419300103793,
+        22.191798001585994
+      ]
+    },
+    "profile": {
+      "args": {
+        "Order": "id ASC",
+        "GlobalMemory": 1696,
+        "planner-impl": "IDP",
+        "Memory": 0,
+        "string-representation": "Cypher 5\n\nPlanner COST\n\nRuntime SLOTTED\n\nRuntime version 5.26.32\n\n+-----------------+----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| Operator        | Id | Details                                                                                              | Estimated Rows | Rows | DB Hits | Memory (Bytes) | Page Cache Hits/Misses | Ordered by |\n+-----------------+----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| +ProduceResults |  0 | id                                                                                                   |              0 |    5 |       0 |              0 |                    0/0 |            |\n| |               +----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+            |\n| +Top            |  1 | id ASC LIMIT 12                                                                                      |              0 |    5 |       0 |           1320 |                    0/0 | id ASC     |\n| |               +----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| +Distinct       |  2 | d.id AS id                                                                                           |              0 |    5 |       5 |            552 |                    0/0 |            |\n| |               +----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| +Filter         |  3 | d.version = $version AND (cache[d.path] STARTS WITH $prefix OR NOT cache[d.path] STARTS WITH $autost |              0 |    5 |      15 |                |                    0/0 |            |\n| |               |    | ring_0) AND d:Document                                                                               |                |      |         |                |                        |            |\n| |               +----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| +Expand(All)    |  4 | (p)-[anon_0:SUPPORTED_BY]->(d)                                                                       |             10 |    5 |      10 |                |                    0/0 |            |\n| |               +----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n| +NodeIndexSeek  |  5 | RANGE INDEX p:Entity(version, normalized) WHERE version = $version AND normalized IN $names          |             10 |    5 |      10 |                |                    0/0 |            |\n+-----------------+----+------------------------------------------------------------------------------------------------------+----------------+------+---------+----------------+------------------------+------------+\n\nTotal database accesses: 40, total allocated memory: 1696\n",
+        "runtime": "SLOTTED",
+        "runtime-impl": "SLOTTED",
+        "version": "5",
+        "DbHits": 0,
+        "Details": "id",
+        "planner-version": "5.26.32",
+        "runtime-version": "5.26.32",
+        "Id": 0,
+        "EstimatedRows": 0.2072151068283182,
+        "planner": "COST",
+        "PageCacheMisses": 0,
+        "Rows": 5,
+        "PageCacheHits": 0
+      },
+      "pageCacheMisses": 0,
+      "children": [
+        {
+          "args": {
+            "Order": "id ASC",
+            "Details": "id ASC LIMIT 12",
+            "Memory": 1320,
+            "Id": 1,
+            "EstimatedRows": 0.2072151068283182,
+            "PageCacheMisses": 0,
+            "DbHits": 0,
+            "Rows": 5,
+            "PageCacheHits": 0
+          },
+          "pageCacheMisses": 0,
+          "children": [
+            {
+              "args": {
+                "Details": "d.id AS id",
+                "Memory": 552,
+                "Id": 2,
+                "EstimatedRows": 0.2072151068283182,
+                "PageCacheMisses": 0,
+                "DbHits": 5,
+                "Rows": 5,
+                "PageCacheHits": 0
+              },
+              "pageCacheMisses": 0,
+              "children": [
+                {
+                  "args": {
+                    "Details": "d.version = $version AND (cache[d.path] STARTS WITH $prefix OR NOT cache[d.path] STARTS WITH $autostring_0) AND d:Document",
+                    "Id": 3,
+                    "PageCacheMisses": 0,
+                    "EstimatedRows": 0.21812116508244023,
+                    "DbHits": 15,
+                    "Rows": 5,
+                    "PageCacheHits": 0
+                  },
+                  "pageCacheMisses": 0,
+                  "children": [
+                    {
+                      "args": {
+                        "Details": "(p)-[anon_0:SUPPORTED_BY]->(d)",
+                        "Id": 4,
+                        "PageCacheMisses": 0,
+                        "EstimatedRows": 9.68772832855668,
+                        "DbHits": 10,
+                        "Rows": 5,
+                        "PageCacheHits": 0
+                      },
+                      "pageCacheMisses": 0,
+                      "children": [
+                        {
+                          "args": {
+                            "Details": "RANGE INDEX p:Entity(version, normalized) WHERE version = $version AND normalized IN $names",
+                            "Id": 5,
+                            "PageCacheMisses": 0,
+                            "EstimatedRows": 9.68772832855668,
+                            "DbHits": 10,
+                            "Rows": 5,
+                            "PageCacheHits": 0
+                          },
+                          "pageCacheMisses": 0,
+                          "dbHits": 10,
+                          "identifiers": [
+                            "p"
+                          ],
+                          "operatorType": "NodeIndexSeek@neo4j",
+                          "rows": 5,
+                          "pageCacheHitRatio": 0.0,
+                          "pageCacheHits": 0
+                        }
+                      ],
+                      "dbHits": 10,
+                      "identifiers": [
+                        "p",
+                        "anon_0",
+                        "d"
+                      ],
+                      "operatorType": "Expand(All)@neo4j",
+                      "rows": 5,
+                      "pageCacheHitRatio": 0.0,
+                      "pageCacheHits": 0
+                    }
+                  ],
+                  "dbHits": 15,
+                  "identifiers": [
+                    "p",
+                    "anon_0",
+                    "d"
+                  ],
+                  "operatorType": "Filter@neo4j",
+                  "rows": 5,
+                  "pageCacheHitRatio": 0.0,
+                  "pageCacheHits": 0
+                }
+              ],
+              "dbHits": 5,
+              "identifiers": [
+                "id"
+              ],
+              "operatorType": "Distinct@neo4j",
+              "rows": 5,
+              "pageCacheHitRatio": 0.0,
+              "pageCacheHits": 0
+            }
+          ],
+          "dbHits": 0,
+          "identifiers": [
+            "id"
+          ],
+          "operatorType": "Top@neo4j",
+          "rows": 5,
+          "pageCacheHitRatio": 0.0,
+          "pageCacheHits": 0
+        }
+      ],
+      "dbHits": 0,
+      "identifiers": [
+        "id"
+      ],
+      "operatorType": "ProduceResults@neo4j",
+      "rows": 5,
+      "pageCacheHitRatio": 0.0,
+      "pageCacheHits": 0
+    },
+    "db_hits": 40,
+    "ids": [
+      "benchmark-v099-doc-13",
+      "benchmark-v099-doc-25",
+      "benchmark-v099-doc-3",
+      "benchmark-v099-doc-42",
+      "benchmark-v099-doc-8"
+    ],
+    "diagnostic_warmup_ms": [
+      117.89928800135385,
+      12.790698998287553,
+      70.58239300022251,
+      21.868896998057608,
+      69.71099300062633
+    ]
+  },
+  "environment": {
+    "python": "3.14.8",
+    "platform": "WSL Linux x86_64",
+    "postgres_cpu_limit": 0.75,
+    "postgres_memory_bytes": 536870912,
+    "neo4j_cpu_limit": 1,
+    "neo4j_memory_bytes": 1610612736,
+    "field_or_vps_measurement": false,
+    "metadata_collector_python": "3.13.15",
+    "interpreter_evidence": "Benchmark invoked with pinned uv run and project .venv Python3.14.8; metadata descriptor was assembled by system Python3.13.15."
+  },
+  "coordination": {
+    "started_at": "2026-10-17T21:28:38.299834+00:00",
+    "coordination": "Portfolio owner local builds ended21:27:33.521Z; vps-ops no heavy local work21:28-21:31; shared WSL, no exclusive CPU reservation.",
+    "initial_loadavg": [
+      "4.43",
+      "5.15",
+      "5.73"
+    ],
+    "completed_at": "2026-10-17T21:29:28.697811+00:00",
+    "exit_code": 0,
+    "final_loadavg": [
+      "3.34",
+      "4.68",
+      "5.54"
+    ]
+  },
+  "provenance_note": "Final fresh owned fixture after coordinated local-build pause; source_sha256 identifies measured candidate files. Developed from ff2982783ad62be044ad4e721b8573488a9d296b. No paid calls."
+}

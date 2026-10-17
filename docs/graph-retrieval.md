@@ -70,3 +70,12 @@ we report weaker individual strategies rather than weakening the test cases.
 | vector | 5/9 | 40.2 |
 | graph | 8/9 | 48.1 |
 | hybrid | 9/9 | 39.7 |
+
+## Versioned lookup access path
+
+The knowledge writer owns `entity_version_normalized(version, normalized)` and
+waits for indexes before activation. The application keeps parameterized reads,
+source revalidation and a two-second graph-read deadline. See the
+[query-plan measurements and synthetic limits](verification/database-queries-2026-10-17.md).
+Exact vector search remains the measured small-corpus baseline; no ANN/plugin or
+additional ontology is introduced by this access-path change.

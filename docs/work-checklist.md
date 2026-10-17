@@ -1,130 +1,73 @@
 # Three-deliverable acceptance checklist
 
-Single priority/status checkpoint for the consolidated mandate. Preserve existing
-work, six-layer boundaries and v1 consumers. Use checked PRs into **develop only**;
-no main promotion, artifact publication or production execution is authorized.
-Critical security issues interrupt the sequence below. Paid calls require explicit
-scope/budget; the dated experiment below does not authorize ongoing usage.
+Current checkpoint: 2026-10-17. This replaces the earlier October status table;
+historical counts and decisions remain in their dated verification reports and Git
+history. Keep source acceptance separate from production acceptance. Each invocation
+needs its own authority for main promotion, publication, external exports or paid
+calls; a merged plan grants none of those permissions.
 
-Latest integrated application checkpoint (2026-10-12):
-`5ff96d3dbd015ddf9f90f83231052f57b7d494c8` (reviewed Dependabot PR #48),
-including PostgreSQL 18 PR #46 and private operations PR #47. The final security/
-runtime handoff is tracked by PR #49; its required checks and merge remain
-authoritative. Earlier runtime security/database commits are preserved in history.
-Current contract: `61da393520014ed2c8b1f8a0635b3b4e615f9e53` (PR #36).
-Latest [runtime security evidence](verification/runtime-security-2026-10-10.md) and
-[database evidence](verification/database-images-2026-10-10.md) supersede earlier
-container observations. [CI evidence](ci.md#executed-overnight-verification) identifies
-the actual runs; [vps-ops request](vps-ops-request.md) is the committed handoff prompt.
-[2026-10-10 evidence and blockers](verification/runtime-2026-10-10.md) records
-237 real-service tests, image/proxy checks, source revisions and the bounded
-real-provider experiment. The older [readiness audit](live-evaluation-readiness.md)
-retains its dated closure criteria; neither document grants additional authority.
-
-| Priority / deliverable | Acceptance criterion | Current status and evidence |
+| Priority / deliverable | Implemented and verified | Remaining acceptance |
 | --- | --- | --- |
-| 1 Conversations | Grounded bilingual answers, correct citations and topic changes | Observed citation mapping and Spanish topic-switch defects fixed in PR #39, with pure, streaming, HTTP/history and fixture continuity regressions. Three real-provider turns revalidated final citations/history and the observed Spanish topic switch; broader claim-support quality remains pending. |
-| 1 Compatibility | Stable HTTP/SSE, optional visitor context, sessions/history/cancellation | Context validated and mapped separately from evidence in PR #36; OpenAPI/examples committed, legacy clients preserved. Native portfolio contract import/browser pairing pending with its owner; rollout remains disabled. |
-| 2 Security/reliability | Ownership, CSRF, isolation, budgets, termination and safe ingestion | Existing controls tested; interruption writes now drain before pool shutdown. Both database isolation guards implemented in PR #39. API image removes base pip/ensurepip bundles: 58 unresolved HIGH findings. Patched PostgreSQL: 3 CRITICAL/65 HIGH, none fixable in the scan; Neo4j: 1 CRITICAL/113 HIGH, including vendor Java fixes. Full reports retained, no suppression. Production assessment remains blocked. |
-| 3 Backend quality | Strict boundaries/types, real persistence and image/proxy evidence | 291 tests including shutdown-ordering and database-image provenance regressions on Python 3.14.8, Ruff/format, strict mypy, frozen install, contract/Compose/skills checks; final non-root image streaming, SIGTERM and proxy/disconnect checks pass. PR #41 current-head CI passed; 25 real-service tests also confirmed in downloaded CI diagnostics. |
-| 4 Skills | Focused canonical catalog and portable discovery | Five canonical skills with relative Codex links, validator/scenarios; previously exercised client discovery. Updated release skill reflects application/database scope. Model-based natural-language selection remains unverified. |
-| 5 CI/dependencies | Pinned parallel checks, minimal permissions, protected merges | PR #41 actual static 36 s, integration 219 s, gate 3 s; PR #31 actual 30/148/3 s. Strict develop freshness and required checks verified. Actions major PR #31 manually reviewed and merged; unattended dependency automation remains inactive. |
-| 6 Deployment handoff | Image/runtime/databases for vps-ops-managed Coolify | Contract and committed vps-ops master request updated with local database ceilings, the tested non-root PostgreSQL image, runtime-only configuration, native CORS and backoffice ownership. VPS allocation, image publication, production execution and recovery validation remain unverified/unauthorized. |
-| Final | Integrated increments with precise release recommendation | PRs #36–#41 and manually reviewed dependency PR #31 merged into develop; main untouched. This is a verified application increment, not production release approval. |
+| 1 Conversations and compatibility | Native portfolio HTTP/SSE contract, optional bounded visitor context, ownership/CSRF, history/cancellation, bilingual voice and source mapping. Product events and current-rating summaries are private, validated and default-off. | The portfolio owner controls activation. Broader model factuality and physical-device acceptance remain separate from fixture and bounded live evidence. |
+| 1 Security and reliability | Explicit provider origin, verified TLS, no redirects or inherited proxy/CA environment, zero generation retries, constructor ownership and independent resource cleanup. Pure policy and architectural negative tests remain mandatory. | Native TLS negotiation and future VPS load are not certified by synthetic transport tests. Neo4j security acceptance is blocked. |
+| 2 Repository quality and skills | Five canonical skills with relative Codex discovery links, maintained structural/scenario checks, strict mypy, pinned parallel CI and standard MIT software licensing with separate content rights. | Model-based skill selection and untested client versions are not certified. Existing checks and review requirements remain authoritative. |
+| 3 Runtime and integration handoff | Application images, private OPS/product/feedback contracts, PostgreSQL artifact, measured database access paths and Coolify runtime/migration contract. | Immutable image publication, registry visibility, real OAuth, shared monitoring, VPS resources, effective routing/headers and recovery belong to separately authorized verification. |
 
-The public-knowledge/coverage sections below retain earlier implementation history;
-the current table and dated verification define remaining acceptance gates.
+## Evidence and revisions
 
-## Current public-knowledge increment · 2026-10-03
+- [Bounded live smoke](verification/bounded-live-smoke-2026-10-17.md): exact API
+  `02b6f2784564669597fe8a4c2adf53bf807737a6`, portfolio corpus
+  `776ee8613d3cc78bc3afb5a4609d5edbfd16ada3`. Six completed cases, five actual model
+  generations and one local policy response; 100 real embeddings. This is not a
+  new 200-question campaign or proof of every supported claim. No ongoing paid
+  allowance follows from that experiment.
+- [Provider transport and cleanup](verification/provider-transport-2026-10-17.md):
+  runtime commit `9ad866c2bf92a857df12bdf58d04fbf70c6ca520`, 537 offline tests;
+  service/container CI is the independent merge gate in PR84.
+- [Database access paths](verification/database-queries-2026-10-17.md): PR81,
+  migration008, 507 offline / 33 real-service tests at that increment. Synthetic
+  plan/latency results are not production capacity or semantic-retrieval recall.
+- [Manual LangSmith aggregate export](synthetic-evaluation-export.md): PR80,
+  offline by default, explicit authorization needed for any external export.
+  No automatic tracing or real LangSmith account was activated.
+- Software licensing: PR82, 518 offline / 33 real-service tests at that increment.
+  [MIT](../LICENSE) applies to application software; personal/reference content,
+  marks and dependencies retain [their separate rights](../THIRD_PARTY_NOTICES.md).
+- [Runtime compatibility](verification/runtime-compatibility-2026-10-17.md),
+  [runtime baseline](runtime-baseline.md), [CI job purposes](ci.md) and
+  [actual gallery capture provenance](verification/readme-gallery.md) retain their
+  own evidence and limitations. Counts above identify increments, not a combined
+  test total. Later required CI runs supersede earlier source checkpoints.
 
-| Priority | Acceptance | Status |
-| --- | --- | --- |
-| 1 Current knowledge | Poll approved published main; coalesce revisions; atomic activation; stale knowledge fails closed | Implemented; deterministic worker and real database activation/cache tests. Local worker fetched and indexed main 2f4fb400184b34593fd71f4d5fbf29738496a5a0. No production worker configured. |
-| 1 Model and language | OpenAI only, GPT-6 Luna, medium, ES/EN, bounded context, source-supported citations | Implemented adapters/configuration and offline tests. Real paid answer quality remains unverified. |
-| 2 Retrieval and budget | Semantic, lexical and graph retrieval; shared USD 10 admission ledger; public embedding cache | Implemented migrations 004/005 and adapters, tested with synthetic provider and real stores. Real embedding precision and paid accounting still require authorized evaluation. |
-| 2 Security | No tracing, no provider fallback, safe errors, private cache exclusions, request deadline | Implemented and tested. Local logs remain for operations; no external telemetry enabled. |
-| 3 Skills and CI | Update existing focused workflows, retain boundaries and secure runner compatibility | Structural/behavioral regression tests pass; current-head Actions remains the merge gate. |
-| 3 Handoffs | Public projection schema, source-backed starter endpoint, Coolify worker/runtime contract | Committed artifacts prepared; portfolio projection publication, frontend import and vps-ops execution remain external gates. |
+## Production blockers and owner handoffs
 
-Pending live evaluation is not a claimed capability. Extra LLM planning/reranking,
-budget warning notifications and corpus pruning remain deferred until their need,
-cost and operational policy are reviewed. The existing deterministic LangGraph
-retrieve/answer flow remains intentional. A bounded paid evaluation was authorized
-and executed on 2026-10-10; production and further paid scope are separate decisions.
+- **Blocked:** [Neo4j vendor acceptance](verification/neo4j-vendor-refresh-2026-10-17.md).
+  The rejected candidate does not replace the retained digest. A normal API/PG
+  image scan does not assess the full Neo4j Java inventory. Do not suppress the
+  critical/fixable-high findings or patch vendor jars.
+- **Migration constraint:** a rollback reader must retain applied migration008 and
+  its checksum. Reverting an application image does not undo schema changes;
+  pre008 images fail strict readiness. See [deployment contract](deployment-contract.md).
+- **Owner decisions:** dependency maintenance is manual; native auto-merge is off.
+  Keep default-branch security updates visible and require reviewed current-head
+  CI. See [maintenance policy](dependency-updates.md).
+- **Deferred:** public assistant and product collection activation, production
+  deployment and external telemetry/export. The portfolio owner owns the native
+  launcher/chat; the separate web repository is the authenticated backoffice.
+- **Outside this repository:** vps-ops owns Coolify, the single reverse proxy,
+  production networks, DNS/TLS, shared resources, encrypted off-server backups,
+  restart/reboot acceptance and rollback orchestration. Application source merging
+  does not authorize those actions or establish VPS readiness.
 
-## Remaining external gates and deferred work
+## Knowledge and evaluation scope
 
-- **Implemented:** citation/context regressions and both harness isolation guards.
-  **Verified:** bounded three-turn real-provider revalidation. Broader claim-support
-  review remains pending. Thirteen single-turn terminals do
-  not establish broad answer quality.
-- **Pending coordination:** native portfolio context import/browser evidence and
-  the missing private operations contract for real backoffice metrics. Consume
-  only committed snapshots; fixture dashboards are not integration proof.
-- **Deferred:** enabling the real portfolio assistant; cross-tab transfer is not
-  a release requirement.
-- **Outside application ownership:** Coolify/Traefik, DNS/TLS, resource allocation,
-  encrypted off-server restoration and deployment belong to private vps-ops.
-  Runtime contract is ready for its review; no registry digest exists until an
-  explicitly authorized publication. Default planned package visibility is private.
-- **Owner decision:** source license remains unspecified. No new infrastructure,
-  framework or optional action protocol is needed to finish this increment.
+The maintained bank contains 100 intent families / 1,000 question variations,
+500 per locale hint, plus 40 adversarial prompts. It is a coverage asset, not
+1,000 biographical facts or 1,000 live evaluations. Only approved public portfolio
+content enters the runtime corpus. Polling coalesces committed published revisions
+and activates a validated corpus atomically; no private career-ops content is used.
 
-Backend UX, repository skills and runtime handoff are the three deliverables.
-Security, architecture, testing, coding style and CI are acceptance criteria across
-them, not additional projects. Historical main promotion does not authorize another.
-
-
-## Requested CI maintenance increment
-
-Conservative Dependabot policy is implemented and locally tested (52 policy cases).
-Repository native auto-merge capability is enabled; unattended automation remains
-**inactive** until separately authorized required-check/variable activation and
-privileged-token verification. Policy files are already on the default branch;
-their presence alone does not enable merging. Existing strict protections/reviews
-are preserved. Read-only CI token protection-query access is blocked; the
-privileged controller must establish access before activation.
-Dependabot PR #31 was instead manually reviewed: authenticated bot/source/base,
-one bot commit, four pinned action-only changes, signed upstream release and
-current-head Quality. No automatic merge eligibility was granted to this major
-update. API and backoffice open-PR inventories were empty at the 2026-10-10
-05:15 UTC checkpoint; this does not assert that security alerts are empty.
-See [scope, tests and activation handoff](dependency-updates.md). This is part of
-repository quality; it adds no deployment controller or main promotion authority.
-
-## Question coverage increment
-
-100 intent families / 1000 question variations (500 per locale hint), plus the
-existing 40 adversarial prompts. Canonical source and deterministic compiler prevent
-copy drift; family-level splits protect holdout isolation. Fixture execution and
-current-head CI are the verification gates. Live answer quality remains unverified;
-question count is coverage, not additional approved biographical facts.
-
-## Final voice, support and private operations increment
-
-- Completed/integrated: final neutral Spanish/US English voice and retained-topic fix
-  (PR #45); PostgreSQL 18.6/pgvector 0.8.7 fresh-store upgrade (PR #46).
-- Implemented/locally verified: private status/Prometheus API, manual opt-in OTLP,
-  migration 006 and committed backoffice adapter compatibility. PR #47 passed final
-  current-head CI and integrated into develop; actual image/health/SSE evidence is
-  recorded in the dated operations report.
-- Completed research: actual LTS policies for Node/Next/Neo4j/Prometheus/LangGraph/
-  LangChain; maintained stable exceptions and Python 3.15 Lingua wheel blocker.
-- Deferred to owners: native assistant activation, actual OAuth/browser dashboard
-  pairing, collector/Grafana/Prometheus deployment and production readiness.
-- Remaining release gates: vulnerability review, measured VPS resources, effective
-  private proxy/egress, encrypted backup/restore and compatible rollback.
-
-- Completed: all currently open Dependabot updates reviewed and integrated through
-  replacement PR #48, with 347 local tests and actual current-head CI. No broad
-  automatic eligibility, protection weakening or default-branch activation.
-- Runtime handoff is committed and application artifacts verified. Publication,
-  paired OAuth/browser acceptance and production infrastructure remain explicit
-  owner gates; source integration does not claim those gates are complete.
-
-## October17 closeout
-
-- Completed: default-off product-event contract/SQL bounds in PR70;451offline+30real-service tests passed.
-- In progress: voluntary-context minimization, private current-rating summary and typed BO consumer; no automatic training or raw export.
-- Blocked: vendor Neo4j release, four fixable Jackson HIGH findings and unresolved header CRITICAL; rejected same-version candidate is preserved in draft PR71.
-- Deferred to explicit approval/ops: production, collection activation, live OAuth/provider testing, capacity and off-server recovery.
+Exact vector search remains intentional at the measured corpus size. Additional
+planning/reranking, ANN, extra services, budget notifications and retired-corpus
+pruning require demonstrated need and reviewed operational policy. Preserve the
+finite acceptance criteria rather than adding unrelated infrastructure.

@@ -117,12 +117,18 @@ warm p95 3.432 ms, whole-process peak RSS 175.61 MiB. This is detector evidence,
 not browser performance or future VPS capacity. The native wheel adds ~162 MiB
 compressed download, a deliberate dependency tradeoff requiring production measurement.
 
-LangSmith remains a transitive LangChain dependency; no tracer/exporter is enabled.
-There is no OpenTelemetry dependency or exporter. Removing a required transitive
-package by patching dependencies would break reproducibility; configuration rejects
-external tracing instead. Operational redacted local logs are retained.
+Automatic LangSmith/LangChain tracing remains rejected. The separate
+[manual synthetic-summary exporter](synthetic-evaluation-export.md) is opt-in and
+never exports visitor conversations. Private first-party OpenTelemetry is implemented
+but default-off; see [its data boundary](private-observability.md). Local evaluation
+reports and operational redacted logs remain independent of external export.
 
 ## Dated live evidence
+
+The [bounded six-case smoke](verification/bounded-live-smoke-2026-10-17.md) tests
+the immutable v1.1.0 API with real semantic embeddings and model calls under a
+separately authorized USD 0.50 ceiling. It does not replace the larger historical
+evaluation or establish an independent quality percentage.
 
 The separately authorized [244-turn OpenAI evaluation](verification/live-depth-2026-10-10.md)
 records actual model calls, local abstentions, exposed-case revalidation, citation

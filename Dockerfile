@@ -9,16 +9,18 @@ WORKDIR /app
 FROM runtime-base AS dependencies
 COPY --from=ghcr.io/astral-sh/uv:0.13.1@sha256:4a1f3666816dafadd20ceb71eac9a7d56d7ef30279f7d64048519ab901ada336 /uv /bin/uv
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock LICENSE THIRD_PARTY_NOTICES.md ./
 RUN --mount=type=cache,id=vps-ops-uv-python314,target=/root/.cache/uv,sharing=locked uv sync --frozen --no-dev --no-install-project
 
 FROM runtime-base AS runtime
+LABEL org.opencontainers.image.licenses="MIT"
 RUN /usr/local/bin/python -m pip uninstall --yes pip \
     && rm -rf /usr/local/lib/python3.14/ensurepip
 COPY --from=dependencies /app/.venv /app/.venv
 COPY app ./app
 COPY migrations ./migrations
 COPY contracts ./contracts
+COPY LICENSE THIRD_PARTY_NOTICES.md ./
 ENV PATH=/app/.venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 ENV LANGSMITH_TRACING=false LANGCHAIN_TRACING_V2=false
 USER 65532:65532
