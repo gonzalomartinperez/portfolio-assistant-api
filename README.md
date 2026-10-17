@@ -141,7 +141,7 @@ image, migrations and runtime contract.
 
 ## Quick start without a model key
 
-**Requirements:** Linux/WSL, Git, Docker Compose and uv **0.13.0**. Frozen installation
+**Requirements:** Linux/WSL, Git, Docker Compose and uv **0.13.1**. Frozen installation
 uses Python **3.14.8**. Run from this repository’s root.
 
 ```sh

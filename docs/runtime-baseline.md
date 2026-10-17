@@ -1,4 +1,4 @@
-# Runtime baseline acceptance — 2026-10-13
+# Runtime baseline acceptance — 2026-10-17
 
 The owner authorized execution of the shared deployment-readiness plan. This repository owns
 its code, tests, image and runtime contract. The private vps-ops inventory owns the shared
@@ -13,12 +13,12 @@ baseline/routing/release policy; Coolify remains the sole deployment executor.
 | `pydantic-settings` | `2.15.0` |
 | `opentelemetry-sdk` | `1.45.1` |
 | `mypy` | `2.4.0` |
-| `ruff` | `0.17.0` |
+| `ruff` | `0.17.1` |
 | `pytest` | `9.1.1` |
 
 The lockfile is authoritative for the complete dependency graph. This dated view does not
 assert that these versions remain the newest forever or that an image has been published.
-Python3.14.8 is maintained stable, not named LTS; uv0.13.0 is stable tooling. Both APIs share these runtimes and the shared packages above. Portfolio alone needs Lingua2.2.0 (no CP315 wheel), LangGraph/LangChain1.x LTS, pgvector and Neo4j. Pequeverso uses SQLite, not that retrieval stack.
+Python3.14.8 is maintained stable, not named LTS; uv0.13.1 is stable tooling. These are this repository’s verified versions; other applications adopt their own committed, tested baseline. Portfolio alone needs Lingua2.2.0 (no CP315 wheel), LangGraph/LangChain1.x LTS, pgvector and Neo4j. Pequeverso uses SQLite, not that retrieval stack.
 
 ## Image and operations boundaries
 
@@ -49,3 +49,13 @@ merely to change a vulnerability count.
 Public-repository CI runs synthetic checks without publishing images, raw diagnostic artifacts
 or browser reports. Review results in the bounded redacted job output. Private release artifact
 publication needs a separately accepted access/visibility path; passing CI never activates it.
+
+## October 17 patch review
+
+The patch increment selects [uv0.13.1](https://github.com/astral-sh/uv/releases/tag/0.13.1)
+and [Ruff0.17.1](https://github.com/astral-sh/ruff/releases/tag/0.17.1), confirmed through
+the official PyPI version metadata. uv remains build/CI tooling; it is not copied into the
+HTTP runtime. The Dockerfile pins its OCI index digest; Ruff is the only changed resolved
+Python package. Neither tool has a declared LTS channel. Python, model, database engines,
+wire contracts and operational payloads remain unchanged. See
+[verification](verification/toolchain-security-2026-10-17.md) for executed checks and limits.
