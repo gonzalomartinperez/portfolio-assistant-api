@@ -319,94 +319,54 @@ def process(api: GitHub, number: int, expected_head: str, manual: bool = False) 
     return 'native_auto_merge_enabled'
 
 
+def manual_assessment(api: GitHub, number: int) -> dict:
+    """Read authenticated risk metadata; never arm or approve a merge."""
+    if not 0 < number < 1_000_000_000:
+        raise ValueError('invalid_pr_number')
+    pr = api.request(f'{ROOT}/pulls/{number}')
+    try:
+        repository = controls(api)
+    except GitHubRequestError as error:
+        if not error.permission_denied:
+            raise
+        return {
+            'pr': number,
+            'head': pr['head']['sha'],
+            'merge_mode': 'manual',
+            'eligible': False,
+            'protections_ready': False,
+            'audit_state': 'permission_blocked',
+            'reason': str(error),
+        }
+    decision = inspect_candidate(api, pr)
+    return {
+        'pr': number,
+        'head': pr['head']['sha'],
+        'merge_mode': 'manual',
+        **asdict(decision),
+        'protections_ready': protected_for_automation(repository),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--audit-pr', type=int)
     args = parser.parse_args()
-    api = GitHub()
-    if args.audit_pr:
-        pr = api.request(f'{ROOT}/pulls/{args.audit_pr}')
-        try:
-            repository = controls(api)
-        except GitHubRequestError as error:
-            if not error.permission_denied:
-                raise
-            # This diagnostic job has no merge authority. Record the blocker rather
-            # than grant it write/admin access. The privileged controller still fails
-            # closed if its own protection query is unavailable.
-            print(
-                json.dumps(
-                    {
-                        'pr': args.audit_pr,
-                        'head': pr['head']['sha'],
-                        'eligible': False,
-                        'protections_ready': False,
-                        'audit_state': 'permission_blocked',
-                        'reason': str(error),
-                    },
-                    indent=2,
-                )
-            )
-            return
-        decision = inspect_candidate(api, pr)
-        print(
-            json.dumps(
-                {
-                    'pr': args.audit_pr,
-                    'head': pr['head']['sha'],
-                    **asdict(decision),
-                    'protections_ready': protected_for_automation(repository),
-                },
-                indent=2,
-            )
-        )
-        return
-    if os.environ.get('GITHUB_REPOSITORY') != REPOSITORY:
-        raise ValueError('wrong_repository')
-    event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
-    kind = os.environ['GITHUB_EVENT_NAME']
-    manual = False
-    if kind == 'pull_request_target':
-        requests = [(event['number'], event['pull_request']['head']['sha'])]
-    elif kind == 'workflow_run':
-        run = event['workflow_run']
-        if (
-            run['name'] != 'Quality'
-            or run['event'] != 'pull_request'
-            or run['head_repository']['full_name'] != REPOSITORY
-        ):
-            return
-        requests = [
-            (pr['number'], run['head_sha'])
-            for pr in api.request(
-                f'{ROOT}/commits/{run["head_sha"]}/pulls?per_page=100'
-            )
-            if pr['state'] == 'open' and pr['head']['sha'] == run['head_sha']
-        ]
-    elif kind == 'workflow_dispatch':
-        if os.environ.get('GITHUB_REF') != 'refs/heads/main':
-            raise ValueError('dispatch_requires_default_branch')
-        actor = os.environ['GITHUB_ACTOR']
-        permission = api.request(f'{ROOT}/collaborators/{actor}/permission')[
-            'permission'
-        ]
-        if permission not in ('admin', 'maintain', 'write'):
-            raise ValueError('manual_actor_not_authorized')
-        inputs = event['inputs']
-        manual = inputs['mode'] == 'manual'
-        if inputs['mode'] not in ('manual', 'reevaluate') or not re.fullmatch(
-            r'[0-9a-f]{40}', inputs['head']
-        ):
-            raise ValueError('invalid_dispatch')
-        requests = [(int(inputs['number']), inputs['head'])]
-    else:
-        raise ValueError('unsupported_event')
-    for number, head in requests:
-        print(
-            json.dumps(
-                {'pr': number, 'decision': process(api, int(number), head, manual)}
-            )
-        )
+    if os.environ.get('DEPENDABOT_AUTOMERGE_ENABLED') == 'true':
+        raise ValueError('manual_profile_rejects_write_activation')
+    number = args.audit_pr
+    if number is None:
+        if os.environ.get('GITHUB_REPOSITORY') != REPOSITORY:
+            raise ValueError('wrong_repository')
+        event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+        kind = os.environ['GITHUB_EVENT_NAME']
+        if kind == 'pull_request_target':
+            number = event['number']
+        elif kind == 'workflow_dispatch':
+            number = int(event['inputs']['number'])
+        else:
+            raise ValueError('unsupported_read_only_event')
+    print(json.dumps(manual_assessment(GitHub(), number), indent=2))
 
 
 if __name__ == '__main__':
