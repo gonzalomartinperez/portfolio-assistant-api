@@ -2,14 +2,13 @@
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from decimal import Decimal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from neo4j import GraphDatabase
-from openai import AsyncOpenAI, OpenAI
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -37,6 +36,7 @@ from app.infrastructure.language import LocalLanguageDetector
 from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
 from app.infrastructure.migrations import check_schema
 from app.infrastructure.operations import OperationalObserver, PostgresOperations
+from app.infrastructure.provider_http import create_async_client, create_sync_client
 from app.infrastructure.runs import PostgresRuns
 from app.infrastructure.web_ledger import WebAccounting
 from app.infrastructure.web_search import OpenAIWebSearch
@@ -92,12 +92,7 @@ def create_app(
             accounting = None
             if config.ai_provider == 'openai':
                 # Paid authorization was validated by Settings. Never retry a possibly billed run.
-                client = AsyncOpenAI(
-                    api_key=config.openai_api_key,
-                    base_url='https://api.openai.com/v1',
-                    timeout=45,
-                    max_retries=0,
-                )
+                client = await create_async_client(api_key=config.openai_api_key)
                 provider = ResponsesProvider(
                     client,
                     config.openai_model,
@@ -135,12 +130,7 @@ def create_app(
                 )
             embeddings = FixtureEmbeddings()
             if config.embeddings_provider == 'openai':
-                embedding_client = OpenAI(
-                    api_key=config.openai_api_key,
-                    base_url='https://api.openai.com/v1',
-                    timeout=20,
-                    max_retries=0,
-                )
+                embedding_client = create_sync_client(api_key=config.openai_api_key)
                 embeddings = OpenAIEmbeddings(
                     embedding_client,
                     EmbeddingAccounting(
@@ -236,17 +226,37 @@ def create_app(
             app.state.cleanup = cleanup
             yield
         finally:
-            if runs:
-                await runs.drain_cleanup()
-            if observer:
-                await observer.close()
-            if client:
-                await client.close()
-            if embedding_client:
-                await asyncio.to_thread(embedding_client.close)
-            await checkpoints.close()
-            await asyncio.to_thread(graph.close)
-            await asyncio.to_thread(database.close)
+            failures = []
+
+            async def close_resource(callback, *args):
+                try:
+                    await callback(*args)
+                except BaseException as error:  # noqa: BLE001 - Attempt every owned cleanup, then propagate all failures including cancellation.
+                    failures.append(error)
+
+            # LIFO preserves drain-before-close order, including partial startup.
+            async with AsyncExitStack() as cleanup:
+                cleanup.push_async_callback(
+                    close_resource, asyncio.to_thread, database.close
+                )
+                cleanup.push_async_callback(
+                    close_resource, asyncio.to_thread, graph.close
+                )
+                cleanup.push_async_callback(close_resource, checkpoints.close)
+                if embedding_client:
+                    cleanup.push_async_callback(
+                        close_resource, asyncio.to_thread, embedding_client.close
+                    )
+                if client:
+                    cleanup.push_async_callback(close_resource, client.close)
+                if observer:
+                    cleanup.push_async_callback(close_resource, observer.close)
+                if runs:
+                    cleanup.push_async_callback(close_resource, runs.drain_cleanup)
+            if len(failures) == 1:
+                raise failures[0]
+            if failures:
+                raise BaseExceptionGroup('API resource cleanup failed', failures)
 
     app = FastAPI(
         title='Portfolio Assistant API',
