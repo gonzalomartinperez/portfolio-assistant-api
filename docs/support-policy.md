@@ -12,11 +12,11 @@ because its major line is supported.
 | pgvector | 0.8.7 | Maintained stable extension, no formal LTS label; tested with PG 18.6. |
 | Neo4j | 5.26 LTS | Retain the vendor-designated LTS line and review security patches. Current guide says November 2028; the older announcement says June 2028. |
 | Python | 3.14.8 | Maintained stable release, not officially called LTS. 3.15 remains blocked below. |
-| LangGraph / LangChain Core | 1.2.13 / 1.6.6 | Official 1.x LTS: active until 2.0, then at least one year of maintenance; associated packages need separate review. |
+| LangGraph / LangChain Core | 1.x LTS (patches in runtime baseline) | Official 1.x LTS: active until 2.0, then at least one year of maintenance; associated packages need separate review. |
 | Node / Next.js (backoffice) | 24 LTS / 16 Active LTS | Node 24 ends 2028-04-30; Next 16 active until next major, maintenance policy two years from initial release. |
 | Debian runtime base | 13 Trixie | General support until 2028-08-09, followed by LTS until 2030-06-30, subject to package/architecture coverage. |
 | PostgreSQL image OS | Debian 12 Bookworm | Actual inspected base; Debian LTS through 2028-06-30 with package/architecture limitations. This differs from the API/Neo4j Debian 13 base. |
-| uv | 0.13.0 | Stable pinned tooling; no formal LTS designation. |
+| uv | Pinned stable (runtime baseline) | Stable pinned tooling; no formal LTS designation. |
 | FastAPI, OpenAI SDK, psycopg | `uv.lock` | Maintained stable packages; no universal LTS policy. Review compiler/framework/auth changes manually. |
 | OpenTelemetry Python | Stable SDK/OTLP APIs when adopted | No formal LTS; use manual allowlisted instrumentation and stable exporters. SDK/HTTP exporter 1.45.1 pulls vendor semantic conventions 0.66b1: reviewed beta dependency exception, not an all-stable graph. |
 | Prometheus server | 3.13 LTS target | Supported until 2027-07-31; 3.5 LTS is already end-of-life. Selection/deployment belongs to vps-ops. |
@@ -90,7 +90,7 @@ Additional official references: [LangChain/LangGraph LTS](https://docs.langchain
 [Debian 12 LTS coverage](https://www.debian.org/releases/bookworm/) applies to the
 actual pgvector image base; do not report every container as Debian 13.
 
-## Final reviewed application lock
+## Historical Dependabot #48 lock review
 
 Dependabot PR #48 was reviewed as a complete mixed-risk group, not automatically
 approved as low risk. After frozen installation, 347 local real-service tests,
@@ -99,3 +99,7 @@ LangGraph 1.2.13, LangChain Core 1.6.6, OpenAI SDK 3.24.0, Neo4j driver 6.4.0,
 mypy 2.4.0 and Ruff 0.16.10. The exact full graph remains in uv.lock. This aligns
 maintained selected versions, not a claim that every package is the latest or LTS.
 FastAPI's native request/exception telemetry is explicitly disabled by bootstrap.
+
+The later fixed October17 runtime cohort is recorded in [runtime baseline](runtime-baseline.md)
+and its linked compatibility evidence. Earlier dated audit versions above are historical,
+not current lock values. No package acquires an LTS guarantee from being in the cohort.
