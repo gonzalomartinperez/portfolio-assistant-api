@@ -404,10 +404,15 @@ abort the migration safely; do not disable them to force completion.
 
 The knowledge writer also creates the idempotent Neo4j range index
 `entity_version_normalized(version, normalized)` after the projection transaction,
-then waits at most 30 seconds for indexes before activating knowledge. It uses existing schema-writing
-privileges; the API runtime reader gains no DDL privilege. No new container, port,
-extension, plugin, environment variable or secret is required. The application
-retains its two-second graph-read limit and exact vector search.
+then waits at most 30 seconds for indexes before activating knowledge. It uses
+existing Neo4j schema-writing privileges. No new PostgreSQL DDL grants are introduced;
+`deploy/runtime-grants.sql` governs PostgreSQL only. Neo4j Community credentials
+remain privileged: fixed read templates are application behavior, not database-enforced
+reader authorization. Keep the graph isolated and limited to the approved public,
+rebuildable projection; never colocate conversations or other private/project data.
+See [the graph authorization boundary](graph-retrieval.md#authorization-boundary).
+No new container, port, extension, plugin, environment variable or secret is required.
+The application retains its two-second graph-read limit and exact vector search.
 
 After applying 008, a pre-008 checkout fails strict migration-history readiness.
 Do not roll back to the immutable v1.1.0 image expecting it to start. A forward-fix
