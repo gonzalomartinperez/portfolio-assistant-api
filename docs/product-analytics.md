@@ -93,9 +93,12 @@ No paid model request is needed to collect or test website events.
 ## Upgrade, rollback and activation gates
 
 Apply 007 once through the existing checksum-verified migration runner and reapply
-`deploy/runtime-grants.sql`. Existing API/session/SSE paths are unchanged. Old
-application images ignore these additive tables; rolling back source does not undo
-DDL or delete collected data. Existing backups include these tables automatically;
+`deploy/runtime-grants.sql`. Existing API/session/SSE paths are unchanged. The schema checker rejects applied
+migrations missing from a checkout: pre-007 images become unready after 007, even
+though its tables are additive. Rollback must use a reviewed forward-fix image that
+retains migration 007 and its checksum, disables analytics and reverts the affected
+behavior. Do not delete 007, weaken schema validation or restore over new writes.
+Rolling back source does not undo DDL or erase data. Existing backups include these tables;
 restore to an isolated database and verify duplicate/quota behavior before admission.
 
 Before enabling real collection: portfolio hook/network tests and truthful bilingual

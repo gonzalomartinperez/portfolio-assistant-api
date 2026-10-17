@@ -156,3 +156,18 @@ def test_internal_schema_not_exposed_and_public_contract_exported():
     paths = http.get('/openapi.json').json()['paths']
     assert '/api/v1/analytics/events' in paths
     assert '/internal/ops/v1/product-analytics' not in paths
+
+
+def test_pre_007_image_cannot_pass_schema_readiness_after_upgrade():
+    import hashlib
+    from pathlib import Path
+
+    from app.infrastructure.migrations import validate_history
+
+    migrations = sorted(Path('migrations').glob('[0-9][0-9][0-9]_*.sql'))
+    applied = {
+        path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in migrations
+    }
+    validate_history(migrations, applied)
+    with pytest.raises(RuntimeError, match='applied migration is missing'):
+        validate_history([path for path in migrations if path.name < '007'], applied)
