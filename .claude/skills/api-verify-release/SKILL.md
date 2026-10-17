@@ -135,3 +135,8 @@ after analytics007; a rollback reader must retain applied migration history/chec
 Dependency maintenance is manual by owner decision. Use the read-only audit; never
 activate old merge flags, grant writer permissions or arm native auto-merge. Preserve
 normal review/required CI and security-update visibility on the default branch.
+
+For README overview diagrams read [the owned diagram source and review rules](../../../docs/diagrams.md).
+Keep the first-party SVG and Mermaid semantics aligned. Inspect both palettes, card
+text bounds and narrow/full-size rendering; never substitute a deployment claim for
+an architecture view or add scripts/remote resources to the documentation graphic.
