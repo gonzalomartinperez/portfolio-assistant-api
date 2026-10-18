@@ -43,8 +43,13 @@ demo_dir=/path/to/the/printed/analytics-demo-directory
 node --env-file="$demo_dir/iam-migration.env" scripts/auth-migrate.ts --project-grants
 node --env-file="$demo_dir/backoffice.env" scripts/auth-fixture-session.ts
 # Build normally first; prepare standalone public/static assets as documented.
-node --env-file="$demo_dir/backoffice.env" .next/standalone/server.js
+NODE_EXTRA_CA_CERTS="$demo_dir/tls.crt" \
+  node --env-file="$demo_dir/backoffice.env" .next/standalone/server.js
 ```
+
+Node reads `NODE_EXTRA_CA_CERTS` when the process starts; the CLI `--env-file`
+alone does not establish trust early enough. Set the public certificate path in
+the parent environment as shown; never use `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 
 The session tool verifies the live fixture's exact Docker ID, UUID/source labels,
 loopback binding and IAM runtime identity before creating synthetic owner/viewer

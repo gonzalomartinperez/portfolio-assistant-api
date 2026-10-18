@@ -6,9 +6,11 @@ import os
 import re
 import secrets
 import shutil
+import signal
 import socket
 import subprocess
-from contextlib import ExitStack
+from collections.abc import Iterator
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from threading import Timer
 from unittest.mock import patch
@@ -69,6 +71,16 @@ def private_environment(path: Path, values: dict[str, str]) -> None:
         output.write(''.join(key + '=' + value + '\n' for key, value in values.items()))
 
 
+@contextmanager
+def cleanup_signals() -> Iterator[None]:
+    # Uvicorn replays SIGTERM after its own shutdown, before outer fixtures unwind.
+    previous = signal.signal(signal.SIGTERM, signal.default_int_handler)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--authorize-fixture', action='store_true')
@@ -103,7 +115,7 @@ def main() -> None:
     ).stdout.strip()
     directory = root / 'artifacts' / ('analytics-demo-' + uuid4().hex[:12])
     directory.mkdir(mode=0o700, parents=True, exist_ok=False)
-    with ExitStack() as cleanup:
+    with cleanup_signals(), ExitStack() as cleanup:
         private_paths = [
             directory / name
             for name in (

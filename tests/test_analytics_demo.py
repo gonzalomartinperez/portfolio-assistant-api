@@ -3,6 +3,8 @@
 import argparse
 import socket
 import stat
+import subprocess
+import sys
 
 import pytest
 
@@ -52,3 +54,30 @@ def test_private_environment_is_exclusive_0600_and_rejects_injected_lines(tmp_pa
         with pytest.raises(ValueError, match='invalid demo'):
             private_environment(rejected, values)
         assert not rejected.exists()
+
+
+def test_sigterm_replay_unwinds_external_fixture_cleanup(tmp_path):
+    marker = tmp_path / 'cleaned'
+    program = f"""
+import os
+import signal
+from contextlib import ExitStack
+from pathlib import Path
+import uvicorn
+from scripts.analytics_demo import cleanup_signals
+previous = signal.getsignal(signal.SIGTERM)
+try:
+    with cleanup_signals(), ExitStack() as cleanup:
+        cleanup.callback(Path({str(marker)!r}).write_text, 'done')
+        with uvicorn.Server(uvicorn.Config('not.imported:app')).capture_signals():
+            os.kill(os.getpid(), signal.SIGTERM)
+except KeyboardInterrupt:
+    assert signal.getsignal(signal.SIGTERM) == previous
+else:
+    raise AssertionError('SIGTERM was swallowed')
+"""
+    result = subprocess.run(
+        [sys.executable, '-c', program], check=False, capture_output=True, timeout=10
+    )
+    assert result.returncode == 0
+    assert marker.read_text() == 'done'
