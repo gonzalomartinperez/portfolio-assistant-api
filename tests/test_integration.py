@@ -359,7 +359,7 @@ def test_expired_session_prunes_history_and_checkpoints(client_factory):
     )
 
 
-def test_concurrent_reservations_respect_one_remaining_budget_slot(monkeypatch):
+def test_concurrent_reservations_respect_one_remaining_budget_slot():
     session_id, conversation_id = uuid4(), uuid4()
     run_ids = [uuid4(), uuid4()]
     with connect() as conn:
@@ -379,18 +379,12 @@ def test_concurrent_reservations_respect_one_remaining_budget_slot(monkeypatch):
                 "INSERT INTO runs(id,conversation_id,idempotency_key,payload_hash,state) VALUES (%s,%s,%s,'fixture','completed')",
                 (run_id, conversation_id, str(uuid4())),
             )
-    monkeypatch.setattr(
-        'app.adapters.postgres.ledger.settings',
-        lambda: type(
-            'BudgetSettings', (), {'reserve_cutoff_usd': str(spent + Decimal('0.05'))}
-        )(),
-    )
     barrier = Barrier(2)
 
     def attempt(run_id):
         barrier.wait()
         try:
-            reserve(str(run_id), Decimal('0.05'))
+            reserve(str(run_id), Decimal('0.05'), cutoff=spent + Decimal('0.05'))
             return 'allowed'
         except BudgetExhaustedError:
             return 'blocked'
