@@ -83,8 +83,24 @@ def test_missing_java_os_scanner_or_wrong_image_cannot_produce_release_receipt()
             receipt(json.dumps(value), identifier, REFERENCE, scanner, EXPECTED)
 
 
-def test_cli_refuses_fixable_java_findings_without_suppressing_them(
-    tmp_path, monkeypatch, capsys
+@pytest.mark.parametrize(
+    ('header', 'java_severity', 'java_fixed', 'blocked', 'counts'),
+    [
+        pytest.param(True, None, '', True, (1, 0, 0), id='unfixed-header-critical'),
+        pytest.param(
+            False, 'CRITICAL', '', True, (1, 0, 0), id='unfixed-java-critical'
+        ),
+        pytest.param(
+            False, 'CRITICAL', '2.22.3', True, (1, 0, 0), id='fixable-critical'
+        ),
+        pytest.param(True, 'HIGH', '2.22.3', True, (1, 1, 0), id='mixed-critical-high'),
+        pytest.param(False, 'HIGH', '2.22.3', True, (0, 1, 0), id='fixable-high'),
+        pytest.param(False, 'HIGH', '', False, (0, 0, 1), id='unfixed-high-visible'),
+        pytest.param(False, None, '', False, (0, 0, 0), id='no-findings-not-approval'),
+    ],
+)
+def test_cli_vendor_gate_preserves_complete_findings(
+    tmp_path, monkeypatch, capsys, header, java_severity, java_fixed, blocked, counts
 ):
     from scripts.database_security_receipt import main
 
@@ -100,15 +116,21 @@ def test_cli_refuses_fixable_java_findings_without_suppressing_them(
     )
 
     value = report()
-    value['Results'][1]['Vulnerabilities'] = [
-        {
-            'VulnerabilityID': 'CVE-synthetic-java',
-            'PkgName': 'jackson-core',
-            'InstalledVersion': '2.22.2',
-            'Severity': 'HIGH',
-            'FixedVersion': '2.22.3',
-        }
-    ]
+    if not header:
+        value['Results'][0]['Vulnerabilities'] = []
+    value['Results'][1]['Vulnerabilities'] = (
+        [
+            {
+                'VulnerabilityID': 'CVE-synthetic-java',
+                'PkgName': 'jackson-core',
+                'InstalledVersion': '2.22.2',
+                'Severity': java_severity,
+                'FixedVersion': java_fixed,
+            }
+        ]
+        if java_severity is not None
+        else []
+    )
     paths = [tmp_path / name for name in ('report.json', 'id.txt', 'scanner.json')]
     paths[0].write_text(json.dumps(value))
     paths[1].write_text(ID)
@@ -127,11 +149,15 @@ def test_cli_refuses_fixable_java_findings_without_suppressing_them(
             REFERENCE,
         ],
     )
-    with pytest.raises(SystemExit, match='fixable critical/high'):
+    if blocked:
+        with pytest.raises(SystemExit, match='findings'):
+            main()
+    else:
         main()
     output = json.loads(capsys.readouterr().out)
-    assert output['counts']['critical'] == 1
-    assert output['counts']['fixable_high'] == 1
+    assert output['counts']['critical'] == counts[0]
+    assert output['counts']['fixable_high'] == counts[1]
+    assert output['counts']['unresolved_high'] == counts[2]
     assert output['production_accepted'] is False
 
 

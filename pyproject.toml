@@ -46,7 +46,7 @@ pythonpath = ["."]
 markers = ["integration: requires isolated PostgreSQL/pgvector and Neo4j"]
 
 [tool.mypy]
-files = ["app/domain", "app/application", "app/ai"]
+files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py"]
 strict = true
 
 [tool.ruff.format]
