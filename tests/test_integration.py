@@ -884,7 +884,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
     git('add', '.')
     git('commit', '-qm', 'fixture: cache recovery')
     revision = git('rev-parse', 'HEAD')
-    version = revision + '-semantic-v7'
+    version = indexing.corpus_identity(revision, 'openai')[0]
     content_hash = hashlib.sha256(content.encode()).hexdigest()
     config = settings().model_copy(
         update={

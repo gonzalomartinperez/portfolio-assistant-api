@@ -33,7 +33,7 @@ def test_every_job_identity_and_dependency_is_required(key):
 
 
 @pytest.mark.parametrize(
-    'mode', ['paths', 'permissions', 'action', 'if', 'continue', 'gate']
+    'mode', ['paths', 'permissions', 'action', 'if', 'continue', 'gate', 'runner']
 )
 def test_policy_cannot_hide_or_privilege_pr_work(mode):
     value = workflow()
@@ -45,6 +45,8 @@ def test_policy_cannot_hide_or_privilege_pr_work(mode):
         value['jobs']['static']['steps'][0]['uses'] = 'actions/checkout@main'
     elif mode == 'if':
         value['jobs']['database']['if'] = 'false'
+    elif mode == 'runner':
+        value['jobs']['database']['runs-on'] = 'ubuntu-latest'
     elif mode == 'continue':
         value['jobs']['container']['steps'][0]['continue-on-error'] = True
     else:

@@ -56,7 +56,7 @@ def profile_errors(workflow: dict) -> list[str]:
             errors.append(f'{key}: name/dependency graph')
         if job.get('continue-on-error') or (key != 'checks' and job.get('if')):
             errors.append(f'{key}: required work cannot be skipped')
-        if job.get('runs-on') not in ('ubuntu-latest', 'ubuntu-24.04'):
+        if job.get('runs-on') != 'ubuntu-24.04':
             errors.append(f'{key}: isolated hosted runner')
         permissions = job.get('permissions', workflow.get('permissions', {}))
         if any(value != 'read' for value in permissions.values()):

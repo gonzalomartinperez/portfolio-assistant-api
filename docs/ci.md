@@ -9,7 +9,11 @@
 
 `Quality` runs on every PR into `develop` or `main`, manual dispatch, and trusted reusable
 calls. There are **no path filters**: documentation/contract-only PRs still finish
-the required gate. New commits cancel stale runs for the same PR/ref.
+the required gate. New commits cancel stale runs for the same PR/ref. Hosted jobs
+use the explicit Ubuntu24.04 LTS label, matching the paired backoffice profile;
+the moving ubuntu-latest alias is rejected so an announced runner-major migration
+cannot silently change the validated environment. Runner patch images remain
+GitHub-managed and are recorded by Actions.
 
 | Job ID / human name | Purpose | Needs |
 | --- | --- | --- |
@@ -78,7 +82,7 @@ they are not a controlled claim of a fixed percentage speedup.
 ## Main promotion gate
 
 Promote through a `develop` → `main` PR after explicit owner authorization. Wait
-for both Quality jobs and the aggregate `checks` on that PR’s current head; do not
+for all five prerequisite jobs and the `Required checks` aggregate on that PR’s current head; do not
 reuse a check from an earlier head or bypass reviews. The same workflow runs without
 path filters on both target branches. This promotes the verified fixture candidate;
 production/live-model limitations in the release checklist remain in force.

@@ -18,5 +18,5 @@ are not a substitute for required checks on the current PR head.
 Main promotion requires current explicit authorization and its own PR gate.
 Production deployment and image publication require separate authorization; Coolify
 execution belongs to private vps-ops. Live-model quality, model-driven skill routing,
-VPS capacity and encrypted off-server recovery remain unverified. No source license
-has been selected. Never infer production readiness from fixture test success.
+VPS capacity and encrypted off-server recovery remain unverified. Application
+software uses MIT with separate identity/content and third-party notices. Never infer production readiness from fixture test success.

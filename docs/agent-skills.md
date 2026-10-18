@@ -110,3 +110,28 @@ On 2026-10-03, catalog validation and workflow tests were rerun after the knowle
 sync updates. Available clients report Codex CLI 0.160.0 and Claude Code 2.1.288.
 Those version checks do not establish fresh model invocation or implicit-routing
 compatibility; the earlier client discovery evidence above remains separately dated.
+
+## Refreshed discovery and automatic selection · 2026-10-18
+
+Codex CLI 0.163.0 actually discovered all five repository skills through app-server
+skills/list with forceReload, including the relative discovery links. Claude Code
+2.1.292 actually returned all five commands in its stream-JSON initialize response
+with project settings enabled. Both probes submitted zero model turns; Claude's
+model endpoint was an unreachable loopback address and extra MCP configuration
+was empty. Only safe names/counts are retained in [the discovery receipt](verification/skill-discovery-2026-10-18.json),
+not raw initialization payloads.
+
+All skills remain eligible for automatic selection by task. Explicit commands above
+are optional ways to choose one, never prerequisites. Frontmatter is the portable
+name/description core; disabling Claude model invocation is rejected. Optional
+Codex policy metadata may omit allow_implicit_invocation or set it to true, never
+false. Structural negative tests enforce that invariant. Description triggers remain
+focused on real use cases; there is no catch-all or permission expansion.
+
+This proves discovery, not model-driven task selection or execution. The documented
+positive/nearby-negative/read-only/scope-escalation scenarios remain the behavioral
+review procedure; no paid model campaign was launched for client verification.
+Official documentation rechecked:
+[Codex skills](https://developers.openai.com/codex/skills),
+[app-server skills/list](https://developers.openai.com/codex/app-server) and
+[Claude skill discovery](https://code.claude.com/docs/en/skills).

@@ -2,7 +2,11 @@
 
 import argparse
 import json
+import os
+import signal
 import socket
+import stat
+import tempfile
 import threading
 import time
 from collections import defaultdict, deque
@@ -16,6 +20,87 @@ import uvicorn
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
 from scripts.evaluation_isolation import validate_targets
+
+MAX_REPORT_BYTES = 64 * 1024 * 1024
+
+
+class EvaluationProgress:
+    """Own a new private report and atomically retain bounded local progress."""
+
+    def __init__(self, path: Path, metadata: dict):
+        self.path = path
+        self.state = {
+            **metadata,
+            'status': 'running',
+            'active_case_id': None,
+            'samples': [],
+        }
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, 'wb') as reserved:
+            self.identity = os.fstat(reserved.fileno())
+        self.write(self.state)
+
+    def write(self, state: dict) -> None:
+        data = (json.dumps(state, ensure_ascii=False, indent=2) + '\n').encode()
+        # Keep enough space to mark even a full running snapshot interrupted.
+        marker_space = max(0, len('interrupted') - len(state['status']))
+        if len(data) + marker_space > MAX_REPORT_BYTES:
+            raise ValueError('evaluation report exceeds the private report size limit')
+        descriptor, temporary = tempfile.mkstemp(
+            prefix='.evaluation-', dir=self.path.parent
+        )
+        try:
+            with os.fdopen(descriptor, 'wb') as output:
+                output.write(data)
+                output.flush()
+                os.fsync(output.fileno())
+                identity = os.fstat(output.fileno())
+            current = self.path.lstat()
+            if (
+                (current.st_dev, current.st_ino)
+                != (self.identity.st_dev, self.identity.st_ino)
+                or not stat.S_ISREG(current.st_mode)
+                or stat.S_IMODE(current.st_mode) != 0o600
+                or current.st_uid != os.getuid()
+            ):
+                raise ValueError('evaluation report ownership changed')
+            os.replace(temporary, self.path)
+            self.identity = identity
+            self.state = state
+            directory = os.open(self.path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+
+    def start_case(self, case_id: str) -> None:
+        self.write({**self.state, 'active_case_id': case_id})
+
+    def record(self, sample: dict) -> None:
+        self.write({**self.state, 'samples': [*self.state['samples'], sample]})
+
+    def finish(self, status: str) -> None:
+        self.write(
+            {
+                **self.state,
+                'status': status,
+                'active_case_id': None
+                if status == 'complete'
+                else self.state['active_case_id'],
+            }
+        )
+
+
+@contextmanager
+def interruption_signals():
+    """Let SIGTERM unwind report persistence and the owned evaluation server."""
+    previous = signal.signal(signal.SIGTERM, signal.default_int_handler)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGTERM, previous)
 
 
 @contextmanager
@@ -71,9 +156,16 @@ def configuration(mode: str, allow_paid: bool) -> Settings:
     return config.model_copy(update={'trusted_proxy_ips': '127.0.0.1'})
 
 
-def evaluate(config: Settings, cases: list[dict], url: str) -> list[dict]:
+def evaluate(
+    config: Settings,
+    cases: list[dict],
+    url: str,
+    progress: EvaluationProgress | None = None,
+) -> list[dict]:
     reports = []
     for index, case in enumerate(cases):
+        if progress is not None:
+            progress.start_case(case['id'])
         with httpx.Client(base_url=url, timeout=130) as client:
             origin = config.origins[0]
             visitor = {
@@ -134,6 +226,8 @@ def evaluate(config: Settings, cases: list[dict], url: str) -> list[dict]:
                         'human_scores': None,
                     }
                 )
+                if progress is not None:
+                    progress.record(reports[-1])
             finally:
                 client.delete('/api/v1/session', headers=headers).raise_for_status()
     return reports
@@ -183,29 +277,43 @@ def main():
         parser.error(f'--limit must be between 1 and {maximum}')
     config = configuration(args.mode, args.allow_paid)
     cases = select_cases(bank, args.split, args.limit)
-    with evaluation_server(config) as url:
-        catalog = httpx.get(url + '/api/v1/knowledge/suggestions', timeout=10)
-        catalog.raise_for_status()
-        revision = catalog.json()
-        reports = evaluate(config, cases, url)
-    args.output.write_text(
-        json.dumps(
-            {
-                'mode': args.mode,
-                'corpus_version': revision['corpus_version'],
-                'source_commit': revision['source_commit'],
-                'model': config.openai_model if args.mode == 'openai' else None,
-                'reasoning_effort': config.openai_reasoning_effort
-                if args.mode == 'openai'
-                else None,
-                'live_quality_verified': False,
-                'samples': reports,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + '\n'
+    progress = EvaluationProgress(
+        args.output,
+        {
+            'mode': args.mode,
+            'corpus_version': None,
+            'source_commit': None,
+            'model': config.openai_model if args.mode == 'openai' else None,
+            'reasoning_effort': config.openai_reasoning_effort
+            if args.mode == 'openai'
+            else None,
+            'live_quality_verified': False,
+        },
     )
+    with interruption_signals():
+        try:
+            with evaluation_server(config) as url:
+                catalog = httpx.get(url + '/api/v1/knowledge/suggestions', timeout=10)
+                catalog.raise_for_status()
+                revision = catalog.json()
+                progress.write(
+                    {
+                        **progress.state,
+                        'corpus_version': revision['corpus_version'],
+                        'source_commit': revision['source_commit'],
+                    }
+                )
+                reports = evaluate(config, cases, url, progress)
+            progress.finish('complete')
+        except BaseException as error:  # Retain cancellation; never retry generation.
+            try:
+                progress.finish('interrupted')
+            except OSError, ValueError, TypeError:
+                # A storage failure leaves the last atomic snapshot intact.
+                error.add_note(
+                    'Could not persist interruption marker; inspect the last private snapshot.'
+                )
+            raise
     failures = sum(item['terminal'] != 'run.completed' for item in reports)
     print(
         json.dumps(

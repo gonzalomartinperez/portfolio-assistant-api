@@ -27,7 +27,7 @@ and the [bounded checklist](../../../docs/release-checklist.md):
 - CI/container changes: inspect [job purposes](../../../docs/ci.md), run
   `bash scripts/check_workflows.sh`, validate Compose, then image/proxy/shutdown
   smoke against private fixtures. Existing jobs run in parallel; preserve their
-  disjoint suites, pinned tools/actions, minimal permissions and required `checks`.
+  disjoint suites, pinned tools/actions, minimal permissions and required `Required checks` aggregate.
 
 Inspect actual Actions runs and retained diagnostics when GitHub is available;
 syntax validation is not an executed pipeline. Never bypass a gate or increase
@@ -51,7 +51,7 @@ harness now checks both configured destinations against owned Docker identities;
 read the evaluation procedure for prerequisites and remaining quality limitations.
 Keep documented follow-up work distinct from implemented and tested fixes.
 
-Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.
+Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. The old production controller/templates are retired; test proxy resources are fixtures only. Do not publish images without current authorization and confirmed package visibility.
 
 The current user-facing UI is native to the portfolio and remains disabled;
 the separate web repository is the authenticated backoffice. Read only committed

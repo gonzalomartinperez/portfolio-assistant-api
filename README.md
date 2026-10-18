@@ -142,7 +142,7 @@ flowchart TB
     A --> D[Domain · pure policy and state]
     B --> AI[AI · injected workflow and retrieval]
     AI --> A
-    B --> I[Infrastructure · provider, stores and source]
+    B --> I[Adapters · provider, stores and source]
     I --> A
     I --> D
 ```

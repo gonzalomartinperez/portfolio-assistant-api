@@ -1,6 +1,6 @@
 # Three-deliverable acceptance checklist
 
-Current checkpoint: 2026-10-17. This replaces the earlier October status table;
+Current checkpoint: 2026-10-18. This replaces the earlier October status table;
 historical counts and decisions remain in their dated verification reports and Git
 history. Keep source acceptance separate from production acceptance. Each invocation
 needs its own authority for main promotion, publication, external exports or paid
@@ -10,7 +10,7 @@ calls; a merged plan grants none of those permissions.
 | --- | --- | --- |
 | 1 Conversations and compatibility | Native portfolio HTTP/SSE contract, optional bounded visitor context, ownership/CSRF, history/cancellation, bilingual voice and source mapping. Product events and current-rating summaries are private, validated and default-off. | The portfolio owner controls activation. Broader model factuality and physical-device acceptance remain separate from fixture and bounded live evidence. |
 | 1 Security and reliability | Explicit provider origin, verified TLS, no redirects or inherited proxy/CA environment, zero generation retries, constructor ownership and independent resource cleanup. Pure policy and architectural negative tests remain mandatory. | Native TLS negotiation and future VPS load are not certified by synthetic transport tests. Neo4j security acceptance is blocked. |
-| 2 Repository quality and skills | Five canonical skills with relative Codex discovery links, maintained structural/scenario checks, strict mypy, pinned parallel CI and standard MIT software licensing with separate content rights. | Model-based skill selection and untested client versions are not certified. Existing checks and review requirements remain authoritative. |
+| 2 Repository quality and skills | Five canonical skills with relative Codex discovery links, maintained structural/scenario checks, strict inner-layer mypy, capability adapter packages and pinned parallel CI. Standard MIT software licensing retains separate content rights. | Model-based skill selection and untested client versions are not certified. Existing checks and review requirements remain authoritative. |
 | 3 Runtime and integration handoff | Application images, private OPS/product/feedback contracts, PostgreSQL artifact, measured database access paths and Coolify runtime/migration contract. | Immutable image publication, registry visibility, real OAuth, shared monitoring, VPS resources, effective routing/headers and recovery belong to separately authorized verification. |
 
 ## Evidence and revisions
@@ -39,13 +39,52 @@ calls; a merged plan grants none of those permissions.
   own evidence and limitations. Counts above identify increments, not a combined
   test total. Later required CI runs supersede earlier source checkpoints.
 
+## Current source increments
+
+- **Completed:** PR91/92 calendar analytics, real native-ingest/readback evidence and
+  tooling cleanup fixes. [Calendar verification](https://github.com/gonzalomartinperez/portfolio-backoffice/blob/14c9e11ca42e2b47d26dc5ef55c9f0eef33512a5/docs/verification/calendar-integration-2026-10-18.json)
+  is a safe aggregate receipt; it contains no credentials or conversation data.
+- **Completed:** PR93 canonical capability adapters and explicit bootstrap defaults;
+  source8722bbefe31a227e7b9987cc1e20b13431f1d8e9 passed671offline and37real-service
+  tests in [CI39091167785](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/39091167785).
+  [Dated architecture evidence](verification/common-layout-results-2026-10-18.md)
+  records SQL checksum/CLI/negative-boundary tests and independent review.
+- **Completed:** PR94 application-only Docker layout and retired production
+  controller;676offline and37real-service tests passed in CI39091552603.
+  Develop mergecf3b68be8ddd45460d8156ac73d6eaf175e04d99; see
+  [the path/ownership handoff](docker-layout-handoff.md).
+- **Completed:** PR95 paired six-job CI profile, exact-source identity,
+  fail-closed aggregate and read-back protection bridge on develop/main.
+  CI39092548386passed every job at9a7b97c before normal merge
+  923f5d32215203d6a09efd2ef1dec8e49225d4e5. Post-merge runs remain separately
+  attributed. Post-develop39093024368 correctly failed closed on a fresh PostgreSQL
+  initialization race. PR99 adds final-postmaster readiness and a delayed-initdb
+  regression; CI39093823788 passed696offline and38real-service tests before
+  normal mergea5707b24bf1853e44b9888794bcfb7575e462cea. No image archive or publication
+  was introduced.
+- **Completed:** manually reviewed Dependabot96/97/98 cohort, normal PR100 merge
+  633b7ecbe8141ddf505deba42c21e418c460f5c2 after all six jobs passed
+  CI39094247058. The rebased duplicate97 workflow blob exactly matched develop and
+  was closed without suppressing alerts. [Review scope](verification/dependency-cohort-2026-10-18.md)
+  records the meaningful runtime changes and original failed fixture run.
+- **Completed:** final audit fixes isolate chunk identities across embedding profiles
+  (6c26f3915a45762c8de1755fbbd840f8ef217a87) and durably retain private evaluation
+  progress (aa9bbeae3bb5e2e156917f9b07b1150a2f800718). Each has observed RED/GREEN
+  regressions and independent source review. CI39094723647 passed all six jobs:
+  723offline and40real-service tests, including both provider-switch directions.
+  The new encoder transport remained synthetic; no new model calls.
+- **Completed:** root project1.0 metadata, automatic skill policy negatives and
+  actual client-discovery evidence are included in the verified sourcef6990fc.
+  Wire schema versions remain independent; no final tag or production readiness is
+  inferred from a package version. Main/final promotion remains coordinated.
+
 ## Production blockers and owner handoffs
 
 - **Blocked:** [Neo4j vendor acceptance](verification/neo4j-vendor-refresh-2026-10-17.md).
   The rejected candidate does not replace the retained digest. A normal API/PG
   image scan does not assess the full Neo4j Java inventory. Do not suppress the
   critical/fixable-high findings or patch vendor jars.
-- **Migration constraint:** a rollback reader must retain applied migration008 and
+- **Migration constraint:** a rollback reader must retain every applied migration through009 and
   its checksum. Reverting an application image does not undo schema changes;
   pre008 images fail strict readiness. See [deployment contract](deployment-contract.md).
 - **Owner decisions:** dependency maintenance is manual; native auto-merge is off.
