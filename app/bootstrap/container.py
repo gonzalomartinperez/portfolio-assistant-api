@@ -80,6 +80,8 @@ def create_app(
             connection_acquisition_timeout=3,
             max_connection_pool_size=4,
             max_transaction_retry_time=0,
+            disable_auto_commit_retries=True,
+            telemetry_disabled=True,
         )
         client = None
         embedding_client = None
@@ -213,7 +215,14 @@ def create_app(
                         active['source_commit'], embeddings.provider
                     ):
                         raise RuntimeError('corpus_unavailable')
-                graph.verify_connectivity()
+                index.verify_ready(active['id'])
+                with database.connection() as conn:
+                    current = conn.execute(
+                        "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                        (embeddings.provider, embeddings.model),
+                    ).fetchone()
+                    if current != active:
+                        raise RuntimeError('corpus_changed')
 
             app.state.ready = ready
 

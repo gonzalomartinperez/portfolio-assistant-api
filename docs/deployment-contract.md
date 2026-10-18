@@ -115,7 +115,9 @@ a separately tested recovery procedure.
 ## Health, routing and streams
 
 - `GET /health/live`: process response, not dependency readiness.
-- `GET /health/ready`: schema/checksum, active public corpus matching the configured embedding model and graph connectivity;
+- `GET /health/ready`: schema/checksum, active public corpus matching the configured embedding model,
+  and the fixed graph reads in one shared two-second transaction. It rechecks the
+  active corpus after the probe and fails closed on a concurrent change;
   use as the traffic admission probe. No paid model call.
 - Suggested container probe: `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"`.
   Initial settings: interval 20s, timeout 8s, retries 3, start period 30s; verify on VPS.
@@ -214,6 +216,13 @@ Allow at least 60 seconds for worker termination. SIGTERM prevents further chunk
 from being embedded and blocks activation; the current bounded operation finishes.
 Git/embedding timeouts are 30/20 seconds respectively. The API's streaming grace
 remains separate. vps-ops must verify restart/probe and shutdown behavior on Coolify.
+
+Graph publication also prepares the exact fixed reads after indexes are online and
+before activation: five read transactions with five-second server timeouts, plus
+bounded connection acquisition. An unchanged-version worker startup performs the same
+preparation. Visitor reads retain two-second transactions with implicit SDK retries
+disabled. Readiness performs no model call or five-second warmup. See the
+[cold-start evidence and acceptance procedure](verification/graph-readiness-2026-10-18.md).
 
 Coolify is the initial secret store/delivery mechanism. Disable Build Variable for
 runtime secrets; never build images with credentials. Protect the control plane

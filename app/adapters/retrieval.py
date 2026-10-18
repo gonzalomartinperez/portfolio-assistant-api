@@ -1,26 +1,20 @@
 import asyncio
 import logging
 
-from neo4j import Query
+from neo4j import READ_ACCESS, Query
 from neo4j.exceptions import Neo4jError, ServiceUnavailable, SessionExpired
 
+from app.adapters.neo4j.read_queries import (
+    DIRECT_RELATIONSHIPS_QUERY,
+    READ_TIMEOUT,
+    RELATED_RELATIONSHIPS_QUERY,
+    probe_reads,
+)
 from app.adapters.providers.embedding import FixtureEmbeddings, vector
 from app.application.embeddings import Embeddings
 from app.application.knowledge import Chunk, Corpus
 from app.domain.errors import RejectedError
 from app.domain.portfolio_paths import corpus_version, profile_paths
-
-LOCALE_FILTER = (
-    '(d.path STARTS WITH $prefix OR d.path STARTS WITH $root_prefix '
-    'OR (NOT d.path STARTS WITH "src/content/" AND NOT d.path STARTS WITH "content/")) '
-)
-
-DIRECT_RELATIONSHIPS_QUERY = (
-    'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
-    'WHERE p.normalized IN $names AND '
-    + LOCALE_FILTER
-    + 'RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12'
-)
 
 
 class KnowledgeIndex:
@@ -124,11 +118,15 @@ class KnowledgeIndex:
     ) -> tuple[str, ...]:
         def read():
             try:
-                with self.graph.session(database=self.database) as graph:
+                with self.graph.session(
+                    database=self.database,
+                    default_access_mode=READ_ACCESS,
+                    disable_auto_commit_retries=True,
+                ) as graph:
                     direct = graph.run(
                         Query(
                             DIRECT_RELATIONSHIPS_QUERY,
-                            timeout=2,
+                            timeout=READ_TIMEOUT,
                         ),
                         version=version,
                         names=sorted(terms),
@@ -140,15 +138,8 @@ class KnowledgeIndex:
                         return ids
                     related = graph.run(
                         Query(
-                            'MATCH (seed:Entity {version:$version})-[a:RELATES]->(t:Entity {kind:"Technology",version:$version})'
-                            '<-[b:RELATES]-(other:Entity {version:$version}) '
-                            'WHERE seed.normalized IN $names AND seed.id<>other.id '
-                            'AND a.version=$version AND b.version=$version '
-                            'MATCH (d:Document {id:b.document,version:$version}) '
-                            'WHERE '
-                            + LOCALE_FILTER
-                            + 'RETURN d.id AS id,count(DISTINCT t.id) AS shared ORDER BY shared DESC,id LIMIT 12',
-                            timeout=2,
+                            RELATED_RELATIONSHIPS_QUERY,
+                            timeout=READ_TIMEOUT,
                         ),
                         version=version,
                         names=sorted(terms),
@@ -167,6 +158,20 @@ class KnowledgeIndex:
                 return ()
 
         return await asyncio.to_thread(read)
+
+    def verify_ready(self, version: str) -> None:
+        with self.connect() as conn:
+            document = conn.execute(
+                'SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1', (version,)
+            ).fetchone()
+        if not document:
+            raise ValueError('public graph projection unavailable')
+        with self.graph.session(
+            database=self.database,
+            default_access_mode=READ_ACCESS,
+            disable_auto_commit_retries=True,
+        ) as graph:
+            probe_reads(graph, version, document['id'])
 
     def starter_prompts(self, locale):
         from app.domain.knowledge import suggestions

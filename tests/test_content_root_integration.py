@@ -92,6 +92,18 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
             'SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton'
         ).fetchone()
     results = []
+    prepared = []
+    preparation = indexing.prepare_graph
+
+    def prepare(driver, configuration, version, document_id):
+        with connect() as conn:
+            active = conn.execute(
+                "SELECT id FROM knowledge_versions WHERE status='active'"
+            ).fetchone()['id']
+        preparation(driver, configuration, version, document_id)
+        prepared.append((version, active))
+
+    monkeypatch.setattr(indexing, 'prepare_graph', prepare)
 
     def publish(repo: Path, revision: str, **kwargs):
         result = indexing.sync(
@@ -119,18 +131,21 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
         async def run_worker():
             stop = asyncio.Event()
             activated = []
+            statuses = []
 
             class Source:
                 async def latest(self):
                     return revisions[min(len(activated), len(revisions) - 1)]
 
             def report(status):
+                statuses.append(status)
                 if status == 'activated':
                     activated.append(status)
                     if len(activated) == len(revisions):
                         stop.set()
 
             await asyncio.wait_for(watch(Source(), publisher, stop, 0.01, report), 60)
+            assert statuses == ['activated'] * 3
 
         asyncio.run(run_worker())
         assert [result['knowledge_version'] for result in results] == versions
@@ -146,7 +161,16 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
             )['changed']
             is False
         )
-        index = KnowledgeIndex(connect, driver, freshness=90)
+        assert prepared == [
+            (versions[0], legacy),
+            (versions[1], versions[0]),
+            (versions[2], versions[1]),
+            (versions[2], versions[2]),
+        ]
+        index = KnowledgeIndex(
+            connect, driver, database=config.neo4j_database, freshness=90
+        )
+        index.verify_ready(versions[-1])
         for locale in ('en', 'es'):
             current, commit, prompts = index.starter_prompts(locale)
             assert (
@@ -190,6 +214,49 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
                     f'/blob/{revision}/' in edge['url'] and edge['start'] <= edge['end']
                     for edge in edges
                 )
+        profile.write_text(
+            profile.read_text() + '\nsummary: "Failed preparation fixture"'
+        )
+        git('add', '.')
+        git('commit', '-qm', 'candidate preparation failure')
+        failed_revision = git('rev-parse', 'HEAD')
+        failed_version = indexing.corpus_identity(failed_revision, 'fixture')[0]
+        all_versions.append(failed_version)
+
+        def fail_preparation(*args):
+            raise RuntimeError('synthetic preparation failure')
+
+        with monkeypatch.context() as failure:
+            failure.setattr(indexing, 'prepare_graph', fail_preparation)
+            with pytest.raises(RuntimeError, match='synthetic preparation failure'):
+                indexing.sync(
+                    tmp_path,
+                    failed_revision,
+                    configuration=config,
+                    connection=connect,
+                )
+        with connect() as conn:
+            assert (
+                conn.execute(
+                    "SELECT id FROM knowledge_versions WHERE status='active'"
+                ).fetchone()['id']
+                == versions[-1]
+            )
+            assert (
+                conn.execute(
+                    'SELECT status FROM knowledge_versions WHERE id=%s',
+                    (failed_version,),
+                ).fetchone()['status']
+                == 'staging'
+            )
+        with driver.session(database=config.neo4j_database) as graph:
+            assert (
+                graph.run(
+                    'MATCH (d:Document {version:$version}) RETURN count(d) AS n',
+                    version=versions[-1],
+                ).single()['n']
+                > 0
+            )
     finally:
         try:
             with connect() as conn:

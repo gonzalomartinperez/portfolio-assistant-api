@@ -95,3 +95,9 @@ historical provenance to the new path. Verify worker polling, unchanged-file reu
 locale filtering and both-store publication with the real isolated fixture. A new
 source format must invalidate an incomplete same-commit index before query embedding
 I/O. Matching folders or a synthetic move alone do not validate the producer candidate.
+
+For graph cold-start or readiness changes, load [bounded graph readiness](../../../docs/verification/graph-readiness-2026-10-18.md).
+Keep publication preparation separate from visitor reads and preserve the two-second
+request budget. Verify late-read failure before activation, unchanged-version startup,
+active-pointer races and effective SDK retry policy on the pinned driver. A successful
+warm read does not erase an earlier cold failure or prove a production latency guarantee.
