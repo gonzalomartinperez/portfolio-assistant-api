@@ -200,9 +200,11 @@ The integration job now builds infra/docker/postgres/Dockerfile once and uses th
 non-root image for its owned Compose fixture. It supplies that exact container ID
 to the existing two-service evaluation guard and stops only its fixture even on
 failure. PostgreSQL logs are captured before artifact upload. The complete database
-scan and matching-image summary are retained; fixable CRITICAL/HIGH findings fail
-the job. Unfixed database CRITICAL/HIGH findings still require explicit production
-assessment. The API's all-CRITICAL gate is unchanged. Full Neo4j Java scanning is
+scan and matching-image summary are ephemeral; raw inventories are not uploaded.
+The supported-base candidate tightens the PostgreSQL gate to reject every CRITICAL
+and fixable HIGH finding through the same validated CLI as the application image.
+Unfixed HIGH findings still require explicit production assessment. The API's
+all-CRITICAL gate is unchanged. Full Neo4j Java scanning is
 recorded separately for release assessment because its advisory database is ~936 MiB;
 it is not represented as a green per-PR security gate. No extra API build or paid
 provider call was added. Actual current-head Actions remains the merge gate.

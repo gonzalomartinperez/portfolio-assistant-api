@@ -94,6 +94,36 @@ def profile_errors(workflow: dict) -> list[str]:
             for step in jobs.get(key, {}).get('steps', [])
         ):
             errors.append(f'{key}: meaningful application verification absent')
+    database_scans = [
+        step.get('run', '')
+        for step in jobs.get('container', {}).get('steps', [])
+        if step.get('name')
+        == 'Inventory PostgreSQL and reject critical or fixable high findings'
+    ]
+    if (
+        len(database_scans) != 1
+        or any(
+            command not in database_scans[0]
+            for command in (
+                '--list-all-pkgs',
+                '--output artifacts/postgres-vulnerabilities.json portfolio-assistant-postgres:18.6',
+                'python -m scripts.image_security',
+                '--report artifacts/postgres-vulnerabilities.json --image-id "$image_id"',
+            )
+        )
+        or any(
+            bypass in database_scans[0]
+            for bypass in (
+                '--ignore-unfixed',
+                '--severity ',
+                '|| true',
+                'fixable_critical',
+            )
+        )
+    ):
+        errors.append(
+            'container: complete PostgreSQL inventory and all-critical gate required'
+        )
     return errors
 
 

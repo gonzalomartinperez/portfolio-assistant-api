@@ -376,6 +376,7 @@ def main() -> None:
             'backoffice_invitation',
             'backoffice_access_audit',
         ]
+        platform = target.verify_platform()
         api_before = fingerprint('portfolio_api_migrator', api_tables)
         iam_before = fingerprint('portfolio_iam_migrator', iam_tables)
         iam_dump = target.dump('portfolio_iam')
@@ -410,11 +411,13 @@ def main() -> None:
         assert api_before == fingerprint('portfolio_api_migrator', api_tables)
         assert iam_before == fingerprint('portfolio_iam_migrator', iam_tables)
         target.restart()
+        assert target.verify_platform() == platform
         assert api_before == fingerprint('portfolio_api_migrator', api_tables)
         assert iam_before == fingerprint('portfolio_iam_migrator', iam_tables)
         with project_fixture(arguments.postgres_image, authorized=True) as replacement:
             replacement.restore('portfolio_assistant', api_dump)
             replacement.restore('portfolio_iam', iam_dump)
+            assert replacement.verify_platform() == platform
             replacement.sql_as(
                 'portfolio_api_migrator',
                 (root / 'deploy/runtime-grants.sql').read_text(),
@@ -447,6 +450,7 @@ def main() -> None:
                     > 0
                 )
         receipt = {
+            'platform_before_and_after_recovery': platform,
             'both_actual_migration_commands': True,
             'restricted_fake_oauth_suite': True,
             'api_unseeded_fixture_run_history_checkpoint': True,
