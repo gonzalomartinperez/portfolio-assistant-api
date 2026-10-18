@@ -8,7 +8,7 @@ The commit containing this document identifies the handoff revision.
 
 ## Artifact and runtime
 
-Build locally: `docker build --platform linux/amd64 -t portfolio-assistant-api:local .`.
+Build locally: `docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .`.
 CI currently verifies Linux amd64 only. The candidate publisher prepares
 `ghcr.io/gonzalomartinperez/portfolio-assistant-api:<full-source-SHA>` and records
 its immutable registry manifest `@sha256:` digest (not a local image ID).
@@ -161,11 +161,16 @@ shutdown during a stream and schema-compatible rollback. No zero-downtime claim.
 
 | Assets | Classification / next owner |
 | --- | --- |
-| Dockerfile, .dockerignore, lockfiles, .env.example, app migrations, contracts, active quality/publish workflows | Retain: application-owned |
-| Root compose.yaml, scripts/fixture-env.sh, container/proxy smoke scripts | Retain: isolated local/CI verification |
-| deploy/compose.yaml, deploy/nginx/*, deploy/*env.example | Frozen shared-production transfer references; vps-ops confirms adoption before retirement |
-| deploy/apply-release.sh, .github/workflow-templates/deploy-vps.yml | Inactive transfer references; do not execute/activate here or create a competing controller |
-| deploy/runtime-grants.sql | Retain reviewed application schema privileges; vps-ops schedules execution |
+| infra/docker/app and infra/docker/postgres recipes/ignore files, lockfiles, .env.example, migrations and contracts | Application-owned |
+| infra/compose/local.yaml, scripts/fixture-env.sh, container/proxy smoke and tests/fixtures/proxy | Isolated local/CI verification only |
+| Former deploy/compose.yaml, deploy/nginx/server.conf, deploy/apply-release.sh and deployment workflow template | Retired after vps-ops accepted ownership; recover only from Git history for reference |
+| deploy/*env.example | Safe reference placeholders; production secret delivery belongs to vps-ops |
+| infra/docker/postgres/project-postgres-bootstrap.psql and project-pg_hba.conf | Active public application bootstrap/HBA resources; unchanged in-image paths |
+| deploy/runtime-grants.sql and knowledge-worker-grants.sql | Reviewed application schema privileges; vps-ops schedules execution |
+
+Current build paths and the exact retirement inventory are in
+[the Docker handoff](docker-layout-handoff.md). Per-recipe ignore files override the
+root deny-all fallback; builds always use repository root as context.
 
 Open vps-ops decisions: exact Coolify version/resource type and digest workflow,
 private pull access/package visibility, trusted proxy peers, secret injection,
@@ -221,7 +226,7 @@ must not start a generation retry loop.
 
 ## Application-owned database tuning
 
-Root `compose.yaml` is an isolated local/test specification, not the shared
+`infra/compose/local.yaml` is an isolated local/test specification, not the shared
 production stack. It pins service images, binds development ports to loopback,
 retains project-scoped volumes, prevents privilege escalation and rotates local
 logs at 10 MiB × 3 per service. No fixed container names or production secrets.
@@ -251,7 +256,7 @@ Current patch and vulnerability evidence: [runtime security verification](verifi
 
 ## Application-owned PostgreSQL artifact
 
-Build: `docker build --platform linux/amd64 -f Dockerfile.postgres -t portfolio-assistant-postgres:local .`.
+Build: `docker build --platform linux/amd64 -f infra/docker/postgres/Dockerfile -t portfolio-assistant-postgres:local .`.
 Root Compose is local/test only and builds this image; production composition stays
 in vps-ops. Planned package name is ghcr.io/gonzalomartinperez/portfolio-assistant-postgres,
 private unless separately authorized. No publication workflow has been activated

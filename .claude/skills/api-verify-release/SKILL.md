@@ -73,7 +73,7 @@ Python 3.14 and model GPT-6 Luna with medium reasoning are validated defaults; p
 calls and real answer-quality claims remain separate from fixture acceptance.
 
 
-For application Docker/database tuning, root `compose.yaml` is local/CI only.
+For application Docker/database tuning, `infra/compose/local.yaml` is local/CI only.
 Validate its loopback ports, bounded resources/logs and existing image digests with
 `uv run python -m scripts.validate_compose`. Verify migrations/indexing plus active
 SSE shutdown under those ceilings. Keep build tools out of the runtime image;
@@ -104,7 +104,7 @@ the [fixed-cohort review](../../../docs/verification/runtime-compatibility-2026-
 records the distinction between compatibility tests and live model evaluation.
 
 
-Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`
+Local Compose builds infra/docker/postgres/Dockerfile: use `docker compose -f infra/compose/local.yaml up --build -d --wait`
 with an isolated project. It runs UID 999, so existing PGDATA ownership must match;
 never silently chown shared volumes. Verify both fresh initialization and a copy of
 owned stopped data, and explicitly review vector extension metadata upgrades. Read

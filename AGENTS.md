@@ -48,5 +48,5 @@ ordinary orientation starts with README.md, not the whole catalog. See
 Private vps-ops owns production composition, shared resources and Coolify execution.
 This repository owns the API image, runtime contract, migrations and local tests.
 Do not edit vps-ops, install a controller, activate deployment triggers or treat
-image publication as deployment approval. Retained deploy/ assets are transfer
-references; follow docs/deployment-contract.md.
+image publication as deployment approval. Production controller/stack references are retired; local proxy fixtures are
+tests only. Follow docs/deployment-contract.md and use explicit canonical Docker paths.

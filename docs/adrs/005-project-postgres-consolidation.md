@@ -15,7 +15,7 @@ initializes one assistant database; the backoffice tests use separate fresh fixt
 Their fixture superuser credentials are not a production permission model.
 
 Propose one project-scoped PostgreSQL instance running the API-owned
-[database artifact](../../Dockerfile.postgres), with **two distinct databases** and
+[database artifact](../../infra/docker/postgres/Dockerfile), with **two distinct databases** and
 separate non-superuser credentials. Keep Neo4j dedicated to Portfolio's public
 projection. Pequeverso, career-ops and other projects must not share this instance,
 its credentials or volumes. No Redis, Celery, PgBouncer or additional service is
@@ -133,8 +133,8 @@ References: PostgreSQL 18 [HBA rules](https://www.postgresql.org/docs/18/auth-pg
 ## Implemented application artifacts and local proof
 
 The API image recipe now includes the idempotent
-[bootstrap](../../deploy/project-postgres-bootstrap.psql) and
-[ordered HBA template](../../deploy/project-pg_hba.conf). Bootstrap runs explicitly
+[bootstrap](../../infra/docker/postgres/project-postgres-bootstrap.psql) and
+[ordered HBA template](../../infra/docker/postgres/project-pg_hba.conf). Bootstrap runs explicitly
 as the local-socket-only `portfolio_bootstrap` provisioning identity; it neither
 assigns passwords nor executes automatically at normal startup. Five restricted
 logins receive credentials through the operator's secret-delivery procedure.

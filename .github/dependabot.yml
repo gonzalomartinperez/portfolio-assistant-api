@@ -34,7 +34,7 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
   - package-ecosystem: docker
-    directory: /
+    directories: ["/infra/docker/app", "/infra/docker/postgres"]
     target-branch: develop
     schedule:
       interval: weekly

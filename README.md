@@ -176,7 +176,7 @@ export ASSISTANT_PROJECT=assistant-readme-demo
 # Choose unused loopback ports before sourcing the fixture environment.
 export POSTGRES_PORT=55463 NEO4J_PORT=57713 NEO4J_HTTP_PORT=57513
 source scripts/fixture-env.sh
-docker compose up --build -d --wait
+docker compose -f infra/compose/local.yaml up --build -d --wait
 uv run python -m app.migrate
 uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
@@ -194,7 +194,7 @@ The demo establishes a session, sends a question, receives SSE output and delete
 session without printing credentials. Liveness is `/health/live`; readiness is
 `/health/ready` and requires migrations, an active corpus and graph connectivity.
 
-To stop the selected fixture services, use `docker compose stop` from the terminal
+To stop the selected fixture services, use `docker compose -f infra/compose/local.yaml stop` from the terminal
 where the fixture environment is loaded. Preserve volumes; do not use `down -v` against
 shared environments. [Local development](docs/local-development.md) covers alternate
 ports, real-service tests and local source indexing. [Environment](docs/environment.md)
@@ -268,7 +268,7 @@ and physical-device acceptance remain documented release gates.
 Build the application-owned image with:
 
 ```sh
-docker build --platform linux/amd64 -t portfolio-assistant-api:local .
+docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .
 ```
 
 It runs non-root on private port **8000**. Startup does not migrate or ingest knowledge;

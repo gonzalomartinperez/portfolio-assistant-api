@@ -1,6 +1,6 @@
 #006 · Canonical adapters and explicit operator composition
 
-Status: implemented; local verification complete, real-service/image PR CI required. Date:2026-10-18.
+Status: accepted and merged through PR93 with real-service/image CI. Date:2026-10-18.
 
 The shared vocabulary calls concrete I/O adapters. The previous infrastructure
 package also contained five settings-aware operator conveniences. A blind rename

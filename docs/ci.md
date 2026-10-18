@@ -27,30 +27,20 @@ Tests are explicitly marked `integration`. Offline and real-service jobs run
 disjoint selections, retaining all coverage. The container is built once with
 BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the
 lockfile and `.python-version`, with platform-aware setup-uv behavior. uv itself
-is pinned to 0.9.13, matching the production image. Only the static job saves this
+is pinned to 0.13.1, matching the production image. Only the static job saves this
 shared dependency cache; integration restores it and installs the same frozen lock
 without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
 cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
-`api-linux-amd64`. Cache entries never replace checks. Failure/success diagnostic
-artifacts retain JUnit and redacted JSON summaries for seven days. A tested image
-archive is exported only for trusted manual publishing, not every PR.
+`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt is uploaded for seven days.
+Other test diagnostics remain in Actions logs; no public image archive is uploaded.
 
 Third-party actions are pinned to reviewed upstream commit SHAs. PR jobs have only
 `contents: read`, do not persist checkout credentials, receive no deployment/model
 secrets and never use `pull_request_target`. Fixture credentials belong solely to
-ephemeral CI databases. Registry write permission exists only in the manual
-publisher's final job. User inputs enter shell steps through environment variables
-and are validated as full hashes/digests before use.
-
-`Publish tested candidate (manual)` accepts an immutable frontend image and its
-owner's committed revision. It reuses Quality, including cross-service proxy smoke and exact committed frontend contract-byte comparison,
-then publishes the **tested image archive** without rebuilding it. The artifact
-`release-candidate-manifest` records both image digests, both commits and contract
-version, with `production_authorized: false`. Manual publishing is prepared but
-has not been executed with a frontend release image. GitHub discovers dispatchable
-workflows on the default branch, `main`. Default-branch activation requires separate owner authorization; this increment
-merges into develop only. Discovery of the publisher neither authorizes image
-publication nor production deployment.
+ephemeral CI databases. No active workflow grants registry write permission. The earlier candidate
+publisher and public image-archive uploads were retired for privacy. Local release
+manifest validation remains; an authorized private publication path and registry
+visibility decision are separate release gates. A merge cannot publish or deploy.
 
 ## Deployment belongs to vps-ops
 
@@ -60,11 +50,12 @@ prepare authorized immutable publication. Publication is not deployment approval
 Package visibility must be confirmed independently from repository visibility.
 No publication has been authorized for this phase.
 
-`.github/workflow-templates/deploy-vps.yml` and `deploy/apply-release.sh` are frozen
-transfer references from the earlier ownership model. Do not activate or execute
-them here. vps-ops defines migration scheduling, approval, serialization, routing,
-verification and rollback; it must verify its exact Coolify prebuilt-image workflow.
-See [deployment contract](deployment-contract.md) for the asset inventory.
+The old deployment template, apply-release script and production Compose/TLS
+configuration were retired after explicit vps-ops ownership acceptance. They remain
+in Git history. Local proxy configuration moved to tests/fixtures/proxy and cannot
+serve as production configuration. vps-ops owns approvals, serialization, routing,
+migration scheduling, verification and rollback; see the
+[Docker ownership handoff](docker-layout-handoff.md).
 
 ## Observed Actions duration
 
@@ -192,7 +183,7 @@ release digest again at release selection: the vulnerability database changes
 independently of source/image revisions.
 
 
-The integration job now builds Dockerfile.postgres once and uses the tested
+The integration job now builds infra/docker/postgres/Dockerfile once and uses the tested
 non-root image for its owned Compose fixture. It supplies that exact container ID
 to the existing two-service evaluation guard and stops only its fixture even on
 failure. PostgreSQL logs are captured before artifact upload. The complete database

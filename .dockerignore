@@ -1,22 +1,3 @@
-# Only runtime sources and locked build inputs belong in the production context.
+# Fail closed for accidental/default contexts. Each canonical recipe has its own
+# Dockerfile.dockerignore; always build with -f infra/docker/<service>/Dockerfile .
 *
-!Dockerfile
-!pyproject.toml
-!uv.lock
-!LICENSE
-!THIRD_PARTY_NOTICES.md
-!app/
-!app/**
-!migrations/
-!migrations/**
-!contracts/
-!contracts/**
-**/__pycache__/
-**/*.pyc
-**/.env*
-
-# Public project bootstrap resources used only by the PostgreSQL artifact.
-!deploy/
-deploy/*
-!deploy/project-postgres-bootstrap.psql
-!deploy/project-pg_hba.conf

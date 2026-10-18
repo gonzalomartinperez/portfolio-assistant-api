@@ -4,7 +4,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 -o Acquire::htt
     && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 upgrade --yes \
     && rm -rf /var/lib/apt/lists/* /usr/local/bin/gosu
 RUN dpkg-query --show > /usr/share/assistant-postgres-packages.txt
-COPY deploy/project-postgres-bootstrap.psql deploy/project-pg_hba.conf /usr/local/share/portfolio-postgres/
+COPY infra/docker/postgres/project-postgres-bootstrap.psql infra/docker/postgres/project-pg_hba.conf /usr/local/share/portfolio-postgres/
 LABEL org.opencontainers.image.source="https://github.com/gonzalomartinperez/portfolio-assistant-api"
 # The official entrypoint skips root ownership repair when already non-root.
 USER postgres

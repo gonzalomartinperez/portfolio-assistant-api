@@ -8,7 +8,7 @@ these instructions do not modify its checkout or services.
 ```sh
 uv sync --frozen
 source scripts/fixture-env.sh
-docker compose up --build -d --wait
+docker compose -f infra/compose/local.yaml up --build -d --wait
 uv run python -m app.migrate
 uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
@@ -18,7 +18,7 @@ The fixture script uses project `assistant-fixture` and loopback ports
 55433 (PostgreSQL), 57688 (Bolt), 57475 (Neo4j HTTP). Override `ASSISTANT_PROJECT`,
 `POSTGRES_PORT`, `NEO4J_PORT`, `NEO4J_HTTP_PORT` **before** sourcing it if occupied.
 Each project gets separate volumes. Never stop another project's services or run
-`down -v`. `docker compose stop` stops only the selected project and preserves data.
+`down -v`. `docker compose -f infra/compose/local.yaml stop` stops only the selected project and preserves data.
 The CLI's GitHub source fetches the exact approved public revision above; a local
 approved checkout can use `--repo ../portfolio --ref <full SHA>` instead.
 
@@ -49,7 +49,7 @@ git diff --exit-code contracts
 uv run python -m scripts.evaluate_retrieval
 uv run python -m scripts.benchmark_fixture
 uv run python -m scripts.scan_secrets
-docker build -t portfolio-assistant-api:fixture .
+docker build -f infra/docker/app/Dockerfile -t portfolio-assistant-api:fixture .
 uv run python -m scripts.container_smoke --image portfolio-assistant-api:fixture
 ```
 
@@ -71,7 +71,7 @@ checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
 The root Compose services have bounded memory/CPU/PIDs and rotating logs. See the
 [application database settings](deployment-contract.md#application-owned-database-tuning)
 for tested fixture ceilings; the file is not a production composition. Render
-`docker compose config --quiet` and run `uv run python -m scripts.validate_compose`
+`docker compose -f infra/compose/local.yaml config --quiet` and run `uv run python -m scripts.validate_compose`
 after changing it. Preserve volumes and verify migrations, indexing and real-service
 tests before accepting new constraints. Production allocation belongs to vps-ops.
 

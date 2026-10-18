@@ -33,7 +33,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='assistant-proxy-') as directory:
         root = Path(directory)
         root.chmod(0o755)
-        for source in Path('deploy/nginx').glob('*.conf'):
+        for source in Path('tests/fixtures/proxy').glob('*.conf'):
             text = (
                 source.read_text()
                 .replace('api:8000', f'127.0.0.1:{api_port}')
