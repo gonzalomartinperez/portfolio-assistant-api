@@ -75,3 +75,16 @@ reference authorities, portfolio-only career facts, cache/cancellation bounds an
 shared cost accounting. The model has no general shell/database/navigation tools.
 Use `tests/test_web_context.py`; actual quality requires separately authorized live
 evaluation, never a claim inferred from mocked requests.
+
+For embedding-profile/index identity changes, load
+[the corpus-identity regression](../../../docs/verification/embedding-corpus-identity-2026-10-18.md).
+Chunk identities include the corpus/provider/model/dimension profile; legacy corpus
+rows stay immutable. A new version needs explicitly authorized indexing, even when
+public embedding cache entries can be reused. Test both provider-switch directions
+against real isolated PostgreSQL/Neo4j before claiming acceptance; synthetic encoder
+transport must never be described as a real OpenAI embedding call.
+
+The evaluation CLI requires a new private output path and retains atomic progress
+before deleting each completed session. Read the evaluation guide for interruption
+markers and hard-kill/storage limits. An interrupted report is evidence to preserve,
+not permission to restart or replay paid generations; there is no automatic resume.

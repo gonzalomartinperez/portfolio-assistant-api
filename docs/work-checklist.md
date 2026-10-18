@@ -62,6 +62,16 @@ calls; a merged plan grants none of those permissions.
   regression; CI39093823788 passed696offline and38real-service tests before
   normal mergea5707b24bf1853e44b9888794bcfb7575e462cea. No image archive or publication
   was introduced.
+- **Completed:** manually reviewed Dependabot96/97/98 cohort, normal PR100 merge
+  633b7ecbe8141ddf505deba42c21e418c460f5c2 after all six jobs passed
+  CI39094247058. The rebased duplicate97 workflow blob exactly matched develop and
+  was closed without suppressing alerts. [Review scope](verification/dependency-cohort-2026-10-18.md)
+  records the meaningful runtime changes and original failed fixture run.
+- **In progress:** final audit fixes isolate chunk identities across embedding profiles
+  (6c26f3915a45762c8de1755fbbd840f8ef217a87) and durably retain private evaluation
+  progress (aa9bbeae3bb5e2e156917f9b07b1150a2f800718). Each has observed RED/GREEN
+  regressions and independent source review; hosted provider-switch integration is
+  required before marking the complete increment accepted. No new model calls.
 - **In progress:** separate root project1.0 metadata and evidence consolidation.
   Wire schema versions remain independent; no final tag or production readiness is
   inferred from a package version. Main/final promotion remains coordinated.
