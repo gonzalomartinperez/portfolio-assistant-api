@@ -141,7 +141,7 @@ class ProjectPostgres:
             + ROLES[role]
         )
 
-    def owner_sql(self, query: str) -> bytes:
+    def owner_sql(self, query: str, *, timeout: int = 60) -> bytes:
         self.port()
         # The provisioning secret stays in the owned container environment, not argv.
         return docker(
@@ -153,6 +153,7 @@ class ProjectPostgres:
             'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -X --no-password '
             '-U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -At',
             data=query.encode(),
+            timeout=timeout,
         )
 
     def bootstrap(self) -> None:
@@ -254,8 +255,23 @@ class ProjectPostgres:
         }
 
 
+def wait_for_postmaster(target: ProjectPostgres) -> None:
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        try:
+            # The official initdb server accepts socket queries but has no TCP listeners.
+            if target.owner_sql('SHOW listen_addresses', timeout=3).strip():
+                return
+        except FixtureCommandError:
+            pass
+        time.sleep(0.5)
+    raise ValueError('owned PostgreSQL fixture did not become ready')
+
+
 @contextmanager
-def project_fixture(image: str, *, authorized: bool = False):
+def project_fixture(
+    image: str, *, authorized: bool = False, delay_initialization: bool = False
+):
     if not authorized:
         raise ValueError('explicit owned-fixture authorization is required')
     if (
@@ -294,6 +310,17 @@ def project_fixture(image: str, *, authorized: bool = False):
             # A private bridge permits the host's loopback test clients; production has no host port.
             cleanup.callback(remove_owned, kind, name, fixture)
             docker(kind, 'create', '--label', LABEL + '=' + fixture, name)
+        delay_mount = []
+        if delay_initialization:
+            delay = directory / 'initialization-delay.sql'
+            delay.write_text('SELECT pg_sleep(8);\n')
+            delay.chmod(0o644)
+            delay_mount = [
+                '--mount',
+                'type=bind,src='
+                + str(delay)
+                + ',dst=/docker-entrypoint-initdb.d/99-fixture-delay.sql,readonly',
+            ]
         cleanup.callback(remove_owned, 'container', name, fixture)
         identity = (
             docker(
@@ -308,6 +335,7 @@ def project_fixture(image: str, *, authorized: bool = False):
                 '999:999',
                 '--env-file',
                 str(environment),
+                *delay_mount,
                 '--read-only',
                 '--cap-drop',
                 'ALL',
@@ -354,15 +382,7 @@ def project_fixture(image: str, *, authorized: bool = False):
         docker('start', identity)
         target = ProjectPostgres(identity, fixture, passwords)
         target.port()
-        for _ in range(60):
-            try:
-                if target.owner_sql('SELECT 1').strip() == b'1':
-                    break
-            except FixtureCommandError:
-                pass
-            time.sleep(0.5)
-        else:
-            raise ValueError('owned PostgreSQL fixture did not become ready')
+        wait_for_postmaster(target)
         target.bootstrap()
         target.provision_fixture_passwords()
         yield target
