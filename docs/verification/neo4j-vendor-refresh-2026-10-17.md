@@ -55,10 +55,10 @@ another agent's VM/services. It does not add another image build/server lifecycl
 digests. It also re-fetches bounded official index/platform metadata and verifies
 SHA256 plus the amd64→configuration chain; a caller-supplied image ID alone is insufficient. It
 requires OS+jar inventories and scanner/DB provenance, shows relevant Jackson
-versions/header findings plus complete severity counts, and fails on fixable
-critical/high findings. Unresolved critical findings are still production release
-blockers requiring documented exposure/remediation/disposition; a green remediation
-gate is not a clean-image claim or risk waiver. The API image's stricter existing
+versions/header findings plus complete severity counts. The current CLI fails on
+**every CRITICAL and fixable HIGH** finding, including critical findings without a
+published fix. Unfixed HIGH findings remain visible for production assessment;
+a green remediation gate is not a clean-image claim or risk waiver. The API image's stricter existing
 all-critical gate is unchanged. Old scans remain historical, never relabeled fresh.
 
 No ~1GB Java advisory download is added to every ordinary PR. Run this explicit
@@ -88,3 +88,29 @@ incomplete artifact binding; no `continue-on-error`, ignore file or waiver is us
 Run, for example, `gh workflow run quality.yml --ref <reviewed-ref> -f verify_vendor_image=true`.
 Record the exact source SHA, selected index/platform/config, report and advisory times.
 Never use a green ordinary dispatch with the default false as a deep assessment.
+
+## October18 correction and metadata recheck
+
+The previous CLI threshold rejected only fixable critical/high findings, despite
+this handoff treating unresolved critical findings as release blockers. A synthetic
+unfixed-header critical and an unfixed-Java critical both reproduced an incorrect
+successful exit. The CLI now fails for either case while preserving the full receipt,
+package counts and `production_accepted=false`. Fixable critical/high, mixed findings,
+unfixed-HIGH visibility and no-finding behavior have separate regression cases.
+The verifier's receipt now has an explicit typed shape and is included in the
+existing strict mypy command/CI job, without changing dependency locks or adding a
+second checker. Untrusted report metadata retains `object` types; the gate uses
+validated integer counts. A header finding still does not identify the host kernel; lack of exposure evidence
+must not turn an unresolved critical assessment green. No suppression or waiver
+mechanism is introduced.
+
+Read-only official registry verification at2026-10-18T14:01:07Z observed the same
+rejected candidate index0a6e7aed, amd64 manifest47ea172c and config4e4837b1 recorded
+above. SHA256 of the fetched manifest bytes matched the descriptor. The
+`5.26.33-community-trixie` tag returned HTTP404; the official changelog still listed
+5.26.32 first. This is a metadata observation, not a fresh image scan or evidence
+that a different artifact is safe. No image was pulled/built or pin changed.
+The [Debian tracker](https://security-tracker.debian.org/tracker/CVE-2026-43185)
+continues to mark the selected stable line vulnerable; that source-package status
+alone does not establish runtime exploitability. Vendor remediation and production
+acceptance remain blocked independently of ordinary application-source CI.
