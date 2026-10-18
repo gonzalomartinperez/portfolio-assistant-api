@@ -188,3 +188,160 @@ def test_postgres_inventory_cannot_hide_unfixed_critical_findings(mutation):
     else:
         value['defaults']['run']['shell'] = 'sh'
     assert profile_errors(value)
+
+
+POSTGRES_CACHE_EXPORT = (
+    "${{ github.event_name == 'push' && "
+    "(github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') "
+    "&& 'type=gha,version=2,mode=max,scope=postgres-linux-amd64' || '' }}"
+)
+
+
+def assert_postgres_cache_policy(value):
+    exporters = [
+        (key, step.get('name'), step['with']['cache-to'])
+        for key, job in value['jobs'].items()
+        for step in job.get('steps', [])
+        if step.get('uses', '').startswith('docker/build-push-action@')
+        and 'scope=postgres-linux-amd64'
+        in str(step.get('with', {}).get('cache-to', ''))
+    ]
+    assert exporters == [
+        (
+            'container',
+            'Build and load the isolated PostgreSQL fixture',
+            POSTGRES_CACHE_EXPORT,
+        )
+    ]
+    for key in ('database', 'container'):
+        steps = value['jobs'][key]['steps']
+        builders = [
+            step
+            for step in steps
+            if step.get('uses', '').startswith('docker/setup-buildx-action@')
+        ]
+        assert len(builders) == 1
+        assert builders[0]['with'] == {
+            'version': 'v0.38.0',
+            'driver-opts': 'image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea',
+        }
+        builds = [
+            step
+            for step in steps
+            if step.get('name') == 'Build and load the isolated PostgreSQL fixture'
+        ]
+        assert len(builds) == 1
+        build = builds[0]
+        assert (
+            build['uses']
+            == 'docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc'
+        )
+        expected = {
+            'context': '.',
+            'file': 'infra/docker/postgres/Dockerfile',
+            'platforms': 'linux/amd64',
+            'load': True,
+            'push': False,
+            'tags': 'portfolio-assistant-postgres:18.6',
+            'cache-from': 'type=gha,version=2,scope=postgres-linux-amd64',
+        }
+        if key == 'container':
+            expected['cache-to'] = POSTGRES_CACHE_EXPORT
+        assert build['with'] == expected
+        assert 'if' not in build
+        starts = [step for step in steps if step.get('id') == 'postgres']
+        assert len(starts) == 1
+        start = starts[0]
+        assert steps.index(builders[0]) < steps.index(build) < steps.index(start)
+        assert start['run'].splitlines()[0] == (
+            'docker compose -f infra/compose/local.yaml -p assistant-ci '
+            'up --no-build --pull never -d --wait --wait-timeout 90 postgres'
+        )
+
+
+def test_postgres_cache_never_replaces_build_or_service_verification():
+    assert_postgres_cache_policy(workflow())
+
+
+@pytest.mark.parametrize('key', ['database', 'container'])
+@pytest.mark.parametrize(
+    'mutation',
+    [
+        'platform',
+        'scope',
+        'load',
+        'push',
+        'writer',
+        'skip',
+        'order',
+        'rebuild',
+        'pull',
+        'buildx',
+        'buildkit',
+    ],
+)
+def test_postgres_cache_rejects_unbound_or_untrusted_execution(key, mutation):
+    value = workflow()
+    steps = value['jobs'][key]['steps']
+    build = next(
+        step
+        for step in steps
+        if step.get('name') == 'Build and load the isolated PostgreSQL fixture'
+    )
+    builder = next(
+        step
+        for step in steps
+        if step.get('uses', '').startswith('docker/setup-buildx-action@')
+    )
+    start = next(step for step in steps if step.get('id') == 'postgres')
+    if mutation == 'platform':
+        build['with']['platforms'] = 'linux/arm64'
+    elif mutation == 'scope':
+        build['with']['cache-from'] = 'type=gha,scope=api-linux-amd64'
+    elif mutation in ('load', 'push'):
+        build['with'][mutation] = mutation == 'push'
+    elif mutation == 'writer':
+        build['with']['cache-to'] = (
+            'type=gha,version=2,mode=max,scope=postgres-linux-amd64'
+        )
+    elif mutation == 'skip':
+        build['if'] = 'false'
+    elif mutation == 'order':
+        steps.remove(build)
+        steps.append(build)
+    elif mutation == 'rebuild':
+        start['run'] = start['run'].replace('--no-build', '--build')
+    elif mutation == 'pull':
+        start['run'] = start['run'].replace('--pull never', '--pull always')
+    elif mutation == 'buildx':
+        builder['with']['version'] = 'latest'
+    else:
+        builder['with']['driver-opts'] = 'image=moby/buildkit:latest'
+    with pytest.raises(AssertionError):
+        assert_postgres_cache_policy(value)
+
+
+@pytest.mark.parametrize('mutation', ['extra_exporter', 'application_scope'])
+def test_postgres_cache_rejects_exporters_under_other_step_names(mutation):
+    value = workflow()
+    if mutation == 'extra_exporter':
+        steps = value['jobs']['database']['steps']
+        extra = deepcopy(
+            next(
+                step
+                for step in steps
+                if step.get('name') == 'Build and load the isolated PostgreSQL fixture'
+            )
+        )
+        extra['name'] = 'Unexpected second exporter'
+        extra['with']['cache-to'] = POSTGRES_CACHE_EXPORT
+        steps.append(extra)
+    else:
+        app = next(
+            step
+            for step in value['jobs']['container']['steps']
+            if step.get('with', {}).get('file') == 'infra/docker/app/Dockerfile'
+        )
+        app['with']['cache-to'] = POSTGRES_CACHE_EXPORT
+    with pytest.raises(AssertionError):
+        assert_postgres_cache_policy(value)
