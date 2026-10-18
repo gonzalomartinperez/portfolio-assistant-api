@@ -1,6 +1,6 @@
-"""Compatibility CLI; new code imports app.infrastructure.migrations."""
+"""Compatibility CLI; new code imports app.bootstrap.migrations."""
 
-from app.infrastructure.migrations import main
+from app.bootstrap.migrations import main
 
 if __name__ == '__main__':
     main()

@@ -1,11 +1,10 @@
 """Prune expired anonymous data and its LangGraph checkpoints."""
 
-from app.infrastructure.analytics import prune_product_counts
-from app.infrastructure.db import connect
+from app.adapters.postgres.analytics import prune_product_counts
 
 
-def prune() -> dict[str, int]:
-    with connect() as conn:
+def prune(*, connection, cleanup) -> dict[str, int]:
+    with connection() as conn:
         run_ids = [
             str(row['id'])
             for row in conn.execute(
@@ -31,11 +30,5 @@ def prune() -> dict[str, int]:
             'DELETE FROM sessions WHERE expires_at<=now() RETURNING id'
         ).fetchall()
         conn.execute("DELETE FROM rate_events WHERE created_at<now()-interval '2 days'")
-    from app.infrastructure.checkpoints import drain_cleanup
-
-    drain_cleanup()
+    cleanup()
     return {'sessions': len(removed), 'checkpoints': len(run_ids)}
-
-
-if __name__ == '__main__':
-    print(prune())

@@ -17,7 +17,6 @@ import urllib.error
 import urllib.request
 from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import patch
 from uuid import uuid4
 
 import psycopg
@@ -25,9 +24,9 @@ from fastapi.testclient import TestClient
 from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
+from app.adapters.postgres import migrations
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
-from app.infrastructure import migrations
 from scripts.project_postgres_fixture import (
     LABEL,
     ProjectPostgres,
@@ -245,16 +244,14 @@ def main() -> None:
             otel_sdk_disabled=True,
             ops_read_token=None,
         )
-        with (
-            patch.object(migrations, 'settings', lambda: config),
-            patch.object(
-                migrations,
-                'connect',
-                lambda: psycopg.connect(config.database_url, row_factory=dict_row),
-            ),
-        ):
-            migrations.main()
-            migrations.main()
+        migrations.migrate(
+            lambda: psycopg.connect(config.database_url, row_factory=dict_row),
+            config.database_url,
+        )
+        migrations.migrate(
+            lambda: psycopg.connect(config.database_url, row_factory=dict_row),
+            config.database_url,
+        )
         target.sql_as(
             'portfolio_api_migrator', (root / 'deploy/runtime-grants.sql').read_text()
         )

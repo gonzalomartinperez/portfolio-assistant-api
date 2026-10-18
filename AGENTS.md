@@ -23,8 +23,8 @@ the canonical operating contract; CLAUDE.md explicitly imports it.
 
 `app/domain` is pure standard-library policy. `app/application` owns use cases and
 ports and may import domain. Neither imports outer layers. `app/ai` implements
-workflow/retrieval with injected capabilities, never concrete I/O. Infrastructure
-implements persistence/provider/source ports; presentation handles HTTP/SSE;
+workflow/retrieval with injected capabilities, never concrete I/O. Adapters
+implement persistence/provider/source ports; presentation handles HTTP/SSE;
 bootstrap composes clients and lifespan. Preserve v1 wire artifacts.
 
 Run `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,

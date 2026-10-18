@@ -10,14 +10,14 @@ from pydantic import ValidationError
 from requests import Response
 from requests.exceptions import ConnectionError
 
-from app.application.evaluation_export import EvaluationSummary, export_evaluation
-from app.bootstrap.config import Settings
-from app.bootstrap.evaluation_export import run
-from app.infrastructure.evaluation_export import (
+from app.adapters.observability.evaluation_export import (
     ENDPOINT,
     EvaluationSession,
     LangSmithEvaluationExporter,
 )
+from app.application.evaluation_export import EvaluationSummary, export_evaluation
+from app.bootstrap.config import Settings
+from app.bootstrap.evaluation_export import run
 
 
 @pytest.fixture

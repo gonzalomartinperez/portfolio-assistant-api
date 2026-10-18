@@ -1,6 +1,6 @@
 # Assistant voice
 
-Canonical voice instructions live in `app/infrastructure/voice.py`, composed into
+Canonical voice instructions live in `app/adapters/providers/voice.py`, composed into
 ResponsesProvider's developer instructions. They shape presentation, never source
 authority, session policy, the resolved locale or provider behavior. Keep GPT-6 Luna,
 medium effort, the existing output allowance, citation validation and no-fallback policy.

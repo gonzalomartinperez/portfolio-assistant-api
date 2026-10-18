@@ -9,11 +9,11 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 
+from app.adapters.providers.embedding import embed
 from app.bootstrap.config import settings
+from app.bootstrap.maintenance import connect, reserve, settle
+from app.domain.errors import BudgetExhaustedError
 from app.domain.fixture import insufficient_message
-from app.infrastructure.db import connect
-from app.infrastructure.embedding import embed
-from app.infrastructure.ledger import BudgetExhaustedError, reserve, settle
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
@@ -300,7 +300,7 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(
                 == second['knowledge_version']
             )
         monkeypatch.setattr(
-            'app.infrastructure.indexing.GraphDatabase.driver',
+            'app.adapters.portfolio.indexing.GraphDatabase.driver',
             lambda *args, **kwargs: (_ for _ in ()).throw(
                 RuntimeError('graph unavailable')
             ),
@@ -380,7 +380,7 @@ def test_concurrent_reservations_respect_one_remaining_budget_slot(monkeypatch):
                 (run_id, conversation_id, str(uuid4())),
             )
     monkeypatch.setattr(
-        'app.infrastructure.ledger.settings',
+        'app.adapters.postgres.ledger.settings',
         lambda: type(
             'BudgetSettings', (), {'reserve_cutoff_usd': str(spent + Decimal('0.05'))}
         )(),
@@ -552,7 +552,7 @@ def test_every_owned_mutation_and_stream_wire_contract(client_factory):
 
 
 def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
-    from app.infrastructure.checkpoints import drain_cleanup
+    from app.bootstrap.maintenance import drain_cleanup
 
     client = client_factory(app, client=(str(uuid4()), 50000))
     csrf = bootstrap(client, 'http://localhost:3000')
@@ -569,7 +569,7 @@ def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
         def fail(*args):
             raise RuntimeError('simulated checkpoint outage')
 
-        patch.setattr('app.infrastructure.checkpoints.delete_checkpoint', fail)
+        patch.setattr('app.adapters.postgres.checkpoints.delete_checkpoint', fail)
         assert client.delete('/api/v1/session', headers=auth).status_code == 204
     with connect() as conn:
         assert conn.execute(
@@ -590,9 +590,9 @@ def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
 
 
 def test_atomic_run_slot_and_abuse_limits(client_factory):
+    from app.adapters.postgres.conversations import PostgresConversations
     from app.application.conversations import digest
     from app.domain.errors import RejectedError
-    from app.infrastructure.conversations import PostgresConversations
 
     client = client_factory(app, client=(str(uuid4()), 50000))
     csrf = bootstrap(client, 'http://localhost:3000')
@@ -787,7 +787,7 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
 def test_embedding_ledger_shares_atomic_monthly_limit():
     from concurrent.futures import ThreadPoolExecutor
 
-    from app.infrastructure.ledger import EmbeddingAccounting
+    from app.adapters.postgres.ledger import EmbeddingAccounting
 
     with connect() as conn:
         spent = conn.execute(
@@ -827,8 +827,8 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
 
 
 def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
+    from app.adapters.retrieval import KnowledgeIndex
     from app.domain.errors import RejectedError
-    from app.infrastructure.knowledge import KnowledgeIndex
 
     class ForbiddenEmbeddings:
         provider = 'fixture'
@@ -869,7 +869,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
     import subprocess
     from types import SimpleNamespace
 
-    from app.infrastructure import indexing
+    from app.adapters.portfolio import indexing
 
     repo = tmp_path / 'public-fixture'
     repo.mkdir()
@@ -917,7 +917,6 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
             pass
 
     monkeypatch.setattr(indexing, 'create_sync_client', FakeOpenAI)
-    monkeypatch.setattr(indexing, 'settings', lambda: config)
     project = indexing.project
     with connect() as conn:
         original = conn.execute(
@@ -935,7 +934,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
             ),
         )
         with pytest.raises(RuntimeError, match='synthetic projection failure'):
-            indexing.sync(repo)
+            indexing.sync(repo, configuration=config, connection=connect)
         with connect() as conn:
             assert conn.execute(
                 'SELECT content_hash FROM public_embedding_cache WHERE content_hash=%s',
@@ -948,7 +947,10 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
                 == original
             )
         monkeypatch.setattr(indexing, 'project', project)
-        assert indexing.sync(repo)['changed'] is True
+        assert (
+            indexing.sync(repo, configuration=config, connection=connect)['changed']
+            is True
+        )
         assert calls == ['text-embedding-3-small']
     finally:
         with connect() as conn:
@@ -1107,8 +1109,8 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
 def test_operational_usage_month_is_utc_even_with_non_utc_connection():
     from contextlib import contextmanager
 
+    from app.adapters.postgres.operations import PostgresOperations
     from app.bootstrap.config import Settings
-    from app.infrastructure.operations import PostgresOperations
 
     identifier = uuid4()
     with connect() as conn:

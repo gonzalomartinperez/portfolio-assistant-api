@@ -4,9 +4,9 @@ from decimal import Decimal
 
 import pytest
 
+from app.adapters.postgres.migrations import validate_history
 from app.bootstrap.config import Settings
 from app.domain.budget import Budget
-from app.infrastructure.migrations import validate_history
 from app.presentation.middleware import BodyLimit
 
 
@@ -126,8 +126,8 @@ def test_database_error_translation_never_passes_driver_exception_to_use_case():
 
     import psycopg
 
+    from app.adapters.postgres.db import translated
     from app.domain.errors import DependencyUnavailableError
-    from app.infrastructure.db import translated
 
     @contextmanager
     def broken():
@@ -142,7 +142,7 @@ def test_database_error_translation_never_passes_driver_exception_to_use_case():
 def test_checkpoint_cleanup_uses_injected_database(monkeypatch):
     from contextlib import contextmanager
 
-    from app.infrastructure import checkpoints
+    from app.adapters.postgres import checkpoints
 
     statements, destinations = [], []
 

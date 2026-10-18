@@ -5,10 +5,10 @@ from dataclasses import asdict
 
 from neo4j import GraphDatabase
 
+from app.adapters.retrieval import KnowledgeIndex
 from app.ai.retrieval import PublicRetrieval
 from app.bootstrap.config import settings
-from app.infrastructure.db import connect
-from app.infrastructure.knowledge import KnowledgeIndex
+from app.bootstrap.maintenance import connect
 
 
 def retrieve(question, locale='en', *, strategy='hybrid'):

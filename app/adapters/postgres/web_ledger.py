@@ -3,9 +3,9 @@
 import asyncio
 from uuid import UUID, uuid4
 
+from app.adapters.postgres.ledger import MONTHLY_SPEND_SQL
 from app.domain.errors import BudgetExhaustedError
 from app.domain.web_budget import WebBudget
-from app.infrastructure.ledger import MONTHLY_SPEND_SQL
 
 
 class WebAccounting:

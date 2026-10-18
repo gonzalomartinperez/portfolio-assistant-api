@@ -4,11 +4,11 @@ from typing import Literal
 
 from psycopg import sql
 
+from app.adapters.postgres.analytics_report import read_report
 from app.domain.analytics import ProductEvent
 from app.domain.analytics_country import country_label
 from app.domain.analytics_interactions import PublicInteraction
 from app.domain.analytics_report import AnalyticsQuery, ProductReport
-from app.infrastructure.analytics_report import read_report
 
 
 def prune_product_counts(conn) -> None:

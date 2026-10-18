@@ -12,8 +12,8 @@ source evidence. Do not assume permission to mutate an index from a review reque
 
 Use [retrieval/evaluation policy](../../../docs/graph-retrieval.md),
 [cases](../../../evals/retrieval.json), [retrieval orchestration](../../../app/ai/retrieval.py),
-[indexing](../../../app/infrastructure/indexing.py) and
-[bounded graph queries](../../../app/infrastructure/graph.py) for the affected path.
+[indexing](../../../app/adapters/portfolio/indexing.py) and
+[bounded graph queries](../../../app/adapters/neo4j/projection.py) for the affected path.
 Load these selectively: a citation-policy fix does not require every ingest detail.
 
 1. Use only the fixed approved public portfolio source. The local-demo guide pins

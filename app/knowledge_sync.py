@@ -1,6 +1,6 @@
-"""Compatibility CLI; new code imports app.infrastructure.indexing."""
+"""Compatibility CLI; new code imports app.bootstrap.indexing."""
 
-from app.infrastructure.indexing import main, sync
+from app.bootstrap.indexing import main, sync
 
 __all__ = ['main', 'sync']
 

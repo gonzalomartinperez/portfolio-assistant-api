@@ -27,7 +27,7 @@ def test_hybrid_retrieval_evaluation_and_relationship_provenance():
     from neo4j import GraphDatabase
 
     from app.bootstrap.config import settings
-    from app.infrastructure.db import connect
+    from app.bootstrap.maintenance import connect
     from tests.support import retrieve
 
     for case in json.loads(Path('evals/retrieval.json').read_text()):
@@ -76,7 +76,7 @@ def test_hybrid_retrieval_evaluation_and_relationship_provenance():
 def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
     import subprocess
 
-    from app.infrastructure.indexing import _sync
+    from app.adapters.portfolio.indexing import _sync
 
     repo = tmp_path / 'source'
     repo.mkdir()
@@ -94,11 +94,21 @@ def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
         check=True,
     )
     with pytest.raises(ValueError, match='only the public'):
-        _sync(repo, '--help')
+        from app.bootstrap.config import Settings
+
+        def forbidden_connection():
+            raise AssertionError('unapproved source must fail before database access')
+
+        _sync(
+            repo,
+            '--help',
+            configuration=Settings(_env_file=None),
+            connection=forbidden_connection,
+        )
 
 
 def test_github_indexing_honors_immutable_revision(monkeypatch, capsys):
-    from app.infrastructure import indexing
+    from app.bootstrap import indexing
 
     revision = 'a' * 40
     commands = []
@@ -112,7 +122,7 @@ def test_github_indexing_honors_immutable_revision(monkeypatch, capsys):
 
 
 def test_github_indexing_rejects_arbitrary_ref(monkeypatch):
-    from app.infrastructure import indexing
+    from app.bootstrap import indexing
 
     monkeypatch.setattr(
         'sys.argv',

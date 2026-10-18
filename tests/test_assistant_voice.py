@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.infrastructure.answer import ResponsesProvider
+from app.adapters.providers.answer import ResponsesProvider
 
 
 @pytest.mark.parametrize(

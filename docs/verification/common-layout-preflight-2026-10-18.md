@@ -64,3 +64,11 @@ Baseline RED command: `.venv/bin/pytest -q tests/test_adapter_layout.py` →
 locations, unknown adapter classification and concrete SQL still in the legacy
 namespace. This is intentional pre-move evidence, not a passing release candidate;
 the implementation must make these regressions pass before a PR is ready.
+
+## Implementation decision after the preflight
+
+The initial forwarding-facade proposal above was temporary. A complete current
+consumer scan found no external deployed importer; all in-repository consumers
+now use canonical adapters or bootstrap composition. The obsolete infrastructure
+package is removed, while root ASGI/CLI entry points remain stable. Historical
+receipts retain their source attribution. ADR006 records the final decision.

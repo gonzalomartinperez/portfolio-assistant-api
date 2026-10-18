@@ -51,18 +51,50 @@ def test_adapters_consume_owned_ports_without_bootstrap_or_legacy_backedges(modu
     assert dependency_errors(module, 'from app.infrastructure.db import connect')
 
 
-def test_only_operator_facades_retain_the_legacy_namespace():
+def test_obsolete_infrastructure_namespace_is_absent():
     root = Path(__file__).parents[1] / 'app'
-    allowed = {
-        'db.py',
-        'ledger.py',
-        'checkpoints.py',
-        'migrations.py',
-        'indexing.py',
-        '__init__.py',
-    }
-    assert {p.name for p in (root / 'infrastructure').glob('*.py')} == allowed
-    for path in (root / 'infrastructure').glob('*.py'):
-        assert not any(
-            sql in path.read_text() for sql in ('SELECT ', 'INSERT INTO ', 'MATCH (')
-        )
+    assert not (root / 'infrastructure').exists()
+
+
+@pytest.mark.parametrize(
+    'source',
+    [
+        'def hidden_policy():\n    return 1',
+        'class HiddenAdapter:\n    pass',
+        'import psycopg',
+        'from app.bootstrap.maintenance import settings',
+        'from app.adapters.postgres.db import connect\nconnect()',
+    ],
+)
+def test_obsolete_namespace_rejects_implementation_without_sql_text(source):
+    assert dependency_errors('app.infrastructure.db', source)
+
+
+def test_nested_legacy_modules_are_unclassified_even_without_imports(tmp_path):
+    from scripts.check_architecture import architecture_errors
+
+    root = tmp_path / 'app'
+    target = root / 'infrastructure/hidden/policy.py'
+    target.parent.mkdir(parents=True)
+    target.write_text('value = 1')
+    assert architecture_errors(root) == [
+        'unclassified application module: app.infrastructure.hidden.policy'
+    ]
+
+
+def test_stable_public_command_dispatch_is_supported(monkeypatch):
+    import runpy
+    import sys
+
+    from app.bootstrap import indexing, migrations
+
+    calls = []
+    monkeypatch.setattr(migrations, 'main', lambda: calls.append('migrate'))
+    monkeypatch.setattr(indexing, 'main', lambda: calls.append('index'))
+    for module in (
+        'app.migrate',
+        'app.knowledge_sync',
+    ):
+        monkeypatch.delitem(sys.modules, module, raising=False)
+        runpy.run_module(module, run_name='__main__')
+    assert calls == ['migrate', 'index']

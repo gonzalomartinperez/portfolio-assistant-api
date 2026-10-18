@@ -10,9 +10,9 @@ from psycopg.conninfo import make_conninfo
 from psycopg.rows import dict_row
 from psycopg_pool import PoolTimeout
 
+from app.adapters.postgres import migrations
+from app.adapters.postgres.db import pool
 from app.bootstrap.config import Settings
-from app.infrastructure import migrations
-from app.infrastructure.db import pool
 from scripts.project_postgres_fixture import ROLES, project_fixture
 
 pytestmark = [
@@ -57,14 +57,14 @@ def test_project_database_bootstrap_api_migrations_and_permission_boundaries(
             otel_sdk_disabled=True,
             ops_read_token=None,
         )
-        monkeypatch.setattr(migrations, 'settings', lambda: configuration)
-        monkeypatch.setattr(
-            migrations,
-            'connect',
+        migrations.migrate(
             lambda: psycopg.connect(configuration.database_url, row_factory=dict_row),
+            configuration.database_url,
         )
-        migrations.main()
-        migrations.main()
+        migrations.migrate(
+            lambda: psycopg.connect(configuration.database_url, row_factory=dict_row),
+            configuration.database_url,
+        )
         target.sql_as(
             'portfolio_api_migrator', Path('deploy/runtime-grants.sql').read_text()
         )

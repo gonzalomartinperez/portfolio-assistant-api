@@ -153,7 +153,7 @@ flowchart TB
 | --- | --- |
 | `app/domain`, `app/application` | Framework-independent policy, explicit lifecycle and small ports. |
 | `app/ai` | LangGraph orchestration and retrieval with injected capabilities. |
-| `app/infrastructure`, `app/presentation` | Concrete I/O, validation, HTTP and SSE boundaries. |
+| `app/adapters`, `app/presentation` | Concrete I/O, validation, HTTP and SSE boundaries. |
 | `contracts`, `migrations`, `evals` | Pinned wire artifacts, explicit schema evolution and reproducible evaluation cases. |
 
 Import-boundary tests enforce this direction. Strict mypy covers the inner layers and AI

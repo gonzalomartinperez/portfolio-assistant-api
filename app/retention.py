@@ -1,6 +1,6 @@
-"""Compatibility CLI; new code imports app.infrastructure.retention."""
+"""Compatibility CLI; new code imports app.bootstrap.maintenance."""
 
-from app.infrastructure.retention import prune
+from app.bootstrap.maintenance import prune
 
 if __name__ == '__main__':
     print(prune())

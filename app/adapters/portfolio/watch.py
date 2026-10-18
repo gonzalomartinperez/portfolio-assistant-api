@@ -12,9 +12,8 @@ import psycopg
 from neo4j.exceptions import DriverError, Neo4jError
 from openai import APIError
 
+from app.adapters.portfolio.indexing import git
 from app.domain.errors import DependencyUnavailableError
-from app.infrastructure.db import connect
-from app.infrastructure.indexing import git, sync
 
 REMOTE = 'https://github.com/gonzalomartinperez/portfolio.git'
 
@@ -53,16 +52,18 @@ class PublishedPortfolio:
 
 
 class PublicKnowledgePublisher:
-    def __init__(self, repo: Path, stop: Event | None = None):
+    def __init__(self, repo: Path, stop: Event | None = None, *, connection, publish):
         self.repo = repo
         self.stop = stop
+        self.connection = connection
+        self.publish_projection = publish
 
     async def observe(self, revision: str) -> None:
         if not re.fullmatch(r'[0-9a-f]{40}', revision):
             raise ValueError('invalid source revision')
 
         def save():
-            with connect() as conn:
+            with self.connection() as conn:
                 conn.execute(
                     'INSERT INTO knowledge_watch(singleton,observed_commit,checked_at) VALUES (true,%s,now()) '
                     'ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit,checked_at=now()',
@@ -77,7 +78,11 @@ class PublicKnowledgePublisher:
     async def publish(self, revision: str) -> bool:
         try:
             result = await asyncio.to_thread(
-                sync, self.repo, revision, watched=True, stop=self.stop
+                self.publish_projection,
+                self.repo,
+                revision,
+                watched=True,
+                stop=self.stop,
             )
         except (
             OSError,

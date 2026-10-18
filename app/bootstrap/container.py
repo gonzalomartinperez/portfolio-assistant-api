@@ -12,6 +12,25 @@ from neo4j import GraphDatabase
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from app.adapters.postgres.analytics import PostgresProductAnalytics
+from app.adapters.postgres.checkpoints import drain_cleanup
+from app.adapters.postgres.conversations import PostgresConversations
+from app.adapters.postgres.db import pool, translated
+from app.adapters.postgres.feedback import PostgresFeedback
+from app.adapters.postgres.ledger import EmbeddingAccounting, PostgresAccounting
+from app.adapters.postgres.migrations import check_schema
+from app.adapters.postgres.operations import OperationalObserver, PostgresOperations
+from app.adapters.postgres.runs import PostgresRuns
+from app.adapters.postgres.web_ledger import WebAccounting
+from app.adapters.providers.answer import (
+    FixtureProvider,
+    ResponsesProvider,
+)
+from app.adapters.providers.embedding import FixtureEmbeddings, OpenAIEmbeddings
+from app.adapters.providers.http import create_async_client, create_sync_client
+from app.adapters.providers.language import LocalLanguageDetector
+from app.adapters.providers.web_search import OpenAIWebSearch
+from app.adapters.retrieval import KnowledgeIndex
 from app.ai.retrieval import PublicRetrieval
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import Provider
@@ -21,25 +40,6 @@ from app.bootstrap.config import Settings, settings
 from app.bootstrap.logging import configure
 from app.domain.budget import Budget
 from app.domain.web_budget import WebBudget
-from app.infrastructure.analytics import PostgresProductAnalytics
-from app.infrastructure.answer import (
-    FixtureProvider,
-    ResponsesProvider,
-)
-from app.infrastructure.checkpoints import drain_cleanup
-from app.infrastructure.conversations import PostgresConversations
-from app.infrastructure.db import pool, translated
-from app.infrastructure.embedding import FixtureEmbeddings, OpenAIEmbeddings
-from app.infrastructure.feedback import PostgresFeedback
-from app.infrastructure.knowledge import KnowledgeIndex
-from app.infrastructure.language import LocalLanguageDetector
-from app.infrastructure.ledger import EmbeddingAccounting, PostgresAccounting
-from app.infrastructure.migrations import check_schema
-from app.infrastructure.operations import OperationalObserver, PostgresOperations
-from app.infrastructure.provider_http import create_async_client, create_sync_client
-from app.infrastructure.runs import PostgresRuns
-from app.infrastructure.web_ledger import WebAccounting
-from app.infrastructure.web_search import OpenAIWebSearch
 from app.presentation.analytics import router as analytics_router
 from app.presentation.feedback import router as feedback_router
 from app.presentation.http import router
@@ -175,7 +175,7 @@ def create_app(
                 operations = PostgresOperations(operational_connection, config)
                 exporter = None
                 if not config.otel_sdk_disabled:
-                    from app.infrastructure.telemetry import PrivateTelemetry
+                    from app.adapters.observability.telemetry import PrivateTelemetry
 
                     exporter = PrivateTelemetry(
                         config.otel_private_endpoint,

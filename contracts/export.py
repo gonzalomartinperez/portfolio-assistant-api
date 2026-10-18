@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from app.infrastructure.public_projection import PublicProjection
+from app.adapters.portfolio.projection import PublicProjection
 from app.main import app
 from app.presentation.analytics import ProductEventBody, ProductSnapshot
 from app.presentation.analytics_report_models import ProductReportSnapshot

@@ -8,10 +8,10 @@ import pytest
 from openai import AsyncOpenAI
 from pydantic import ValidationError
 
+from app.adapters.providers.answer import ResponsesProvider
 from app.application.contracts import GenerationFailedError
 from app.bootstrap.config import Settings
 from app.domain.errors import ProviderUnavailableError
-from app.infrastructure.answer import ResponsesProvider
 
 
 def test_utf8_environment_configuration_and_environment_override(tmp_path, monkeypatch):

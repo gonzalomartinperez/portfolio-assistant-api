@@ -4,10 +4,10 @@ import logging
 from neo4j import Query
 from neo4j.exceptions import Neo4jError, ServiceUnavailable, SessionExpired
 
+from app.adapters.providers.embedding import FixtureEmbeddings, vector
 from app.application.embeddings import Embeddings
 from app.application.knowledge import Chunk, Corpus
 from app.domain.errors import RejectedError
-from app.infrastructure.embedding import FixtureEmbeddings, vector
 
 DIRECT_RELATIONSHIPS_QUERY = (
     'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
