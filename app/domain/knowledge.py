@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Literal
 
+from app.domain.portfolio_paths import profile_paths
+
 Locale = Literal['en', 'es']
 
 
@@ -42,11 +44,11 @@ def suggestions(
     result = tuple(
         Suggestion(identifier, topic, spanish if locale == 'es' else english)
         for identifier, topic, english, spanish in PROMPTS
-        if f'src/content/{locale}/{topic}.ts' in paths
+        if any(path in paths for path in profile_paths(locale, topic))
     )
 
     if achievements and (
-        f'src/content/{locale}/experience.ts' in paths
+        any(path in paths for path in profile_paths(locale, 'experience'))
         or 'public/assistant-knowledge.json' in paths
     ):
         metric = Suggestion(

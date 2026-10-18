@@ -39,6 +39,7 @@ from app.application.runs import RunService
 from app.bootstrap.config import Settings, settings
 from app.bootstrap.logging import configure
 from app.domain.budget import Budget
+from app.domain.portfolio_paths import corpus_version
 from app.domain.web_budget import WebBudget
 from app.presentation.analytics import router as analytics_router
 from app.presentation.feedback import router as feedback_router
@@ -204,10 +205,13 @@ def create_app(
                 check_schema(connection)
                 with database.connection() as conn:
                     conn.execute('SELECT 1 FROM schema_migrations LIMIT 1')
-                    if not conn.execute(
-                        "SELECT id FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                    active = conn.execute(
+                        "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
                         (embeddings.provider, embeddings.model),
-                    ).fetchone():
+                    ).fetchone()
+                    if not active or active['id'] != corpus_version(
+                        active['source_commit'], embeddings.provider
+                    ):
                         raise RuntimeError('corpus_unavailable')
                 graph.verify_connectivity()
 

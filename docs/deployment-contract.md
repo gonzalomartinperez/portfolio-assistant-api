@@ -475,12 +475,18 @@ Do not replace existing volumes or the IAM fallback image from this document alo
 
 ## Corpus identity upgrade requirement · 2026-10-18
 
-The indexer now creates fixture `-v7` and semantic `-semantic-v8` corpus versions
+The root-aware indexer creates fixture `-v8` and semantic `-semantic-v9` corpus versions
 with profile-scoped chunk identities. Retain legacy corpora and public embedding
 cache records. Source/image replacement does not reindex automatically: schedule
 an explicitly authorized one-shot indexing operation before selecting the new
 corpus. Existing matching semantic cache entries can be reused; missing embeddings
 still require separate paid authority and the existing ledger budget. Model or
-provider mismatch continues to fail readiness. No SQL migration or public wire
+provider or source-format mismatch fails readiness, retrieval and starter reads until
+the new worker activates a compatible index. Coordinate API and worker replacement;
+do not admit an older source-format corpus merely because its Git commit is current.
+No SQL migration or public HTTP/SSE field
 change is introduced. Review [the executed identity regression](verification/embedding-corpus-identity-2026-10-18.md)
 when selecting a compatible image/corpus pair.
+The [content-layout handoff](coordination/portfolio-content-layout.md) records both
+approved roots, preserved historical citations, the additional format transition
+and the required producer-candidate fixture verification.

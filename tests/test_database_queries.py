@@ -81,6 +81,7 @@ def test_versioned_graph_lookup_avoids_history_scan_and_keeps_support():
                 'version': prefix + '63',
                 'names': ['lookup-3'],
                 'prefix': 'src/content/en/',
+                'root_prefix': 'content/en/',
             }
             # Bulk fixture insertion bypasses writer population; refresh native statistics.
             graph.run('CALL db.prepareForReplanning(30)').consume()

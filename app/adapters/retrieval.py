@@ -8,11 +8,18 @@ from app.adapters.providers.embedding import FixtureEmbeddings, vector
 from app.application.embeddings import Embeddings
 from app.application.knowledge import Chunk, Corpus
 from app.domain.errors import RejectedError
+from app.domain.portfolio_paths import corpus_version, profile_paths
+
+LOCALE_FILTER = (
+    '(d.path STARTS WITH $prefix OR d.path STARTS WITH $root_prefix '
+    'OR (NOT d.path STARTS WITH "src/content/" AND NOT d.path STARTS WITH "content/")) '
+)
 
 DIRECT_RELATIONSHIPS_QUERY = (
     'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
-    'WHERE p.normalized IN $names AND (d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/") '
-    'RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12'
+    'WHERE p.normalized IN $names AND '
+    + LOCALE_FILTER
+    + 'RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12'
 )
 
 
@@ -40,6 +47,10 @@ class KnowledgeIndex:
                 ).fetchone()
                 if not version:
                     return None
+                if version['id'] != corpus_version(
+                    version['source_commit'], self.embeddings.provider
+                ):
+                    raise RejectedError('knowledge_updating', 503)
                 if self.freshness is not None:
                     watch = conn.execute(
                         "SELECT observed_commit, checked_at > now() - %s * interval '1 second' AS fresh FROM knowledge_watch WHERE singleton",
@@ -122,6 +133,7 @@ class KnowledgeIndex:
                         version=version,
                         names=sorted(terms),
                         prefix=f'src/content/{locale}/',
+                        root_prefix=f'content/{locale}/',
                     )
                     ids = tuple(record['id'] for record in direct)
                     if not expand:
@@ -133,13 +145,15 @@ class KnowledgeIndex:
                             'WHERE seed.normalized IN $names AND seed.id<>other.id '
                             'AND a.version=$version AND b.version=$version '
                             'MATCH (d:Document {id:b.document,version:$version}) '
-                            'WHERE d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/" '
-                            'RETURN d.id AS id,count(DISTINCT t.id) AS shared ORDER BY shared DESC,id LIMIT 12',
+                            'WHERE '
+                            + LOCALE_FILTER
+                            + 'RETURN d.id AS id,count(DISTINCT t.id) AS shared ORDER BY shared DESC,id LIMIT 12',
                             timeout=2,
                         ),
                         version=version,
                         names=sorted(terms),
                         prefix=f'src/content/{locale}/',
+                        root_prefix=f'content/{locale}/',
                     )
                     neighbors = tuple(record['id'] for record in related)
                     # Keep seed evidence as well as the evidence reached through shared technology.
@@ -163,6 +177,10 @@ class KnowledgeIndex:
             ).fetchone()
             if not version:
                 raise RejectedError('knowledge_updating', 503)
+            if version['id'] != corpus_version(
+                version['source_commit'], self.embeddings.provider
+            ):
+                raise RejectedError('knowledge_updating', 503)
             if self.freshness is not None:
                 watch = conn.execute(
                     "SELECT observed_commit, checked_at > now() - %s * interval '1 second' AS fresh FROM knowledge_watch WHERE singleton",
@@ -183,11 +201,13 @@ class KnowledgeIndex:
             )
             achievements = bool(
                 conn.execute(
-                    'SELECT 1 FROM chunks WHERE knowledge_version=%s AND (path=%s OR path=%s) AND content LIKE %s AND content LIKE %s LIMIT 1',
+                    'SELECT 1 FROM chunks WHERE knowledge_version=%s AND path=ANY(%s) AND content LIKE %s AND content LIKE %s LIMIT 1',
                     (
                         version['id'],
-                        f'src/content/{locale}/experience.ts',
-                        'public/assistant-knowledge.json',
+                        [
+                            *profile_paths(locale, 'experience'),
+                            'public/assistant-knowledge.json',
+                        ],
                         '%qualifier%',
                         '%value%',
                     ),

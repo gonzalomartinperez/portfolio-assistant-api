@@ -24,6 +24,11 @@ from app.adapters.providers.embedding import (
     vector,
 )
 from app.adapters.providers.http import create_sync_client
+from app.domain.portfolio_paths import (
+    PROFILE_PATH_PATTERN,
+    corpus_version,
+    profile_parts,
+)
 
 
 class IndexConfiguration(Protocol):
@@ -39,7 +44,7 @@ class IndexConfiguration(Protocol):
 
 ROOT_PATTERNS = (
     re.compile(r'^public/assistant-knowledge\.json$'),
-    re.compile(r'^src/content/(en|es)/(profile|experience|projects|education)\.ts$'),
+    re.compile(PROFILE_PATH_PATTERN),
     re.compile(r'^docs/(development|public-content|editorial-guidelines)\.md$'),
     re.compile(r'^README\.md$'),
 )
@@ -67,12 +72,18 @@ def git(repo: Path, *args: str) -> bytes:
 def manifest_at_commit(repo: Path, commit: str):
     listed = git(repo, 'ls-tree', '-r', commit).decode().splitlines()
     allowed = []
+    profiles = set()
     for line in listed:
         metadata, path = line.split('\t', 1)
         mode, kind, blob_sha = metadata.split()
         if any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS):
             if kind != 'blob' or mode not in ('100644', '100755'):
                 raise ValueError(f'unsupported file type: {path}')
+            profile = profile_parts(path)
+            if profile is not None:
+                if profile in profiles:
+                    raise ValueError('ambiguous public profile source layouts')
+                profiles.add(profile)
             allowed.append((path, blob_sha))
     if len(allowed) > MAX_FILES:
         raise ValueError('file limit exceeded')
@@ -93,17 +104,15 @@ def corpus_identity(commit: str, provider: str) -> tuple[str, str]:
     if provider == 'fixture':
         encoder = FixtureEmbeddings
         expected = ('fixture', 'hash64-v1', 64)
-        suffix = '-v7'
     elif provider == 'openai':
         encoder = OpenAIEmbeddings
         expected = ('openai', 'text-embedding-3-small', 1536)
-        suffix = '-semantic-v8'
     else:
         raise ValueError('unsupported embedding provider')
     if (encoder.provider, encoder.model, encoder.dimensions) != expected:
         raise ValueError('embedding profile requires a reviewed schema/cache migration')
     # New versions preserve legacy corpus rows and graph documents during upgrades.
-    version = commit + suffix
+    version = corpus_version(commit, provider)
     return version, json.dumps((version, *expected), separators=(',', ':'))
 
 

@@ -6,6 +6,8 @@ import unicodedata
 from typing import TypedDict
 from urllib.parse import quote
 
+from app.domain.portfolio_paths import profile_parts
+
 
 class EvidenceRecord(TypedDict):
     path: str
@@ -196,9 +198,10 @@ def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
             not tech and 'summary:' in row['content']
         ):
             score *= 3
-    if row['path'].startswith(f'src/content/{locale}/'):
+    profile = profile_parts(row['path'])
+    if profile is not None and profile[0] == locale:
         score *= 1.35
-    elif row['path'].startswith('src/content/'):
+    elif profile is not None:
         score *= 0.45
     return score
 
