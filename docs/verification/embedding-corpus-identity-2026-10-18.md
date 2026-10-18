@@ -27,3 +27,14 @@ both switch directions, reactivation, preservation of legacy/retired rows, graph
 references and cached embeddings, using synthetic provider transport. They have
 not been executed in this source-only increment. No paid/model-quality claim,
 service execution, image acceptance or deployment follows from these tests.
+
+## Hosted integrated verification
+
+[Quality39094723647](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/39094723647)
+passed all six paired jobs at sourcef6990fc5d30a02e6966dfddb7607bd4f164a7901.
+Actual logs record723 offline tests and40 real-service tests (38.37seconds),
+including both new provider-switch directions and legacy/reactivation assertions.
+The same run passed IAM/recovery, bilingual fixtures and production-image
+scan/HTTP-SSE/proxy/shutdown checks. The provider transport in the new indexing
+tests remained synthetic; this is real PostgreSQL/Neo4j evidence, not paid OpenAI
+embedding/model quality or production security acceptance.

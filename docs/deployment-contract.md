@@ -460,3 +460,15 @@ Runtime URLs use separate runtime identities. Reapply reviewed grants after logi
 restore or new migration objects; grants do not automatically spread to all tables.
 See the ADR for exact names, privilege boundaries, rollback and local commands.
 Do not replace existing volumes or the IAM fallback image from this document alone.
+
+## Corpus identity upgrade requirement · 2026-10-18
+
+The indexer now creates fixture `-v7` and semantic `-semantic-v8` corpus versions
+with profile-scoped chunk identities. Retain legacy corpora and public embedding
+cache records. Source/image replacement does not reindex automatically: schedule
+an explicitly authorized one-shot indexing operation before selecting the new
+corpus. Existing matching semantic cache entries can be reused; missing embeddings
+still require separate paid authority and the existing ledger budget. Model or
+provider mismatch continues to fail readiness. No SQL migration or public wire
+change is introduced. Review [the executed identity regression](verification/embedding-corpus-identity-2026-10-18.md)
+when selecting a compatible image/corpus pair.

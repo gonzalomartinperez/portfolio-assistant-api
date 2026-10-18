@@ -67,12 +67,14 @@ calls; a merged plan grants none of those permissions.
   CI39094247058. The rebased duplicate97 workflow blob exactly matched develop and
   was closed without suppressing alerts. [Review scope](verification/dependency-cohort-2026-10-18.md)
   records the meaningful runtime changes and original failed fixture run.
-- **In progress:** final audit fixes isolate chunk identities across embedding profiles
+- **Completed:** final audit fixes isolate chunk identities across embedding profiles
   (6c26f3915a45762c8de1755fbbd840f8ef217a87) and durably retain private evaluation
   progress (aa9bbeae3bb5e2e156917f9b07b1150a2f800718). Each has observed RED/GREEN
-  regressions and independent source review; hosted provider-switch integration is
-  required before marking the complete increment accepted. No new model calls.
-- **In progress:** separate root project1.0 metadata and evidence consolidation.
+  regressions and independent source review. CI39094723647 passed all six jobs:
+  723offline and40real-service tests, including both provider-switch directions.
+  The new encoder transport remained synthetic; no new model calls.
+- **Completed:** root project1.0 metadata, automatic skill policy negatives and
+  actual client-discovery evidence are included in the verified sourcef6990fc.
   Wire schema versions remain independent; no final tag or production readiness is
   inferred from a package version. Main/final promotion remains coordinated.
 
