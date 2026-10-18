@@ -51,6 +51,10 @@ The shared baseline does not promise zero downtime, production capacity or an ad
 image. Current unfixed OS findings remain visible; no package is removed or scanner weakened
 merely to change a vulnerability count.
 
+The [October 18 exact-image inventory](verification/container-security-2026-10-18.md)
+records the current package findings and the explicit LZMA security pin. Historical
+image results remain attached to their original identities; patched images need a rescan.
+
 ## CI privacy boundary
 
 Public-repository CI runs synthetic checks without publishing images, raw diagnostic artifacts
