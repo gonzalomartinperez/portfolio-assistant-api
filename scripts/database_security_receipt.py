@@ -7,11 +7,26 @@ import re
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from typing import Literal, TypedDict
 
 from scripts.image_security import evaluate
 
 
-def database_metadata(value: object) -> dict:
+class VendorReceipt(TypedDict):
+    reference: str
+    source_descriptor: dict[str, str]
+    image_id: str
+    created_at: object
+    scanner: dict[str, object]
+    jackson_packages: list[dict[str, object]]
+    counts: dict[str, int]
+    relevant_findings: list[dict[str, object]]
+    relevant_selection: str
+    production_accepted: Literal[False]
+    scope: str
+
+
+def database_metadata(value: object) -> dict[str, object]:
     if not isinstance(value, dict) or not isinstance(value.get('Version'), int):
         raise TypeError('missing database provenance')
     for key in ('UpdatedAt', 'NextUpdate', 'DownloadedAt'):
@@ -32,7 +47,7 @@ def database_metadata(value: object) -> dict:
 
 
 def verify_manifest_chain(
-    index_raw: bytes, manifest_raw: bytes, expected: dict
+    index_raw: bytes, manifest_raw: bytes, expected: dict[str, str]
 ) -> None:
     index_digest = expected['reference'].split('@')[1]
     if (
@@ -55,7 +70,7 @@ def verify_manifest_chain(
         raise ValueError('vendor config chain mismatch')
 
 
-def verify_registry(expected: dict) -> None:
+def verify_registry(expected: dict[str, str]) -> None:
     # Only official public Neo4j metadata; anonymous pull token never leaves this scope.
     with urllib.request.urlopen(
         'https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/neo4j:pull',
@@ -79,7 +94,7 @@ def verify_registry(expected: dict) -> None:
         )
         with urllib.request.urlopen(request, timeout=15) as response:
             body = response.read(131073)
-        if len(body) > 131072:
+        if not isinstance(body, bytes) or len(body) > 131072:
             raise ValueError('registry manifest limit')
         return body
 
@@ -91,8 +106,12 @@ def verify_registry(expected: dict) -> None:
 
 
 def receipt(
-    raw: str, image_id: str, reference: str, scanner: dict, expected: dict | None = None
-) -> dict:
+    raw: str,
+    image_id: str,
+    reference: str,
+    scanner: dict[str, object],
+    expected: dict[str, str] | None = None,
+) -> VendorReceipt:
     summary = evaluate(raw, image_id)
     report = json.loads(raw)
     expected = (
@@ -224,9 +243,8 @@ def main() -> None:
             'Missing, incomplete or mismatched vendor security receipt'
         ) from None
     print(json.dumps(result, sort_keys=True))
-    # Same remediation gate as PostgreSQL; unresolved critical findings remain release blockers.
-    if result['counts']['fixable_critical'] or result['counts']['fixable_high']:
-        raise SystemExit('Vendor image retains fixable critical/high findings')
+    if result['counts']['critical'] or result['counts']['fixable_high']:
+        raise SystemExit('Vendor image retains critical or fixable high findings')
 
 
 if __name__ == '__main__':

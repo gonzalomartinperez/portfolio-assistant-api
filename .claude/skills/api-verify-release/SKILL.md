@@ -133,6 +133,8 @@ For a database image refresh, compare immutable index/platform bytes, not only t
 Manually dispatch the existing Quality workflow with `verify_vendor_image=true` for full Neo4j OS/Java inventory and
 record scanner/DB times; normal PR API/PG scans do not establish Neo4j acceptance.
 Use [the release receipt procedure](../../../docs/verification/neo4j-vendor-refresh-2026-10-17.md).
+The receipt CLI rejects every CRITICAL and fixable HIGH finding, even without a
+published critical fix; unfixed HIGH remains explicit and no receipt approves production.
 Keep unfixed critical applicability visible. A pre-007 image fails schema readiness
 after analytics007; a rollback reader must retain applied migration history/checksums.
 
