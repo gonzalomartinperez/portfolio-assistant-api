@@ -1,6 +1,5 @@
 """Small storage capability for bounded anonymous product counts."""
 
-from datetime import datetime
 from typing import Literal, Protocol
 
 from app.domain.analytics import ProductEvent
@@ -26,10 +25,10 @@ def accept_event(
 
 
 class ProductAnalyticsReadPort(Protocol):
-    def report(self, query: AnalyticsQuery, now: datetime) -> ProductReport: ...
+    def report(self, query: AnalyticsQuery) -> ProductReport: ...
 
 
 def read_product_report(
-    port: ProductAnalyticsReadPort, query: AnalyticsQuery, now: datetime
+    port: ProductAnalyticsReadPort, query: AnalyticsQuery
 ) -> ProductReport:
-    return port.report(query, now)
+    return port.report(query)

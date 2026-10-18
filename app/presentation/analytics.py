@@ -1,7 +1,6 @@
 """Anonymous public ingestion and separately authorized aggregate reads."""
 
 from dataclasses import asdict
-from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -133,9 +132,7 @@ def detailed_aggregates(
         selection = AnalyticsQuery(period, offset, section, region_id, viewport, locale)
     except ValueError:
         raise HTTPException(422, 'invalid_analytics_selection') from None
-    report = read_product_report(
-        request.app.state.product_analytics, selection, datetime.now(UTC)
-    )
+    report = read_product_report(request.app.state.product_analytics, selection)
     return ProductReportSnapshot.model_validate(
         {
             **asdict(report),

@@ -1,6 +1,5 @@
 """Transactional deduplication, global quotas and server-UTC aggregates."""
 
-from datetime import datetime
 from typing import Literal
 
 from psycopg import sql
@@ -92,8 +91,9 @@ class PostgresProductAnalytics:
                         event.cell_y if event.cell_y is not None else -1,
                     ),
                 )
+            # Transaction start times can precede later requests that acquire the lock first.
             conn.execute(
-                'INSERT INTO product_collection_status(singleton,first_observed_at,last_observed_at) VALUES (true,now(),now()) ON CONFLICT(singleton) DO UPDATE SET last_observed_at=excluded.last_observed_at'
+                'INSERT INTO product_collection_status(singleton,first_observed_at,last_observed_at) VALUES (true,now(),now()) ON CONFLICT(singleton) DO UPDATE SET first_observed_at=least(product_collection_status.first_observed_at,excluded.first_observed_at),last_observed_at=greatest(product_collection_status.last_observed_at,excluded.last_observed_at)'
             )
         return 'accepted'
 
@@ -111,5 +111,5 @@ class PostgresProductAnalytics:
                 'counts': rows,
             }
 
-    def report(self, query: AnalyticsQuery, now: datetime) -> ProductReport:
-        return read_report(self.connection, query, now)
+    def report(self, query: AnalyticsQuery) -> ProductReport:
+        return read_report(self.connection, query)

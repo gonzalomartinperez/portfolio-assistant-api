@@ -137,7 +137,7 @@ without fabricated pointer coordinates.
 
 The host client must positively allowlist public regions, exclude sensitive ancestors
 and dynamic canvas/graph content, accept genuine primary-pointer clicks and preserve
-natural scrolling. Exposure means an approved bounded heading/paragraph target is at
+natural scrolling. Exposure means an approved bounded heading/paragraph target or approved paragraph-start sentinel is at
 least 50% geometrically intersecting for 500 ms continuously while the document is
 visible. Hidden state, route departure and unmount cancel pending dwell; reentry
 requires a new dwell. Deduplicate within the committed route visit/region/layout/

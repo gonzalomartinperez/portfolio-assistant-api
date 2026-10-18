@@ -1,6 +1,7 @@
 """Real restricted persistence, HTTP compatibility, suppression and shared quotas."""
 
 import os
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
@@ -12,8 +13,10 @@ from psycopg.rows import dict_row
 
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
+from app.domain.analytics import ProductEvent
 from app.domain.analytics_periods import calendar_window
 from app.infrastructure import migrations
+from app.infrastructure.analytics import PostgresProductAnalytics
 from scripts.project_postgres_fixture import project_fixture
 
 pytestmark = [
@@ -25,26 +28,31 @@ pytestmark = [
 ]
 
 
+def migrate_project(target, monkeypatch):
+    migrator = Settings(
+        _env_file=None,
+        database_url=target.connection_info('portfolio_api_migrator'),
+    )
+    monkeypatch.setattr(migrations, 'settings', lambda: migrator)
+    monkeypatch.setattr(
+        migrations,
+        'connect',
+        lambda: psycopg.connect(migrator.database_url, row_factory=dict_row),
+    )
+    migrations.main()
+    migrations.main()
+    target.sql_as(
+        'portfolio_api_migrator', Path('deploy/runtime-grants.sql').read_text()
+    )
+    return migrator
+
+
 def test_real_interaction_and_legacy_routes_have_bounded_private_calendar_reports(
     monkeypatch,
 ):
     image = os.getenv('PROJECT_POSTGRES_IMAGE', 'portfolio-assistant-postgres:18.6')
     with project_fixture(image, authorized=True) as target:
-        migrator = Settings(
-            _env_file=None,
-            database_url=target.connection_info('portfolio_api_migrator'),
-        )
-        monkeypatch.setattr(migrations, 'settings', lambda: migrator)
-        monkeypatch.setattr(
-            migrations,
-            'connect',
-            lambda: psycopg.connect(migrator.database_url, row_factory=dict_row),
-        )
-        migrations.main()
-        migrations.main()
-        target.sql_as(
-            'portfolio_api_migrator', Path('deploy/runtime-grants.sql').read_text()
-        )
+        migrator = migrate_project(target, monkeypatch)
         token = 'synthetic-product-v2-read-token-000000'
         config = migrator.model_copy(
             update={
@@ -263,3 +271,51 @@ def test_real_interaction_and_legacy_routes_have_bounded_private_calendar_report
                 'last_observed_at',
             ):
                 assert after_restore[key] == before_restore[key]
+
+
+def test_reversed_transaction_order_preserves_observation_extrema_and_accepts_both(
+    monkeypatch,
+):
+    image = os.getenv('PROJECT_POSTGRES_IMAGE', 'portfolio-assistant-postgres:18.6')
+    with project_fixture(image, authorized=True) as target:
+        migrate_project(target, monkeypatch)
+        connection_info = target.connection_info('portfolio_api_runtime')
+
+        def connection():
+            return psycopg.connect(connection_info, row_factory=dict_row)
+
+        with connection() as older:
+            first = older.execute('SELECT now() AS instant').fetchone()['instant']
+            older.execute('SELECT pg_sleep(0.01)')
+            store = PostgresProductAnalytics(connection)
+            assert (
+                store.record(ProductEvent(str(uuid4()), 'page_view', 'about', 'es'))
+                == 'accepted'
+            )
+            with connection() as check:
+                newer = check.execute(
+                    'SELECT first_observed_at FROM product_collection_status'
+                ).fetchone()['first_observed_at']
+            assert first < newer
+
+            @contextmanager
+            def earlier_transaction():
+                yield older
+
+            assert (
+                PostgresProductAnalytics(earlier_transaction).record(
+                    ProductEvent(str(uuid4()), 'page_view', 'about', 'es')
+                )
+                == 'accepted'
+            )
+        with connection() as check:
+            row = check.execute(
+                'SELECT first_observed_at,last_observed_at FROM product_collection_status'
+            ).fetchone()
+            assert row == {'first_observed_at': first, 'last_observed_at': newer}
+            assert (
+                check.execute(
+                    'SELECT sum(count) AS amount FROM product_daily_counts'
+                ).fetchone()['amount']
+                == 2
+            )

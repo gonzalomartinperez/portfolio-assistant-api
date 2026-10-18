@@ -41,3 +41,19 @@ runner refuses provider overrides, foreign images/containers and shared database
 Review [contract/retention/edge requirements](../product-analytics.md#version-2-interaction-and-calendar-extension)
 before consuming the new snapshot. Required Actions, paired UI/browser/accessibility
 checks and actual deployment-chain acceptance must be reported separately.
+
+## Independent review finding and regression
+
+A bounded read-only peer found a real ordering race: transaction A could start
+before B but acquire the global event lock after B. PostgreSQL `now()` is fixed
+at transaction start, so an unconditional last-observed assignment could regress
+freshness or violate the first/last constraint on initial collection. The upsert
+now preserves `LEAST(first)` / `GREATEST(last)`. A controlled real-database test
+holds the earlier transaction open, commits the later request first, then records
+the earlier request and verifies both accepted events and exact timestamp extrema.
+
+The report establishes its repeatable-read snapshot and derives its observation
+clock/calendar window from PostgreSQL `clock_timestamp()`, aligning the report's
+UTC clock with the stored receipt source. The focused HTTP/restore and reversed-order
+suite passed **2 tests in 16.85 s** after the fix. Ruff and strict inner/AI mypy passed.
+This is local regression evidence; required current-head Actions remain separate.

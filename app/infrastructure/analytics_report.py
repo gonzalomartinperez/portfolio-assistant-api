@@ -1,7 +1,7 @@
 """Consistent bounded PostgreSQL reads mapped into application-owned aggregate values."""
 
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC
 
 from app.domain.analytics_country import country_label
 from app.domain.analytics_interactions import REGIONS
@@ -19,13 +19,16 @@ from app.domain.analytics_report import (
 )
 
 
-def read_report(connection, query: AnalyticsQuery, now: datetime) -> ProductReport:
-    window = calendar_window(now, query.period, query.offset)
-    parameters = (window.start, window.end, query.locale, query.locale)
+def read_report(connection, query: AnalyticsQuery) -> ProductReport:
     with connection() as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         conn.execute("SET LOCAL statement_timeout='2000ms'")
         conn.execute("SET LOCAL lock_timeout='500ms'")
+        observed_at = conn.execute(
+            'SELECT clock_timestamp() AS observed_at'
+        ).fetchone()['observed_at']
+        window = calendar_window(observed_at, query.period, query.offset)
+        parameters = (window.start, window.end, query.locale, query.locale)
         status = conn.execute(
             'SELECT first_observed_at,last_observed_at FROM product_collection_status WHERE singleton'
         ).fetchone()
@@ -73,7 +76,7 @@ def read_report(connection, query: AnalyticsQuery, now: datetime) -> ProductRepo
     daily = tuple(DailyViews(row['day'], row['count']) for row in daily_rows)
     return ProductReport(
         window=window,
-        generated_at=now.astimezone(UTC),
+        generated_at=observed_at.astimezone(UTC),
         first_observed_at=status['first_observed_at'] if status else None,
         last_observed_at=status['last_observed_at'] if status else None,
         totals=ActivityTotals(
