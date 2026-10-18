@@ -29,7 +29,16 @@ def profile_errors(workflow: dict) -> list[str]:
     if workflow.get('name') != 'Quality':
         errors.append('workflow name')
     for event in ('pull_request', 'push'):
-        if events.get(event) != {'branches': ['develop', 'main']}:
+        expected = {'branches': ['develop', 'main']}
+        if event == 'pull_request':
+            expected['types'] = [
+                'opened',
+                'synchronize',
+                'reopened',
+                'edited',
+                'ready_for_review',
+            ]
+        if events.get(event) != expected:
             errors.append('required events cannot be filtered')
     if workflow.get('permissions') != {'contents': 'read'}:
         errors.append('default token permissions')

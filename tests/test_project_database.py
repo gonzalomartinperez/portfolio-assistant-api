@@ -13,6 +13,7 @@ from psycopg_pool import PoolTimeout
 from app.adapters.postgres import migrations
 from app.adapters.postgres.db import pool
 from app.bootstrap.config import Settings
+from scripts import project_postgres_fixture as fixture
 from scripts.project_postgres_fixture import ROLES, project_fixture
 
 pytestmark = [
@@ -143,3 +144,35 @@ def test_project_database_bootstrap_api_migrations_and_permission_boundaries(
                     database.putconn(connection)
             with database.connection() as connection:
                 assert connection.execute('SELECT 1').fetchone() == {'?column?': 1}
+
+
+def test_delayed_official_initdb_cannot_be_mistaken_for_the_final_server(monkeypatch):
+    image = os.getenv('PROJECT_POSTGRES_IMAGE', 'portfolio-assistant-postgres:18.6')
+    actual_wait = fixture.wait_for_postmaster
+    observed_temporary_server = []
+
+    def observe_old_readiness_predicate(target):
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            try:
+                if (
+                    target.owner_sql('SELECT 1', timeout=3).strip() == b'1'
+                    and not target.owner_sql('SHOW listen_addresses', timeout=3).strip()
+                ):
+                    observed_temporary_server.append(True)
+                    break
+            except fixture.FixtureCommandError:
+                pass
+            time.sleep(0.1)
+        assert observed_temporary_server, (
+            'the controlled temporary server window was not observed'
+        )
+        actual_wait(target)
+
+    monkeypatch.setattr(fixture, 'wait_for_postmaster', observe_old_readiness_predicate)
+    with project_fixture(image, authorized=True, delay_initialization=True) as target:
+        assert target.owner_sql('SHOW listen_addresses').strip()
+        with psycopg.connect(
+            target.connection_info('portfolio_api_runtime')
+        ) as connection:
+            assert connection.execute('SELECT 1').fetchone() == (1,)

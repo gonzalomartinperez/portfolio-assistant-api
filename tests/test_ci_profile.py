@@ -131,3 +131,9 @@ def test_dirty_or_unverifiable_build_inputs_fail_closed(result, tmp_path, monkey
         lambda *args, **kwargs: subprocess.CompletedProcess(args[0], result),
     )
     assert not ci_identity.clean_build_inputs(tmp_path)
+
+
+def test_target_branch_edits_require_fresh_candidate_verification():
+    value = workflow()
+    value.get('on', value.get(True))['pull_request']['types'].remove('edited')
+    assert profile_errors(value)
