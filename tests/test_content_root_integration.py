@@ -82,6 +82,8 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
     versions = [
         indexing.corpus_identity(revision, 'fixture')[0] for revision in revisions
     ]
+    legacy = revisions[0] + '-v7'
+    all_versions = [legacy, *versions]
     with connect() as conn:
         original = conn.execute(
             "SELECT id FROM knowledge_versions WHERE status='active'"
@@ -105,6 +107,14 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
         max_transaction_retry_time=0,
     )
     try:
+        with connect() as conn:
+            conn.execute(
+                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
+            )
+            conn.execute(
+                "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'active',%s)",
+                (legacy, revisions[0]),
+            )
 
         async def run_worker():
             stop = asyncio.Event()
@@ -159,9 +169,11 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
             )
         with connect() as conn:
             rows = conn.execute(
-                'SELECT id,status FROM knowledge_versions WHERE id=ANY(%s)', (versions,)
+                'SELECT id,status FROM knowledge_versions WHERE id=ANY(%s)',
+                (all_versions,),
             ).fetchall()
             assert {row['id']: row['status'] for row in rows} == {
+                legacy: 'retired',
                 versions[0]: 'retired',
                 versions[1]: 'retired',
                 versions[2]: 'active',
@@ -189,14 +201,16 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
                     (original,),
                 )
                 conn.execute(
-                    'DELETE FROM chunks WHERE knowledge_version=ANY(%s)', (versions,)
+                    'DELETE FROM chunks WHERE knowledge_version=ANY(%s)',
+                    (all_versions,),
                 )
                 conn.execute(
                     'DELETE FROM source_files WHERE knowledge_version=ANY(%s)',
-                    (versions,),
+                    (all_versions,),
                 )
                 conn.execute(
-                    'DELETE FROM knowledge_versions WHERE id=ANY(%s)', (versions,)
+                    'DELETE FROM knowledge_versions WHERE id=ANY(%s)',
+                    (all_versions,),
                 )
                 conn.execute('DELETE FROM knowledge_watch')
                 if previous_watch:
@@ -212,7 +226,7 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
                 with driver.session(database=config.neo4j_database) as graph:
                     graph.run(
                         'MATCH (n) WHERE n.version IN $versions DETACH DELETE n',
-                        versions=versions,
+                        versions=all_versions,
                     ).consume()
             finally:
                 driver.close()
