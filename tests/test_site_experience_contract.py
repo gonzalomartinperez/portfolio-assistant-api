@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from app.domain.analytics_interactions import REGIONS, SHELL_REGIONS
 from app.presentation.analytics import ProductEventBody
+from app.presentation.analytics_report_models import ProductReportSnapshot
 from app.presentation.interaction_models import ProductInteractionBody
 from contracts.site_experience import (
     COMMERCE_EVENTS,
@@ -158,3 +159,55 @@ def test_core_schema_and_profile_publish_cross_field_constraints():
         'public_click',
         'section_view',
     }
+
+
+def test_shared_semantic_fixture_is_explicitly_synthetic_and_keeps_negative_cases():
+    fixture = json.loads(
+        Path('contracts/analytics-semantics.examples.json').read_text()
+    )
+    assert fixture['fixture'] is True
+    assert fixture['scope'] == 'offline_portfolio_analytics_semantics'
+    assert fixture['schema_version'] == 1
+    assert len(fixture['periods']) == 8
+    assert len(fixture['country_cases']) == 14
+    names = {case['name'] for case in fixture['country_cases']}
+    assert {
+        'off-by-default',
+        'untrusted-peer',
+        'missing-peer',
+        'multiple-headers',
+        'identical-duplicates',
+        'cf-unknown',
+        'cf-tor',
+        'lowercase-header',
+    } <= names
+
+
+def test_private_aggregate_example_is_synthetic_and_preserves_count_consistency():
+    fixture = json.loads(
+        Path('contracts/product-analytics-v2.example.json').read_text()
+    )
+    assert set(fixture) == {'fixture', 'scope', 'report'}
+    assert fixture['fixture'] is True
+    assert fixture['scope'] == 'offline_portfolio_aggregate_report'
+    report = ProductReportSnapshot.model_validate_json(json.dumps(fixture['report']))
+    assert sum(row.count for row in report.daily) == report.totals.page_views
+    assert sum(row.count for row in report.countries) == report.totals.page_views
+    assert sum(row.page_views for row in report.sections) == report.totals.page_views
+    assert (
+        sum(row.public_clicks for row in report.sections) == report.totals.public_clicks
+    )
+    assert (
+        sum(row.section_exposures for row in report.sections)
+        == report.totals.section_exposures
+    )
+    selected = next(
+        row for row in report.regions if row.region_id == report.selection.region_id
+    )
+    assert (
+        selected.public_clicks
+        == sum(row.count for row in report.cells) + report.suppressed_cell_clicks
+    )
+    assert selected.section_exposures == report.selected_region_exposures
+    assert report.suppressed_cell_clicks == 1
+    assert report.country_collection == 'disabled'

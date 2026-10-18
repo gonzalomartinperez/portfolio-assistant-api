@@ -17,6 +17,34 @@ Artifacts generated offline by `python -m contracts.export`:
 Actual checks and limitations are recorded in the
 [dated verification receipt](verification/site-experience-contract-2026-10-18.md).
 
+### Reusable semantic fixtures
+
+[`analytics-semantics.examples.json`](../contracts/analytics-semantics.examples.json)
+is explicitly labelled `fixture: true`, with scope `offline_portfolio_analytics_semantics`.
+It contains eight UTC calendar cases (including an ISO year transition, leap February,
+previous periods and timezone normalization) and fourteen country-boundary cases
+(disabled collection, exact trusted/untrusted/missing/mapped peers and invalid or
+duplicated headers). The maintained period and country tests consume these same
+JSON rows through the real calendar function and country adapter, not duplicate
+fixture-only implementations. The IPs and observations are synthetic and identify
+neither a deployed proxy nor a Cloudflare account.
+
+The existing [interaction examples](../contracts/product-interaction.examples.json)
+cover current Portfolio click/exposure input. The core/profile tests demonstrate
+their offline semantic mapping. None of these fixtures establishes Pequeverso
+route/catalogue validity, consent behavior, database grants, network trust or
+end-to-end collection. Import by the announced commit and verify artifact hashes;
+publish product-specific fixtures and a separately authenticated report contract.
+
+[`product-analytics-v2.example.json`](../contracts/product-analytics-v2.example.json)
+contains a synthetic private Portfolio report under `report`, with fixture/scope
+metadata **outside** the wire object. Validate/use `report` against the private v2
+schema; never send the wrapper to an endpoint or relabel its counts as live data.
+It demonstrates a three-click visible cell plus one suppressed click, received
+page views and historical country buckets while current country collection is
+disabled. Tests validate the actual private response model and aggregate totals.
+This is a Portfolio example, not a Pequeverso report or a deployed-source receipt.
+
 Pequeverso owns and must publish its own stricter profile, reviewed routes/regions,
 target catalogue, runtime validator and independent private aggregate API. Do not
 admit an event merely because it passes the core. Profile changes require review;

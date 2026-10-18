@@ -1,5 +1,7 @@
 """Only an explicitly trusted socket peer can supply a coarse edge-country label."""
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -60,11 +62,24 @@ def test_country_is_default_off_and_never_inferred_from_forwarded_client_or_loca
 
 
 @pytest.mark.parametrize(
-    'countries',
-    [(), ('AR', 'US'), ('AR', 'AR'), ('XX',), ('T1',), ('ZZ',), ('AR,US',), ('ar',)],
+    'case',
+    json.loads(Path('contracts/analytics-semantics.examples.json').read_text())[
+        'country_cases'
+    ],
+    ids=lambda case: case['name'],
 )
-def test_duplicate_missing_or_invalid_headers_stay_unknown(countries):
-    assert country_from_edge(request(countries=countries)) == 'unknown'
+def test_shared_country_cases_match_the_actual_boundary(case):
+    assert (
+        country_from_edge(
+            request(
+                peer=case['peer'],
+                countries=case['headers'],
+                enabled=case['enabled'],
+                proxies=case['trusted_peers'],
+            )
+        )
+        == case['expected']
+    )
 
 
 @pytest.mark.parametrize(

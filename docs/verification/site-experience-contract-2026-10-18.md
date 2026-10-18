@@ -31,3 +31,25 @@ analytics evidence remains separately attributed to its implementation revision.
 No provider, LangSmith, geolocation, browser collector, Pequeverso runtime, Meta/CAPI
 or production request was executed. Pequeverso must validate its own narrower
 profile and authorization/consent behavior before implementing its new channel.
+
+## Reusable fixture increment
+
+Published synthetic fixtures, with unchanged runtime and schema bytes:
+
+| Artifact | SHA256 |
+| --- | --- |
+| `analytics-semantics.examples.json` | `a058f6b21ebde843c2283d0e6b3f31796a38e341da461f804e24dd7b77ac2c50` |
+| `product-analytics-v2.example.json` | `be55336b6a825d1d260aeb3cab65b0e4a85e3cb50038573fde4cd4d8fabd1789` |
+
+The first file supplies eight calendar cases and fourteen country-boundary cases
+to the existing tests, preserving their prior negative cases. The second wraps
+one synthetic Portfolio private report in explicit fixture/scope metadata; only
+its `report` field belongs to the private wire schema. The test validates it using
+the actual strict response model and reconciles page/country/section and grid
+totals, including suppressed clicks.
+
+Focused period/country/core/profile/public-input/contract suite: **105 passed in
+3.48s**. Ruff lint/format and local documentation links passed. The earlier 640-test
+offline result above belongs to the earlier freeze increment; it is not a full
+suite result for these added fixture cases. Current-head Actions must still pass.
+No real-service, browser or production proof is added by these synthetic examples.

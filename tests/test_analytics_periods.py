@@ -1,6 +1,8 @@
 """Calendar boundaries are independent of machine timezone and rolling windows."""
 
+import json
 from datetime import UTC, date, datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
@@ -10,13 +12,17 @@ from app.domain.analytics_periods import calendar_window
 @pytest.mark.parametrize(
     ('instant', 'period', 'offset', 'start', 'end', 'partial'),
     [
-        ('2026-10-18T00:00:00+00:00', 'day', 0, '2026-10-18', '2026-10-19', True),
-        ('2026-10-18T00:00:00+00:00', 'day', 1, '2026-10-17', '2026-10-18', False),
-        ('2027-01-01T13:00:00+00:00', 'week', 0, '2026-12-28', '2027-01-04', True),
-        ('2027-01-04T00:00:00+00:00', 'week', 1, '2026-12-28', '2027-01-04', False),
-        ('2028-03-01T00:00:00+00:00', 'month', 1, '2028-02-01', '2028-03-01', False),
-        ('2027-01-31T23:59:59+00:00', 'month', 2, '2026-11-01', '2026-12-01', False),
-        ('2027-01-01T00:00:00+00:00', 'month', 1, '2026-12-01', '2027-01-01', False),
+        (
+            row['instant'],
+            row['period'],
+            row['offset'],
+            row['start'],
+            row['end'],
+            row['partial'],
+        )
+        for row in json.loads(
+            Path('contracts/analytics-semantics.examples.json').read_text()
+        )['periods']
     ],
 )
 def test_calendar_uses_half_open_utc_periods(
