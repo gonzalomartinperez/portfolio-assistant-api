@@ -9,7 +9,8 @@ The commit containing this document identifies the handoff revision.
 ## Artifact and runtime
 
 Build locally: `docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .`.
-CI currently verifies Linux amd64 only. The candidate publisher prepares
+CI currently verifies Linux amd64 only. No active application workflow publishes images.
+The proposed naming convention for a separately authorized publisher is
 `ghcr.io/gonzalomartinperez/portfolio-assistant-api:<full-source-SHA>` and records
 its immutable registry manifest `@sha256:` digest (not a local image ID).
 Publication is not yet authorized; plan private package visibility unless separately
@@ -66,8 +67,8 @@ The application uses Python 3.14.8 and the build uses uv 0.13.1, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
 restoration before replacing a Neo4j image; no zero-downtime or reverse store
-compatibility is claimed. The retained deploy/ transfer reference is not the
-canonical production stack and has not been silently rewritten.
+compatibility is claimed. The former production controller and stack were retired
+after vps-ops accepted ownership; application privilege scripts remain active.
 See locked Python dependencies and pinned local Compose images for exact versions.
 Private TCP access to PostgreSQL 5432 and Neo4j Bolt 7687 is required. Fixture
 chat requires no external model network; approved indexing uses GitHub HTTPS,
@@ -85,10 +86,12 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
-Current application schema includes ordered migrations 001–006, plus the locked
+Current application schema includes ordered migrations 001–009, plus the locked
 LangGraph checkpoint schema. Migration 004 adds semantic vectors, lexical search,
 embedding identity, freshness state and a single-active-version constraint. Migration 005 persists public embeddings after each successful call for crash-safe
-reuse. Apply both before starting this image. Older images reject unknown applied migrations;
+reuse. Migrations006–009 add private operational measurements, product aggregates,
+ledger access paths and bounded interaction analytics. Apply the complete ordered
+history before starting this image. Older images reject unknown applied migrations;
 image-only rollback to the previous release is not compatible without a separately
 reviewed recovery path. Reapply reviewed runtime grants including SELECT on
 knowledge_watch. The worker uses separate corpus/ledger write credentials.

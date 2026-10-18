@@ -98,11 +98,12 @@ repository supplies tested API images and the [runtime contract](deployment-cont
 It does not install Coolify, manage shared resources, or execute production releases.
 The portfolio remains on Hostinger Business.
 
-Existing files under `deploy/` and the disabled workflow template are retained as
-**transfer references**, not a second canonical production stack. See the asset
-inventory in the runtime contract. The vps-ops owner must confirm adoption before
-obsolete references are retired. Application-owned local proxy tests continue to
-exercise routing and streaming requirements; they do not validate Coolify itself.
+The former production Compose, proxy, apply-release script and disabled deployment
+template were retired after vps-ops accepted ownership. Recover historical references
+from Git only; there is no second canonical production stack. Retained `deploy/`
+files are application privilege scripts and safe environment examples. See the asset
+inventory in the runtime contract. Application-owned proxy fixtures under
+`tests/fixtures/proxy` exercise routing and streaming; they do not validate Coolify.
 
 ## Routing, streams and browser integration
 
