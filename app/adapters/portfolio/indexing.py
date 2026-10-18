@@ -89,6 +89,24 @@ def chunk_id(commit: str, path: str, start: int, content_hash: str):
     ).hexdigest()
 
 
+def corpus_identity(commit: str, provider: str) -> tuple[str, str]:
+    if provider == 'fixture':
+        encoder = FixtureEmbeddings
+        expected = ('fixture', 'hash64-v1', 64)
+        suffix = '-v7'
+    elif provider == 'openai':
+        encoder = OpenAIEmbeddings
+        expected = ('openai', 'text-embedding-3-small', 1536)
+        suffix = '-semantic-v8'
+    else:
+        raise ValueError('unsupported embedding provider')
+    if (encoder.provider, encoder.model, encoder.dimensions) != expected:
+        raise ValueError('embedding profile requires a reviewed schema/cache migration')
+    # New versions preserve legacy corpus rows and graph documents during upgrades.
+    version = commit + suffix
+    return version, json.dumps((version, *expected), separators=(',', ':'))
+
+
 def projection_spans(content: str):
     decoder = json.JSONDecoder()
     array = re.search(r'"facts"\s*:\s*\[', content)
@@ -224,9 +242,7 @@ def _sync(
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('invalid commit')
     config = configuration
-    version = commit + (
-        '-semantic-v7' if config.embeddings_provider == 'openai' else '-v6'
-    )
+    version, namespace = corpus_identity(commit, config.embeddings_provider)
     files = manifest_at_commit(repo, commit)
     with connection() as conn:
         existing = conn.execute(
@@ -318,6 +334,10 @@ def _sync(
         raise ValueError('complete source spans must fit the embedding input bound')
     if not records or len(records) > 500:
         raise ValueError('corpus must contain between 1 and 500 chunks')
+    for record in records:
+        record['id'] = hashlib.sha256(
+            f'{namespace}:{record["id"]}'.encode()
+        ).hexdigest()
     embedding_client = None
     encoder = FixtureEmbeddings()
     if config.embeddings_provider == 'openai':
