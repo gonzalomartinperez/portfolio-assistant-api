@@ -26,7 +26,7 @@ groups, scripts and human-added commits require closer manual investigation.
 to force the routine-update policy.
 
 Use `uv run python -m scripts.dependabot_automation --audit-pr <number>` locally,
-or dispatch the trusted workflow with `gh workflow run dependabot-policy.yml -f number=<existing-pr>`.
+or dispatch the trusted workflow with `gh workflow run dependency-policy.yml -f number=<existing-pr>`.
 This returns a head-bound risk report only. A workflow token that cannot inspect
 protection reports permission_blocked without granting itself writer/admin permissions.
 Missing protection visibility is not permission to weaken the actual protected branches.

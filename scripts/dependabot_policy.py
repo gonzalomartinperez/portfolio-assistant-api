@@ -225,7 +225,7 @@ def protected_for_automation(repository: dict) -> bool:
         and rule.get('requiresStrictStatusChecks')
         and rule.get('allowsForcePushes') is False
         and rule.get('allowsDeletions') is False
-        and {('checks', ACTIONS_ID), (POLICY_CHECK, ACTIONS_ID)} <= required
+        and {('Required checks', ACTIONS_ID), (POLICY_CHECK, ACTIONS_ID)} <= required
     )
 
 
