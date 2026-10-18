@@ -96,6 +96,8 @@ Official references inspected for this implementation:
 [input/output and metadata privacy](https://docs.langchain.com/langsmith/mask-inputs-outputs),
 [manual API tracing](https://docs.langchain.com/langsmith/trace-with-api).
 
-This feature is subsequent to the immutable `v1.1.0` source tag. Use its actual
-reviewed commit in a compatibility manifest; never move that tag or claim this code
-was present in the previously tagged image/source.
+This feature follows the source historically labeled `v1.1.0`, commit
+`02b6f2784564669597fe8a4c2adf53bf807737a6`. Use the exporter's actual reviewed commit
+in a compatibility manifest; it was not present in that earlier evaluated source.
+The owner's later tag normalization does not change those historical facts; see
+[release-reference policy](../README.md#verification-and-evidence).

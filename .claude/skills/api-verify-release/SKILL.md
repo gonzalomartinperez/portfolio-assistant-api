@@ -151,7 +151,10 @@ For manual LangSmith evaluation work, load [the synthetic export contract](../..
 and run `uv run pytest -q tests/test_evaluation_export.py tests/test_architecture.py`.
 The CLI validates offline by default; `--authorize-export` requires separate current
 external-export authority and a synthetic aggregate, never a raw answer report.
-Keep automatic tracing rejected and record post-tag source separately from v1.1.0.
+Keep automatic tracing rejected and record each evaluated commit separately from later source.
+For tag reconciliation follow the [release-reference policy](../../../README.md#verification-and-evidence):
+current explicit authority, trigger review, recoverable tag-object backup and independent
+restore verification are prerequisites. A historical label never transfers its evidence to newer code.
 
 For database access-path work, use [the measured query procedure](../../../docs/verification/database-queries-2026-10-17.md).
 Run `TEST_INTEGRATION=1 uv run pytest -q tests/test_database_queries.py` only on owned
