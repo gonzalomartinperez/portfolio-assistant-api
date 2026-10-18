@@ -9,7 +9,11 @@
 
 `Quality` runs on every PR into `develop` or `main`, manual dispatch, and trusted reusable
 calls. There are **no path filters**: documentation/contract-only PRs still finish
-the required gate. New commits cancel stale runs for the same PR/ref.
+the required gate. New commits cancel stale runs for the same PR/ref. Hosted jobs
+use the explicit Ubuntu24.04 LTS label, matching the paired backoffice profile;
+the moving ubuntu-latest alias is rejected so an announced runner-major migration
+cannot silently change the validated environment. Runner patch images remain
+GitHub-managed and are recorded by Actions.
 
 | Job ID / human name | Purpose | Needs |
 | --- | --- | --- |

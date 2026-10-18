@@ -37,7 +37,7 @@ env:
 jobs:
   workflows:
     name: Workflow validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -54,7 +54,7 @@ jobs:
       run: bash scripts/check_workflows.sh
   secrets:
     name: Secret scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -76,7 +76,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -122,7 +122,7 @@ jobs:
       run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
   database:
     name: Database tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       neo4j:
@@ -237,7 +237,7 @@ jobs:
     - static
   container:
     name: Container verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       neo4j:
@@ -375,7 +375,7 @@ jobs:
     - static
   checks:
     name: Required checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions: {}
     if: always()
