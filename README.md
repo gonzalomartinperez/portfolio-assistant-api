@@ -253,11 +253,19 @@ Frozen dependencies, pinned actions, current-head checks and image scans remain 
 | [Deep model evaluation](docs/verification/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
 | [Bilingual voice](docs/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
 | [1000-question bank](docs/assistant-evaluation.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
-| [Bounded v1.1.0 live smoke](docs/verification/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling. |
-| [Manual synthetic evaluation export](docs/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after the immutable v1.1.0 tag. |
+| [Bounded 2026-10-17 live smoke](docs/verification/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling, tied to source `02b6f2784564669597fe8a4c2adf53bf807737a6`. |
+| [Manual synthetic evaluation export](docs/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after that evaluated source revision. |
 | [Private operations](docs/verification/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
 | [PostgreSQL 18](docs/verification/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
 | [Versioned query plans](docs/verification/database-queries-2026-10-17.md) | Measured ledger/graph access paths, migration 008, source-hashed synthetic receipts and structural CI regressions; no VPS latency claim. |
+
+Release tags are immutable by default. The owner explicitly requested a single GitHub
+`v1.0.0` tag for the final verified source on 2026-10-18; prior tag objects must be
+backed up and independently restored before that normalization. Historical reports
+retain their original commit/image identifiers and version labels: renaming a tag
+never extends an earlier evaluation to newer code. Future tag changes require new
+explicit authority, trigger review and current source verification; a tag grants no
+publication, deployment or paid-call authority.
 
 These are local/test-environment results, not field performance or production guarantees.
 Known vendor image findings, effective proxy behavior, backup/restore, live OAuth pairing
@@ -320,5 +328,5 @@ to reuse personal data. The production image includes both notice files.
 
 `uv run python -m scripts.check_license` validates the standard grant, SPDX metadata
 and document links in CI. It is a consistency check, not a dependency-license or
-legal audit. Existing `v1.1.0` tags remain immutable; use the actual later source
-revision when identifying this licensing change.
+legal audit. Identify this licensing change by its actual source revision; historical
+version labels do not establish which later code or notices were evaluated.
