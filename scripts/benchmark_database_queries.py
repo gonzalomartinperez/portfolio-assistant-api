@@ -13,10 +13,10 @@ from neo4j import GraphDatabase, Query
 from neo4j.exceptions import Neo4jError
 from psycopg.rows import dict_row
 
+from app.adapters.postgres.ledger import MONTHLY_SPEND_SQL
+from app.adapters.postgres.migrations import check_schema
+from app.adapters.retrieval import DIRECT_RELATIONSHIPS_QUERY
 from app.bootstrap.config import Settings
-from app.infrastructure.knowledge import DIRECT_RELATIONSHIPS_QUERY
-from app.infrastructure.ledger import MONTHLY_SPEND_SQL
-from app.infrastructure.migrations import check_schema
 from scripts.evaluation_isolation import validate_targets
 
 REPEATS = 20
@@ -140,9 +140,9 @@ def benchmark(config, output):
             ).hexdigest()
             for name in (
                 'scripts/benchmark_database_queries.py',
-                'app/infrastructure/graph.py',
-                'app/infrastructure/knowledge.py',
-                'app/infrastructure/ledger.py',
+                'app/adapters/neo4j/projection.py',
+                'app/adapters/retrieval.py',
+                'app/adapters/postgres/ledger.py',
                 'migrations/008_spend_ledger_time_index.sql',
             )
         },

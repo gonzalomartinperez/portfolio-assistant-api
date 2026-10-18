@@ -53,7 +53,10 @@ Version compatibility is checked against the locked installed packages, not an
 unrequested dependency upgrade. No live-model or production claims follow from
 fixture tests.
 
-## Concrete folder map (source migration)
+## Concrete folder map (historical source migration)
+
+The physical `infrastructure` name below is superseded by
+[ADR 006](006-canonical-adapters.md); the dependency direction remains unchanged.
 
 | Package | Existing responsibilities moved here |
 | --- | --- |

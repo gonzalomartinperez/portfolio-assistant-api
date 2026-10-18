@@ -8,8 +8,9 @@ The commit containing this document identifies the handoff revision.
 
 ## Artifact and runtime
 
-Build locally: `docker build --platform linux/amd64 -t portfolio-assistant-api:local .`.
-CI currently verifies Linux amd64 only. The candidate publisher prepares
+Build locally: `docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .`.
+CI currently verifies Linux amd64 only. No active application workflow publishes images.
+The proposed naming convention for a separately authorized publisher is
 `ghcr.io/gonzalomartinperez/portfolio-assistant-api:<full-source-SHA>` and records
 its immutable registry manifest `@sha256:` digest (not a local image ID).
 Publication is not yet authorized; plan private package visibility unless separately
@@ -66,8 +67,8 @@ The application uses Python 3.14.8 and the build uses uv 0.13.1, each pinned by
 immutable upstream image digest. These are same-line patch updates; they are not
 authorization to upgrade production stores. vps-ops must back up and rehearse
 restoration before replacing a Neo4j image; no zero-downtime or reverse store
-compatibility is claimed. The retained deploy/ transfer reference is not the
-canonical production stack and has not been silently rewritten.
+compatibility is claimed. The former production controller and stack were retired
+after vps-ops accepted ownership; application privilege scripts remain active.
 See locked Python dependencies and pinned local Compose images for exact versions.
 Private TCP access to PostgreSQL 5432 and Neo4j Bolt 7687 is required. Fixture
 chat requires no external model network; approved indexing uses GitHub HTTPS,
@@ -85,10 +86,12 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
-Current application schema includes ordered migrations 001–006, plus the locked
+Current application schema includes ordered migrations 001–009, plus the locked
 LangGraph checkpoint schema. Migration 004 adds semantic vectors, lexical search,
 embedding identity, freshness state and a single-active-version constraint. Migration 005 persists public embeddings after each successful call for crash-safe
-reuse. Apply both before starting this image. Older images reject unknown applied migrations;
+reuse. Migrations006–009 add private operational measurements, product aggregates,
+ledger access paths and bounded interaction analytics. Apply the complete ordered
+history before starting this image. Older images reject unknown applied migrations;
 image-only rollback to the previous release is not compatible without a separately
 reviewed recovery path. Reapply reviewed runtime grants including SELECT on
 knowledge_watch. The worker uses separate corpus/ledger write credentials.
@@ -161,11 +164,16 @@ shutdown during a stream and schema-compatible rollback. No zero-downtime claim.
 
 | Assets | Classification / next owner |
 | --- | --- |
-| Dockerfile, .dockerignore, lockfiles, .env.example, app migrations, contracts, active quality/publish workflows | Retain: application-owned |
-| Root compose.yaml, scripts/fixture-env.sh, container/proxy smoke scripts | Retain: isolated local/CI verification |
-| deploy/compose.yaml, deploy/nginx/*, deploy/*env.example | Frozen shared-production transfer references; vps-ops confirms adoption before retirement |
-| deploy/apply-release.sh, .github/workflow-templates/deploy-vps.yml | Inactive transfer references; do not execute/activate here or create a competing controller |
-| deploy/runtime-grants.sql | Retain reviewed application schema privileges; vps-ops schedules execution |
+| infra/docker/app and infra/docker/postgres recipes/ignore files, lockfiles, .env.example, migrations and contracts | Application-owned |
+| infra/compose/local.yaml, scripts/fixture-env.sh, container/proxy smoke and tests/fixtures/proxy | Isolated local/CI verification only |
+| Former deploy/compose.yaml, deploy/nginx/server.conf, deploy/apply-release.sh and deployment workflow template | Retired after vps-ops accepted ownership; recover only from Git history for reference |
+| deploy/*env.example | Safe reference placeholders; production secret delivery belongs to vps-ops |
+| infra/docker/postgres/project-postgres-bootstrap.psql and project-pg_hba.conf | Active public application bootstrap/HBA resources; unchanged in-image paths |
+| deploy/runtime-grants.sql and knowledge-worker-grants.sql | Reviewed application schema privileges; vps-ops schedules execution |
+
+Current build paths and the exact retirement inventory are in
+[the Docker handoff](docker-layout-handoff.md). Per-recipe ignore files override the
+root deny-all fallback; builds always use repository root as context.
 
 Open vps-ops decisions: exact Coolify version/resource type and digest workflow,
 private pull access/package visibility, trusted proxy peers, secret injection,
@@ -221,7 +229,7 @@ must not start a generation retry loop.
 
 ## Application-owned database tuning
 
-Root `compose.yaml` is an isolated local/test specification, not the shared
+`infra/compose/local.yaml` is an isolated local/test specification, not the shared
 production stack. It pins service images, binds development ports to loopback,
 retains project-scoped volumes, prevents privilege escalation and rotates local
 logs at 10 MiB × 3 per service. No fixed container names or production secrets.
@@ -251,7 +259,7 @@ Current patch and vulnerability evidence: [runtime security verification](verifi
 
 ## Application-owned PostgreSQL artifact
 
-Build: `docker build --platform linux/amd64 -f Dockerfile.postgres -t portfolio-assistant-postgres:local .`.
+Build: `docker build --platform linux/amd64 -f infra/docker/postgres/Dockerfile -t portfolio-assistant-postgres:local .`.
 Root Compose is local/test only and builds this image; production composition stays
 in vps-ops. Planned package name is ghcr.io/gonzalomartinperez/portfolio-assistant-postgres,
 private unless separately authorized. No publication workflow has been activated
@@ -436,3 +444,31 @@ No package publication, production approval or change to immutable tags follows.
 engine with separate assistant/IAM databases and credentials. It is not implemented
 or tested as a combined topology. Keep existing artifacts/fixtures until its isolation,
 migration, recovery and resource gates pass; vps-ops owns production selection.
+
+
+## Project-engine application handoff
+
+[ADR 005](adrs/005-project-postgres-consolidation.md) now records a locally verified
+application bootstrap and recovery proof, with production adoption still pending.
+The API-owned engine contains `/usr/local/share/portfolio-postgres/` resources
+`project-postgres-bootstrap.psql` and `project-pg_hba.conf`; neither runs implicitly.
+A local-socket provisioning identity creates two databases and five isolated logins.
+Passwords are intentionally absent from SQL and must be delivered by vps-ops.
+Apply API migrations with the API migrator, then the exact API and worker grant
+files; run the backoffice image's IAM CLI with its migrator and `--project-grants`.
+Runtime URLs use separate runtime identities. Reapply reviewed grants after logical
+restore or new migration objects; grants do not automatically spread to all tables.
+See the ADR for exact names, privilege boundaries, rollback and local commands.
+Do not replace existing volumes or the IAM fallback image from this document alone.
+
+## Corpus identity upgrade requirement · 2026-10-18
+
+The indexer now creates fixture `-v7` and semantic `-semantic-v8` corpus versions
+with profile-scoped chunk identities. Retain legacy corpora and public embedding
+cache records. Source/image replacement does not reindex automatically: schedule
+an explicitly authorized one-shot indexing operation before selecting the new
+corpus. Existing matching semantic cache entries can be reused; missing embeddings
+still require separate paid authority and the existing ledger budget. Model or
+provider mismatch continues to fail readiness. No SQL migration or public wire
+change is introduced. Review [the executed identity regression](verification/embedding-corpus-identity-2026-10-18.md)
+when selecting a compatible image/corpus pair.

@@ -10,10 +10,10 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
+from app.adapters.providers.answer import ResponsesProvider
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import AnswerCommand
 from app.application.presentation_context import PortfolioPath, PresentationContext
-from app.infrastructure.answer import ResponsesProvider
 from app.presentation.models import SendMessage
 from tests.test_workflow import SOURCE
 

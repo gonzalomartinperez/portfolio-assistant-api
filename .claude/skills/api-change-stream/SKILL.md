@@ -11,7 +11,7 @@ unless the user also requests a fix. Load [API/SSE behavior](../../../docs/api-c
 and inspect [stream tests](../../../tests/test_workflow.py) before designing changes.
 
 Trace [run policy](../../../app/application/runs.py) → [injected workflow](../../../app/ai/workflow.py)
-→ [provider translation](../../../app/infrastructure/answer.py) →
+→ [provider translation](../../../app/adapters/providers/answer.py) →
 [stream closure](../../../app/presentation/streaming.py) and [HTTP](../../../app/presentation/http.py).
 Do not pass LangGraph state, SDK objects or HTTP requests into application contracts.
 

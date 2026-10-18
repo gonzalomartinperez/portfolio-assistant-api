@@ -1,0 +1,12 @@
+# Only public, reviewed database bootstrap resources enter this context.
+*
+!infra/
+!infra/docker/
+!infra/docker/postgres/
+!infra/docker/postgres/project-postgres-bootstrap.psql
+!infra/docker/postgres/project-pg_hba.conf
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx

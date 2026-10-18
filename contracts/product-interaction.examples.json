@@ -1,0 +1,28 @@
+[
+  {
+    "schema_version": 2,
+    "project": "portfolio",
+    "source": "site",
+    "event_id": "123e4567-e89b-42d3-a456-426614174000",
+    "event_name": "public_click",
+    "section": "home",
+    "locale": "en",
+    "region_id": "home-featured",
+    "layout_revision": "portfolio-v1",
+    "viewport": "desktop",
+    "cell_x": 3,
+    "cell_y": 4
+  },
+  {
+    "schema_version": 2,
+    "project": "portfolio",
+    "source": "site",
+    "event_id": "123e4567-e89b-42d3-a456-426614174001",
+    "event_name": "section_exposure",
+    "section": "home",
+    "locale": "es",
+    "region_id": "home-featured",
+    "layout_revision": "portfolio-v1",
+    "viewport": "mobile"
+  }
+]

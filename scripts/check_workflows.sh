@@ -10,4 +10,4 @@ printf '%s  %s\n' \
   8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8 \
   "$lint_directory/actionlint.tar.gz" | sha256sum --check --status
 tar -xzf "$lint_directory/actionlint.tar.gz" -C "$lint_directory" actionlint
-"$lint_directory/actionlint" .github/workflows/*.yml .github/workflow-templates/*.yml
+"$lint_directory/actionlint" .github/workflows/*.yml

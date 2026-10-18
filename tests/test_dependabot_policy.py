@@ -64,7 +64,7 @@ def repository():
                 'allowsDeletions': False,
                 'requiredStatusChecks': [
                     {'context': name, 'app': {'databaseId': ACTIONS_ID}}
-                    for name in ('checks', POLICY_CHECK)
+                    for name in ('Required checks', POLICY_CHECK)
                 ],
             },
         },
@@ -77,7 +77,7 @@ def required_checks():
 
 def successful_check():
     return {
-        'name': 'checks',
+        'name': 'Required checks',
         'status': 'completed',
         'conclusion': 'success',
         'head_sha': HEAD,
@@ -433,7 +433,7 @@ def test_manual_workflow_never_executes_pr_code_or_grants_writer_permissions():
     import yaml
 
     workflow = yaml.safe_load(
-        Path('.github/workflows/dependabot-policy.yml').read_text()
+        Path('.github/workflows/dependency-policy.yml').read_text()
     )
     job = workflow['jobs']['policy']
     checkout, policy = job['steps']

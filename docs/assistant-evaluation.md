@@ -71,6 +71,18 @@ benchmark-network address; production rate limits are unchanged. Failed/incomple
 terminal events produce a nonzero exit code after the report is written. Fixture configuration explicitly
 selects both fixture adapters and never loads a key from `.env.local`.
 
+Choose a new `--output` path in an existing private directory. Reports contain raw
+answers for local review: never commit, upload or treat them as public receipts.
+The harness reserves a new 0600 file before generation and refuses existing files
+or symlinks. It atomically replaces and fsyncs a private snapshot after every sample,
+before deleting that sample's session; snapshots are limited to 64 MiB. The existing
+`samples` contract is retained, with additive `status` (`running`, `complete`, or
+`interrupted`) and `active_case_id` fields. Timeout, Ctrl-C or SIGTERM preserves
+completed samples and marks interruption without recording exception text or
+retrying generation. `complete` means the harness finished, not that every run or
+answer passed. Hard termination or storage failure can leave the last durable
+snapshot marked `running`; inspect it before separately authorizing further calls.
+
 Recorded fixture runs and their limitations are in
 [question coverage evidence](verification/question-coverage.json). The expanded
 development bank exposed spoken-language retrieval selecting technical paragraphs;

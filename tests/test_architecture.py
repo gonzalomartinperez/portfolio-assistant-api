@@ -29,13 +29,13 @@ def test_architecture():
             'app.application.example',
             'if TYPE_CHECKING:\n    from fastapi import Request',
         ),
-        ('app.ai.example', 'from app.infrastructure.db import connect'),
+        ('app.ai.example', 'from app.adapters.postgres.db import connect'),
         ('app.presentation.example', 'from app.bootstrap.container import create_app'),
         ('app.infrastructure.example', 'from app.bootstrap.config import Settings'),
-        ('app.infrastructure.db', 'from app.bootstrap.container import create_app'),
+        ('app.adapters.postgres.db', 'from app.bootstrap.container import create_app'),
         ('app.domain.example', 'import os'),
         ('app.domain.example', 'import urllib.request'),
-        ('app.application.example', '__import__("app.infrastructure.db")'),
+        ('app.application.example', '__import__("app.adapters.postgres.db")'),
         ('app.application.example', 'import importlib as i; i.import_module(name)'),
         (
             'app.application.example',
@@ -54,14 +54,13 @@ def test_rejects_dependency_bypasses(module, source):
         ('app.domain.example', 'from .evidence import tokens'),
         ('app.domain.example', 'from urllib.parse import urlsplit'),
         ('app.application.example', 'from app.domain import budget'),
-        ('app.infrastructure.db', 'from app.bootstrap.config import settings'),
         (
-            'app.infrastructure.example',
+            'app.adapters.example',
             'from app.application.web_context import SearchAccounting',
         ),
     ],
 )
-def test_allows_owned_ports_and_narrow_legacy_cli_exception(module, source):
+def test_allows_owned_ports(module, source):
     assert dependency_errors(module, source) == []
 
 

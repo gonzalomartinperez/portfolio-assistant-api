@@ -13,16 +13,16 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.ai.workflow import LangGraphWorkflow
-from app.application.observability import Execution, Stage, measurements
-from app.application.runs import RunService
-from app.bootstrap.config import Settings
-from app.infrastructure.operations import OperationalObserver
-from app.infrastructure.telemetry import (
+from app.adapters.observability.telemetry import (
     PrivateSession,
     PrivateTelemetry,
     SafeTelemetryLog,
 )
+from app.adapters.postgres.operations import OperationalObserver
+from app.ai.workflow import LangGraphWorkflow
+from app.application.observability import Execution, Stage, measurements
+from app.application.runs import RunService
+from app.bootstrap.config import Settings
 from app.presentation.operations import OperationalSnapshot, router
 from tests.test_workflow import GatedProvider, Retrieval, Store
 
@@ -426,7 +426,7 @@ def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypat
     import ast
     from pathlib import Path
 
-    from app.infrastructure.provider_http import create_async_client, create_sync_client
+    from app.adapters.providers.http import create_async_client, create_sync_client
 
     monkeypatch.setenv('OPENAI_BASE_URL', 'https://untrusted.invalid/v1')
     calls = []
@@ -441,7 +441,7 @@ def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypat
         )
     assert len(calls) == 2
     for file, call in calls:
-        assert file == Path('app/infrastructure/provider_http.py')
+        assert file == Path('app/adapters/providers/http.py')
         kwargs = {
             arg.arg: ast.literal_eval(arg.value)
             for arg in call.keywords
@@ -466,10 +466,10 @@ def test_real_sdk_http_stream_mapping_and_no_generation_retry(available):
     import httpx
     from openai import AsyncOpenAI
 
+    from app.adapters.providers.answer import ResponsesProvider
     from app.application.contracts import Usage
     from app.domain.budget import MAX_OUTPUT_TOKENS
     from app.domain.errors import ProviderUnavailableError
-    from app.infrastructure.answer import ResponsesProvider
 
     requests = []
 

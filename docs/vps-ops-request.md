@@ -27,7 +27,7 @@ Applications own their source, Dockerfiles, tests and runtime contracts. Consume
 prebuilt tested immutable image digests after separately authorized publication;
 no source rebuild on the VPS as the normal release path. API image publication
 preparation exists; no registry digest or publication approval is supplied here.
-A separate application-owned Dockerfile.postgres now builds patched PostgreSQL
+A separate application-owned infra/docker/postgres/Dockerfile now builds patched PostgreSQL
 18.6 / pgvector 0.8.7. Its publication and package visibility still require
 separate authorization. Local image IDs in reports are not registry manifests.
 
@@ -103,7 +103,7 @@ and outstanding owner decisions before requesting production authorization.
 
 ## Superseding PostgreSQL and monitoring handoff · 2026-10-12
 
-PostgreSQL now selects 18.6 / pgvector 0.8.7 through Dockerfile.postgres and local
+PostgreSQL now selects 18.6 / pgvector 0.8.7 through infra/docker/postgres/Dockerfile and local
 Compose. PR #46 passed current-head Actions and merged at
 `2e951faa25b5ebe0d15e8642f9cbb4e6e2e35527`. Older 17 data volumes remain untouched.
 Use the new volume/PGDATA contract and rehearse data migration only where existing

@@ -2,10 +2,14 @@
   "artifacts": {
     "feedback.schema.json": "efe765fd1aec41abf608b0d4f2963dbf83a7cbaa8b8f281aa8cf320cb4943de0",
     "knowledge.schema.json": "2489d6ff589e4bdfa50891ed8c110fb8e93371feda9db84818572bf9c4d387d0",
-    "openapi.json": "5da3128b1994869aebe4aeab73204a067dbd235aa123e3225b99e848de150bec",
+    "openapi.json": "e76de806786629a092ba7ae98d99d9d83a94a934faa478ca8eee5819e630985c",
     "operations.schema.json": "6fbf28e2900dfbd6afe59f8fadcb56de2c223efcbcfc8bfccf43c2116e20d834",
+    "product-analytics-v2.schema.json": "856afd5790079fbf14b1d61731bbb27ee72ff838871672144c7b21b73a290f2c",
     "product-analytics.schema.json": "6faf401fdcb6754b355dd94e1e9ce002314d67d5b46647f5b379e98cf07c3ca7",
     "product-event.schema.json": "8203591a5b8768ffaa8bfa13399c50de1802be9075a8f78808e61c94aaa9f6ca",
+    "product-interaction.schema.json": "1397c486b1160e80be92ecce269888cd2eb3cfbce8f3aec3c367de58487363b9",
+    "site-experience-portfolio-v1.schema.json": "f5905c368e668cfd833dd102253ed2b04e7350b7938164e5259bada94ad2ad32",
+    "site-experience-v1.schema.json": "355341ceb79621bcb6d0ac79fb211b78958436b1e89f8bee8a3a78953ece5f59",
     "sse.schema.json": "6cc2a2eb99eb86532d455eeb9022142f969ff4b2365c21c11bd9139edf409aff"
   },
   "contract_version": "1"

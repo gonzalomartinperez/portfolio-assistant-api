@@ -5,22 +5,14 @@ import sys
 from importlib.util import resolve_name
 from pathlib import Path
 
-LAYERS = {'domain', 'application', 'ai', 'infrastructure', 'presentation', 'bootstrap'}
+LAYERS = {'domain', 'application', 'ai', 'adapters', 'presentation', 'bootstrap'}
 ALLOWED = {
     'domain': {'domain'},
     'application': {'application', 'domain'},
     'ai': {'ai', 'application', 'domain'},
-    'infrastructure': {'infrastructure', 'application', 'domain'},
+    'adapters': {'adapters', 'application', 'domain'},
     'presentation': {'presentation', 'application', 'domain'},
     'bootstrap': LAYERS,
-}
-# Existing operator CLIs retain settings defaults; new adapters must receive inputs.
-CLI_SETTINGS = {
-    'app.infrastructure.db',
-    'app.infrastructure.ledger',
-    'app.infrastructure.migrations',
-    'app.infrastructure.indexing',
-    'app.infrastructure.checkpoints',
 }
 ENTRY_POINTS = {
     'app.main',
@@ -49,15 +41,12 @@ def dependencies(module: str, source: str, *, package: bool = False) -> set[str]
 
 def dependency_errors(module: str, source: str, *, package: bool = False) -> list[str]:
     layer = 'bootstrap' if module in ENTRY_POINTS else module.split('.')[1]
+    if layer not in ALLOWED:
+        return [f'unclassified application module: {module}']
     errors = []
     for dependency in sorted(dependencies(module, source, package=package)):
         parts = dependency.split('.')
         if parts[0] == 'app':
-            if module in CLI_SETTINGS and (
-                dependency == 'app.bootstrap.config'
-                or dependency.startswith('app.bootstrap.config.')
-            ):
-                continue
             if len(parts) > 1 and parts[1] in ALLOWED[layer]:
                 continue
             # The parent package alone adds no dependency; imported children are checked separately.

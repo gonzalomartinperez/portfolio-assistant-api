@@ -9,13 +9,25 @@
 
 `Quality` runs on every PR into `develop` or `main`, manual dispatch, and trusted reusable
 calls. There are **no path filters**: documentation/contract-only PRs still finish
-the required gate. New commits cancel stale runs for the same PR/ref.
+the required gate. New commits cancel stale runs for the same PR/ref. Hosted jobs
+use the explicit Ubuntu24.04 LTS label, matching the paired backoffice profile;
+the moving ubuntu-latest alias is rejected so an announced runner-major migration
+cannot silently change the validated environment. Runner patch images remain
+GitHub-managed and are recorded by Actions.
 
-| Job | Purpose | Dependencies |
+| Job ID / human name | Purpose | Needs |
 | --- | --- | --- |
-| Static and offline | Pinned actionlint, frozen install, licensing consistency, Ruff format/lint, strict mypy, pure tests, redacted history scan, deterministic contract drift | None |
-| Real services and container | Real PostgreSQL/Neo4j migrations/indexing/integration tests; build image once, test non-root SSE/shutdown and actual Nginx routing | None |
-| checks | Required aggregate; fails unless both jobs succeed, including cancelled/skipped failures | Both, with `always()` |
+| workflows / Workflow validation | Pinned actionlint and trusted-event syntax; no dependency install or secret token | None |
+| secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None |
+| static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | None |
+| database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | static |
+| container / Container verification | Own isolated databases/corpus, explicit recipe build, full scans, non-root streaming/SIGTERM/proxy and tested image identity | static |
+| checks / Required checks | Always-evaluated fail-closed aggregate over every five prerequisites | All five |
+
+The exact paired profile is enforced by scripts/ci_profile.py and its negative
+fixtures. PRs and pushes to develop/main, merge-group, manual and reusable events
+retain verification; no path filter can omit a required job. Main/develop post-merge
+runs prove their actual merge commits, independently of prior PR merge-ref checks.
 
 Static checks compile the authored bilingual question bank and reject generated
 drift. The real-service job exercises ten development cases spanning all topics and
@@ -23,34 +35,25 @@ both locale hints through the HTTP/SSE harness; failed terminals fail the job.
 Full 1000-case fixture runs are recorded locally rather than adding that cost to
 every PR. These checks establish executable coverage, not live-model answer quality.
 
-Tests are explicitly marked `integration`. Offline and real-service jobs run
-disjoint selections, retaining all coverage. The container is built once with
+Tests are explicitly marked `integration`. Static and database jobs run
+disjoint selections, retaining all coverage. Container smoke owns fresh services;
+a completed database job cannot leave a fixture on another runner. The container is built once with
 BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the
 lockfile and `.python-version`, with platform-aware setup-uv behavior. uv itself
-is pinned to 0.9.13, matching the production image. Only the static job saves this
-shared dependency cache; integration restores it and installs the same frozen lock
+is pinned to 0.13.1, matching the production image. Only the static job saves this
+shared dependency cache; runtime jobs restore it and installs the same frozen lock
 without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
 cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
-`api-linux-amd64`. Cache entries never replace checks. Failure/success diagnostic
-artifacts retain JUnit and redacted JSON summaries for seven days. A tested image
-archive is exported only for trusted manual publishing, not every PR.
+`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt is uploaded for seven days.
+Other test diagnostics remain in Actions logs; no public image archive is uploaded.
 
 Third-party actions are pinned to reviewed upstream commit SHAs. PR jobs have only
 `contents: read`, do not persist checkout credentials, receive no deployment/model
 secrets and never use `pull_request_target`. Fixture credentials belong solely to
-ephemeral CI databases. Registry write permission exists only in the manual
-publisher's final job. User inputs enter shell steps through environment variables
-and are validated as full hashes/digests before use.
-
-`Publish tested candidate (manual)` accepts an immutable frontend image and its
-owner's committed revision. It reuses Quality, including cross-service proxy smoke and exact committed frontend contract-byte comparison,
-then publishes the **tested image archive** without rebuilding it. The artifact
-`release-candidate-manifest` records both image digests, both commits and contract
-version, with `production_authorized: false`. Manual publishing is prepared but
-has not been executed with a frontend release image. GitHub discovers dispatchable
-workflows on the default branch, `main`. Default-branch activation requires separate owner authorization; this increment
-merges into develop only. Discovery of the publisher neither authorizes image
-publication nor production deployment.
+ephemeral CI databases. No active workflow grants registry write permission. The earlier candidate
+publisher and public image-archive uploads were retired for privacy. Local release
+manifest validation remains; an authorized private publication path and registry
+visibility decision are separate release gates. A merge cannot publish or deploy.
 
 ## Deployment belongs to vps-ops
 
@@ -60,11 +63,12 @@ prepare authorized immutable publication. Publication is not deployment approval
 Package visibility must be confirmed independently from repository visibility.
 No publication has been authorized for this phase.
 
-`.github/workflow-templates/deploy-vps.yml` and `deploy/apply-release.sh` are frozen
-transfer references from the earlier ownership model. Do not activate or execute
-them here. vps-ops defines migration scheduling, approval, serialization, routing,
-verification and rollback; it must verify its exact Coolify prebuilt-image workflow.
-See [deployment contract](deployment-contract.md) for the asset inventory.
+The old deployment template, apply-release script and production Compose/TLS
+configuration were retired after explicit vps-ops ownership acceptance. They remain
+in Git history. Local proxy configuration moved to tests/fixtures/proxy and cannot
+serve as production configuration. vps-ops owns approvals, serialization, routing,
+migration scheduling, verification and rollback; see the
+[Docker ownership handoff](docker-layout-handoff.md).
 
 ## Observed Actions duration
 
@@ -78,7 +82,7 @@ they are not a controlled claim of a fixed percentage speedup.
 ## Main promotion gate
 
 Promote through a `develop` → `main` PR after explicit owner authorization. Wait
-for both Quality jobs and the aggregate `checks` on that PR’s current head; do not
+for all five prerequisite jobs and the `Required checks` aggregate on that PR’s current head; do not
 reuse a check from an earlier head or bypass reviews. The same workflow runs without
 path filters on both target branches. This promotes the verified fixture candidate;
 production/live-model limitations in the release checklist remain in force.
@@ -137,7 +141,7 @@ and protection readiness false; the privileged controller still fails closed on
 unreadable controls. This diagnostic is not the required authorization gate. Offline policy tests run
 in the existing test suite, without duplicating builds or integration tests.
 
-`dependabot-policy.yml` is a separate trusted-metadata controller. Its single job
+`dependency-policy.yml` is a separate trusted-metadata controller. Its single job
 checks out the trusted workflow SHA, installs no PR dependencies, uses no PR cache
 or artifact, and can only manage a required policy check and native auto-merge.
 It does not run the test suite. Completion of Quality triggers revalidation of the
@@ -192,7 +196,7 @@ release digest again at release selection: the vulnerability database changes
 independently of source/image revisions.
 
 
-The integration job now builds Dockerfile.postgres once and uses the tested
+The integration job now builds infra/docker/postgres/Dockerfile once and uses the tested
 non-root image for its owned Compose fixture. It supplies that exact container ID
 to the existing two-service evaluation guard and stops only its fixture even on
 failure. PostgreSQL logs are captured before artifact upload. The complete database
@@ -270,3 +274,43 @@ and feedback schema bytes. Its archived public chat/SSE snapshot is not a curren
 chat consumer and cannot establish native portfolio compatibility. Current native
 browser/API verification belongs to the portfolio. This opt-in source comparison is
 not live OAuth/HTTPS pairing or a release-controller/deployment authorization.
+
+The real-services job also reads an exact committed backoffice revision, installs
+its frozen dependencies with a lock-keyed Node cache, and exercises both applications'
+actual migrations/authentication against a fresh restricted project engine. The
+owned fixture runner verifies independent recovery, restart and fresh-cluster
+restore; it never uses the job's corpus fixture for destructive recovery. Only its
+synthetic aggregate receipt is retained, not IAM logs, credentials or archives.
+The required `checks` gate still requires both existing jobs. This adds application
+compatibility coverage without a second API image build or privileged PR execution.
+
+
+## Paired profile source and artifact privacy
+
+The locally encoded profile follows the owner-coordinated contract revision
+`eb8288349f797d1fd5d51bfc349e70da8eaf3c01`; public CI neither checks out nor depends
+on that private repository. Commands above are this application's adapters to the
+common job identities. No empty/dummy job replaces real verification.
+
+Database/container jobs build only their own required fixtures. The API application
+image is built once in container and reused for scan/stream/shutdown/proxy tests.
+No cross-job image archive is uploaded. A same-SHA/config fixture rebuild is an
+explicit privacy tradeoff; caches accelerate it without becoming provenance.
+ci_identity records actual checkout/base/workflow SHA, run/attempt, platform,
+reviewed input hashes and inspected local image IDs. Dirty/unverifiable build
+inputs fail before identity is reported. IDs are not published registry digests.
+Only redacted synthetic database receipts may be uploaded; no env files, session
+artifacts, prompts/answers, backups or raw telemetry are included.
+
+The required context changes from checks to Required checks. First obtain the
+new actual GitHub Actions context in green, add it alongside the old requirement,
+verify both remain required and then remove only the obsolete context. Preserve
+strict freshness, producing app identity, admin enforcement and all other rules.
+Never disable protection, add a green legacy placeholder or bypass a pending gate.
+Actual protection and post-merge execution evidence must be recorded after this
+transition; YAML/test success alone does not establish remote enforcement.
+
+Official references checked:
+[GitHub required-check semantics](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks),
+[job dependencies](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs)
+and [source/workflow environment identity](https://docs.github.com/en/actions/reference/workflows-and-actions/variables).

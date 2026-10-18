@@ -9,6 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from app.adapters.portfolio.projection import PublicProjection, graph_facts
+from app.adapters.providers.embedding import OpenAIEmbeddings
+from app.adapters.providers.language import LocalLanguageDetector
 from app.application.conversation_context import Turn
 from app.application.knowledge_watch import watch
 from app.application.language import select_locale
@@ -17,9 +20,6 @@ from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
 from app.domain.errors import DependencyUnavailableError
 from app.domain.knowledge import suggestions
-from app.infrastructure.embedding import OpenAIEmbeddings
-from app.infrastructure.language import LocalLanguageDetector
-from app.infrastructure.public_projection import PublicProjection, graph_facts
 from app.presentation.middleware import BodyLimit
 from tests.test_workflow import SOURCE
 
@@ -417,13 +417,14 @@ def test_achievement_starter_requires_public_support_and_uses_supported_locale()
 def test_graph_driver_outage_is_recoverable_for_knowledge_worker(monkeypatch, tmp_path):
     from neo4j.exceptions import ServiceUnavailable
 
-    from app.infrastructure import knowledge_watch
+    from app.adapters.portfolio import watch as knowledge_watch
 
     def unavailable(*args, **kwargs):
         raise ServiceUnavailable('synthetic unavailable graph')
 
-    monkeypatch.setattr(knowledge_watch, 'sync', unavailable)
-    publisher = knowledge_watch.PublicKnowledgePublisher(tmp_path)
+    publisher = knowledge_watch.PublicKnowledgePublisher(
+        tmp_path, connection=unavailable, publish=unavailable
+    )
     with pytest.raises(DependencyUnavailableError, match='candidate_failed'):
         asyncio.run(publisher.publish('a' * 40))
 

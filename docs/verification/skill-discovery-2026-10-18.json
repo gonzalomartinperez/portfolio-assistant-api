@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-18",
+  "source_catalog_revision": "a589cc1deee52d14012c8a46b5b5cd4ec4fdafa5",
+  "model_turns_sent": 0,
+  "clients": {
+    "codex": {
+      "version": "codex-cli 0.163.0",
+      "expected": [
+        "api-change-storage",
+        "api-change-stream",
+        "api-change-use-case",
+        "api-maintain-knowledge",
+        "api-verify-release"
+      ],
+      "discovered": [
+        "api-change-storage",
+        "api-change-stream",
+        "api-change-use-case",
+        "api-maintain-knowledge",
+        "api-verify-release"
+      ],
+      "passed": true,
+      "errors": 0,
+      "probe_error": null
+    },
+    "claude": {
+      "version": "2.1.292 (Claude Code)",
+      "expected": [
+        "api-change-storage",
+        "api-change-stream",
+        "api-change-use-case",
+        "api-maintain-knowledge",
+        "api-verify-release"
+      ],
+      "discovered": [
+        "api-change-storage",
+        "api-change-stream",
+        "api-change-use-case",
+        "api-maintain-knowledge",
+        "api-verify-release"
+      ],
+      "passed": true,
+      "probe_error": null
+    }
+  }
+}

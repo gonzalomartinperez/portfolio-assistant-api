@@ -1,11 +1,14 @@
 name: Quality
-on:
+'on':
   pull_request:
-    branches: [develop, main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+    branches:
+    - develop
+    - main
   workflow_dispatch:
     inputs:
       verify_vendor_image:
-        description: 'Deep OS/Java vendor assessment; required separately before release selection'
+        description: Deep OS/Java vendor assessment; required separately before release selection
         type: boolean
         default: false
   workflow_call:
@@ -16,6 +19,11 @@ on:
       frontend_commit:
         type: string
         default: ''
+  push:
+    branches:
+    - develop
+    - main
+  merge_group: {}
 permissions:
   contents: read
 concurrency:
@@ -27,201 +35,367 @@ env:
   LANGSMITH_TRACING: 'false'
   DOCKER_BUILD_RECORD_UPLOAD: 'false'
 jobs:
+  workflows:
+    name: Workflow validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 1
+    - name: Bind exact source and build inputs
+      run: python3 -m scripts.ci_identity
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - name: Validate workflow syntax and shell steps
+      run: bash scripts/check_workflows.sh
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - name: Bind exact source and build inputs
+      run: python3 -m scripts.ci_identity
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - name: Scan tracked content and history without exposing secrets
+      run: |
+        mkdir -p artifacts
+        python3 -m scripts.scan_secrets > artifacts/secret-scan.json
   static:
-    name: Static and offline
+    name: Static checks
     permissions:
       contents: read
       pull-requests: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
-        with:
-          version: '0.13.1'
-          enable-cache: true
-          cache-dependency-glob: |
-            uv.lock
-            .python-version
-      - name: Validate workflow syntax and shell steps
-        run: bash scripts/check_workflows.sh
-      - name: Install locked dependencies
-        run: uv sync --frozen
-      - name: Validate portable repository skills
-        run: uv run python -m scripts.validate_skills
-      - name: Validate software licensing and separate content scope
-        run: uv run python -m scripts.check_license
-      - name: Lint Python
-        run: uv run ruff check app tests contracts scripts
-      - name: Check Python formatting
-        run: uv run ruff format --check app tests contracts scripts
-      - name: Type-check application boundaries
-        run: uv run mypy
-      - name: Verify authored bilingual question bank
-        run: uv run python -m scripts.build_assistant_bank --check
-      - name: Enforce architecture and run offline and contract tests
-        run: |
-          mkdir -p artifacts
-          uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
-      - name: Scan tracked content and history without exposing secrets
-        run: uv run python -m scripts.scan_secrets > artifacts/secret-scan.json
-      - name: Verify public contract drift
-        run: uv run python -m contracts.export && git diff --exit-code contracts
-      - name: Audit live dependency controls without mutations
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
-  integration:
-    name: Real services and container
-    runs-on: ubuntu-latest
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 1
+    - name: Bind exact source and build inputs
+      run: python3 -m scripts.ci_identity
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+      with:
+        version: 0.13.1
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          .python-version
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - name: Validate portable repository skills
+      run: uv run python -m scripts.validate_skills
+    - name: Validate software licensing and separate content scope
+      run: uv run python -m scripts.check_license
+    - name: Lint Python
+      run: uv run ruff check app tests contracts scripts
+    - name: Check Python formatting
+      run: uv run ruff format --check app tests contracts scripts
+    - name: Type-check application boundaries
+      run: uv run mypy
+    - name: Verify authored bilingual question bank
+      run: uv run python -m scripts.build_assistant_bank --check
+    - name: Enforce architecture and run offline and contract tests
+      run: |
+        mkdir -p artifacts
+        uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+    - name: Verify public contract drift
+      run: uv run python -m contracts.export && git diff --exit-code contracts
+    - name: Audit live dependency controls without mutations
+      if: github.event_name == 'pull_request'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
+  database:
+    name: Database tests
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
       neo4j:
         image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
         env:
           NEO4J_AUTH: neo4j/change-me
-        ports: ['7688:7687']
-        options: >-
-          --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'"
-          --health-interval 10s --health-timeout 10s --health-retries 20
+        ports:
+        - 7688:7687
+        options: --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'" --health-interval 10s --health-timeout
+          10s --health-retries 20
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: gonzalomartinperez/portfolio
-          ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
-          path: public-portfolio
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
-        with:
-          version: '0.13.1'
-          save-cache: false
-          enable-cache: true
-          cache-dependency-glob: |
-            uv.lock
-            .python-version
-      - name: Install locked dependencies
-        run: uv sync --frozen
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        if: inputs.frontend_commit != ''
-        with:
-          repository: gonzalomartinperez/portfolio-backoffice
-          ref: ${{ inputs.frontend_commit }}
-          path: frontend-contract
-          sparse-checkout: contracts
-          persist-credentials: false
-      - name: Verify the paired backoffice private contract bytes
-        if: inputs.frontend_commit != ''
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
-              assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
-          PY
-      - name: Validate private networks and container limits
-        run: uv run python -m scripts.validate_compose
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Build and start the isolated non-root PostgreSQL fixture
-        id: postgres
-        run: |
-          docker compose -p assistant-ci up --build -d --wait --wait-timeout 90 postgres
-          postgres_id=$(docker compose -p assistant-ci ps -q postgres)
-          test -n "$postgres_id"
-          echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
-      - name: Apply and verify migrations
-        run: uv run python -m app.migrate
-      - name: Index the pinned approved public corpus
-        run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
-      - name: Run real-service integration tests
-        run: |
-          mkdir -p artifacts
-          uv run pytest -q -m integration --junitxml=artifacts/integration.xml
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Bind exact source and build inputs
+      run: python3 -m scripts.ci_identity
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: gonzalomartinperez/portfolio
+        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+        path: public-portfolio
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+      with:
+        version: 0.13.1
+        save-cache: false
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          .python-version
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - name: Read the pinned IAM compatibility source
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: gonzalomartinperez/portfolio-backoffice
+        ref: 5238643d5f5cb1c129b66b7d527f440635f68d33
+        path: artifacts/compat-backoffice
+        persist-credentials: false
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      with:
+        node-version-file: artifacts/compat-backoffice/.nvmrc
+        cache: npm
+        cache-dependency-path: artifacts/compat-backoffice/package-lock.json
+    - name: Install the pinned IAM fixture dependencies
+      run: npm ci --prefix artifacts/compat-backoffice --no-audit --no-fund
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      if: inputs.frontend_commit != ''
+      with:
+        repository: gonzalomartinperez/portfolio-backoffice
+        ref: ${{ inputs.frontend_commit }}
+        path: frontend-contract
+        sparse-checkout: contracts
+        persist-credentials: false
+    - name: Verify the paired backoffice private contract bytes
+      if: inputs.frontend_commit != ''
+      run: |
+        python - <<'PY'
+        from pathlib import Path
+        for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
+            assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
+        PY
+    - name: Validate private networks and container limits
+      run: uv run python -m scripts.validate_compose
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+    - name: Build and start the isolated non-root PostgreSQL fixture
+      id: postgres
+      run: |
+        docker compose -f infra/compose/local.yaml -p assistant-ci up --build -d --wait --wait-timeout 90 postgres
+        postgres_id=$(docker compose -f infra/compose/local.yaml -p assistant-ci ps -q postgres)
+        test -n "$postgres_id"
+        echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
+    - name: Apply and verify migrations
+      run: uv run python -m app.migrate
+    - name: Index the pinned approved public corpus
+      run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+    - name: Run real-service integration tests
+      run: |
+        mkdir -p artifacts
+        uv run pytest -q -m integration --junitxml=artifacts/integration.xml
+      env:
+        TEST_INTEGRATION: '1'
+        EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+        EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
+    - name: Exercise representative bilingual question families
+      run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
+      env:
+        EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+        EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
+    - name: Verify real dual-application identities and independent recovery
+      run: |
+        uv run python -m scripts.verify_project_databases --authorize-fixture \
+          --postgres-image portfolio-assistant-postgres:18.6 \
+          --backoffice-path artifacts/compat-backoffice
+    - name: Stop only the owned PostgreSQL fixture
+      if: always()
+      run: |
+        mkdir -p artifacts
+        docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
+        docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
+    - name: Retain safe synthetic database verification receipt
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: project-database-verification
+        path: artifacts/project-databases.json
+        retention-days: 7
+        if-no-files-found: ignore
+    needs:
+    - static
+  container:
+    name: Container verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      neo4j:
+        image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
         env:
-          TEST_INTEGRATION: '1'
-      - name: Exercise representative bilingual question families
-        run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
-        env:
-          EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
-          EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          load: true
-          tags: portfolio-assistant-api:ci
-          cache-from: type=gha,scope=api-linux-amd64
-          cache-to: type=gha,mode=max,scope=api-linux-amd64
-      - name: Verify pinned image scanner
-        run: |
-          mkdir -p /tmp/image-scanner artifacts
-          curl --fail --silent --show-error --location --retry 3 --max-time 120 \
-            https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz \
-            --output /tmp/image-scanner/trivy.tar.gz
-          echo 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f  /tmp/image-scanner/trivy.tar.gz' | sha256sum --check
-          tar -xzf /tmp/image-scanner/trivy.tar.gz -C /tmp/image-scanner trivy
-      - name: Inventory the tested image and reject critical or fixable high findings
-        run: |
-          /tmp/image-scanner/trivy --config '' image --image-src docker \
-            --ignorefile '' --scanners vuln --format json \
-            --output artifacts/image-vulnerabilities.json portfolio-assistant-api:ci
-          image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
-          uv run python -m scripts.image_security \
-            --report artifacts/image-vulnerabilities.json --image-id "$image_id" > artifacts/image-security-summary.json
-      - name: Inventory PostgreSQL and reject fixable critical or high findings
-        run: |
-          /tmp/image-scanner/trivy --config '' image --image-src docker \
-            --ignorefile '' --scanners vuln --format json \
-            --output artifacts/postgres-vulnerabilities.json portfolio-assistant-postgres:18.6
-          docker image inspect portfolio-assistant-postgres:18.6 --format '{{.Id}}' > artifacts/postgres-image-id.txt
-          uv run python - <<'PY' > artifacts/postgres-security-summary.json
-          import json
-          from pathlib import Path
-          from scripts.image_security import evaluate
-          result = evaluate(Path('artifacts/postgres-vulnerabilities.json').read_text(), Path('artifacts/postgres-image-id.txt').read_text().strip())
-          print(json.dumps(result))
-          raise SystemExit(bool(result['fixable_critical'] or result['fixable_high']))
-          PY
-      - name: Deep-scan the exact Neo4j vendor image for release assessment
-        if: github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image
-        run: |
-          reference=$(uv run python -c "import yaml; from pathlib import Path; print(yaml.safe_load(Path('compose.yaml').read_text())['services']['neo4j']['image'])")
-          /tmp/image-scanner/trivy --config '' image --image-src docker \
-            --ignorefile '' --scanners vuln --list-all-pkgs --timeout 10m --format json \
-            --output artifacts/neo4j-vulnerabilities.json "$reference"
-          docker image inspect "$reference" --format '{{.Id}}' > artifacts/neo4j-image-id.txt
-          /tmp/image-scanner/trivy --config '' version --format json > artifacts/scanner-version.json
-          uv run python -m scripts.database_security_receipt \
-            --report artifacts/neo4j-vulnerabilities.json \
-            --image-id-file artifacts/neo4j-image-id.txt \
-            --scanner-version artifacts/scanner-version.json --reference "$reference"
-      - name: Verify image streaming and graceful shutdown
-        run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
-      - name: Verify proxy routing and stream cancellation
-        run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
-        env:
-          FRONTEND_IMAGE: ${{ inputs.frontend_image }}
-      - name: Stop only the owned PostgreSQL fixture
-        if: always()
-        run: |
-          mkdir -p artifacts
-          docker compose -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
-          docker compose -p assistant-ci stop postgres
+          NEO4J_AUTH: neo4j/change-me
+        ports:
+        - 7688:7687
+        options: --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'" --health-interval 10s --health-timeout
+          10s --health-retries 20
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Bind exact source and build inputs
+      run: python3 -m scripts.ci_identity
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: gonzalomartinperez/portfolio
+        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+        path: public-portfolio
+        persist-credentials: false
+    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+      with:
+        version: 0.13.1
+        save-cache: false
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          .python-version
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      if: inputs.frontend_commit != ''
+      with:
+        repository: gonzalomartinperez/portfolio-backoffice
+        ref: ${{ inputs.frontend_commit }}
+        path: frontend-contract
+        sparse-checkout: contracts
+        persist-credentials: false
+    - name: Verify the paired backoffice private contract bytes
+      if: inputs.frontend_commit != ''
+      run: |
+        python - <<'PY'
+        from pathlib import Path
+        for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
+            assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
+        PY
+    - name: Validate private networks and container limits
+      run: uv run python -m scripts.validate_compose
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+    - name: Build and start the isolated non-root PostgreSQL fixture
+      id: postgres
+      run: |
+        docker compose -f infra/compose/local.yaml -p assistant-ci up --build -d --wait --wait-timeout 90 postgres
+        postgres_id=$(docker compose -f infra/compose/local.yaml -p assistant-ci ps -q postgres)
+        test -n "$postgres_id"
+        echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
+    - name: Apply and verify migrations
+      run: uv run python -m app.migrate
+    - name: Index the pinned approved public corpus
+      run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+      with:
+        context: .
+        file: infra/docker/app/Dockerfile
+        load: true
+        tags: portfolio-assistant-api:ci
+        cache-from: type=gha,scope=api-linux-amd64
+        cache-to: type=gha,mode=max,scope=api-linux-amd64
+        labels: org.opencontainers.image.revision=${{ github.sha }}
+    - name: Verify pinned image scanner
+      run: |
+        mkdir -p /tmp/image-scanner artifacts
+        curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+          https://github.com/aquasecurity/trivy/releases/download/v0.75.0/trivy_0.75.0_Linux-64bit.tar.gz \
+          --output /tmp/image-scanner/trivy.tar.gz
+        echo 'c6e65abddb348e25f10549df887045629cf28cc72453cd1c63acb717316b3f3f  /tmp/image-scanner/trivy.tar.gz' | sha256sum --check
+        tar -xzf /tmp/image-scanner/trivy.tar.gz -C /tmp/image-scanner trivy
+    - name: Inventory the tested image and reject critical or fixable high findings
+      run: |
+        /tmp/image-scanner/trivy --config '' image --image-src docker \
+          --ignorefile '' --scanners vuln --format json \
+          --output artifacts/image-vulnerabilities.json portfolio-assistant-api:ci
+        image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
+        uv run python -m scripts.image_security \
+          --report artifacts/image-vulnerabilities.json --image-id "$image_id" > artifacts/image-security-summary.json
+    - name: Inventory PostgreSQL and reject fixable critical or high findings
+      run: |
+        /tmp/image-scanner/trivy --config '' image --image-src docker \
+          --ignorefile '' --scanners vuln --format json \
+          --output artifacts/postgres-vulnerabilities.json portfolio-assistant-postgres:18.6
+        docker image inspect portfolio-assistant-postgres:18.6 --format '{{.Id}}' > artifacts/postgres-image-id.txt
+        uv run python - <<'PY' > artifacts/postgres-security-summary.json
+        import json
+        from pathlib import Path
+        from scripts.image_security import evaluate
+        result = evaluate(Path('artifacts/postgres-vulnerabilities.json').read_text(), Path('artifacts/postgres-image-id.txt').read_text().strip())
+        print(json.dumps(result))
+        raise SystemExit(bool(result['fixable_critical'] or result['fixable_high']))
+        PY
+    - name: Deep-scan the exact Neo4j vendor image for release assessment
+      if: github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image
+      run: |
+        reference=$(uv run python -c "import yaml; from pathlib import Path; print(yaml.safe_load(Path('infra/compose/local.yaml').read_text())['services']['neo4j']['image'])")
+        /tmp/image-scanner/trivy --config '' image --image-src docker \
+          --ignorefile '' --scanners vuln --list-all-pkgs --timeout 10m --format json \
+          --output artifacts/neo4j-vulnerabilities.json "$reference"
+        docker image inspect "$reference" --format '{{.Id}}' > artifacts/neo4j-image-id.txt
+        /tmp/image-scanner/trivy --config '' version --format json > artifacts/scanner-version.json
+        uv run python -m scripts.database_security_receipt \
+          --report artifacts/neo4j-vulnerabilities.json \
+          --image-id-file artifacts/neo4j-image-id.txt \
+          --scanner-version artifacts/scanner-version.json --reference "$reference"
+    - name: Verify image streaming and graceful shutdown
+      run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
+    - name: Verify proxy routing and stream cancellation
+      run: uv run python -m scripts.proxy_smoke --image portfolio-assistant-api:ci > artifacts/proxy-smoke.json
+      env:
+        FRONTEND_IMAGE: ${{ inputs.frontend_image }}
+    - name: Record tested image identities
+      run: |
+        python3 -m scripts.ci_identity --image portfolio-assistant-api:ci --image portfolio-assistant-postgres:18.6
+      env:
+        CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+    - name: Stop only the owned PostgreSQL fixture
+      if: always()
+      run: |
+        mkdir -p artifacts
+        docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
+        docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
+    needs:
+    - static
   checks:
-    permissions: {}
-    name: checks
-    if: always()
-    needs: [static, integration]
-    runs-on: ubuntu-latest
+    name: Required checks
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
+    permissions: {}
+    if: always()
+    needs:
+    - workflows
+    - secrets
+    - static
+    - database
+    - container
     steps:
-      - name: Preserve the required aggregate gate
-        env:
-          STATIC_RESULT: ${{ needs.static.result }}
-          INTEGRATION_RESULT: ${{ needs.integration.result }}
-        run: test "$STATIC_RESULT" = success && test "$INTEGRATION_RESULT" = success
+    - name: Require every expected job to succeed
+      run: |
+        test "${WORKFLOWS_RESULT}" = success
+        test "${SECRETS_RESULT}" = success
+        test "${STATIC_RESULT}" = success
+        test "${DATABASE_RESULT}" = success
+        test "${CONTAINER_RESULT}" = success
+      env:
+        WORKFLOWS_RESULT: ${{ needs.workflows.result }}
+        SECRETS_RESULT: ${{ needs.secrets.result }}
+        STATIC_RESULT: ${{ needs.static.result }}
+        DATABASE_RESULT: ${{ needs.database.result }}
+        CONTAINER_RESULT: ${{ needs.container.result }}

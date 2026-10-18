@@ -6,8 +6,8 @@ cohesive capabilities, enforced by `tests/test_architecture.py`:
 ```text
 presentation ──► application ──► domain
 ai ────────────► application ──► domain
-infrastructure ► application ──► domain
-bootstrap composes presentation + application + ai + infrastructure
+adapters ──────► application ──► domain
+bootstrap composes presentation + application + ai + adapters
 ```
 
 | Package | Responsibility |
@@ -15,16 +15,21 @@ bootstrap composes presentation + application + ai + infrastructure
 | `domain` | Pure provenance, lexical/graph fact and cost policies; value objects/errors |
 | `application` | Conversation and run use cases; workflow/retrieval/provider/accounting/storage ports |
 | `ai` | Injected LangGraph workflow and deterministic retrieval orchestration |
-| `infrastructure` | psycopg, pgvector, Neo4j, public Git indexing, Responses translation and migrations |
+| `adapters` | psycopg, pgvector, Neo4j, public Git indexing, Responses translation and migrations |
 | `presentation` | FastAPI routes, cookie/origin/CSRF transport, typed SSE and request guards |
 | `bootstrap` | Validated settings, explicit composition, shared resources and structured logs |
 
 Inner layers import only the standard library and domain/application code.
-AI code imports no concrete storage/provider implementation. Infrastructure's CLI
-entry points still use the settings adapter in `bootstrap.config`; the HTTP
-composition injects its connection and pricing capabilities. The architecture
-test allows only that settings module, never the composition root. This explicit
-CLI exception avoids a generic container/service-locator framework.
+AI code imports no concrete storage/provider implementation. Concrete capability
+packages are `adapters/postgres`, `providers`, `portfolio`, `neo4j` and
+`observability`, plus the hybrid retrieval adapter. Configuration defaults and
+operator orchestration live in bootstrap; adapters receive explicit settings values
+and connection/publish capabilities. No adapter may import bootstrap or a legacy facade.
+
+The obsolete `app.infrastructure` package is removed. AST checks reject its
+reintroduction and all adapter→bootstrap backedges. Root ASGI/CLI paths remain
+stable; see [ADR006](adrs/006-canonical-adapters.md) and the
+[pre-move consumer map](verification/common-layout-preflight-2026-10-18.md).
 
 ## One request
 
@@ -119,10 +124,9 @@ selected direct platform I/O imports. This is a regression guard, not a Python s
 or proof that arbitrary standard-library code is side-effect free; review still checks
 behavior and capability ownership.
 
-Five existing operator modules (`db`, `ledger`, `migrations`, `indexing`, `checkpoints`)
-retain explicit `bootstrap.config` defaults for compatibility with documented CLI
-commands. The allowlist names these modules individually; it grants no general
-infrastructure-to-bootstrap permission. New adapters receive their inputs explicitly.
+Operator defaults now live exclusively in bootstrap. Migration, indexing and
+maintenance commands inject explicit configuration and connection capabilities
+into adapters; there is no legacy import or layer exception.
 
 Search pricing now belongs to immutable `domain.web_budget.WebBudget`. Application owns
 `SearchAccounting`; the OpenAI search adapter consumes that port, and PostgreSQL

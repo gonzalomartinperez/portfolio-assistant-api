@@ -7,13 +7,13 @@ import httpx
 import pytest
 from openai import AsyncOpenAI
 
+from app.adapters.providers.answer import ResponsesProvider
 from app.application.conversation_context import (
     Turn,
     bounded_history,
     retrieval_question,
 )
 from app.domain.privacy import minimize_visitor_text
-from app.infrastructure.answer import ResponsesProvider
 from app.presentation.models import SendMessage
 
 

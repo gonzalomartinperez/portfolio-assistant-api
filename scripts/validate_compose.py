@@ -1,17 +1,24 @@
-"""Verify local resource limits and the frozen shared-stack transfer reference."""
+"""Verify isolated local resources; production composition belongs to vps-ops."""
 
 import json
-import os
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 
 def main():
     local = json.loads(
         subprocess.check_output(
-            ['docker', 'compose', 'config', '--format', 'json'], text=True
+            [
+                'docker',
+                'compose',
+                '-f',
+                'infra/compose/local.yaml',
+                'config',
+                '--format',
+                'json',
+            ],
+            text=True,
         )
     )
     for service in local['services'].values():
@@ -25,8 +32,8 @@ def main():
         assert 'no-new-privileges:true' in service['security_opt']
         assert all(port['host_ip'] == '127.0.0.1' for port in service['ports'])
         if service['image'] == 'portfolio-assistant-postgres:18.6':
-            assert service['build']['dockerfile'] == 'Dockerfile.postgres'
-            base = Path('Dockerfile.postgres').read_text().splitlines()[0]
+            assert service['build']['dockerfile'] == 'infra/docker/postgres/Dockerfile'
+            base = Path('infra/docker/postgres/Dockerfile').read_text().splitlines()[0]
             assert re.fullmatch(
                 r'FROM pgvector/pgvector:0\.8\.7-pg18@sha256:[a-f0-9]{64}', base
             )
@@ -34,63 +41,7 @@ def main():
             assert '@sha256:' in service['image']
     assert 'shared_buffers=128MB' in local['services']['postgres']['command']
     assert 'max_connections=50' in local['services']['postgres']['command']
-    with tempfile.TemporaryDirectory() as directory:
-        private = Path(directory, 'fixture.env')
-        private.write_text('POSTGRES_USER=fixture\nPOSTGRES_DB=fixture\n')
-        env = {
-            **os.environ,
-            'API_IMAGE': 'example.invalid/api@sha256:' + 'a' * 64,
-            'WEB_IMAGE': 'example.invalid/web@sha256:' + 'b' * 64,
-            'TLS_DIRECTORY': directory,
-            **dict.fromkeys(
-                (
-                    'API_ENV_FILE',
-                    'MIGRATION_ENV_FILE',
-                    'POSTGRES_ENV_FILE',
-                    'NEO4J_ENV_FILE',
-                ),
-                str(private),
-            ),
-        }
-        data = json.loads(
-            subprocess.check_output(
-                [
-                    'docker',
-                    'compose',
-                    '-f',
-                    'deploy/compose.yaml',
-                    '--profile',
-                    'edge',
-                    '--profile',
-                    'maintenance',
-                    'config',
-                    '--format',
-                    'json',
-                ],
-                env=env,
-                text=True,
-            )
-        )
-        services = data['services']
-        assert {name for name, service in services.items() if service.get('ports')} == {
-            'proxy'
-        }
-        assert data['networks']['data']['internal'] is True
-        for name, service in services.items():
-            assert 'container_name' not in service
-            assert int(service['mem_limit']) > 0
-            assert service['logging']['options']['max-file'] == '3'
-            if name in ('postgres', 'neo4j'):
-                assert set(service['networks']) == {'data'}
-            else:
-                assert service['read_only'] is True
-                assert 'ALL' in service['cap_drop']
-        assert services['migrate']['profiles'] == ['maintenance']
-        assert '--no-proxy-headers' in services['api']['command']
-    print(
-        'Local Compose: loopback-only, bounded resources/logs. '
-        'Frozen transfer reference: private data services and hardened containers.'
-    )
+    print('Local Compose: root build context, loopback-only, bounded resources/logs.')
 
 
 if __name__ == '__main__':

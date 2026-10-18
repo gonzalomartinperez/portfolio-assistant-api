@@ -6,14 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.adapters.providers.answer import ResponsesProvider
+from app.adapters.providers.language import LocalLanguageDetector
 from app.ai.retrieval import PublicRetrieval
 from app.application.contracts import GenerationFailedError
 from app.application.conversation_context import Turn, retrieval_question
 from app.application.knowledge import Chunk, Corpus
 from app.application.language import explicit_locale
 from app.domain.evidence import blocks_private_query, tokens
-from app.infrastructure.answer import ResponsesProvider
-from app.infrastructure.language import LocalLanguageDetector
 
 
 @pytest.mark.parametrize(

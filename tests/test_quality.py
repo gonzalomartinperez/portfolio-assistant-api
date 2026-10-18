@@ -125,7 +125,7 @@ def test_graph_outage_falls_back_to_verified_text(monkeypatch):
         return ()
 
     monkeypatch.setattr(
-        'app.infrastructure.knowledge.KnowledgeIndex.relationships', unavailable
+        'app.adapters.retrieval.KnowledgeIndex.relationships', unavailable
     )
     rows, _ = retrieve('What is Filomena?', 'en')
     assert rows and rows[0]['path'] == 'src/content/en/projects.ts'

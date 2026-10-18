@@ -27,7 +27,7 @@ and the [bounded checklist](../../../docs/release-checklist.md):
 - CI/container changes: inspect [job purposes](../../../docs/ci.md), run
   `bash scripts/check_workflows.sh`, validate Compose, then image/proxy/shutdown
   smoke against private fixtures. Existing jobs run in parallel; preserve their
-  disjoint suites, pinned tools/actions, minimal permissions and required `checks`.
+  disjoint suites, pinned tools/actions, minimal permissions and required `Required checks` aggregate.
 
 Inspect actual Actions runs and retained diagnostics when GitHub is available;
 syntax validation is not an executed pipeline. Never bypass a gate or increase
@@ -51,7 +51,7 @@ harness now checks both configured destinations against owned Docker identities;
 read the evaluation procedure for prerequisites and remaining quality limitations.
 Keep documented follow-up work distinct from implemented and tested fixes.
 
-Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. Do not activate the retained deployment templates or publish images without current authorization and confirmed package visibility.
+Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. The old production controller/templates are retired; test proxy resources are fixtures only. Do not publish images without current authorization and confirmed package visibility.
 
 The current user-facing UI is native to the portfolio and remains disabled;
 the separate web repository is the authenticated backoffice. Read only committed
@@ -73,7 +73,7 @@ Python 3.14 and model GPT-6 Luna with medium reasoning are validated defaults; p
 calls and real answer-quality claims remain separate from fixture acceptance.
 
 
-For application Docker/database tuning, root `compose.yaml` is local/CI only.
+For application Docker/database tuning, `infra/compose/local.yaml` is local/CI only.
 Validate its loopback ports, bounded resources/logs and existing image digests with
 `uv run python -m scripts.validate_compose`. Verify migrations/indexing plus active
 SSE shutdown under those ceilings. Keep build tools out of the runtime image;
@@ -104,7 +104,7 @@ the [fixed-cohort review](../../../docs/verification/runtime-compatibility-2026-
 records the distinction between compatibility tests and live model evaluation.
 
 
-Root Compose builds Dockerfile.postgres: use `docker compose up --build -d --wait`
+Local Compose builds infra/docker/postgres/Dockerfile: use `docker compose -f infra/compose/local.yaml up --build -d --wait`
 with an isolated project. It runs UID 999, so existing PGDATA ownership must match;
 never silently chown shared volumes. Verify both fresh initialization and a copy of
 owned stopped data, and explicitly review vector extension metadata upgrades. Read

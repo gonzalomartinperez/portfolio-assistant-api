@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock
 import httpx2
 import pytest
 
-from app.infrastructure import provider_http
+from app.adapters.providers import http as provider_http
 
 
 @pytest.mark.parametrize('asynchronous', [False, True])

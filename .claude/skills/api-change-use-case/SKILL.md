@@ -16,12 +16,12 @@ for information the repository already supplies.
    Use [architecture](../../../docs/architecture.md) for transaction/lifespan rules;
    read [coding conventions](../../../CONTRIBUTING.md) when changing code.
 2. Put invariants in domain and orchestration/consumed ports in application.
-   Neither imports ai, infrastructure, presentation or bootstrap. AI must use
-   injected capabilities. Only the five documented legacy CLI modules may import bootstrap.config;
-   new adapters receive inputs explicitly. Run `uv run python -m scripts.check_architecture`
+   Neither imports ai, adapters, presentation or bootstrap. AI must use
+   injected capabilities. Configuration/default wiring belongs to bootstrap; concrete adapters receive inputs
+   explicitly. The obsolete infrastructure namespace is rejected. Run `uv run python -m scripts.check_architecture`
    for fast feedback; its negative probes run in the normal offline suite.
 3. For session or abuse-limit changes, inspect [conversation policy](../../../app/application/conversations.py),
-   [atomic storage](../../../app/infrastructure/conversations.py) and the relevant
+   [atomic storage](../../../app/adapters/postgres/conversations.py) and the relevant
    [threat-model](../../../docs/threat-model.md) section. Ownership is checked on
    every operation; a model or prompt never authorizes access. Concurrent limits
    and usage reservations belong in database transactions, not in-memory counters.
@@ -50,6 +50,11 @@ For product metrics use [the separate analytics contract](../../../docs/product-
 Keep the runtime flag off by default, global transactional quotas and event-specific
 closed dimensions. No visitor identity, IP, prompts or new arbitrary properties.
 Existing operational observations remain best effort, not reliable visitor/run totals.
+Cross-product event work must also read the versioned
+[site experience core and product profiles](../../../docs/site-experience-contract.md).
+The offline core is not an ingestion allowlist. Preserve existing wire names and
+require product-owned route/region/target validation; a vocabulary freeze does not
+authorize collection, commerce events or consent/advertising changes.
 
 For volunteered context and quality signals use [privacy and human improvement](../../../docs/feedback-and-improvement.md).
 Minimize common visitor patterns at outbound boundaries, preserve public evidence,

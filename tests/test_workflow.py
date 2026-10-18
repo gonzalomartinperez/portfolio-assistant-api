@@ -3,6 +3,7 @@ from contextlib import aclosing
 
 import pytest
 
+from app.adapters.providers.answer import ResponsesProvider
 from app.ai.workflow import LangGraphWorkflow
 from app.application.answer import generate
 from app.application.contracts import (
@@ -12,7 +13,6 @@ from app.application.contracts import (
     Usage,
 )
 from app.application.runs import RunService
-from app.infrastructure.answer import ResponsesProvider
 
 SOURCE = Evidence(
     'id',

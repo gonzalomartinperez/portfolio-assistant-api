@@ -33,7 +33,7 @@ class MemoryStore:
         self.events = []
         self.limited = False
 
-    def record(self, value):
+    def record(self, value, country='unknown'):
         if self.limited:
             return 'limited'
         self.events.append(value)
@@ -164,7 +164,7 @@ def test_pre_007_image_cannot_pass_schema_readiness_after_upgrade():
     import hashlib
     from pathlib import Path
 
-    from app.infrastructure.migrations import validate_history
+    from app.adapters.postgres.migrations import validate_history
 
     migrations = sorted(Path('migrations').glob('[0-9][0-9][0-9]_*.sql'))
     applied = {

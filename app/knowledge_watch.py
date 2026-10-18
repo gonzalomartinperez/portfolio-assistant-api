@@ -3,23 +3,26 @@
 import asyncio
 import signal
 import tempfile
+from functools import partial
 from pathlib import Path
 from threading import Event
 
-from app.application.knowledge_watch import watch
-from app.bootstrap.config import settings
-from app.bootstrap.logging import configure
-from app.infrastructure.db import connect
-from app.infrastructure.knowledge_watch import (
+from app.adapters.portfolio.indexing import sync
+from app.adapters.portfolio.watch import (
     PublicKnowledgePublisher,
     PublishedPortfolio,
     report,
 )
+from app.adapters.postgres.db import connect
+from app.application.knowledge_watch import watch
+from app.bootstrap.config import settings
+from app.bootstrap.logging import configure
 
 
 async def run() -> None:
     configure()
     config = settings()
+    connection = partial(connect, config.database_url)
     stop = asyncio.Event()
     index_stop = Event()
 
@@ -32,7 +35,7 @@ async def run() -> None:
         loop.add_signal_handler(sig, stop_worker)
     try:
         with (
-            connect() as lock,
+            connection() as lock,
             tempfile.TemporaryDirectory(prefix='portfolio-watch-') as directory,
         ):
             lock.autocommit = True
@@ -43,7 +46,12 @@ async def run() -> None:
             repo = Path(directory)
             await watch(
                 PublishedPortfolio(repo),
-                PublicKnowledgePublisher(repo, index_stop),
+                PublicKnowledgePublisher(
+                    repo,
+                    index_stop,
+                    connection=connection,
+                    publish=partial(sync, configuration=config, connection=connection),
+                ),
                 stop,
                 config.knowledge_poll_seconds,
                 report,

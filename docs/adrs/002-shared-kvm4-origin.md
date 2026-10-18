@@ -28,9 +28,10 @@ Nginx global anti-framing headers are not a production `/embed` specification.
 ## Operations and cost
 
 Production composition, networks, volumes, proxy and release orchestration belong
-to private vps-ops. Coolify is the selected management platform. The previous
-`deploy/compose.yaml` is retained only as a transfer reference and local verification
-input. ADR 003 records the ownership transition; do not activate a competing proxy.
+to private vps-ops. Coolify is the selected management platform. The previous production Compose/controller/TLS files were retired after vps-ops
+confirmed ownership; Git history preserves the reference. Local proxy fixtures in
+tests/fixtures/proxy are tests only. ADR003 records the ownership transition;
+do not activate a competing proxy.
 
 Initial assistant memory ceilings total about 4.4 GiB (API 768 MiB, web 512 MiB,
 PostgreSQL 1 GiB, Neo4j 2 GiB, proxy 128 MiB). These are initial limits, not measured

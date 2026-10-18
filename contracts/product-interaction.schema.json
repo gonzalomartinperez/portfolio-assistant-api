@@ -1,0 +1,147 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "cell_x": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell X"
+    },
+    "cell_y": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell Y"
+    },
+    "event_id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_name": {
+      "enum": [
+        "public_click",
+        "section_exposure"
+      ],
+      "title": "Event Name",
+      "type": "string"
+    },
+    "layout_revision": {
+      "const": "portfolio-v1",
+      "title": "Layout Revision",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "project": {
+      "const": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "region_id": {
+      "enum": [
+        "site-header",
+        "site-footer",
+        "home-featured",
+        "home-experience",
+        "home-about",
+        "home-education",
+        "home-contact",
+        "about-story",
+        "about-focus",
+        "about-principles",
+        "about-opportunities",
+        "work-rampy",
+        "work-teamcubation",
+        "work-cooperativa",
+        "work-independent",
+        "work-projects",
+        "filomena-problem",
+        "filomena-approach",
+        "filomena-outcomes",
+        "filomena-evidence",
+        "stack-catalogue",
+        "stack-scope",
+        "education-degree",
+        "education-curriculum",
+        "education-credentials",
+        "education-evidence",
+        "cv-downloads",
+        "cv-summary",
+        "contact-channels",
+        "contact-resume"
+      ],
+      "title": "Region Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 2,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "section": {
+      "enum": [
+        "home",
+        "about",
+        "work",
+        "filomena",
+        "stack",
+        "education",
+        "cv",
+        "contact"
+      ],
+      "title": "Section",
+      "type": "string"
+    },
+    "source": {
+      "const": "site",
+      "title": "Source",
+      "type": "string"
+    },
+    "viewport": {
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop"
+      ],
+      "title": "Viewport",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "source",
+    "event_id",
+    "event_name",
+    "section",
+    "locale",
+    "region_id",
+    "layout_revision",
+    "viewport"
+  ],
+  "title": "ProductInteractionBody",
+  "type": "object"
+}
