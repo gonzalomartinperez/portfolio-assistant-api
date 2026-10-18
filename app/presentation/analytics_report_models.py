@@ -42,7 +42,11 @@ class ReportDay(StrictAggregate):
 
 
 class ReportCountry(StrictAggregate):
-    country: str = Field(min_length=2, max_length=8)
+    country: str = Field(
+        min_length=2,
+        max_length=8,
+        json_schema_extra={'enum': sorted(COUNTRIES | {'unknown', 'withheld'})},
+    )
     count: int = Field(ge=1, le=310000)
 
     @field_validator('country')
