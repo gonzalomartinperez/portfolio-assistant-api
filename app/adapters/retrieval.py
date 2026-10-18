@@ -1,19 +1,20 @@
 import asyncio
 import logging
 
-from neo4j import Query
+from neo4j import READ_ACCESS, Query
 from neo4j.exceptions import Neo4jError, ServiceUnavailable, SessionExpired
 
+from app.adapters.neo4j.read_queries import (
+    DIRECT_RELATIONSHIPS_QUERY,
+    READ_TIMEOUT,
+    RELATED_RELATIONSHIPS_QUERY,
+    probe_reads,
+)
 from app.adapters.providers.embedding import FixtureEmbeddings, vector
 from app.application.embeddings import Embeddings
 from app.application.knowledge import Chunk, Corpus
 from app.domain.errors import RejectedError
-
-DIRECT_RELATIONSHIPS_QUERY = (
-    'MATCH (p:Entity {version:$version})-[:SUPPORTED_BY]->(d:Document {version:$version}) '
-    'WHERE p.normalized IN $names AND (d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/") '
-    'RETURN DISTINCT d.id AS id ORDER BY id LIMIT 12'
-)
+from app.domain.portfolio_paths import corpus_version, profile_paths
 
 
 class KnowledgeIndex:
@@ -40,6 +41,10 @@ class KnowledgeIndex:
                 ).fetchone()
                 if not version:
                     return None
+                if version['id'] != corpus_version(
+                    version['source_commit'], self.embeddings.provider
+                ):
+                    raise RejectedError('knowledge_updating', 503)
                 if self.freshness is not None:
                     watch = conn.execute(
                         "SELECT observed_commit, checked_at > now() - %s * interval '1 second' AS fresh FROM knowledge_watch WHERE singleton",
@@ -113,33 +118,33 @@ class KnowledgeIndex:
     ) -> tuple[str, ...]:
         def read():
             try:
-                with self.graph.session(database=self.database) as graph:
+                with self.graph.session(
+                    database=self.database,
+                    default_access_mode=READ_ACCESS,
+                    disable_auto_commit_retries=True,
+                ) as graph:
                     direct = graph.run(
                         Query(
                             DIRECT_RELATIONSHIPS_QUERY,
-                            timeout=2,
+                            timeout=READ_TIMEOUT,
                         ),
                         version=version,
                         names=sorted(terms),
                         prefix=f'src/content/{locale}/',
+                        root_prefix=f'content/{locale}/',
                     )
                     ids = tuple(record['id'] for record in direct)
                     if not expand:
                         return ids
                     related = graph.run(
                         Query(
-                            'MATCH (seed:Entity {version:$version})-[a:RELATES]->(t:Entity {kind:"Technology",version:$version})'
-                            '<-[b:RELATES]-(other:Entity {version:$version}) '
-                            'WHERE seed.normalized IN $names AND seed.id<>other.id '
-                            'AND a.version=$version AND b.version=$version '
-                            'MATCH (d:Document {id:b.document,version:$version}) '
-                            'WHERE d.path STARTS WITH $prefix OR NOT d.path STARTS WITH "src/content/" '
-                            'RETURN d.id AS id,count(DISTINCT t.id) AS shared ORDER BY shared DESC,id LIMIT 12',
-                            timeout=2,
+                            RELATED_RELATIONSHIPS_QUERY,
+                            timeout=READ_TIMEOUT,
                         ),
                         version=version,
                         names=sorted(terms),
                         prefix=f'src/content/{locale}/',
+                        root_prefix=f'content/{locale}/',
                     )
                     neighbors = tuple(record['id'] for record in related)
                     # Keep seed evidence as well as the evidence reached through shared technology.
@@ -154,6 +159,20 @@ class KnowledgeIndex:
 
         return await asyncio.to_thread(read)
 
+    def verify_ready(self, version: str) -> None:
+        with self.connect() as conn:
+            document = conn.execute(
+                'SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1', (version,)
+            ).fetchone()
+        if not document:
+            raise ValueError('public graph projection unavailable')
+        with self.graph.session(
+            database=self.database,
+            default_access_mode=READ_ACCESS,
+            disable_auto_commit_retries=True,
+        ) as graph:
+            probe_reads(graph, version, document['id'])
+
     def starter_prompts(self, locale):
         from app.domain.knowledge import suggestions
 
@@ -162,6 +181,10 @@ class KnowledgeIndex:
                 "SELECT id,source_commit FROM knowledge_versions WHERE status='active'"
             ).fetchone()
             if not version:
+                raise RejectedError('knowledge_updating', 503)
+            if version['id'] != corpus_version(
+                version['source_commit'], self.embeddings.provider
+            ):
                 raise RejectedError('knowledge_updating', 503)
             if self.freshness is not None:
                 watch = conn.execute(
@@ -183,11 +206,13 @@ class KnowledgeIndex:
             )
             achievements = bool(
                 conn.execute(
-                    'SELECT 1 FROM chunks WHERE knowledge_version=%s AND (path=%s OR path=%s) AND content LIKE %s AND content LIKE %s LIMIT 1',
+                    'SELECT 1 FROM chunks WHERE knowledge_version=%s AND path=ANY(%s) AND content LIKE %s AND content LIKE %s LIMIT 1',
                     (
                         version['id'],
-                        f'src/content/{locale}/experience.ts',
-                        'public/assistant-knowledge.json',
+                        [
+                            *profile_paths(locale, 'experience'),
+                            'public/assistant-knowledge.json',
+                        ],
                         '%qualifier%',
                         '%value%',
                     ),

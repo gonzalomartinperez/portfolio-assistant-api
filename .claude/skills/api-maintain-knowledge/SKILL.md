@@ -88,3 +88,16 @@ The evaluation CLI requires a new private output path and retains atomic progres
 before deleting each completed session. Read the evaluation guide for interruption
 markers and hard-kill/storage limits. An interrupted report is evidence to preserve,
 not permission to restart or replay paid generations; there is no automatic resume.
+
+For a portfolio content relocation, load the [source-layout handoff](../../../docs/coordination/portfolio-content-layout.md).
+Preserve actual committed paths and citation spans in both layouts; do not rewrite
+historical provenance to the new path. Verify worker polling, unchanged-file reuse,
+locale filtering and both-store publication with the real isolated fixture. A new
+source format must invalidate an incomplete same-commit index before query embedding
+I/O. Matching folders or a synthetic move alone do not validate the producer candidate.
+
+For graph cold-start or readiness changes, load [bounded graph readiness](../../../docs/verification/graph-readiness-2026-10-18.md).
+Keep publication preparation separate from visitor reads and preserve the two-second
+request budget. Verify late-read failure before activation, unchanged-version startup,
+active-pointer races and effective SDK retry policy on the pinned driver. A successful
+warm read does not erase an earlier cold failure or prove a production latency guarantee.

@@ -12,9 +12,10 @@ from threading import Event
 from typing import Literal, Protocol
 from urllib.parse import quote
 
-from neo4j import GraphDatabase
+from neo4j import READ_ACCESS, Driver, GraphDatabase
 
 from app.adapters.neo4j.projection import project
+from app.adapters.neo4j.read_queries import prepare_reads
 from app.adapters.portfolio.projection import PublicProjection, graph_facts
 from app.adapters.postgres.ledger import EmbeddingAccounting
 from app.adapters.providers.embedding import (
@@ -24,6 +25,11 @@ from app.adapters.providers.embedding import (
     vector,
 )
 from app.adapters.providers.http import create_sync_client
+from app.domain.portfolio_paths import (
+    PROFILE_PATH_PATTERN,
+    corpus_version,
+    profile_parts,
+)
 
 
 class IndexConfiguration(Protocol):
@@ -39,7 +45,7 @@ class IndexConfiguration(Protocol):
 
 ROOT_PATTERNS = (
     re.compile(r'^public/assistant-knowledge\.json$'),
-    re.compile(r'^src/content/(en|es)/(profile|experience|projects|education)\.ts$'),
+    re.compile(PROFILE_PATH_PATTERN),
     re.compile(r'^docs/(development|public-content|editorial-guidelines)\.md$'),
     re.compile(r'^README\.md$'),
 )
@@ -49,6 +55,29 @@ SECRET_PATTERN = re.compile(
 MAX_FILES = 80
 MAX_BYTES = 60_000
 CHUNKER_VERSION = 'sections35-v6'
+
+
+def graph_driver(config: IndexConfiguration) -> Driver:
+    return GraphDatabase.driver(
+        config.neo4j_uri,
+        auth=(config.neo4j_user, config.neo4j_password),
+        connection_timeout=3,
+        connection_acquisition_timeout=5,
+        max_transaction_retry_time=0,
+        disable_auto_commit_retries=True,
+        telemetry_disabled=True,
+    )
+
+
+def prepare_graph(
+    driver: Driver, config: IndexConfiguration, version: str, document_id: str
+) -> None:
+    with driver.session(
+        database=config.neo4j_database,
+        default_access_mode=READ_ACCESS,
+        disable_auto_commit_retries=True,
+    ) as graph:
+        prepare_reads(graph, version, document_id)
 
 
 def git(repo: Path, *args: str) -> bytes:
@@ -67,12 +96,18 @@ def git(repo: Path, *args: str) -> bytes:
 def manifest_at_commit(repo: Path, commit: str):
     listed = git(repo, 'ls-tree', '-r', commit).decode().splitlines()
     allowed = []
+    profiles = set()
     for line in listed:
         metadata, path = line.split('\t', 1)
         mode, kind, blob_sha = metadata.split()
         if any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS):
             if kind != 'blob' or mode not in ('100644', '100755'):
                 raise ValueError(f'unsupported file type: {path}')
+            profile = profile_parts(path)
+            if profile is not None:
+                if profile in profiles:
+                    raise ValueError('ambiguous public profile source layouts')
+                profiles.add(profile)
             allowed.append((path, blob_sha))
     if len(allowed) > MAX_FILES:
         raise ValueError('file limit exceeded')
@@ -93,17 +128,15 @@ def corpus_identity(commit: str, provider: str) -> tuple[str, str]:
     if provider == 'fixture':
         encoder = FixtureEmbeddings
         expected = ('fixture', 'hash64-v1', 64)
-        suffix = '-v7'
     elif provider == 'openai':
         encoder = OpenAIEmbeddings
         expected = ('openai', 'text-embedding-3-small', 1536)
-        suffix = '-semantic-v8'
     else:
         raise ValueError('unsupported embedding provider')
     if (encoder.provider, encoder.model, encoder.dimensions) != expected:
         raise ValueError('embedding profile requires a reviewed schema/cache migration')
     # New versions preserve legacy corpus rows and graph documents during upgrades.
-    version = commit + suffix
+    version = corpus_version(commit, provider)
     return version, json.dumps((version, *expected), separators=(',', ':'))
 
 
@@ -249,6 +282,16 @@ def _sync(
             'SELECT status FROM knowledge_versions WHERE id=%s', (version,)
         ).fetchone()
         if existing and existing['status'] == 'active':
+            document = conn.execute(
+                'SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1', (version,)
+            ).fetchone()
+            if not document:
+                raise ValueError('public graph projection unavailable')
+            driver = graph_driver(config)
+            try:
+                prepare_graph(driver, config, version, document['id'])
+            finally:
+                driver.close()
             return {'knowledge_version': version, 'changed': False, 'files': len(files)}
         previous = conn.execute(
             "SELECT id FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1"
@@ -422,13 +465,7 @@ def _sync(
                     record.get('semantic_embedding'),
                 ),
             )
-    driver = GraphDatabase.driver(
-        config.neo4j_uri,
-        auth=(config.neo4j_user, config.neo4j_password),
-        connection_timeout=3,
-        connection_acquisition_timeout=5,
-        max_transaction_retry_time=0,
-    )
+    driver = graph_driver(config)
     try:
         driver.verify_connectivity()
         with driver.session(database=config.neo4j_database) as session:
@@ -442,6 +479,7 @@ def _sync(
                     documents,
                     explicit_facts=graph_facts(structured, documents),
                 )
+        prepare_graph(driver, config, version, records[0]['id'])
     finally:
         driver.close()
     with connection() as conn:

@@ -81,6 +81,7 @@ def graph_measure(graph):
         'version': 'benchmark-v099',
         'names': ['entity-3', 'entity-8', 'entity-13', 'entity-25', 'entity-42'],
         'prefix': 'src/content/en/',
+        'root_prefix': 'content/en/',
     }
     # Diagnostic planning is separate from the application's execution timeout.
     graph.run(

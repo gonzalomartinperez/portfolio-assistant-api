@@ -1,7 +1,7 @@
 {
   "artifacts": {
     "feedback.schema.json": "efe765fd1aec41abf608b0d4f2963dbf83a7cbaa8b8f281aa8cf320cb4943de0",
-    "knowledge.schema.json": "2489d6ff589e4bdfa50891ed8c110fb8e93371feda9db84818572bf9c4d387d0",
+    "knowledge.schema.json": "7d5cd7ed2ea1e2ace8f8b2d744d2ae8528d3d4e64ac8291b1079b8ab01800c89",
     "openapi.json": "e76de806786629a092ba7ae98d99d9d83a94a934faa478ca8eee5819e630985c",
     "operations.schema.json": "6fbf28e2900dfbd6afe59f8fadcb56de2c223efcbcfc8bfccf43c2116e20d834",
     "product-analytics-v2.schema.json": "856afd5790079fbf14b1d61731bbb27ee72ff838871672144c7b21b73a290f2c",

@@ -92,3 +92,7 @@ source revalidation and a two-second graph-read deadline. See the
 [query-plan measurements and synthetic limits](verification/database-queries-2026-10-17.md).
 Exact vector search remains the measured small-corpus baseline; no ANN/plugin or
 additional ontology is introduced by this access-path change.
+
+For bounded publication preparation, actual-query readiness and the driver's
+explicit no-retry policy, use the [cold-start verification procedure](verification/graph-readiness-2026-10-18.md).
+Preparation has its own index budget; it does not widen visitor transactions.

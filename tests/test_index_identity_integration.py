@@ -21,8 +21,9 @@ pytestmark = [
 
 
 @pytest.mark.parametrize('first', ['fixture', 'openai'])
+@pytest.mark.parametrize('source_root', ['src/content', 'content'])
 def test_profile_switch_preserves_legacy_and_retired_projections(
-    tmp_path, monkeypatch, first
+    tmp_path, monkeypatch, first, source_root
 ):
     from app.bootstrap.config import Settings
     from app.bootstrap.maintenance import connect
@@ -43,14 +44,14 @@ def test_profile_switch_preserves_legacy_and_retired_projections(
         'slug: "identity-fixture",\nname: "Identity fixture",\nstack: technologyNames([\n"Python",\n]),\n// '
         + uuid4().hex
     )
-    path = 'src/content/en/projects.ts'
+    path = f'{source_root}/en/projects.ts'
     source = repo / path
     source.parent.mkdir(parents=True)
     source.write_text(content)
     git('add', '.')
     git('commit', '-qm', 'fixture: profile identity')
     revision = git('rev-parse', 'HEAD')
-    legacy = revision + '-v6'
+    legacy = revision + ('-v7' if source_root == 'content' else '-v6')
     versions = [legacy] + [
         indexing.corpus_identity(revision, p)[0] for p in ('fixture', 'openai')
     ]

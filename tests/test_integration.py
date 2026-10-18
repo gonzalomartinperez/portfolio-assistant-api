@@ -1195,3 +1195,60 @@ def test_feedback_summary_tracks_rating_replacement_and_owned_deletion(client_fa
         assert (after['up'], after['down']) == (before['up'], before['down'])
     finally:
         client.delete('/api/v1/session', headers=auth).raise_for_status()
+
+
+@pytest.mark.parametrize('change', ['pointer', 'embedding_profile'])
+def test_readiness_rejects_an_active_corpus_change_during_its_graph_probe(
+    client_factory, monkeypatch, change
+):
+    from app.bootstrap.container import create_app
+    from app.domain.portfolio_paths import corpus_version
+
+    application = create_app(settings())
+    client = client_factory(application)
+    with connect() as conn:
+        original_row = conn.execute(
+            "SELECT id,embedding_model FROM knowledge_versions WHERE status='active'"
+        ).fetchone()
+        original = original_row['id']
+    commit = uuid4().hex + '0' * 8
+    replacement = corpus_version(commit, 'fixture')
+    graph_probe = application.state.knowledge.verify_ready
+    replaced = []
+
+    def replace_after_probe(version):
+        graph_probe(version)
+        with connect() as conn:
+            if change == 'pointer':
+                conn.execute(
+                    "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s)",
+                    (replacement, commit),
+                )
+                conn.execute(
+                    "UPDATE knowledge_versions SET status='retired' WHERE id=%s",
+                    (original,),
+                )
+                conn.execute(
+                    "UPDATE knowledge_versions SET status='active' WHERE id=%s",
+                    (replacement,),
+                )
+            else:
+                conn.execute(
+                    "UPDATE knowledge_versions SET embedding_model='synthetic-unavailable' WHERE id=%s",
+                    (original,),
+                )
+        replaced.append(version)
+
+    monkeypatch.setattr(
+        application.state.knowledge, 'verify_ready', replace_after_probe
+    )
+    try:
+        assert client.get('/health/ready').status_code == 503
+        assert replaced == [original]
+    finally:
+        with connect() as conn:
+            conn.execute('DELETE FROM knowledge_versions WHERE id=%s', (replacement,))
+            conn.execute(
+                "UPDATE knowledge_versions SET status='active',embedding_model=%s WHERE id=%s",
+                (original_row['embedding_model'], original),
+            )

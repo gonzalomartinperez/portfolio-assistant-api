@@ -35,6 +35,8 @@ services:
     image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
     environment:
       NEO4J_AUTH: neo4j/change-me
+      NEO4J_dbms_usage__report_enabled: "false"
+      NEO4J_server_bolt_telemetry_enabled: "false"
       NEO4J_server_memory_heap_initial__size: 256m
       NEO4J_server_memory_heap_max__size: 256m
       NEO4J_server_memory_pagecache_size: 256m
