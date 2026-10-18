@@ -1,9 +1,10 @@
 # Isolated local development/test services; production composition belongs to vps-ops.
+name: portfolio-assistant-local
 services:
   postgres:
     build:
-      context: .
-      dockerfile: Dockerfile.postgres
+      context: ../..
+      dockerfile: infra/docker/postgres/Dockerfile
     image: portfolio-assistant-postgres:18.6
     environment:
       POSTGRES_USER: assistant

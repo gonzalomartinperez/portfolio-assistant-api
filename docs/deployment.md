@@ -2,8 +2,8 @@
 
 Production deployment remains unauthorized. Main promotion requires explicit owner
 approval and passing checks on its own PR.
-The target is Hostinger VPS KVM 4, shared with the assistant frontend and other projects; the existing portfolio remains on Hostinger Business. The shared proxy routes / to Next.js and preserves /api/* for FastAPI. PostgreSQL/pgvector and Neo4j remain private. No additional managed Node.js slot is used.
-No queue service, Kubernetes or heavyweight telemetry platform is required.
+The target is Hostinger VPS KVM 4, shared with the assistant frontend and other projects; the existing portfolio remains on Hostinger Business. Coolify/Traefik routing is owned by vps-ops; API paths are preserved without a duplicate prefix. PostgreSQL/pgvector and Neo4j remain private. No additional managed Node.js slot is used.
+The application does not install or control shared services.
 
 ## Start and upgrade
 
@@ -61,9 +61,9 @@ For a local drill, use a restricted directory and a dedicated test database:
 
 ```sh
 umask 077
-docker compose exec -T postgres pg_dump -U assistant -Fc assistant > /private/assistant.dump
-docker compose exec -T postgres createdb -U assistant assistant_restore
-cat /private/assistant.dump | docker compose exec -T postgres pg_restore -U assistant -d assistant_restore --exit-on-error
+docker compose -f infra/compose/local.yaml exec -T postgres pg_dump -U assistant -Fc assistant > /private/assistant.dump
+docker compose -f infra/compose/local.yaml exec -T postgres createdb -U assistant assistant_restore
+cat /private/assistant.dump | docker compose -f infra/compose/local.yaml exec -T postgres pg_restore -U assistant -d assistant_restore --exit-on-error
 ```
 
 Choose an unused restore database name; never restore over the active database.
@@ -203,3 +203,13 @@ it cannot change the corpus or schema. Re-review explicit grants for every migra
 Do not grant blanket table privileges or place administration credentials in the
 long-running API container. Neo4j Community lacks the same fine-grained role model;
 private network isolation and reviewed read-only query templates remain essential.
+
+## Canonical application artifacts
+
+Use [the runtime contract](deployment-contract.md) and
+[Docker ownership handoff](docker-layout-handoff.md) for current paths. Old shared
+Compose/TLS/controller files are retired with vps-ops acceptance. The only Compose
+here is infra/compose/local.yaml for isolated local fixtures; examples above do
+not authorize production execution. Production backup/restore and migration
+scheduling belong to vps-ops. Local proxy fixtures prove stream behavior in CI,
+not effective Coolify/Traefik settings or TLS on the future VPS.
