@@ -1,3 +1,24 @@
+# Implementation status · 2026-10-18
+
+Current priorities, verified deliverables and external blockers are maintained in
+[the single work checklist](docs/work-checklist.md). Application software is MIT;
+identity/public-source content and third-party rights remain separately scoped.
+The API uses pure policy/application/AI ports, capability adapters and explicit
+bootstrap. The old infrastructure package and application-side production
+controller are retired; [architecture](docs/architecture.md) and the
+[Docker handoff](docs/docker-layout-handoff.md) describe current paths.
+
+Calendar analytics v2 and its bounded shared fixtures are implemented. The native
+portfolio→real API/PostgreSQL→authenticated backoffice fixture proof is separately
+attributed; production collection remains off. Source merging is distinct from
+image publication, production activation and Neo4j vendor acceptance. No new paid
+model campaign, VPS capacity or live OAuth claim follows from fixture CI.
+
+## Dated historical implementation evidence
+
+The following records are preserved with their original counts and revisions.
+They are not the current source, deployment authority or a combined test total.
+
 Latest verified continuation: [2026-10-12 operations/runtime evidence](docs/verification/private-observability-2026-10-12.md).
 It records current application/dependency checks and explicit production limitations.
 The sections below retain dated implementation history, not standing rollout authority.
@@ -7,7 +28,7 @@ The sections below retain dated implementation history, not standing rollout aut
 > are historical; successful transport is not a universal answer-quality or
 > production-readiness claim. Main and the portfolio assistant remain unchanged.
 
-# Implementation status · current checkpoint 2026-10-04
+# Historical implementation checkpoint · 2026-10-04
 
 Current implementation: PR #34 merged into develop at
 `15b6943f741ac80498a5fee611aa74d24250eb6b`. The fresh audit passed **196 tests in

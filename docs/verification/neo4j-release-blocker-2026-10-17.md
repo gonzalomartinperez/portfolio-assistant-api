@@ -51,3 +51,15 @@ Do not force an unreviewed server major or delete useful rejected-candidate work
 No production was deployed, registry image published, shared volume touched or paid
 model invoked. Application-source improvements can be reviewed independently, but
 neither a source tag nor green ordinary CI authorizes the blocked database release.
+
+
+## Official availability recheck · 2026-10-18
+
+The [official current-version catalog](https://neo4j.com/current-neo4j-versions/)
+and [database release archive](https://neo4j.com/release-notes/database/) were read
+again during source closure. They still list5.26.32 (9October2026) for this line;
+no later5.26 patch was confirmed. This metadata recheck is not a new OS/Java scan,
+not evidence that a mutable tag's bytes are unchanged, and not remediation of the
+recorded findings. The retained immutable pin, rejected candidate evidence and
+production blocker remain unchanged. No vendor jar patch, waiver or unrelated
+server-major migration was introduced.

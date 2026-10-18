@@ -33,3 +33,13 @@ Local unit/static checks are separate from the pending hosted real regression.
 No local Docker/build/browser or paid provider was invoked during another owner's
 lease. Keep the original RED and record this fix's exact-head CI result, rather
 than treating an earlier PR's green run as post-merge acceptance.
+
+## Executed correction
+
+PR99 head98fe65b9461f24aba1c0f1294045bb95b480433b passed all six paired jobs in
+[Quality39093823788](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/39093823788).
+The database job executed38 real-service tests successfully in39.38seconds, including
+the controlled temporary-server regression, then bilingual fixture evaluation and
+independent dual-application IAM/recovery checks. Static ran696 offline tests.
+Normal develop mergea5707b24bf1853e44b9888794bcfb7575e462cea has its own post-merge
+run; its outcome must be recorded separately. The original failed run remains intact.

@@ -77,6 +77,21 @@ def validate(root: Path) -> list[str]:
                 data = resource.read_bytes()
                 if matches(data):
                     errors.append(f'{relative}: suspected secret (value redacted)')
+                if resource.name == 'openai.yaml':
+                    try:
+                        client = yaml.safe_load(data)
+                        if not isinstance(client, dict):
+                            raise TypeError
+                        policy = client.get('policy', {})
+                        if not isinstance(policy, dict) or (
+                            'allow_implicit_invocation' in policy
+                            and policy['allow_implicit_invocation'] is not True
+                        ):
+                            raise ValueError
+                    except yaml.YAMLError, TypeError, ValueError:
+                        errors.append(
+                            f'{relative}: automatic skill selection must remain enabled'
+                        )
                 if resource.suffix == '.md':
                     body = data.decode()
                     if PRIVATE_PATH.search(body) or re.search(

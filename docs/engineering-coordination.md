@@ -52,3 +52,24 @@ full build was added. Application source checks never use production secrets or 
 Shared principles do not mandate identical parsers, framework versions, domain models or
 visual identities across products. Any dependency change needs its own compatibility
 validation. Current work uses deterministic fixtures; no new paid evaluation is implied.
+
+## Canonical physical layout closure · 2026-10-18
+
+PR93 merged develop280b803a023fdc6d1b5631ca12c60ff12af4608b with full CI.
+Concrete PostgreSQL/provider/public-source/Neo4j/observability code lives beneath
+app/adapters; bootstrap owns defaults. No obsolete infrastructure facade remains.
+Root ASGI/CLI commands are stable, and all nine SQL checksum resources are unchanged.
+See [the accepted ADR](adrs/006-canonical-adapters.md) for actual guard behavior.
+
+Runtime/tool versions follow [the current locked baseline](runtime-baseline.md),
+not the historical initial-coordination table above. Pequeverso's later public
+handoff includes PostgreSQL/Neo4j work; its earlier SQLite-only baseline is not a
+current cross-project architecture claim. Product/domain packages may differ;
+shared principles never imply identical services, data, secrets or implementation.
+
+Main protection was read back on2026-10-18: required checks, strict up-to-date
+verification, admin enforcement and force-push/deletion denial remain enabled.
+Both application repositories use ordinary reviewed PR flows. No protection was
+relaxed to merge work. [Docker ownership](docker-layout-handoff.md) preserves the
+separate vps-ops/Coolify authority; merging application source cannot change its
+selected image digests or authorize deployment.

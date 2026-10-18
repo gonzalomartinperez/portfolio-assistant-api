@@ -18,7 +18,7 @@ baseline/routing/release policy; Coolify remains the sole deployment executor.
 
 The lockfile is authoritative for the complete dependency graph. This dated view does not
 assert that these versions remain the newest forever or that an image has been published.
-Python3.14.8 is maintained stable, not named LTS; uv0.13.1 is stable tooling. These are this repository’s verified versions; other applications adopt their own committed, tested baseline. Portfolio alone needs Lingua2.2.0 (no CP315 wheel), LangGraph/LangChain1.x LTS, pgvector and Neo4j. Pequeverso uses SQLite, not that retrieval stack.
+Python3.14.8 is maintained stable, not named LTS; uv0.13.1 is stable tooling. These are this repository’s verified versions; other applications adopt their own committed, tested baseline. Portfolio alone needs Lingua2.2.0 (no CP315 wheel), LangGraph/LangChain1.x LTS, pgvector and Neo4j. Other projects own and verify their own storage/provider adaptations; no cross-project runtime guarantee follows from this table.
 
 ## Image and operations boundaries
 
