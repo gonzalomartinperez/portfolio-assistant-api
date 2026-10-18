@@ -3,7 +3,10 @@
 import hashlib
 from pathlib import Path
 
+import pytest
 import yaml
+
+from scripts.validate_compose import validate_postgres_recipe
 
 ROOT = Path(__file__).parents[1]
 
@@ -89,3 +92,40 @@ def test_postgres_bootstrap_resource_bytes_are_preserved():
             ).hexdigest()
             == checksum
         )
+
+
+def test_postgres_uses_one_supported_base_without_runtime_build_tools():
+    validate_postgres_recipe((ROOT / 'infra/docker/postgres/Dockerfile').read_text())
+    postgres = yaml.safe_load((ROOT / 'infra/compose/local.yaml').read_text())[
+        'services'
+    ]['postgres']
+    assert postgres['volumes'] == ['postgres18_alpine_data:/var/lib/postgresql']
+    assert postgres['healthcheck']['test'] == [
+        'CMD',
+        'pg_isready',
+        '-h',
+        '127.0.0.1',
+        '-U',
+        'assistant',
+        '-d',
+        'assistant',
+    ]
+    assert any('uid=70,gid=70' in mount for mount in postgres['tmpfs'])
+
+
+@pytest.mark.parametrize(
+    'old,new',
+    [
+        ('OPTFLAGS=""', 'OPTFLAGS="-march=native"'),
+        ('sha256sum -c -', 'true'),
+        ('USER 70:70', 'USER root'),
+        ('USER 70:70', 'RUN apk add clang21\nUSER 70:70'),
+        ('alpine3.24', 'edge'),
+        ('COPY --from=vector-build /extension/ /', 'RUN apk add build-base'),
+        ('make DESTDIR=/extension install', 'make install'),
+    ],
+)
+def test_postgres_rejects_unverified_nonportable_or_privileged_recipe(old, new):
+    source = (ROOT / 'infra/docker/postgres/Dockerfile').read_text()
+    with pytest.raises(ValueError):
+        validate_postgres_recipe(source.replace(old, new))

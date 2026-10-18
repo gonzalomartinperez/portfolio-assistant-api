@@ -61,7 +61,13 @@ def profile_errors(workflow: dict) -> list[str]:
         permissions = job.get('permissions', workflow.get('permissions', {}))
         if any(value != 'read' for value in permissions.values()):
             errors.append(f'{key}: elevated permissions')
+        if key == 'container' and job.get('defaults', {}).get('run', {}).get(
+            'shell'
+        ) not in (None, 'bash'):
+            errors.append('container: scan pipelines cannot override bash pipefail')
         for step in job.get('steps', []):
+            if key == 'container' and step.get('shell') not in (None, 'bash'):
+                errors.append('container: scan steps cannot override bash pipefail')
             if step.get('continue-on-error'):
                 errors.append(f'{key}: step failure hidden')
             if 'uses' in step and not re.fullmatch(
@@ -94,6 +100,39 @@ def profile_errors(workflow: dict) -> list[str]:
             for step in jobs.get(key, {}).get('steps', [])
         ):
             errors.append(f'{key}: meaningful application verification absent')
+    database_scans = [
+        step.get('run', '')
+        for step in jobs.get('container', {}).get('steps', [])
+        if step.get('name')
+        == 'Inventory PostgreSQL and reject critical or fixable high findings'
+    ]
+    if (
+        len(database_scans) != 1
+        or any(
+            command not in database_scans[0]
+            for command in (
+                '--list-all-pkgs',
+                '--output artifacts/postgres-vulnerabilities.json portfolio-assistant-postgres:18.6',
+                'python -m scripts.image_security',
+                '--report artifacts/postgres-vulnerabilities.json --image-id "$image_id"',
+                '| tee artifacts/postgres-security-summary.json',
+            )
+        )
+        or any(
+            bypass in database_scans[0]
+            for bypass in (
+                '--ignore-unfixed',
+                '--severity ',
+                '|| true',
+                'fixable_critical',
+            )
+        )
+    ):
+        errors.append(
+            'container: complete PostgreSQL inventory and all-critical gate required'
+        )
+    if workflow.get('defaults', {}).get('run', {}).get('shell') != 'bash':
+        errors.append('runtime gates require the explicit bash pipefail shell')
     return errors
 
 
