@@ -55,10 +55,14 @@ def test_workflow_builds_the_explicit_application_recipe():
         for step in steps
         if step.get('uses', '').startswith('docker/build-push-action@')
     ]
-    assert len(builds) == 1
-    assert builds[0]['context'] == '.'
-    assert builds[0]['file'] == 'infra/docker/app/Dockerfile'
-    assert builds[0]['load'] is True
+    assert len(builds) == 2
+    assert {build['file'] for build in builds} == {
+        'infra/docker/app/Dockerfile',
+        'infra/docker/postgres/Dockerfile',
+    }
+    for build in builds:
+        assert build['context'] == '.'
+        assert build['load'] is True
     for step in steps:
         if 'docker compose' in step.get('run', ''):
             for line in step['run'].splitlines():

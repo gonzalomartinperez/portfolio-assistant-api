@@ -47,6 +47,26 @@ cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
 `api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt is uploaded for seven days.
 Other test diagnostics remain in Actions logs; no public image archive is uploaded.
 
+Both service jobs build/load the PostgreSQL fixture with the same explicit
+`linux/amd64` recipe and `postgres-linux-amd64` GHA v2 cache scope. BuildKit content
+keys include the recipe, pinned base and copied inputs; changing a source SHA does
+not discard unchanged layers. Each isolated runner still needs its own loaded
+image. Compose uses `--no-build --pull never` to consume that verified image.
+Only the container job exports this cache, and only on pushes to protected
+`develop`/`main`; PRs, merge groups and dispatches restore without writing it.
+A cold/evicted cache still runs the full build. No cache hit skips migrations,
+service tests, scans or shutdown checks. Negative profile fixtures reject a
+second/untrusted writer, wrong platform/scope, skipped load and implicit rebuild.
+
+Both builders pin Buildx v0.38.0 and the BuildKit image digest
+`sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea`.
+These tool pins are separate from action SHA pins. Cache isolation follows
+[GitHub ref restrictions documented by Docker](https://docs.docker.com/build/cache/backends/gha/);
+[setup-buildx](https://github.com/docker/setup-buildx-action) documents the version
+and driver options. No credentials, provider calls or registry publication are
+added. Actual cold/warm Actions observations belong in release evidence; a cache
+configuration alone is not a measured speedup.
+
 Third-party actions are pinned to reviewed upstream commit SHAs. PR jobs have only
 `contents: read`, do not persist checkout credentials, receive no deployment/model
 secrets and never use `pull_request_target`. Fixture credentials belong solely to
