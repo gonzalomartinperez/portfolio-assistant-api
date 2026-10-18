@@ -198,6 +198,21 @@ POSTGRES_CACHE_EXPORT = (
 
 
 def assert_postgres_cache_policy(value):
+    exporters = [
+        (key, step.get('name'), step['with']['cache-to'])
+        for key, job in value['jobs'].items()
+        for step in job.get('steps', [])
+        if step.get('uses', '').startswith('docker/build-push-action@')
+        and 'scope=postgres-linux-amd64'
+        in str(step.get('with', {}).get('cache-to', ''))
+    ]
+    assert exporters == [
+        (
+            'container',
+            'Build and load the isolated PostgreSQL fixture',
+            POSTGRES_CACHE_EXPORT,
+        )
+    ]
     for key in ('database', 'container'):
         steps = value['jobs'][key]['steps']
         builders = [
@@ -302,5 +317,31 @@ def test_postgres_cache_rejects_unbound_or_untrusted_execution(key, mutation):
         builder['with']['version'] = 'latest'
     else:
         builder['with']['driver-opts'] = 'image=moby/buildkit:latest'
+    with pytest.raises(AssertionError):
+        assert_postgres_cache_policy(value)
+
+
+@pytest.mark.parametrize('mutation', ['extra_exporter', 'application_scope'])
+def test_postgres_cache_rejects_exporters_under_other_step_names(mutation):
+    value = workflow()
+    if mutation == 'extra_exporter':
+        steps = value['jobs']['database']['steps']
+        extra = deepcopy(
+            next(
+                step
+                for step in steps
+                if step.get('name') == 'Build and load the isolated PostgreSQL fixture'
+            )
+        )
+        extra['name'] = 'Unexpected second exporter'
+        extra['with']['cache-to'] = POSTGRES_CACHE_EXPORT
+        steps.append(extra)
+    else:
+        app = next(
+            step
+            for step in value['jobs']['container']['steps']
+            if step.get('with', {}).get('file') == 'infra/docker/app/Dockerfile'
+        )
+        app['with']['cache-to'] = POSTGRES_CACHE_EXPORT
     with pytest.raises(AssertionError):
         assert_postgres_cache_policy(value)
