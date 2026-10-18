@@ -1,4 +1,4 @@
-name: Dependabot policy
+name: Dependency policy
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft, labeled, unlabeled]

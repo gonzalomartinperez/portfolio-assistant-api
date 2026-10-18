@@ -46,7 +46,7 @@ def test_local_compose_context_resolves_to_repository_root():
 
 def test_workflow_builds_the_explicit_application_recipe():
     workflow = yaml.safe_load((ROOT / '.github/workflows/quality.yml').read_text())
-    steps = workflow['jobs']['integration']['steps']
+    steps = workflow['jobs']['container']['steps']
     builds = [
         step['with']
         for step in steps

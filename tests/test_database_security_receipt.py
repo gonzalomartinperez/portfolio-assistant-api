@@ -162,10 +162,10 @@ def test_committed_descriptor_matches_both_tested_service_references():
     compose = yaml.safe_load(Path('infra/compose/local.yaml').read_text())
     workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
     assert compose['services']['neo4j']['image'] == expected['reference']
-    assert (
-        workflow['jobs']['integration']['services']['neo4j']['image']
-        == expected['reference']
-    )
+    for job in ('database', 'container'):
+        assert (
+            workflow['jobs'][job]['services']['neo4j']['image'] == expected['reference']
+        )
 
 
 def test_optional_database_dates_are_bounded_and_timezone_aware():
@@ -240,7 +240,7 @@ def test_vendor_assessment_is_explicit_and_cannot_be_softened():
     triggers = workflow.get('on', workflow.get(True))
     option = triggers['workflow_dispatch']['inputs']['verify_vendor_image']
     assert option['type'] == 'boolean' and option['default'] is False
-    steps = workflow['jobs']['integration']['steps']
+    steps = workflow['jobs']['container']['steps']
     deep = next(step for step in steps if 'Deep-scan' in step.get('name', ''))
     assert (
         deep['if']
