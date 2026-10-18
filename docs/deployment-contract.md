@@ -34,6 +34,16 @@ Use a read-only root filesystem, writable `/tmp`, dropped capabilities and
 no-new-privileges where supported. The API needs no persistent container volume.
 PostgreSQL and Neo4j data durability is owned by vps-ops.
 
+Disable vendor usage collection explicitly on Neo4j:
+`NEO4J_dbms_usage__report_enabled=false` and
+`NEO4J_server_bolt_telemetry_enabled=false`. The
+[Neo4j 5 configuration reference](https://neo4j.com/docs/operations-manual/5/configuration/configuration-settings/#config_dbms.usage_report.enabled)
+distinguishes anonymous vendor usage reporting from Bolt driver telemetry.
+Neither is the application's separately configured private OpenTelemetry pipeline.
+Local Compose and both CI database fixtures enforce these settings; vps-ops owns
+their effective production values. Startup configuration and an authenticated
+`SHOW SETTINGS` readback must verify them before deployment selection.
+
 The image uses separate dependency and runtime stages with the frozen production
 lock. `uv`/`uvx`, pip, ensurepip and development dependencies are absent from runtime. Git remains
 necessary for the approved public-corpus CLI/worker. SIGTERM is explicit; before

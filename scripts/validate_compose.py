@@ -74,6 +74,11 @@ def main():
             assert '@sha256:' in service['image']
     assert 'shared_buffers=128MB' in local['services']['postgres']['command']
     assert 'max_connections=50' in local['services']['postgres']['command']
+    for setting in (
+        'NEO4J_dbms_usage__report_enabled',
+        'NEO4J_server_bolt_telemetry_enabled',
+    ):
+        assert local['services']['neo4j']['environment'].get(setting) == 'false'
     print('Local Compose: root build context, loopback-only, bounded resources/logs.')
 
 

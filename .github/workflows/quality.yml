@@ -132,6 +132,8 @@ jobs:
         image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
         env:
           NEO4J_AUTH: neo4j/change-me
+          NEO4J_dbms_usage__report_enabled: 'false'
+          NEO4J_server_bolt_telemetry_enabled: 'false'
         ports:
         - 7688:7687
         options: --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'" --health-interval 10s --health-timeout
@@ -247,6 +249,8 @@ jobs:
         image: neo4j:5.26.32-community-trixie@sha256:f1e52d4dc6da122468c4a3c1050a4f5e117f6d3268625237c34d49166f0d6082
         env:
           NEO4J_AUTH: neo4j/change-me
+          NEO4J_dbms_usage__report_enabled: 'false'
+          NEO4J_server_bolt_telemetry_enabled: 'false'
         ports:
         - 7688:7687
         options: --health-cmd "cypher-shell -u neo4j -p change-me 'RETURN 1'" --health-interval 10s --health-timeout
