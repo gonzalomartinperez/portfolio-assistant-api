@@ -23,6 +23,18 @@ admit an event merely because it passes the core. Profile changes require review
 do not silently reassign an existing region or layout revision to a different surface.
 No shared runtime package, database, controller or cross-project token is required.
 
+### Version namespaces
+
+| Artifact | Version | Admission status |
+| --- | --- | --- |
+| Shared site-experience core and Portfolio profile | `schema_version: 1` | Offline interoperability only; not accepted by current ingestion |
+| Existing Portfolio region-aware input | `schema_version: 2` | Implemented input, collection disabled by default |
+| Private Portfolio calendar aggregate report | `schema_version: 2` | Implemented authenticated read, disabled with collection flag |
+
+These version numbers belong to different contracts. Calling the expansion “v2”
+does not rename the shared core, change an existing payload or authorize a producer.
+Operational and advertising contracts retain their own version namespaces.
+
 ## Frozen vocabulary
 
 | Event | Meaning | Coordinates / target |
@@ -124,9 +136,42 @@ not turn these counts into ops telemetry. Missing, disabled or unreachable data
 must render unavailable rather than zero. Received-event coverage does not prove
 uptime, unique people, complete collection or a financial ledger.
 
+### Counts and coverage limitations
+
+`page_views` counts accepted page-view events after UUID duplicate suppression;
+it never means unique visitors. The 24-hour replay window is finite: replay after
+expiry can count again. Adding daily unique counts is not a valid way to calculate
+weekly/monthly people, and this system has no persistent identity from which to
+derive that measure. No `unique_visitors` metric is defined by this freeze.
+
+Day, ISO Monday-start week and calendar month use UTC half-open `[start,end)`
+intervals. The existing report's `window.partial` means the current calendar
+interval has not ended. It does **not** establish complete collection for an older
+interval. Describe the selected interval, the 93-day retention limit and
+`coverage: received_events_only` separately; omitted, expired or unavailable data
+must not be described as observed zero traffic.
+
+The implementation does not persist collection-enable/disable history or an
+`enabled_at` field. `first_observed_at`/`last_observed_at` are aggregate receipt
+bounds, not enablement time, uptime or proof of uninterrupted coverage. Migration
+009 initializes legacy bounds from retained UTC daily counts (day precision),
+using a retained dedupe timestamp for the latest bound when available. Bounds are
+global, not scoped to the selected locale/region and not pruned with daily counts.
+They may precede the currently retained window. UI and handoffs must label these
+limits and leave the actual enablement date unknown. Persisting lifecycle history
+would require a separate, reviewed contract/migration; do not fabricate it from
+the first event or claim it has been implemented.
+
 All production collection remains OFF. An independently approved fixture-only
 collector must be visibly labelled, omit credentials, avoid payload logging and
 retries, and drop unsent events/abort pending delivery on revocation. Revocation
 must not create a retry queue or claim to undo an already accepted request.
 Changing Meta/CAPI or its existing consent is outside this increment. Neither
 this schema freeze nor a source merge approves activation or deployment.
+
+For Pequeverso's new channel, an explicit, saved acceptance decision is a
+prerequisite owned by that application. Do not reuse Meta's existing default
+choice or infer acceptance from a missing decision. This is a requirement for its
+separate increment, not a claim that this repository implements its consent flow.
+Final release tags remain on hold until the end-to-end expansion is reviewed and
+accepted; this schema handoff is not that acceptance.
