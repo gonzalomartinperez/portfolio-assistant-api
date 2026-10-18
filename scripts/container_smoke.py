@@ -152,6 +152,18 @@ def main():
                         'assert importlib.util.find_spec("pip") is None; '
                         'assert importlib.util.find_spec("ensurepip") is None',
                     )
+                    docker(
+                        'exec',
+                        name,
+                        'python',
+                        '-c',
+                        'import lzma, subprocess; '
+                        'version = subprocess.check_output('
+                        '["dpkg-query", "-W", "-f=${Version}", "liblzma5"], text=True).strip(); '
+                        'assert version == "5.8.1-1+deb13u2", version; '
+                        'payload = b"runtime lzma security smoke"; '
+                        'assert lzma.decompress(lzma.compress(payload)) == payload',
+                    )
                     response = client.post(
                         '/api/v1/session',
                         headers={
