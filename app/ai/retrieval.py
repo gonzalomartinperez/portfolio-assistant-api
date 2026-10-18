@@ -334,7 +334,7 @@ class PublicRetrieval:
                         min(
                             matching,
                             key=lambda key: (
-                                not eligible[key].path.startswith('src/content/'),
+                                profile_parts(eligible[key].path) is None,
                                 -scores[key],
                                 key,
                             ),
@@ -359,7 +359,7 @@ class PublicRetrieval:
             goals = [
                 key
                 for key in eligible
-                if eligible[key].path.startswith('src/content/')
+                if profile_parts(eligible[key].path) is not None
                 and re.search(
                     r'(?i)\b(?:design goal|design target|objetivo de|meta de)\b',
                     eligible[key].content,

@@ -163,3 +163,56 @@ def test_retrieval_preserves_locale_isolation_and_citations_after_the_move(prefi
     assert all(
         f'/{commit}/{prefix}/en/projects.ts#L' in source.url for source in sources
     )
+
+
+@pytest.mark.parametrize('prefix', ['src/content', 'content'])
+@pytest.mark.parametrize(
+    ('question', 'target', 'distractor'),
+    [
+        (
+            'Explain LangGraph in the portfolio',
+            'LangGraph',
+            'LangGraph portfolio explain ' * 10,
+        ),
+        (
+            'portfolio goals metrics',
+            'Design goal for portfolio performance',
+            'portfolio goals metrics ' * 10,
+        ),
+    ],
+)
+def test_professional_technical_and_goal_anchors_keep_priority_in_both_layouts(
+    prefix, question, target, distractor
+):
+    commit = 'a' * 40
+    chunks = []
+    for identifier, path, content in (
+        ('target', f'{prefix}/en/projects.ts', target),
+        ('other', 'public/assistant-knowledge.json', distractor),
+    ):
+        chunks.append(
+            Chunk(
+                identifier,
+                'Fixture',
+                f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L1',
+                'public',
+                path,
+                1,
+                1,
+                content,
+                hashlib.sha256(content.encode()).hexdigest(),
+            )
+        )
+
+    class Index:
+        async def candidates(self, question):
+            return Corpus(
+                'fixture',
+                commit,
+                tuple(chunks),
+                frozenset(chunk.path for chunk in chunks),
+                tuple(chunk.id for chunk in chunks),
+            )
+
+    evidence = asyncio.run(PublicRetrieval(Index()).search(question, 'en'))
+    assert evidence and evidence[0].path == f'{prefix}/en/projects.ts'
