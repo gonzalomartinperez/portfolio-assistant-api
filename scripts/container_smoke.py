@@ -15,7 +15,7 @@ import psycopg
 
 SLOW_APP = """import asyncio
 from app.bootstrap.container import create_app
-from app.infrastructure.answer import FixtureProvider
+from app.adapters.providers.answer import FixtureProvider
 class SlowFixture(FixtureProvider):
     async def stream(self, question, evidence, locale, history=(), context=None):
         async for item in super().stream(question, evidence, locale, history, context):

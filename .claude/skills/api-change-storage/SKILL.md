@@ -10,7 +10,7 @@ affected invariants, and whether the request permits writes. A schema review mus
 not apply migrations, prune data or perform a restore. Require an explicitly
 isolated fixture database before destructive failure-path testing.
 
-Inspect [migration history](../../../migrations), [migration runner](../../../app/infrastructure/migrations.py),
+Inspect [migration history](../../../migrations), [migration runner](../../../app/adapters/postgres/migrations.py),
 [storage contracts](../../../app/application), and only the affected concrete
 adapter. Read [transaction/lifecycle ownership](../../../docs/architecture.md) and
 [backup/upgrade procedures](../../../docs/deployment.md) for data-bearing changes.
@@ -20,7 +20,7 @@ adapter. Read [transaction/lifecycle ownership](../../../docs/architecture.md) a
 - Each operation owns its connection/transaction. Pools are shared; a transaction
   must not be shared across concurrent tasks. Use locks/constraints to enforce
   allocation, ownership, active-run and budget races atomically. Keep SQL/driver
-  errors inside infrastructure and translate failures into application errors.
+  errors inside adapters and translate failures into application errors.
 - Deletion enqueues checkpoint cleanup transactionally. Keep late-write tombstones
   and bounded retries; do not claim physical deletion completed during an outage.
   Unknown provider usage must not become a free reservation.

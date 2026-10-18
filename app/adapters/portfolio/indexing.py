@@ -1,32 +1,41 @@
 """Explicit, bounded sync of approved files from the public portfolio repository."""
 
-import argparse
 import hashlib
 import json
 import os
 import re
 import subprocess
-import tempfile
 from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
 from threading import Event
+from typing import Literal, Protocol
 from urllib.parse import quote
 
 from neo4j import GraphDatabase
 
-from app.bootstrap.config import settings
-from app.infrastructure.db import connect
-from app.infrastructure.embedding import (
+from app.adapters.neo4j.projection import project
+from app.adapters.portfolio.projection import PublicProjection, graph_facts
+from app.adapters.postgres.ledger import EmbeddingAccounting
+from app.adapters.providers.embedding import (
     FixtureEmbeddings,
     OpenAIEmbeddings,
     embed,
     vector,
 )
-from app.infrastructure.graph import project
-from app.infrastructure.ledger import EmbeddingAccounting
-from app.infrastructure.provider_http import create_sync_client
-from app.infrastructure.public_projection import PublicProjection, graph_facts
+from app.adapters.providers.http import create_sync_client
+
+
+class IndexConfiguration(Protocol):
+    embeddings_provider: Literal['fixture', 'openai']
+    openai_api_key: str | None
+    reserve_cutoff_usd: str
+    embedding_usd_per_million: str
+    neo4j_uri: str
+    neo4j_user: str
+    neo4j_password: str
+    neo4j_database: str
+
 
 ROOT_PATTERNS = (
     re.compile(r'^public/assistant-knowledge\.json$'),
@@ -165,19 +174,40 @@ def reused_record(old: dict, commit: str):
 
 
 def sync(
-    repo: Path, ref: str = 'HEAD', *, watched: bool = False, stop: Event | None = None
+    repo: Path,
+    ref: str = 'HEAD',
+    *,
+    configuration: IndexConfiguration,
+    connection,
+    watched: bool = False,
+    stop: Event | None = None,
 ):
     # The lock spans both projections; only activation changes the authoritative pointer.
-    with connect() as lock:
+    with connection() as lock:
         lock.autocommit = True
         lock.execute('SELECT pg_advisory_lock(472022)')
         try:
-            return _sync(repo, ref, watched=watched, stop=stop)
+            return _sync(
+                repo,
+                ref,
+                configuration=configuration,
+                connection=connection,
+                watched=watched,
+                stop=stop,
+            )
         finally:
             lock.execute('SELECT pg_advisory_unlock(472022)')
 
 
-def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = None):
+def _sync(
+    repo: Path,
+    ref: str,
+    *,
+    configuration: IndexConfiguration,
+    connection,
+    watched: bool = False,
+    stop: Event | None = None,
+):
     repo = repo.resolve(strict=True)
     remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
     if remote not in (
@@ -193,12 +223,12 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
     )
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise ValueError('invalid commit')
-    config = settings()
+    config = configuration
     version = commit + (
         '-semantic-v7' if config.embeddings_provider == 'openai' else '-v6'
     )
     files = manifest_at_commit(repo, commit)
-    with connect() as conn:
+    with connection() as conn:
         existing = conn.execute(
             'SELECT status FROM knowledge_versions WHERE id=%s', (version,)
         ).fetchone()
@@ -255,7 +285,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
             and old_file['blob_sha'] == blob_sha
             and old_file['parser_quality'] == quality
         ):
-            with connect() as conn:
+            with connection() as conn:
                 old_chunks = conn.execute(
                     'SELECT * FROM chunks WHERE knowledge_version=%s AND path=%s ORDER BY start_line',
                     (previous_version, path),
@@ -295,7 +325,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
         encoder = OpenAIEmbeddings(
             embedding_client,
             EmbeddingAccounting(
-                connect,
+                connection,
                 Decimal(config.reserve_cutoff_usd),
                 Decimal(config.embedding_usd_per_million),
             ),
@@ -305,7 +335,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
             if stop is not None and stop.is_set():
                 raise RuntimeError('sync_cancelled')
             if config.embeddings_provider == 'openai':
-                with connect() as conn:
+                with connection() as conn:
                     cached = conn.execute(
                         'SELECT embedding AS semantic_embedding FROM public_embedding_cache WHERE content_hash=%s AND provider=%s AND model=%s',
                         (record['content_hash'], encoder.provider, encoder.model),
@@ -316,7 +346,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
                     else vector(encoder.encode(record['content'], 'index'))
                 )
                 if not cached:
-                    with connect() as conn:
+                    with connection() as conn:
                         conn.execute(
                             'INSERT INTO public_embedding_cache(content_hash,provider,model,embedding) VALUES (%s,%s,%s,%s::vector) ON CONFLICT DO NOTHING',
                             (
@@ -329,7 +359,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
     finally:
         if embedding_client:
             embedding_client.close()
-    with connect() as conn:
+    with connection() as conn:
         conn.execute(
             "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'",
             (version, commit),
@@ -373,8 +403,8 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
                 ),
             )
     driver = GraphDatabase.driver(
-        settings().neo4j_uri,
-        auth=(settings().neo4j_user, settings().neo4j_password),
+        config.neo4j_uri,
+        auth=(config.neo4j_user, config.neo4j_password),
         connection_timeout=3,
         connection_acquisition_timeout=5,
         max_transaction_retry_time=0,
@@ -394,7 +424,7 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
                 )
     finally:
         driver.close()
-    with connect() as conn:
+    with connection() as conn:
         count = conn.execute(
             'SELECT count(*) AS n FROM chunks WHERE knowledge_version=%s', (version,)
         ).fetchone()['n']
@@ -429,52 +459,3 @@ def _sync(repo: Path, ref: str, *, watched: bool = False, stop: Event | None = N
         'manifest': file_manifest,
         'graph_facts': facts_count,
     }
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--repo', type=Path)
-    parser.add_argument('--source', choices=['local', 'github'], default='local')
-    parser.add_argument(
-        '--ref', help='Local Git ref, or main/develop/full commit SHA for GitHub'
-    )
-    args = parser.parse_args()
-    if args.source == 'local':
-        if not args.repo:
-            parser.error('--repo is required for local sync')
-        result = sync(args.repo, args.ref or 'HEAD')
-    else:
-        ref = args.ref or 'main'
-        if ref not in ('main', 'develop') and not re.fullmatch(r'[0-9a-f]{40}', ref):
-            parser.error('GitHub ref must be main, develop or a full commit SHA')
-        with tempfile.TemporaryDirectory(prefix='portfolio-public-sync-') as temp:
-            repo = Path(temp) / 'gonzalomartinperez' / 'portfolio'
-            repo.mkdir(parents=True)
-            git(repo, 'init', '-q')
-            git(
-                repo,
-                'remote',
-                'add',
-                'origin',
-                'https://github.com/gonzalomartinperez/portfolio.git',
-            )
-            git(
-                repo,
-                '-c',
-                'http.followRedirects=false',
-                '-c',
-                'protocol.allow=never',
-                '-c',
-                'protocol.https.allow=always',
-                'fetch',
-                '-q',
-                '--depth=1',
-                'origin',
-                ref,
-            )
-            result = sync(repo, 'FETCH_HEAD')
-    print(json.dumps(result, indent=2))
-
-
-if __name__ == '__main__':
-    main()

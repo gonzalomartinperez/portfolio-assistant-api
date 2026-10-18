@@ -3,9 +3,6 @@ from pathlib import Path
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
-from app.bootstrap.config import settings
-from app.infrastructure.db import connect
-
 
 def validate_history(migrations: list[Path], applied: dict[str, str]) -> None:
     names = [path.name for path in migrations]
@@ -23,11 +20,20 @@ def validate_history(migrations: list[Path], applied: dict[str, str]) -> None:
             raise RuntimeError(f'migration checksum changed: {path.name}')
 
 
-def main():
-    migrations = sorted(
-        (Path(__file__).parents[2] / 'migrations').glob('[0-9][0-9][0-9]_*.sql')
+def migration_paths() -> list[Path]:
+    paths = sorted(
+        (Path(__file__).resolve().parents[3] / 'migrations').glob(
+            '[0-9][0-9][0-9]_*.sql'
+        )
     )
-    with connect() as conn:
+    if not paths:
+        raise RuntimeError('migration resources are missing')
+    return paths
+
+
+def migrate(connection, database_url: str) -> None:
+    migrations = migration_paths()
+    with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472021)')
         conn.execute(
             'CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())'
@@ -49,19 +55,13 @@ def main():
                 'INSERT INTO schema_migrations(version,sha256) VALUES (%s,%s)',
                 (path.name, checksum),
             )
-    with PostgresSaver.from_conn_string(settings().database_url) as checkpointer:
+    with PostgresSaver.from_conn_string(database_url) as checkpointer:
         checkpointer.setup()
-
-
-if __name__ == '__main__':
-    main()
 
 
 def check_schema(connection) -> None:
     """Refuse readiness when this checkout's full migration history is not installed."""
-    paths = sorted(
-        (Path(__file__).parents[2] / 'migrations').glob('[0-9][0-9][0-9]_*.sql')
-    )
+    paths = migration_paths()
     with connection() as conn:
         applied = {
             row['version']: row['sha256']

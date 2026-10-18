@@ -4,14 +4,11 @@ import psycopg
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg.rows import dict_row
 
-from app.bootstrap.config import settings
-from app.infrastructure.db import connect
 
-
-def delete_checkpoint(thread_id: str, database_url: str | None = None) -> None:
+def delete_checkpoint(thread_id: str, database_url: str) -> None:
     """Delete one checkpoint with bounded connection and statement timeouts."""
     with psycopg.connect(
-        database_url or settings().database_url,
+        database_url,
         autocommit=True,
         prepare_threshold=0,
         row_factory=dict_row,
@@ -21,9 +18,7 @@ def delete_checkpoint(thread_id: str, database_url: str | None = None) -> None:
         PostgresSaver(conn).delete_thread(thread_id)
 
 
-def drain_cleanup(
-    *, connection=connect, database_url: str | None = None, limit: int = 100
-) -> int:
+def drain_cleanup(*, connection, database_url: str, limit: int = 100) -> int:
     """Retry at most 100 tombstones; retain recent ones against late checkpoint writes."""
     with connection() as conn:
         rows = conn.execute(

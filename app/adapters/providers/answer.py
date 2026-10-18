@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 from openai import APIError
 
+from app.adapters.providers.voice import voice_instructions
 from app.application.contracts import GenerationFailedError, Usage
 from app.application.conversation_context import (
     Turn,
@@ -20,7 +21,6 @@ from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS
 from app.domain.errors import ProviderUnavailableError
 from app.domain.fixture import fixture_message
 from app.domain.privacy import minimize_visitor_text
-from app.infrastructure.voice import voice_instructions
 
 
 class FixtureProvider:

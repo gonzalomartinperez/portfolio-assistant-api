@@ -13,7 +13,6 @@ from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from threading import Timer
-from unittest.mock import patch
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -21,9 +20,9 @@ import psycopg
 import uvicorn
 from psycopg.rows import dict_row
 
+from app.adapters.postgres import migrations
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
-from app.infrastructure import migrations
 from scripts.project_postgres_fixture import project_fixture
 
 
@@ -163,15 +162,10 @@ def main() -> None:
             allow_paid_ai=False,
             neo4j_uri='bolt://127.0.0.1:1',
         )
-        with (
-            patch.object(migrations, 'settings', lambda: config),
-            patch.object(
-                migrations,
-                'connect',
-                lambda: psycopg.connect(config.database_url, row_factory=dict_row),
-            ),
-        ):
-            migrations.main()
+        migrations.migrate(
+            lambda: psycopg.connect(config.database_url, row_factory=dict_row),
+            config.database_url,
+        )
         target.sql_as(
             'portfolio_api_migrator', (root / 'deploy/runtime-grants.sql').read_text()
         )

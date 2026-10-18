@@ -4,8 +4,6 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
-from app.bootstrap.config import settings
-
 
 def pool(database_url: str) -> ConnectionPool:
     return ConnectionPool(
@@ -24,10 +22,10 @@ def pool(database_url: str) -> ConnectionPool:
 
 
 @contextmanager
-def connect():
+def connect(database_url: str):
     # CLI operations own short-lived connections; the HTTP composition injects a pool.
     with psycopg.connect(
-        settings().database_url,
+        database_url,
         row_factory=dict_row,
         connect_timeout=5,
         options='-c statement_timeout=10000 -c lock_timeout=5000',

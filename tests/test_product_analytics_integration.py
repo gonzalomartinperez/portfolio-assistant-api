@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
+from app.adapters.postgres.analytics import PostgresProductAnalytics
+from app.bootstrap.maintenance import connect
 from app.domain.analytics import ProductEvent
-from app.infrastructure.analytics import PostgresProductAnalytics
-from app.infrastructure.db import connect
 
 pytestmark = [
     pytest.mark.integration,

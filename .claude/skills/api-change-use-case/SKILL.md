@@ -16,12 +16,12 @@ for information the repository already supplies.
    Use [architecture](../../../docs/architecture.md) for transaction/lifespan rules;
    read [coding conventions](../../../CONTRIBUTING.md) when changing code.
 2. Put invariants in domain and orchestration/consumed ports in application.
-   Neither imports ai, infrastructure, presentation or bootstrap. AI must use
-   injected capabilities. Only the five documented legacy CLI modules may import bootstrap.config;
-   new adapters receive inputs explicitly. Run `uv run python -m scripts.check_architecture`
+   Neither imports ai, adapters, presentation or bootstrap. AI must use
+   injected capabilities. Configuration/default wiring belongs to bootstrap; concrete adapters receive inputs
+   explicitly. The obsolete infrastructure namespace is rejected. Run `uv run python -m scripts.check_architecture`
    for fast feedback; its negative probes run in the normal offline suite.
 3. For session or abuse-limit changes, inspect [conversation policy](../../../app/application/conversations.py),
-   [atomic storage](../../../app/infrastructure/conversations.py) and the relevant
+   [atomic storage](../../../app/adapters/postgres/conversations.py) and the relevant
    [threat-model](../../../docs/threat-model.md) section. Ownership is checked on
    every operation; a model or prompt never authorizes access. Concurrent limits
    and usage reservations belong in database transactions, not in-memory counters.

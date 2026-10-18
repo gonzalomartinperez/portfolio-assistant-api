@@ -5,9 +5,7 @@ from decimal import ROUND_CEILING, Decimal
 from uuid import UUID, uuid4
 
 from app.application.contracts import Usage
-from app.bootstrap.config import settings
 from app.domain.errors import BudgetExhaustedError
-from app.infrastructure.db import connect
 
 MONTHLY_SPEND_SQL = (
     'SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount '
@@ -15,12 +13,9 @@ MONTHLY_SPEND_SQL = (
 )
 
 
-def reserve(
-    run_id: str, amount: Decimal, *, connection=connect, cutoff: Decimal | None = None
-) -> None:
+def reserve(run_id: str, amount: Decimal, *, connection, cutoff: Decimal) -> None:
     if amount <= 0 or not amount.is_finite():
         raise ValueError('reservation must be finite and positive')
-    cutoff = cutoff if cutoff is not None else Decimal(settings().reserve_cutoff_usd)
     with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472019)')
         spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()['amount']
@@ -37,22 +32,12 @@ def settle(
     input_tokens: int,
     output_tokens: int,
     *,
-    connection=connect,
-    input_price: Decimal | None = None,
-    output_price: Decimal | None = None,
+    connection,
+    input_price: Decimal,
+    output_price: Decimal,
 ) -> None:
     if input_tokens < 0 or output_tokens < 0:
         raise ValueError('usage cannot be negative')
-    input_price = (
-        input_price
-        if input_price is not None
-        else Decimal(settings().input_usd_per_million)
-    )
-    output_price = (
-        output_price
-        if output_price is not None
-        else Decimal(settings().output_usd_per_million)
-    )
     cost = (
         Decimal(input_tokens) * input_price + Decimal(output_tokens) * output_price
     ) / Decimal(1000000)

@@ -6,10 +6,10 @@ from uuid import uuid4
 
 import pytest
 
+from app.adapters.providers.web_search import OpenAIWebSearch
 from app.application.web_context import WebReference, WebSupplement, supplement
 from app.bootstrap.config import Settings
 from app.domain.web_policy import TOPICS, approved_web_url, technical_topic
-from app.infrastructure.web_search import OpenAIWebSearch
 
 
 @pytest.mark.parametrize(
@@ -312,7 +312,7 @@ def test_known_attribution_is_removed_from_summary_and_reference_urls():
 
 
 def test_external_documentation_cannot_acquire_career_source_marker_ids():
-    from app.infrastructure.answer import ResponsesProvider
+    from app.adapters.providers.answer import ResponsesProvider
 
     async def run():
         class Search:
@@ -375,14 +375,14 @@ def test_external_documentation_cannot_acquire_career_source_marker_ids():
 def test_named_places_and_technical_names_do_not_change_output_language(
     question, expected
 ):
-    from app.infrastructure.language import LocalLanguageDetector
+    from app.adapters.providers.language import LocalLanguageDetector
 
     assert LocalLanguageDetector().supported(question) == expected
 
 
 def test_ambiguous_proper_names_preserve_supported_locale_hint():
+    from app.adapters.providers.language import LocalLanguageDetector
     from app.application.language import select_locale
-    from app.infrastructure.language import LocalLanguageDetector
 
     assert (
         select_locale(

@@ -5,8 +5,8 @@ import json
 import os
 from pathlib import Path
 
+from app.adapters.observability.evaluation_export import LangSmithEvaluationExporter
 from app.application.evaluation_export import EvaluationSummary, export_evaluation
-from app.infrastructure.evaluation_export import LangSmithEvaluationExporter
 
 DISABLED_TRACING_FLAGS = {
     'LANGSMITH_TRACING',

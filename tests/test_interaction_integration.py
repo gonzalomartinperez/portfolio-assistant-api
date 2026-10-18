@@ -11,12 +11,12 @@ import pytest
 from fastapi.testclient import TestClient
 from psycopg.rows import dict_row
 
+from app.adapters.postgres import migrations
+from app.adapters.postgres.analytics import PostgresProductAnalytics
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
 from app.domain.analytics import ProductEvent
 from app.domain.analytics_periods import calendar_window
-from app.infrastructure import migrations
-from app.infrastructure.analytics import PostgresProductAnalytics
 from scripts.project_postgres_fixture import project_fixture
 
 pytestmark = [
@@ -33,14 +33,14 @@ def migrate_project(target, monkeypatch):
         _env_file=None,
         database_url=target.connection_info('portfolio_api_migrator'),
     )
-    monkeypatch.setattr(migrations, 'settings', lambda: migrator)
-    monkeypatch.setattr(
-        migrations,
-        'connect',
+    migrations.migrate(
         lambda: psycopg.connect(migrator.database_url, row_factory=dict_row),
+        migrator.database_url,
     )
-    migrations.main()
-    migrations.main()
+    migrations.migrate(
+        lambda: psycopg.connect(migrator.database_url, row_factory=dict_row),
+        migrator.database_url,
+    )
     target.sql_as(
         'portfolio_api_migrator', Path('deploy/runtime-grants.sql').read_text()
     )
