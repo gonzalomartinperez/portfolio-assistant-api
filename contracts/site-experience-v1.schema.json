@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "cell_x"
+              ]
+            },
+            {
+              "required": [
+                "cell_y"
+              ]
+            }
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "event_name": {
+            "const": "public_click"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "cell_x": {
+            "type": "integer"
+          },
+          "cell_y": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cell_x",
+          "cell_y"
+        ]
+      }
+    },
+    {
+      "else": {
+        "not": {
+          "required": [
+            "target_id"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "event_name": {
+            "enum": [
+              "product_interest",
+              "affiliate_click",
+              "checkout_intent"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "target_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id"
+        ]
+      }
+    }
+  ],
+  "description": "A bounded core still requires a product-owned route/target/region profile.",
+  "properties": {
+    "cell_x": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell X"
+    },
+    "cell_y": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell Y"
+    },
+    "event_id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_name": {
+      "enum": [
+        "page_view",
+        "section_view",
+        "public_click",
+        "product_interest",
+        "affiliate_click",
+        "checkout_intent"
+      ],
+      "title": "Event Name",
+      "type": "string"
+    },
+    "layout_revision": {
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "title": "Layout Revision",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "project": {
+      "enum": [
+        "portfolio",
+        "pequeverso"
+      ],
+      "title": "Project",
+      "type": "string"
+    },
+    "route": {
+      "maxLength": 128,
+      "pattern": "^/(?:[a-z][a-z0-9-]*(?:/[a-z][a-z0-9-]*)*)?$",
+      "title": "Route",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "section_id": {
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "title": "Section Id",
+      "type": "string"
+    },
+    "source": {
+      "const": "site",
+      "title": "Source",
+      "type": "string"
+    },
+    "target_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Id"
+    },
+    "viewport_bucket": {
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop"
+      ],
+      "title": "Viewport Bucket",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "source",
+    "event_id",
+    "event_name",
+    "route",
+    "layout_revision",
+    "viewport_bucket",
+    "section_id",
+    "locale"
+  ],
+  "title": "SiteExperience",
+  "type": "object"
+}

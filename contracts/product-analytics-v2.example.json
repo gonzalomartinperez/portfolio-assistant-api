@@ -1,0 +1,161 @@
+{
+  "fixture": true,
+  "report": {
+    "actions": [
+      {
+        "count": 2,
+        "event_name": "cv_link_open",
+        "locale": "en",
+        "section": "cv",
+        "target": "en"
+      }
+    ],
+    "cells": [
+      {
+        "count": 3,
+        "x": 2,
+        "y": 3
+      }
+    ],
+    "countries": [
+      {
+        "count": 3,
+        "country": "AR"
+      },
+      {
+        "count": 1,
+        "country": "unknown"
+      }
+    ],
+    "country_collection": "disabled",
+    "coverage": "received_events_only",
+    "daily": [
+      {
+        "count": 3,
+        "day": "2026-10-17"
+      },
+      {
+        "count": 1,
+        "day": "2026-10-18"
+      }
+    ],
+    "first_observed_at": "2026-10-17T12:00:00Z",
+    "generated_at": "2026-10-18T12:00:00Z",
+    "grid_size": 8,
+    "last_observed_at": "2026-10-18T11:00:00Z",
+    "layout_revision": "portfolio-v1",
+    "minimum_bucket": 3,
+    "project": "portfolio",
+    "regions": [
+      {
+        "public_clicks": 0,
+        "region_id": "home-about",
+        "section_exposures": 0
+      },
+      {
+        "public_clicks": 0,
+        "region_id": "home-contact",
+        "section_exposures": 0
+      },
+      {
+        "public_clicks": 0,
+        "region_id": "home-education",
+        "section_exposures": 0
+      },
+      {
+        "public_clicks": 0,
+        "region_id": "home-experience",
+        "section_exposures": 0
+      },
+      {
+        "public_clicks": 4,
+        "region_id": "home-featured",
+        "section_exposures": 5
+      },
+      {
+        "public_clicks": 0,
+        "region_id": "site-footer",
+        "section_exposures": 0
+      },
+      {
+        "public_clicks": 0,
+        "region_id": "site-header",
+        "section_exposures": 0
+      }
+    ],
+    "retention_days": 93,
+    "schema_version": 2,
+    "sections": [
+      {
+        "page_views": 4,
+        "public_clicks": 4,
+        "section": "home",
+        "section_exposures": 5
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "about",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "work",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "filomena",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "stack",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "education",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "cv",
+        "section_exposures": 0
+      },
+      {
+        "page_views": 0,
+        "public_clicks": 0,
+        "section": "contact",
+        "section_exposures": 0
+      }
+    ],
+    "selected_region_exposures": 5,
+    "selection": {
+      "locale": "all",
+      "offset": 0,
+      "period": "month",
+      "region_id": "home-featured",
+      "section": "home",
+      "viewport": "desktop"
+    },
+    "suppressed_cell_clicks": 1,
+    "timezone": "UTC",
+    "totals": {
+      "page_views": 4,
+      "public_clicks": 4,
+      "section_exposures": 5
+    },
+    "window": {
+      "end": "2026-11-01",
+      "partial": true,
+      "start": "2026-10-01"
+    }
+  },
+  "scope": "offline_portfolio_aggregate_report"
+}

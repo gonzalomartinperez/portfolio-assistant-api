@@ -5,6 +5,10 @@ interactions, never unique visitors, completed downloads, sent contacts or reven
 No production collection or legal exemption is approved by this implementation.
 Public portfolio code remains owned by its repository; no hooks are installed here.
 
+The separate [site experience vocabulary and product profiles](site-experience-contract.md)
+freeze interoperability semantics without changing these ingestion payloads or
+enabling additional collection. Optional commerce events are not Portfolio capabilities.
+
 ## Public contract
 
 `POST /api/v1/analytics/events` returns 204 for accepted events and duplicate IDs.
@@ -114,3 +118,110 @@ exemptions, not a certification for this system;
 [W3C table guidance](https://www.w3.org/WAI/tutorials/tables/caption-summary/)
 informs dashboard captions and semantic alternatives. Actual jurisdictions and
 operator rights-handling details require owner confirmation, not invented boilerplate.
+
+## Version 2 interaction and calendar extension
+
+The additive public input is defined by
+[`product-interaction.schema.json`](../contracts/product-interaction.schema.json)
+and [synthetic examples](../contracts/product-interaction.examples.json).
+`POST /api/v1/analytics/events` keeps the six original `schema_version: 1` semantic
+events unchanged. New `schema_version: 2` accepts **only** `public_click` and
+`section_exposure`; it does not change chat/session/SSE contracts or authorize
+collection on the public website. The website owner imports a committed snapshot.
+
+Each new event supplies the reviewed page section, EN/ES locale, closed `region_id`,
+`layout_revision: portfolio-v1` and coarse viewport `mobile` (<832 CSS px), `tablet`
+(832–1023) or `desktop` (>=1024). Public clicks additionally require paired integer
+`cell_x`/`cell_y` in 0–7, relative to the reviewed region. Exposure prohibits cells.
+Page-bound region validation permits only the 30 reviewed IDs (header/footer are
+shared); it rejects arbitrary URLs, selectors, pixels, text, country, visitor/session
+IDs and assistant/auth/form content. No replay, input capture or persistent browser
+identity is introduced. Keyboard actions retain appropriate semantic v1 events,
+without fabricated pointer coordinates.
+
+The host client must positively allowlist public regions, exclude sensitive ancestors
+and dynamic canvas/graph content, accept genuine primary-pointer clicks and preserve
+natural scrolling. Exposure means an approved bounded heading/paragraph target or approved paragraph-start sentinel is at
+least 50% geometrically intersecting for 500 ms continuously while the document is
+visible. Hidden state, route departure and unmount cancel pending dwell; reentry
+requires a new dwell. Deduplicate within the committed route visit/region/layout/
+viewport, surviving React StrictMode and theme changes. A later route visit can count
+again. This is not proof of reading, occlusion, attention or a unique person.
+
+Both versions share the original UUID replay window (24 hours), atomic global
+**60 events/minute and 10,000/day** ceilings, 1 KiB request maximum and no-credentials
+policy. There is no automatic retry, sampling extrapolation or quota increase.
+The client's new-interaction lane must not displace semantic page views. Counts are
+best-effort received events, not a census; blockers, opt-out, navigation, quotas and
+network failure can reduce them. Do not claim every click or unique visits.
+
+### Storage, read compatibility and retention
+
+Migration 009 adds aggregate daily semantic/country counts, region/grid counts and
+two collection timestamps, without changing prior migration files. Existing seven-day
+semantic facts backfill as country unknown. The original private v1 snapshot remains
+unchanged. The new authenticated `GET /internal/ops/v2/product-analytics` has a
+[separate bounded schema](../contracts/product-analytics-v2.schema.json).
+
+Parameters are `period=day|week|month`, `offset=0|1|2`, reviewed `section` and
+`region_id`, `viewport=mobile|tablet|desktop`, `locale=all|en|es`. Defaults are current
+month/home/home-featured/desktop/all. Reject unknown/duplicate parameters and a region
+from the wrong page. The selection separates responsive layouts; never merge raw
+coordinates across different layouts or viewports. A consistent read-only transaction
+uses parameterized queries, bounded result dimensions and existing SQL timeouts.
+
+Periods are **UTC calendar** `[start,end)` intervals: ISO Monday-start week and actual
+calendar month, including leap years and year transitions. The current interval is
+partial. First/last observed timestamps describe received data, not continuous client
+coverage or uptime. The snapshot explicitly says `received_events_only`. No unique
+visitor count is inferred or summed from daily values. Aggregates retain **93 UTC
+days** so current/previous/two-months-previous calendar selections fit; dedupe remains
+24 hours and the compatibility v1 view retains seven days. New retention pruning is
+bounded to 1,000 expired rows per aggregate table per operation. Review backlog and
+backup retention operationally; application deletion does not erase existing backups.
+
+Country buckets with fewer than three observations become `withheld`, distinct from
+unknown. Grid cells below three clicks are withheld; the response reports the number
+of suppressed clicks and offers no exact pointer path. This limits detail; it is not
+an anonymity or differential-privacy guarantee. The dashboard must label these states
+and provide a text/table alternative to the grid. Semantic totals, country totals
+and cells refer to different selections; do not invent a conversion/attention rate.
+
+### Optional Cloudflare country boundary
+
+Default `PRODUCT_ANALYTICS_COUNTRY_ENABLED=false` yields unknown. When separately
+approved, set `PRODUCT_ANALYTICS_COUNTRY_PROXY_IPS` to exact socket-peer addresses
+(up to 16, no DNS names, CIDR or wildcard). Attribution requires that enabled flag,
+a matching actual socket peer and one valid `CF-IPCountry` header. Forwarded-client
+headers, locale, SSR/Hostinger geography and client JSON cannot supply the country.
+Missing, duplicated, malformed, `XX`, `T1` or unrecognized labels remain unknown.
+The country is an estimate of the request origin, not nationality or exact location.
+
+[Cloudflare's official country feature](https://developers.cloudflare.com/network/ip-geolocation/)
+is available on Free; country-only configuration avoids city/coordinate transforms.
+Its [header documentation](https://developers.cloudflare.com/fundamentals/reference/http-headers/#cf-ipcountry)
+describes the special unknown/Tor values. No GeoIP service, local geolocation database,
+account credentials or external lookup is used by this application.
+
+**vps-ops must verify** browser → Cloudflare → trusted proxy → API, overwrite/reject
+spoofed input headers, restrict origin bypass and ensure Uvicorn preserves the actual
+proxy socket peer. DNS ownership alone proves none of those conditions. A request
+forwarded from a website server would identify that server, not the page visitor;
+the approved browser collector sends directly to ingestion with credentials omitted.
+The application cannot validate the entire network chain. Keep attribution off until
+its effective configuration/negative tests are accepted. No production setup changed.
+
+### Migration, grants and rollback
+
+Run the real migrator, then reapply exact runtime grants for the three new tables.
+Runtime credentials must never migrate. Migration 009 backfills only already retained
+aggregate facts and updates no conversation, corpus, checkpoint or IAM rows. The
+migration runner remains transactional/checksummed. As before, an older image that
+lacks an installed migration refuses strict readiness; rolling back an image does
+not reverse the schema. Preserve dumps/roles and a tested compatible source revision;
+review a forward recovery or separately rehearsed database recovery with vps-ops.
+
+The v2 `country_collection` field describes the **current configuration**, not
+proof of a verified Cloudflare account or the provenance of every historical row.
+Turning collection off leaves retained historical aggregates available; unknown
+and withheld country buckets remain explicitly distinct.

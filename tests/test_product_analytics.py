@@ -33,7 +33,7 @@ class MemoryStore:
         self.events = []
         self.limited = False
 
-    def record(self, value):
+    def record(self, value, country='unknown'):
         if self.limited:
             return 'limited'
         self.events.append(value)

@@ -363,6 +363,11 @@ def main() -> None:
             'checkpoints',
             'checkpoint_blobs',
             'checkpoint_writes',
+            'product_event_dedupe',
+            'product_event_counts',
+            'product_daily_counts',
+            'product_interaction_counts',
+            'product_collection_status',
         ]
         iam_tables = [
             'user',

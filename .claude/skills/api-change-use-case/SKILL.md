@@ -50,6 +50,11 @@ For product metrics use [the separate analytics contract](../../../docs/product-
 Keep the runtime flag off by default, global transactional quotas and event-specific
 closed dimensions. No visitor identity, IP, prompts or new arbitrary properties.
 Existing operational observations remain best effort, not reliable visitor/run totals.
+Cross-product event work must also read the versioned
+[site experience core and product profiles](../../../docs/site-experience-contract.md).
+The offline core is not an ingestion allowlist. Preserve existing wire names and
+require product-owned route/region/target validation; a vocabulary freeze does not
+authorize collection, commerce events or consent/advertising changes.
 
 For volunteered context and quality signals use [privacy and human improvement](../../../docs/feedback-and-improvement.md).
 Minimize common visitor patterns at outbound boundaries, preserve public evidence,

@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     ops_trace_sample_ratio: float = Field(default=0.1, ge=0, le=1)
     feedback_overview_enabled: bool = False
     product_analytics_enabled: bool = False
+    product_analytics_country_enabled: bool = False
+    product_analytics_country_proxy_ips: str = Field(default='', max_length=1024)
     secure_cookies: bool = False
     retention_days: int = Field(default=7, ge=1, le=30)
     run_timeout_seconds: float = Field(default=60, gt=0, le=120)
@@ -62,6 +64,26 @@ class Settings(BaseSettings):
     output_usd_per_million: str = Field(default='0.50', pattern=r'^\d+(?:\.\d+)?$')
     embedding_usd_per_million: str = Field(default='0.02', pattern=r'^\d+(?:\.\d+)?$')
 
+    @field_validator('product_analytics_country_proxy_ips')
+    @classmethod
+    def exact_country_proxy_addresses(cls, value: str) -> str:
+        addresses = set()
+        for item in value.split(','):
+            if not item.strip():
+                continue
+            try:
+                address = ipaddress.ip_address(item.strip())
+            except ValueError:
+                raise ValueError('country requires exact proxy IP addresses') from None
+            if address.is_unspecified or address.is_multicast:
+                raise ValueError('invalid country proxy IP address')
+            if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+                address = address.ipv4_mapped
+            addresses.add(str(address))
+        if len(addresses) > 16:
+            raise ValueError('too many country proxy IP addresses')
+        return ','.join(sorted(addresses))
+
     @field_validator(
         'ops_read_token', 'ops_api_commit', 'otel_private_endpoint', mode='before'
     )
@@ -71,6 +93,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def safe_configuration(self):
+        if (
+            self.product_analytics_country_enabled
+            and not self.product_analytics_country_proxy_ips
+        ):
+            raise ValueError(
+                'country attribution requires explicitly trusted proxy addresses'
+            )
         if (
             self.langsmith_tracing
             or self.langchain_tracing_v2
