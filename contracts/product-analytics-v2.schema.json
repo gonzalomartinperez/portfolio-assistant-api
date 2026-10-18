@@ -1,0 +1,590 @@
+{
+  "$defs": {
+    "ReportAction": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 310000,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "event_name": {
+          "enum": [
+            "page_view",
+            "navigation_click",
+            "section_open",
+            "cv_link_open",
+            "contact_link_open",
+            "company_link_open"
+          ],
+          "title": "Event Name",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "en",
+            "es"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "section": {
+          "enum": [
+            "home",
+            "about",
+            "work",
+            "filomena",
+            "stack",
+            "education",
+            "cv",
+            "contact"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "enum": [
+                "en",
+                "es",
+                "email",
+                "linkedin",
+                "github",
+                "rampy",
+                "teamcubation",
+                "cooperativa-obrera",
+                "independent"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target"
+        }
+      },
+      "required": [
+        "event_name",
+        "section",
+        "locale",
+        "target",
+        "count"
+      ],
+      "title": "ReportAction",
+      "type": "object"
+    },
+    "ReportCell": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 310000,
+          "minimum": 3,
+          "title": "Count",
+          "type": "integer"
+        },
+        "x": {
+          "maximum": 7,
+          "minimum": 0,
+          "title": "X",
+          "type": "integer"
+        },
+        "y": {
+          "maximum": 7,
+          "minimum": 0,
+          "title": "Y",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "count"
+      ],
+      "title": "ReportCell",
+      "type": "object"
+    },
+    "ReportCountry": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 310000,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "country": {
+          "maxLength": 8,
+          "minLength": 2,
+          "title": "Country",
+          "type": "string"
+        }
+      },
+      "required": [
+        "country",
+        "count"
+      ],
+      "title": "ReportCountry",
+      "type": "object"
+    },
+    "ReportDay": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "day": {
+          "format": "date",
+          "title": "Day",
+          "type": "string"
+        }
+      },
+      "required": [
+        "day",
+        "count"
+      ],
+      "title": "ReportDay",
+      "type": "object"
+    },
+    "ReportRegion": {
+      "additionalProperties": false,
+      "properties": {
+        "public_clicks": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Public Clicks",
+          "type": "integer"
+        },
+        "region_id": {
+          "enum": [
+            "site-header",
+            "site-footer",
+            "home-featured",
+            "home-experience",
+            "home-about",
+            "home-education",
+            "home-contact",
+            "about-story",
+            "about-focus",
+            "about-principles",
+            "about-opportunities",
+            "work-rampy",
+            "work-teamcubation",
+            "work-cooperativa",
+            "work-independent",
+            "work-projects",
+            "filomena-problem",
+            "filomena-approach",
+            "filomena-outcomes",
+            "filomena-evidence",
+            "stack-catalogue",
+            "stack-scope",
+            "education-degree",
+            "education-curriculum",
+            "education-credentials",
+            "education-evidence",
+            "cv-downloads",
+            "cv-summary",
+            "contact-channels",
+            "contact-resume"
+          ],
+          "title": "Region Id",
+          "type": "string"
+        },
+        "section_exposures": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Section Exposures",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "region_id",
+        "public_clicks",
+        "section_exposures"
+      ],
+      "title": "ReportRegion",
+      "type": "object"
+    },
+    "ReportSection": {
+      "additionalProperties": false,
+      "properties": {
+        "page_views": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Page Views",
+          "type": "integer"
+        },
+        "public_clicks": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Public Clicks",
+          "type": "integer"
+        },
+        "section": {
+          "enum": [
+            "home",
+            "about",
+            "work",
+            "filomena",
+            "stack",
+            "education",
+            "cv",
+            "contact"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "section_exposures": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Section Exposures",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page_views",
+        "public_clicks",
+        "section_exposures",
+        "section"
+      ],
+      "title": "ReportSection",
+      "type": "object"
+    },
+    "ReportSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "locale": {
+          "enum": [
+            "all",
+            "en",
+            "es"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "offset": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            "day",
+            "week",
+            "month"
+          ],
+          "title": "Period",
+          "type": "string"
+        },
+        "region_id": {
+          "enum": [
+            "site-header",
+            "site-footer",
+            "home-featured",
+            "home-experience",
+            "home-about",
+            "home-education",
+            "home-contact",
+            "about-story",
+            "about-focus",
+            "about-principles",
+            "about-opportunities",
+            "work-rampy",
+            "work-teamcubation",
+            "work-cooperativa",
+            "work-independent",
+            "work-projects",
+            "filomena-problem",
+            "filomena-approach",
+            "filomena-outcomes",
+            "filomena-evidence",
+            "stack-catalogue",
+            "stack-scope",
+            "education-degree",
+            "education-curriculum",
+            "education-credentials",
+            "education-evidence",
+            "cv-downloads",
+            "cv-summary",
+            "contact-channels",
+            "contact-resume"
+          ],
+          "title": "Region Id",
+          "type": "string"
+        },
+        "section": {
+          "enum": [
+            "home",
+            "about",
+            "work",
+            "filomena",
+            "stack",
+            "education",
+            "cv",
+            "contact"
+          ],
+          "title": "Section",
+          "type": "string"
+        },
+        "viewport": {
+          "enum": [
+            "mobile",
+            "tablet",
+            "desktop"
+          ],
+          "title": "Viewport",
+          "type": "string"
+        }
+      },
+      "required": [
+        "period",
+        "offset",
+        "section",
+        "region_id",
+        "viewport",
+        "locale"
+      ],
+      "title": "ReportSelection",
+      "type": "object"
+    },
+    "ReportTotals": {
+      "additionalProperties": false,
+      "properties": {
+        "page_views": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Page Views",
+          "type": "integer"
+        },
+        "public_clicks": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Public Clicks",
+          "type": "integer"
+        },
+        "section_exposures": {
+          "maximum": 310000,
+          "minimum": 0,
+          "title": "Section Exposures",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page_views",
+        "public_clicks",
+        "section_exposures"
+      ],
+      "title": "ReportTotals",
+      "type": "object"
+    },
+    "ReportWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "format": "date",
+          "title": "End",
+          "type": "string"
+        },
+        "partial": {
+          "title": "Partial",
+          "type": "boolean"
+        },
+        "start": {
+          "format": "date",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "partial"
+      ],
+      "title": "ReportWindow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actions": {
+      "items": {
+        "$ref": "#/$defs/ReportAction"
+      },
+      "maxItems": 128,
+      "title": "Actions",
+      "type": "array"
+    },
+    "cells": {
+      "items": {
+        "$ref": "#/$defs/ReportCell"
+      },
+      "maxItems": 64,
+      "title": "Cells",
+      "type": "array"
+    },
+    "countries": {
+      "items": {
+        "$ref": "#/$defs/ReportCountry"
+      },
+      "maxItems": 251,
+      "title": "Countries",
+      "type": "array"
+    },
+    "country_collection": {
+      "enum": [
+        "disabled",
+        "trusted_proxy_header"
+      ],
+      "title": "Country Collection",
+      "type": "string"
+    },
+    "coverage": {
+      "const": "received_events_only",
+      "default": "received_events_only",
+      "title": "Coverage",
+      "type": "string"
+    },
+    "daily": {
+      "items": {
+        "$ref": "#/$defs/ReportDay"
+      },
+      "maxItems": 31,
+      "title": "Daily",
+      "type": "array"
+    },
+    "first_observed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "First Observed At"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "grid_size": {
+      "const": 8,
+      "default": 8,
+      "title": "Grid Size",
+      "type": "integer"
+    },
+    "last_observed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Observed At"
+    },
+    "layout_revision": {
+      "const": "portfolio-v1",
+      "default": "portfolio-v1",
+      "title": "Layout Revision",
+      "type": "string"
+    },
+    "minimum_bucket": {
+      "const": 3,
+      "default": 3,
+      "title": "Minimum Bucket",
+      "type": "integer"
+    },
+    "project": {
+      "const": "portfolio",
+      "default": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "regions": {
+      "items": {
+        "$ref": "#/$defs/ReportRegion"
+      },
+      "maxItems": 7,
+      "title": "Regions",
+      "type": "array"
+    },
+    "retention_days": {
+      "const": 93,
+      "default": 93,
+      "title": "Retention Days",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": 2,
+      "default": 2,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "sections": {
+      "items": {
+        "$ref": "#/$defs/ReportSection"
+      },
+      "maxItems": 8,
+      "title": "Sections",
+      "type": "array"
+    },
+    "selected_region_exposures": {
+      "maximum": 310000,
+      "minimum": 0,
+      "title": "Selected Region Exposures",
+      "type": "integer"
+    },
+    "selection": {
+      "$ref": "#/$defs/ReportSelection"
+    },
+    "suppressed_cell_clicks": {
+      "maximum": 310000,
+      "minimum": 0,
+      "title": "Suppressed Cell Clicks",
+      "type": "integer"
+    },
+    "timezone": {
+      "const": "UTC",
+      "default": "UTC",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "totals": {
+      "$ref": "#/$defs/ReportTotals"
+    },
+    "window": {
+      "$ref": "#/$defs/ReportWindow"
+    }
+  },
+  "required": [
+    "country_collection",
+    "selection",
+    "window",
+    "generated_at",
+    "first_observed_at",
+    "last_observed_at",
+    "totals",
+    "daily",
+    "countries",
+    "sections",
+    "regions",
+    "cells",
+    "actions",
+    "selected_region_exposures",
+    "suppressed_cell_clicks"
+  ],
+  "title": "ProductReportSnapshot",
+  "type": "object"
+}

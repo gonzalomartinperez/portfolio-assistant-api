@@ -1,5 +1,6 @@
 """Prune expired anonymous data and its LangGraph checkpoints."""
 
+from app.infrastructure.analytics import prune_product_counts
 from app.infrastructure.db import connect
 
 
@@ -25,9 +26,7 @@ def prune() -> dict[str, int]:
         conn.execute(
             "DELETE FROM product_event_dedupe WHERE received_at<now()-interval '1 day'"
         )
-        conn.execute(
-            "DELETE FROM product_event_counts WHERE day < (now() AT TIME ZONE 'UTC')::date-6"
-        )
+        prune_product_counts(conn)
         removed = conn.execute(
             'DELETE FROM sessions WHERE expires_at<=now() RETURNING id'
         ).fetchall()

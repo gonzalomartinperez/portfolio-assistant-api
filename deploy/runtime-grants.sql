@@ -29,3 +29,5 @@ GRANT SELECT, INSERT ON operational_executions TO assistant_runtime, portfolio_a
 -- Anonymous bounded product counts; no shared conversation identifiers.
 GRANT SELECT, INSERT, DELETE ON product_event_dedupe TO assistant_runtime, portfolio_api_runtime;
 GRANT SELECT, INSERT, UPDATE, DELETE ON product_event_counts TO assistant_runtime, portfolio_api_runtime;
+GRANT SELECT, INSERT, UPDATE, DELETE ON product_daily_counts, product_interaction_counts TO assistant_runtime, portfolio_api_runtime;
+GRANT SELECT, INSERT, UPDATE ON product_collection_status TO assistant_runtime, portfolio_api_runtime;

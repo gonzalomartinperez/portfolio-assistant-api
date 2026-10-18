@@ -1,13 +1,21 @@
 """Anonymous public ingestion and separately authorized aggregate reads."""
 
+from dataclasses import asdict
+from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.application.analytics import accept_event
+from app.application.analytics import accept_event, read_product_report
 from app.domain.analytics import EventName, ProductEvent, Section, Target
+from app.domain.analytics_interactions import Region, Viewport
+from app.domain.analytics_periods import Period
+from app.domain.analytics_report import AnalyticsQuery
+from app.presentation.analytics_country import country_from_edge
+from app.presentation.analytics_report_models import ProductReportSnapshot
+from app.presentation.interaction_models import ProductInteractionBody
 from app.presentation.operations import authorize
 
 router = APIRouter()
@@ -78,13 +86,15 @@ def enabled(request: Request):
     operation_id='recordProductEvent',
     dependencies=[Depends(enabled)],
 )
-def record(request: Request, body: ProductEventBody):
+def record(request: Request, body: ProductEventBody | ProductInteractionBody):
     if request.headers.get('content-type', '').split(';')[0] != 'application/json':
         raise HTTPException(415, 'invalid_content_type')
     # Do not attach anonymous events to an authenticated session by accident.
     if request.headers.get('cookie') or request.headers.get('authorization'):
         raise HTTPException(400, 'analytics_credentials_forbidden')
-    accept_event(request.app.state.product_analytics, body.event())
+    accept_event(
+        request.app.state.product_analytics, body.event(), country_from_edge(request)
+    )
     return Response(status_code=204)
 
 
@@ -96,3 +106,42 @@ def record(request: Request, body: ProductEventBody):
 )
 def aggregates(request: Request):
     return request.app.state.product_analytics.snapshot()
+
+
+@router.get(
+    '/internal/ops/v2/product-analytics',
+    response_model=ProductReportSnapshot,
+    include_in_schema=False,
+    dependencies=[Depends(authorize), Depends(enabled)],
+)
+def detailed_aggregates(
+    request: Request,
+    period: Period = 'month',
+    offset: int = Query(default=0, ge=0, le=2),
+    section: Section = 'home',
+    region_id: Region = 'home-featured',
+    viewport: Viewport = 'desktop',
+    locale: Literal['all', 'en', 'es'] = 'all',
+):
+    keys = {'period', 'offset', 'section', 'region_id', 'viewport', 'locale'}
+    if any(
+        key not in keys or len(request.query_params.getlist(key)) != 1
+        for key in request.query_params
+    ):
+        raise HTTPException(422, 'invalid_analytics_selection')
+    try:
+        selection = AnalyticsQuery(period, offset, section, region_id, viewport, locale)
+    except ValueError:
+        raise HTTPException(422, 'invalid_analytics_selection') from None
+    report = read_product_report(
+        request.app.state.product_analytics, selection, datetime.now(UTC)
+    )
+    return ProductReportSnapshot.model_validate(
+        {
+            **asdict(report),
+            'selection': asdict(selection),
+            'country_collection': 'trusted_proxy_header'
+            if request.app.state.config.product_analytics_country_enabled
+            else 'disabled',
+        }
+    )
