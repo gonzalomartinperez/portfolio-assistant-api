@@ -305,6 +305,8 @@ Local Compose intentionally uses a new `postgres18_alpine_data` volume. Existing
 Debian data stays untouched and is never automatically chowned, reused or deleted.
 This candidate supports fresh initialization; migrating existing data requires
 separate cross-distribution logical restore and collation/index verification.
+The [dated candidate evidence](verification/postgres-supported-base-2026-10-18.md)
+records exact tested source/image identities and outstanding gates.
 
 The [vps-ops dispatch request](vps-ops-request.md) connects these application contracts to the separate operations owner without granting deployment authority.
 

@@ -33,6 +33,35 @@ class FixtureCommandError(ValueError):
     """A bounded Docker/psql fixture command failed without exposing its output."""
 
 
+def locale_metadata(values: object) -> dict[str, str | None]:
+    """Whitelist bounded catalog locale fields for the public synthetic receipt."""
+    if (
+        not isinstance(values, (tuple, list))
+        or len(values) != 4
+        or values[0] not in ('b', 'c', 'i')
+        or any(
+            not isinstance(value, str)
+            or not re.fullmatch(r'[A-Za-z0-9_.@;=+:-]{1,128}', value)
+            for value in values[:3]
+        )
+        or (
+            values[3] is not None
+            and (
+                not isinstance(values[3], str)
+                or not re.fullmatch(r'[A-Za-z0-9_.@;=+:-]{1,128}', values[3])
+            )
+        )
+    ):
+        raise ValueError('invalid or unbounded database locale metadata')
+    return dict(
+        zip(
+            ('datlocprovider', 'datcollate', 'datctype', 'datcollversion'),
+            values,
+            strict=True,
+        )
+    )
+
+
 def docker(
     *args: str, data: bytes | None = None, timeout: int = 60, combined: bool = False
 ) -> bytes:
@@ -263,8 +292,14 @@ class ProjectPostgres:
         text = 'Español: niño — 東京 🦊'
         document = '<public>' + text + '</public>'
         values = ['niño', 'árbol', 'Zürich', '東京', '🦊']
+        locales = {}
         for role in ('portfolio_api_migrator', 'portfolio_iam_migrator'):
             with psycopg.connect(self.connection_info(role)) as connection:
+                locales[ROLES[role]] = locale_metadata(
+                    connection.execute(
+                        'SELECT datlocprovider::text,datcollate,datctype,datcollversion FROM pg_database WHERE datname=current_database()'
+                    ).fetchone()
+                )
                 assert connection.execute(
                     "SELECT current_setting('server_version_num'),current_setting('server_encoding')"
                 ).fetchone() == ('180006', 'UTF8')
@@ -303,6 +338,7 @@ class ProjectPostgres:
             'explicit_deterministic_icu_locale': 'und',
             'api_nearest_vector_query': True,
             'iam_without_vector': True,
+            'observed_database_locales': locales,
         }
 
 

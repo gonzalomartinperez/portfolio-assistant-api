@@ -142,7 +142,17 @@ def test_target_branch_edits_require_fresh_candidate_verification():
 
 
 @pytest.mark.parametrize(
-    'mutation', ['missing', 'filtered', 'wrong_report', 'fixable_only']
+    'mutation',
+    [
+        'missing',
+        'filtered',
+        'wrong_report',
+        'fixable_only',
+        'hidden_summary',
+        'shell',
+        'step_shell',
+        'job_shell',
+    ],
 )
 def test_postgres_inventory_cannot_hide_unfixed_critical_findings(mutation):
     value = workflow()
@@ -161,9 +171,20 @@ def test_postgres_inventory_cannot_hide_unfixed_critical_findings(mutation):
             '--report artifacts/postgres-vulnerabilities.json',
             '--report artifacts/image-vulnerabilities.json',
         )
-    else:
+    elif mutation == 'fixable_only':
         step['run'] = step['run'].replace(
             'python -m scripts.image_security',
             'python -m scripts.fixable_critical_only',
         )
+    elif mutation == 'hidden_summary':
+        step['run'] = step['run'].replace(
+            '| tee artifacts/postgres-security-summary.json',
+            '> artifacts/postgres-security-summary.json',
+        )
+    elif mutation == 'step_shell':
+        step['shell'] = 'sh'
+    elif mutation == 'job_shell':
+        value['jobs']['container']['defaults'] = {'run': {'shell': 'sh'}}
+    else:
+        value['defaults']['run']['shell'] = 'sh'
     assert profile_errors(value)

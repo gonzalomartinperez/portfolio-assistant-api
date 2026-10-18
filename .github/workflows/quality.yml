@@ -26,6 +26,9 @@ name: Quality
   merge_group: {}
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -326,7 +329,7 @@ jobs:
           --output artifacts/image-vulnerabilities.json portfolio-assistant-api:ci
         image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
         uv run python -m scripts.image_security \
-          --report artifacts/image-vulnerabilities.json --image-id "$image_id" > artifacts/image-security-summary.json
+          --report artifacts/image-vulnerabilities.json --image-id "$image_id" | tee artifacts/image-security-summary.json
     - name: Inventory PostgreSQL and reject critical or fixable high findings
       run: |
         /tmp/image-scanner/trivy --config '' image --image-src docker \
@@ -335,7 +338,7 @@ jobs:
         docker image inspect portfolio-assistant-postgres:18.6 --format '{{.Id}}' > artifacts/postgres-image-id.txt
         image_id=$(cat artifacts/postgres-image-id.txt)
         uv run python -m scripts.image_security \
-          --report artifacts/postgres-vulnerabilities.json --image-id "$image_id" > artifacts/postgres-security-summary.json
+          --report artifacts/postgres-vulnerabilities.json --image-id "$image_id" | tee artifacts/postgres-security-summary.json
     - name: Deep-scan the exact Neo4j vendor image for release assessment
       if: github.event_name == 'workflow_dispatch' && inputs.verify_vendor_image
       run: |

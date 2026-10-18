@@ -2,6 +2,9 @@
 
 Status: candidate; complete exact-image verification and independent review required.
 
+[Executed candidate evidence](../verification/postgres-supported-base-2026-10-18.md)
+distinguishes tested heads from remaining release gates.
+
 ## Context
 
 The backoffice's complete IAM image scan exposed CVE-2026-6653 in Debian libxml2.
@@ -22,6 +25,13 @@ and all existing bootstrap/HBA resource bytes. Builder dependencies stay outside
 the runtime; copy pgvector's license and build-package inventory with the extension.
 Pin direct compiler packages and the stable-branch libxml2 patch. Native APK
 signature verification remains enabled; no unstable repository or vendor fork.
+
+Alpine is a maintained stable distribution, not a universal LTS promise. Its
+[published lifecycle](https://www.alpinelinux.org/releases/) lists3.24 main support
+through2028-06-01; community support has a shorter cadence. These are separate
+from PostgreSQL18's2030 end date. Rebase to a maintained OS branch before that
+deadline, with the same image/security/locale/recovery review. Neither a base pin
+nor PostgreSQL's support window extends a dependency's own support period.
 
 The supported test target remains linux/amd64. The official source is
 [e00e1bd3](https://github.com/docker-library/postgres/blob/e00e1bd34ec5c8a8e7ad89b273b3d42efaf6d5bc/18/alpine3.24/Dockerfile).

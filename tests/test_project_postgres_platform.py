@@ -5,7 +5,41 @@ import os
 import psycopg
 import pytest
 
-from scripts.project_postgres_fixture import project_fixture
+from scripts.project_postgres_fixture import locale_metadata, project_fixture
+
+
+def test_locale_receipt_retains_observed_provider_and_nullable_catalog_version():
+    assert locale_metadata(('c', 'C.UTF-8', 'C.UTF-8', None)) == {
+        'datlocprovider': 'c',
+        'datcollate': 'C.UTF-8',
+        'datctype': 'C.UTF-8',
+        'datcollversion': None,
+    }
+    assert (
+        locale_metadata(('i', 'en_US.UTF-8', 'en_US.UTF-8', '153.120'))[
+            'datcollversion'
+        ]
+        == '153.120'
+    )
+
+
+@pytest.mark.parametrize(
+    'values',
+    [
+        None,
+        1234,
+        'cCCv',
+        ('c', 'C', 'C'),
+        ('unexpected', 'C', 'C', None),
+        ('c', 'x' * 129, 'C', None),
+        ('c', 'C\nprivate', 'C', None),
+        ('c', 'postgres://user:private@host/db', 'C', None),
+        ('c', 'C', 'C', 2.42),
+    ],
+)
+def test_locale_receipt_rejects_ambiguous_or_unsafe_metadata(values):
+    with pytest.raises(ValueError, match='locale metadata'):
+        locale_metadata(values)
 
 
 @pytest.mark.integration

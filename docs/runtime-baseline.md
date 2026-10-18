@@ -35,6 +35,13 @@ images, source build arguments and diagnostics. Runtime credentials are delivere
 recovery credentials remain independently available. Existing public websites stay on Business
 and their assistant activation remains deferred. No deployment trigger is enabled.
 
+The PostgreSQL18.6/pgvector0.8.7 maintained-base candidate is recorded separately
+in [ADR008](adrs/008-supported-postgres-base.md). Its Alpine3.24 main support ends
+2028-06-01, independently of PostgreSQL's major support window. The current source
+candidate changes neither Python/Node nor the application/Neo4j base. Exact-image
+and dual-database recovery acceptance remain prerequisites; this dated baseline
+does not select a production image or waive the previous Debian critical finding.
+
 ## Verification and remaining gates
 
 Frozen installation, formatting/linting, typing, unit/contract checks and fixture-mode verification were run locally. No paid provider call or real key was used. Exact-image and real-service/restore evidence must accompany the release; migration rollback is separately reviewed.
