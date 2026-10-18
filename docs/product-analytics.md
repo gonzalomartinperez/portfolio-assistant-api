@@ -5,6 +5,10 @@ interactions, never unique visitors, completed downloads, sent contacts or reven
 No production collection or legal exemption is approved by this implementation.
 Public portfolio code remains owned by its repository; no hooks are installed here.
 
+The separate [site experience vocabulary and product profiles](site-experience-contract.md)
+freeze interoperability semantics without changing these ingestion payloads or
+enabling additional collection. Optional commerce events are not Portfolio capabilities.
+
 ## Public contract
 
 `POST /api/v1/analytics/events` returns 204 for accepted events and duplicate IDs.

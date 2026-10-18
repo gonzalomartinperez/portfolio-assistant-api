@@ -1,0 +1,650 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "cell_x"
+              ]
+            },
+            {
+              "required": [
+                "cell_y"
+              ]
+            }
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "event_name": {
+            "const": "public_click"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "cell_x": {
+            "type": "integer"
+          },
+          "cell_y": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cell_x",
+          "cell_y"
+        ]
+      }
+    },
+    {
+      "else": {
+        "not": {
+          "required": [
+            "target_id"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "event_name": {
+            "enum": [
+              "product_interest",
+              "affiliate_click",
+              "checkout_intent"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "target_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "home-about",
+              "home-contact",
+              "home-education",
+              "home-experience",
+              "home-featured",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "home-about",
+              "home-contact",
+              "home-education",
+              "home-experience",
+              "home-featured",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/about"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "about-focus",
+              "about-opportunities",
+              "about-principles",
+              "about-story",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/about"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "about-focus",
+              "about-opportunities",
+              "about-principles",
+              "about-story",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/work"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "site-footer",
+              "site-header",
+              "work-cooperativa",
+              "work-independent",
+              "work-projects",
+              "work-rampy",
+              "work-teamcubation"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/work"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "site-footer",
+              "site-header",
+              "work-cooperativa",
+              "work-independent",
+              "work-projects",
+              "work-rampy",
+              "work-teamcubation"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/work/filomena"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "filomena-approach",
+              "filomena-evidence",
+              "filomena-outcomes",
+              "filomena-problem",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/work/filomena"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "filomena-approach",
+              "filomena-evidence",
+              "filomena-outcomes",
+              "filomena-problem",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/stack"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "site-footer",
+              "site-header",
+              "stack-catalogue",
+              "stack-scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/stack"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "site-footer",
+              "site-header",
+              "stack-catalogue",
+              "stack-scope"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/education"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "education-credentials",
+              "education-curriculum",
+              "education-degree",
+              "education-evidence",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/education"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "education-credentials",
+              "education-curriculum",
+              "education-degree",
+              "education-evidence",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/cv"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "cv-downloads",
+              "cv-summary",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/cv"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "cv-downloads",
+              "cv-summary",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/contact"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "en"
+          },
+          "section_id": {
+            "enum": [
+              "contact-channels",
+              "contact-resume",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "route": {
+            "const": "/es/contact"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "locale": {
+            "const": "es"
+          },
+          "section_id": {
+            "enum": [
+              "contact-channels",
+              "contact-resume",
+              "site-footer",
+              "site-header"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "description": "Offline Portfolio profile for the two existing region-aware interaction events.",
+  "properties": {
+    "cell_x": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell X"
+    },
+    "cell_y": {
+      "anyOf": [
+        {
+          "maximum": 7,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cell Y"
+    },
+    "event_id": {
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_name": {
+      "enum": [
+        "public_click",
+        "section_view"
+      ],
+      "title": "Event Name",
+      "type": "string"
+    },
+    "layout_revision": {
+      "const": "portfolio-v1",
+      "title": "Layout Revision",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "project": {
+      "const": "portfolio",
+      "title": "Project",
+      "type": "string"
+    },
+    "route": {
+      "enum": [
+        "/",
+        "/about",
+        "/work",
+        "/work/filomena",
+        "/stack",
+        "/education",
+        "/cv",
+        "/contact",
+        "/es",
+        "/es/about",
+        "/es/work",
+        "/es/work/filomena",
+        "/es/stack",
+        "/es/education",
+        "/es/cv",
+        "/es/contact"
+      ],
+      "title": "Route",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "section_id": {
+      "enum": [
+        "site-header",
+        "site-footer",
+        "home-featured",
+        "home-experience",
+        "home-about",
+        "home-education",
+        "home-contact",
+        "about-story",
+        "about-focus",
+        "about-principles",
+        "about-opportunities",
+        "work-rampy",
+        "work-teamcubation",
+        "work-cooperativa",
+        "work-independent",
+        "work-projects",
+        "filomena-problem",
+        "filomena-approach",
+        "filomena-outcomes",
+        "filomena-evidence",
+        "stack-catalogue",
+        "stack-scope",
+        "education-degree",
+        "education-curriculum",
+        "education-credentials",
+        "education-evidence",
+        "cv-downloads",
+        "cv-summary",
+        "contact-channels",
+        "contact-resume"
+      ],
+      "title": "Section Id",
+      "type": "string"
+    },
+    "source": {
+      "const": "site",
+      "title": "Source",
+      "type": "string"
+    },
+    "target_id": {
+      "anyOf": [
+        {
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Id"
+    },
+    "viewport_bucket": {
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop"
+      ],
+      "title": "Viewport Bucket",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "project",
+    "source",
+    "event_id",
+    "event_name",
+    "route",
+    "layout_revision",
+    "viewport_bucket",
+    "section_id",
+    "locale"
+  ],
+  "title": "PortfolioExperience",
+  "type": "object"
+}
