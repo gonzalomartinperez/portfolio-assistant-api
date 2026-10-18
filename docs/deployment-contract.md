@@ -436,3 +436,19 @@ No package publication, production approval or change to immutable tags follows.
 engine with separate assistant/IAM databases and credentials. It is not implemented
 or tested as a combined topology. Keep existing artifacts/fixtures until its isolation,
 migration, recovery and resource gates pass; vps-ops owns production selection.
+
+
+## Project-engine application handoff
+
+[ADR 005](adrs/005-project-postgres-consolidation.md) now records a locally verified
+application bootstrap and recovery proof, with production adoption still pending.
+The API-owned engine contains `/usr/local/share/portfolio-postgres/` resources
+`project-postgres-bootstrap.psql` and `project-pg_hba.conf`; neither runs implicitly.
+A local-socket provisioning identity creates two databases and five isolated logins.
+Passwords are intentionally absent from SQL and must be delivered by vps-ops.
+Apply API migrations with the API migrator, then the exact API and worker grant
+files; run the backoffice image's IAM CLI with its migrator and `--project-grants`.
+Runtime URLs use separate runtime identities. Reapply reviewed grants after logical
+restore or new migration objects; grants do not automatically spread to all tables.
+See the ADR for exact names, privilege boundaries, rollback and local commands.
+Do not replace existing volumes or the IAM fallback image from this document alone.

@@ -1,0 +1,95 @@
+-- Project-scoped bootstrap; run with psql as the separate cluster provisioning owner.
+-- This file never provisions passwords or grants runtime membership in owner roles.
+\set ON_ERROR_STOP on
+\connect postgres
+DO $$
+BEGIN
+  IF current_user <> 'portfolio_bootstrap' OR NOT EXISTS (
+    SELECT 1 FROM pg_roles WHERE rolname=current_user AND rolsuper
+  ) THEN
+    RAISE EXCEPTION 'project bootstrap requires its dedicated provisioning identity';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_roles
+    WHERE rolname !~ '^pg_' AND rolname NOT IN (
+      'portfolio_bootstrap','portfolio_api_migrator','portfolio_api_runtime',
+      'portfolio_api_worker','portfolio_iam_migrator','portfolio_iam_runtime','assistant_runtime'
+    )
+  ) THEN
+    RAISE EXCEPTION 'project bootstrap refuses unrelated cluster identities';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_database
+    WHERE datname NOT IN ('postgres','template0','template1','portfolio_assistant','portfolio_iam')
+  ) THEN
+    RAISE EXCEPTION 'project bootstrap refuses a cluster containing unrelated databases';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_database
+    WHERE (datname='portfolio_assistant' AND pg_get_userbyid(datdba)<>'portfolio_api_migrator')
+       OR (datname='portfolio_iam' AND pg_get_userbyid(datdba)<>'portfolio_iam_migrator')
+  ) THEN
+    RAISE EXCEPTION 'project database has an unexpected owner';
+  END IF;
+END $$;
+
+DO $$
+DECLARE
+  identity text;
+BEGIN
+  FOREACH identity IN ARRAY ARRAY[
+    'portfolio_api_migrator','portfolio_api_runtime','portfolio_api_worker',
+    'portfolio_iam_migrator','portfolio_iam_runtime','assistant_runtime'
+  ] LOOP
+    IF EXISTS (
+      SELECT 1 FROM pg_roles WHERE rolname=identity
+      AND (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls OR rolinherit)
+    ) THEN
+      RAISE EXCEPTION 'project role has unexpected elevated or inherited privileges';
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM pg_auth_members membership
+      JOIN pg_roles member ON member.oid=membership.member
+      WHERE member.rolname=identity
+    ) THEN
+      RAISE EXCEPTION 'project role has unexpected role membership';
+    END IF;
+  END LOOP;
+  FOREACH identity IN ARRAY ARRAY[
+    'portfolio_api_migrator','portfolio_api_runtime','portfolio_api_worker',
+    'portfolio_iam_migrator','portfolio_iam_runtime'
+  ] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname=identity) THEN
+      EXECUTE format('CREATE ROLE %I LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS',identity);
+    END IF;
+  END LOOP;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='assistant_runtime') THEN
+    CREATE ROLE assistant_runtime NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+  END IF;
+END $$;
+
+SELECT 'CREATE DATABASE portfolio_assistant OWNER portfolio_api_migrator'
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='portfolio_assistant')
+\gexec
+SELECT 'CREATE DATABASE portfolio_iam OWNER portfolio_iam_migrator'
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='portfolio_iam')
+\gexec
+
+-- CONNECT/TEMP defaults are database privileges, separate from schema/table grants.
+REVOKE ALL ON DATABASE postgres,template0,template1 FROM PUBLIC;
+REVOKE ALL ON DATABASE portfolio_assistant FROM PUBLIC;
+REVOKE ALL ON DATABASE portfolio_iam FROM PUBLIC;
+GRANT CONNECT ON DATABASE portfolio_assistant TO portfolio_api_runtime,portfolio_api_worker;
+GRANT CONNECT ON DATABASE portfolio_iam TO portfolio_iam_runtime;
+
+\connect portfolio_assistant
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE,CREATE ON SCHEMA public TO portfolio_api_migrator;
+ALTER DEFAULT PRIVILEGES FOR ROLE portfolio_api_migrator REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+CREATE EXTENSION IF NOT EXISTS vector;
+
+\connect portfolio_iam
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE,CREATE ON SCHEMA public TO portfolio_iam_migrator;
+ALTER DEFAULT PRIVILEGES FOR ROLE portfolio_iam_migrator REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+-- No vector extension, cross-database FDW or shared application schema in IAM.

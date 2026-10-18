@@ -109,6 +109,20 @@ jobs:
             .python-version
       - name: Install locked dependencies
         run: uv sync --frozen
+      - name: Read the pinned IAM compatibility source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: gonzalomartinperez/portfolio-backoffice
+          ref: 5238643d5f5cb1c129b66b7d527f440635f68d33
+          path: artifacts/compat-backoffice
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: artifacts/compat-backoffice/.nvmrc
+          cache: npm
+          cache-dependency-path: artifacts/compat-backoffice/package-lock.json
+      - name: Install the pinned IAM fixture dependencies
+        run: npm ci --prefix artifacts/compat-backoffice --no-audit --no-fund
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         if: inputs.frontend_commit != ''
         with:
@@ -145,11 +159,18 @@ jobs:
           uv run pytest -q -m integration --junitxml=artifacts/integration.xml
         env:
           TEST_INTEGRATION: '1'
+          EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+          EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
       - name: Exercise representative bilingual question families
         run: uv run python -m scripts.evaluate_assistant --mode fixture --split development --limit 10 --output artifacts/question-sample.json
         env:
           EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
           EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
+      - name: Verify real dual-application identities and independent recovery
+        run: |
+          uv run python -m scripts.verify_project_databases --authorize-fixture \
+            --postgres-image portfolio-assistant-postgres:18.6 \
+            --backoffice-path artifacts/compat-backoffice
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -212,6 +233,14 @@ jobs:
           mkdir -p artifacts
           docker compose -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
           docker compose -p assistant-ci stop postgres
+      - name: Retain safe synthetic database verification receipt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: project-database-verification
+          path: artifacts/project-databases.json
+          retention-days: 7
+          if-no-files-found: ignore
   checks:
     permissions: {}
     name: checks
