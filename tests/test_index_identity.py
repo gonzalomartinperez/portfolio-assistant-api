@@ -81,6 +81,7 @@ def capture_index(monkeypatch, tmp_path):
         indexing.GraphDatabase, 'driver', lambda *args, **kwargs: driver
     )
     monkeypatch.setattr(indexing, 'project', lambda *args, **kwargs: 0)
+    monkeypatch.setattr(indexing, 'prepare_graph', lambda *args, **kwargs: None)
 
     def run(provider, *, reuse=False):
         state['reuse'] = reuse

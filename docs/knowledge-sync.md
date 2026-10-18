@@ -4,6 +4,10 @@ The API owns one bounded sync worker, not a production scheduler. Start it local
 with `uv run python -m app.knowledge_watch` after migrations and initial indexing.
 Fixture mode costs nothing. vps-ops decides its Coolify process/resource and credentials.
 
+For the eight-file `src/content` → `content` transition, follow the
+[source-layout and corpus-format handoff](coordination/portfolio-content-layout.md).
+Both exact roots are supported; API and worker must agree on the active index format.
+
 ## Revision and freshness
 
 The worker resolves only `gonzalomartinperez/portfolio` main, fetches immutable Git

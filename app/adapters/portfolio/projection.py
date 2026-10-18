@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.domain.portfolio_paths import PROFILE_PATH_PATTERN
+
 
 class PublicText(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -30,9 +32,7 @@ class PublicFact(BaseModel):
     ]
     text: PublicText
     verified_on: date
-    source_path: str = Field(
-        pattern=r'^src/content/(en|es)/(profile|experience|projects|education)\.ts$'
-    )
+    source_path: str = Field(pattern=PROFILE_PATH_PATTERN)
     start_line: int = Field(ge=1, le=10000)
     end_line: int = Field(ge=1, le=10000)
     technologies: list[str] = Field(default_factory=list, max_length=30)

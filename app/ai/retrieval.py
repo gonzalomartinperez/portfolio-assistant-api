@@ -19,6 +19,7 @@ from app.domain.evidence import (
     tokens,
     verified,
 )
+from app.domain.portfolio_paths import profile_parts, profile_paths
 from app.domain.web_policy import TOPICS
 
 
@@ -96,7 +97,7 @@ class PublicRetrieval:
             # Editorial/development instructions are not evidence of professional contributions.
             if (
                 not repository_question
-                and not chunk.path.startswith('src/content/')
+                and profile_parts(chunk.path) is None
                 and chunk.path != 'public/assistant-knowledge.json'
             ):
                 continue
@@ -132,11 +133,13 @@ class PublicRetrieval:
                 score += 50
             if chunk.path in entity_paths:
                 score *= 2
-            parts = chunk.path.split('/')
+            profile = profile_parts(chunk.path)
             preferred = (
-                not chunk.path.startswith('src/content/')
-                or parts[2] == locale
-                or f'src/content/{locale}/' + '/'.join(parts[3:]) not in corpus.paths
+                profile is None
+                or profile[0] == locale
+                or not any(
+                    path in corpus.paths for path in profile_paths(locale, profile[1])
+                )
             )
             if preferred and verified(row, corpus.commit, set(corpus.paths)):
                 eligible[chunk.id] = chunk
@@ -331,7 +334,7 @@ class PublicRetrieval:
                         min(
                             matching,
                             key=lambda key: (
-                                not eligible[key].path.startswith('src/content/'),
+                                profile_parts(eligible[key].path) is None,
                                 -scores[key],
                                 key,
                             ),
@@ -356,7 +359,7 @@ class PublicRetrieval:
             goals = [
                 key
                 for key in eligible
-                if eligible[key].path.startswith('src/content/')
+                if profile_parts(eligible[key].path) is not None
                 and re.search(
                     r'(?i)\b(?:design goal|design target|objetivo de|meta de)\b',
                     eligible[key].content,

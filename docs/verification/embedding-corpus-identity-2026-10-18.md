@@ -1,5 +1,10 @@
 # Embedding corpus identity correction
 
+This records the original namespace correction. The later
+[public content-layout handoff](../coordination/portfolio-content-layout.md)
+supersedes its format suffixes with fixture `-v8` / semantic `-semantic-v9` and
+coordinates the new reader/worker pair. The evidence below remains historical.
+
 The previous fixture/semantic versions for one source commit shared chunk IDs,
 violating PostgreSQL chunk and Neo4j document uniqueness when changing providers.
 New indexing namespaces IDs by corpus version, provider, model, dimensions and the

@@ -5,6 +5,12 @@ was inspected at `f2fca923a4d109937378e0f12779f817688fd537` for evaluation and l
 at `e770c3894732f69f96e45c2459a7c2b341bb29aa`. The index remains deliberately frozen
 for comparison; production synchronization remains the existing versioned worker.
 
+Those paths/revisions describe the historical evaluation. The current producer's
+eight-file relocation and required reader/worker compatibility are recorded in the
+[content-layout handoff](portfolio-content-layout.md). Review the corresponding
+`content/{en,es}/projects.ts` paths after that coordinated cutover; retain historical
+citations at their original committed paths.
+
 Before enabling the native assistant, review public descriptions in
 `src/content/en/projects.ts`, `src/content/es/projects.ts` and, if adopted,
 `public/assistant-knowledge.json` under the existing knowledge schema. The current

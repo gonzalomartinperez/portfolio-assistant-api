@@ -96,7 +96,7 @@
           "default": null
         },
         "source_path": {
-          "pattern": "^src/content/(en|es)/(profile|experience|projects|education)\\.ts$",
+          "pattern": "^(?:src/)?content/(en|es)/(profile|experience|projects|education)\\.ts$",
           "title": "Source Path",
           "type": "string"
         },

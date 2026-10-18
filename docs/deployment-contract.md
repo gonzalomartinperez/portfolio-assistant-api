@@ -34,6 +34,16 @@ Use a read-only root filesystem, writable `/tmp`, dropped capabilities and
 no-new-privileges where supported. The API needs no persistent container volume.
 PostgreSQL and Neo4j data durability is owned by vps-ops.
 
+Disable vendor usage collection explicitly on Neo4j:
+`NEO4J_dbms_usage__report_enabled=false` and
+`NEO4J_server_bolt_telemetry_enabled=false`. The
+[Neo4j 5 configuration reference](https://neo4j.com/docs/operations-manual/5/configuration/configuration-settings/#config_dbms.usage_report.enabled)
+distinguishes anonymous vendor usage reporting from Bolt driver telemetry.
+Neither is the application's separately configured private OpenTelemetry pipeline.
+Local Compose and both CI database fixtures enforce these settings; vps-ops owns
+their effective production values. Startup configuration and an authenticated
+`SHOW SETTINGS` readback must verify them before deployment selection.
+
 The image uses separate dependency and runtime stages with the frozen production
 lock. `uv`/`uvx`, pip, ensurepip and development dependencies are absent from runtime. Git remains
 necessary for the approved public-corpus CLI/worker. SIGTERM is explicit; before
@@ -105,7 +115,9 @@ a separately tested recovery procedure.
 ## Health, routing and streams
 
 - `GET /health/live`: process response, not dependency readiness.
-- `GET /health/ready`: schema/checksum, active public corpus matching the configured embedding model and graph connectivity;
+- `GET /health/ready`: schema/checksum, active public corpus matching the configured embedding model,
+  and the fixed graph reads in one shared two-second transaction. It rechecks the
+  active corpus after the probe and fails closed on a concurrent change;
   use as the traffic admission probe. No paid model call.
 - Suggested container probe: `python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"`.
   Initial settings: interval 20s, timeout 8s, retries 3, start period 30s; verify on VPS.
@@ -204,6 +216,13 @@ Allow at least 60 seconds for worker termination. SIGTERM prevents further chunk
 from being embedded and blocks activation; the current bounded operation finishes.
 Git/embedding timeouts are 30/20 seconds respectively. The API's streaming grace
 remains separate. vps-ops must verify restart/probe and shutdown behavior on Coolify.
+
+Graph publication also prepares the exact fixed reads after indexes are online and
+before activation: five read transactions with five-second server timeouts, plus
+bounded connection acquisition. An unchanged-version worker startup performs the same
+preparation. Visitor reads retain two-second transactions with implicit SDK retries
+disabled. Readiness performs no model call or five-second warmup. See the
+[cold-start evidence and acceptance procedure](verification/graph-readiness-2026-10-18.md).
 
 Coolify is the initial secret store/delivery mechanism. Disable Build Variable for
 runtime secrets; never build images with credentials. Protect the control plane
@@ -475,12 +494,18 @@ Do not replace existing volumes or the IAM fallback image from this document alo
 
 ## Corpus identity upgrade requirement · 2026-10-18
 
-The indexer now creates fixture `-v7` and semantic `-semantic-v8` corpus versions
+The root-aware indexer creates fixture `-v8` and semantic `-semantic-v9` corpus versions
 with profile-scoped chunk identities. Retain legacy corpora and public embedding
 cache records. Source/image replacement does not reindex automatically: schedule
 an explicitly authorized one-shot indexing operation before selecting the new
 corpus. Existing matching semantic cache entries can be reused; missing embeddings
 still require separate paid authority and the existing ledger budget. Model or
-provider mismatch continues to fail readiness. No SQL migration or public wire
+provider or source-format mismatch fails readiness, retrieval and starter reads until
+the new worker activates a compatible index. Coordinate API and worker replacement;
+do not admit an older source-format corpus merely because its Git commit is current.
+No SQL migration or public HTTP/SSE field
 change is introduced. Review [the executed identity regression](verification/embedding-corpus-identity-2026-10-18.md)
 when selecting a compatible image/corpus pair.
+The [content-layout handoff](coordination/portfolio-content-layout.md) records both
+approved roots, preserved historical citations, the additional format transition
+and the required producer-candidate fixture verification.
