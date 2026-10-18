@@ -56,3 +56,32 @@ streaming after a cold start and dependency restart with its real resource alloc
 The [query-cache documentation](https://neo4j.com/docs/cypher-manual/current/planning-and-tuning/caching/)
 explains parameter-shape and schema invalidation. Preparation does not guarantee a
 cache hit for every question, eliminate eviction or establish a field latency SLO.
+
+## Executed counterfactual
+
+Source `b53cd1998e17c27a7b6ba17ac2317d9db6cfcfce` passed the fresh isolated
+counterfactual on the same Neo4j one-CPU/1536-MiB ceiling. PostgreSQL used 0.5 CPU/
+512 MiB; the host test process used core 3 at low priority. The worker/publication
+and two readiness identity-race cases passed: 3 tests in 14.20 seconds. The complete
+[hosted Quality run](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/39171935622)
+separately passed all six required jobs, 794 offline tests and 47 real-service tests
+(51.22 seconds). Neither count is substituted for the other environment.
+
+The exact public producer `12e68c662b855422411ffdfd1d5334f6b4b0e086` was then
+indexed with fixture hash64 vectors: all eight professional files, 12 approved
+files total, 97 chunks, 282 extracted facts and 460 source-supported relationship
+instances. Six English/Spanish × vector/graph/hybrid queries returned the correct
+locale/root paths and immutable commit/line citations; each locale had five starter
+questions. Resynchronization was unchanged, and the previous version remained retired.
+The index's ledger row count stayed zero. Twenty fixture HTTP turns completed with
+`run.completed`, followed by successful session deletion. This verifies transport,
+provenance and fixture behavior, not semantic model quality or real visitor traffic.
+
+The run ended at 22:31:10 UTC on October 18. Independent cleanup readback confirmed
+the owned processes, containers, network and volumes absent, with all three ports
+bindable. The owner-local execution receipt has SHA-256
+`7401d6994eb6ca128a847b15a473796019e4276d631a3dad2a83553c6f334f31`;
+the producer acceptance receipt is
+`782ad302ae01a00669105ebe2e6db0c24dab6e4ef2fa6258e4050fc226421e3c`.
+Original failed runs remain retained. No OpenAI request, production deployment or
+registry publication occurred. The vendor-image security and VPS-only gates remain.

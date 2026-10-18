@@ -66,3 +66,11 @@ repeatability. Also index the exact reviewed producer candidate with fixture emb
 before accepting the coordinated cutover; a synthetic move alone does not establish
 that the producer's actual files were consumed. Record source/index/image revisions,
 both-store results and remaining limitations in the integration handoff.
+
+The executed fixture cutover uses API source
+`b53cd1998e17c27a7b6ba17ac2317d9db6cfcfce` and the exact producer above. It
+consumed all eight relocated professional files, validated both projections and
+both locales, preserved retired versions and passed 20 HTTP turns. See the
+[dated acceptance evidence](../verification/graph-readiness-2026-10-18.md#executed-counterfactual)
+for counts, receipt hashes, original failed attempts and environment limitations.
+No generation/embedding provider call or portfolio activation is implied.
