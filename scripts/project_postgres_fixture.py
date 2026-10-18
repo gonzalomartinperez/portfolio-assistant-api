@@ -33,6 +33,35 @@ class FixtureCommandError(ValueError):
     """A bounded Docker/psql fixture command failed without exposing its output."""
 
 
+def locale_metadata(values: object) -> dict[str, str | None]:
+    """Whitelist bounded catalog locale fields for the public synthetic receipt."""
+    if (
+        not isinstance(values, (tuple, list))
+        or len(values) != 4
+        or values[0] not in ('b', 'c', 'i')
+        or any(
+            not isinstance(value, str)
+            or not re.fullmatch(r'[A-Za-z0-9_.@;=+:-]{1,128}', value)
+            for value in values[:3]
+        )
+        or (
+            values[3] is not None
+            and (
+                not isinstance(values[3], str)
+                or not re.fullmatch(r'[A-Za-z0-9_.@;=+:-]{1,128}', values[3])
+            )
+        )
+    ):
+        raise ValueError('invalid or unbounded database locale metadata')
+    return dict(
+        zip(
+            ('datlocprovider', 'datcollate', 'datctype', 'datcollversion'),
+            values,
+            strict=True,
+        )
+    )
+
+
 def docker(
     *args: str, data: bytes | None = None, timeout: int = 60, combined: bool = False
 ) -> bytes:
@@ -254,6 +283,64 @@ class ProjectPostgres:
             'databases': sorted(set(ROLES.values())),
         }
 
+    def verify_platform(self) -> dict[str, object]:
+        """Probe both fresh application databases, without changing their schemas.
+
+        ICU is selected explicitly; this does not establish default-collation or
+        PGDATA compatibility with another distribution or ICU version.
+        """
+        text = 'Español: niño — 東京 🦊'
+        document = '<public>' + text + '</public>'
+        values = ['niño', 'árbol', 'Zürich', '東京', '🦊']
+        locales = {}
+        for role in ('portfolio_api_migrator', 'portfolio_iam_migrator'):
+            with psycopg.connect(self.connection_info(role)) as connection:
+                locales[ROLES[role]] = locale_metadata(
+                    connection.execute(
+                        'SELECT datlocprovider::text,datcollate,datctype,datcollversion FROM pg_database WHERE datname=current_database()'
+                    ).fetchone()
+                )
+                assert connection.execute(
+                    "SELECT current_setting('server_version_num'),current_setting('server_encoding')"
+                ).fetchone() == ('180006', 'UTF8')
+                assert connection.execute(
+                    'SELECT %s::text,XMLSERIALIZE(CONTENT XMLPARSE(CONTENT %s) AS text)',
+                    (text, document),
+                ).fetchone() == (text, document)
+                connection.execute(
+                    "CREATE COLLATION public.fixture_platform_icu (provider=icu,locale='und',deterministic=true)"
+                )
+                assert connection.execute(
+                    "SELECT collprovider,collisdeterministic FROM pg_collation WHERE oid='public.fixture_platform_icu'::regcollation"
+                ).fetchone() == ('i', True)
+                order = 'SELECT array_agg(value ORDER BY value COLLATE public.fixture_platform_icu) FROM unnest(%s::text[]) AS item(value)'
+                ascending = connection.execute(order, (values,)).fetchone()
+                assert (
+                    ascending
+                    == connection.execute(order, (list(reversed(values)),)).fetchone()
+                )
+                version = connection.execute(
+                    "SELECT extversion FROM pg_extension WHERE extname='vector'"
+                ).fetchone()
+                if role == 'portfolio_api_migrator':
+                    assert version == ('0.8.7',)
+                    assert connection.execute(
+                        "SELECT name FROM (VALUES ('near','[1,0,0]'::vector),('far','[0,1,0]'::vector)) AS item(name,embedding) ORDER BY embedding <-> '[1,0,0]'::vector LIMIT 1"
+                    ).fetchone() == ('near',)
+                else:
+                    assert version is None
+                # The explicit collation is a capability probe, not a new migration.
+                connection.rollback()
+        return {
+            'postgres_version': '18.6',
+            'api_vector_version': '0.8.7',
+            'both_databases_utf8_text_xml': True,
+            'explicit_deterministic_icu_locale': 'und',
+            'api_nearest_vector_query': True,
+            'iam_without_vector': True,
+            'observed_database_locales': locales,
+        }
+
 
 def wait_for_postmaster(target: ProjectPostgres) -> None:
     deadline = time.monotonic() + 30
@@ -332,7 +419,7 @@ def project_fixture(
                 '--label',
                 LABEL + '=' + fixture,
                 '--user',
-                '999:999',
+                '70:70',
                 '--env-file',
                 str(environment),
                 *delay_mount,
@@ -352,7 +439,7 @@ def project_fixture(
                 '--tmpfs',
                 '/tmp:rw,nosuid,nodev,size=16m',
                 '--tmpfs',
-                '/var/run/postgresql:rw,nosuid,nodev,uid=999,gid=999,mode=3775,size=8m',
+                '/var/run/postgresql:rw,nosuid,nodev,uid=70,gid=70,mode=3775,size=8m',
                 '--mount',
                 'type=volume,src=' + name + ',dst=/var/lib/postgresql',
                 '--publish',

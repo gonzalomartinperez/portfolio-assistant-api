@@ -105,12 +105,16 @@ records the distinction between compatibility tests and live model evaluation.
 
 
 Local Compose builds infra/docker/postgres/Dockerfile: use `docker compose -f infra/compose/local.yaml up --build -d --wait`
-with an isolated project. It runs UID 999, so existing PGDATA ownership must match;
-never silently chown shared volumes. Verify both fresh initialization and a copy of
-owned stopped data, and explicitly review vector extension metadata upgrades. Read
+with an isolated project. The maintained-base candidate runs UID70 and uses a new
+local volume; never reuse/chown Debian PGDATA or silently modify shared volumes.
+Read [ADR008](../../../docs/adrs/008-supported-postgres-base.md) for the exact candidate
+and acceptance limits. Verify fresh initialization, both applications' logical
+restores and explicit ICU/Unicode/XML/vector behavior. Cross-distribution migration
+requires separate logical-restore/collation/index proof; a same-image restore is
+not that proof. Explicitly review vector extension metadata upgrades. Read
 the database artifact section of deployment-contract.md before publishing/selecting
-an image. Database scan policy rejects fixable CRITICAL/HIGH; unresolved critical
-findings and vendor Java updates remain production gates. Do not patch vendor jars
+an image. The candidate PostgreSQL scan policy rejects all CRITICAL and fixable HIGH;
+unfixed HIGH findings and vendor Java updates remain production gates. Do not patch vendor jars
 or equate local counts with complete recovery verification.
 
 For operational/dashboard changes, load [private observability](../../../docs/private-observability.md).

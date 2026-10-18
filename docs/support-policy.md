@@ -1,6 +1,6 @@
 # Supported versions and upgrade policy
 
-Checked 2026-10-12. Prefer an officially supported LTS line where the upstream offers
+Checked2026-10-12; PostgreSQL candidate OS policy rechecked2026-10-18. Prefer an officially supported LTS line where the upstream offers
 one. Otherwise use maintained stable releases and current security patches, with a
 frozen lockfile and immutable image digest. Stable, LTS and security support are
 different claims. Do not rename every dependency LTS or retain a vulnerable patch
@@ -15,7 +15,7 @@ because its major line is supported.
 | LangGraph / LangChain Core | 1.x LTS (patches in runtime baseline) | Official 1.x LTS: active until 2.0, then at least one year of maintenance; associated packages need separate review. |
 | Node / Next.js (backoffice) | 24 LTS / 16 Active LTS | Node 24 ends 2028-04-30; Next 16 active until next major, maintenance policy two years from initial release. |
 | Debian runtime base | 13 Trixie | General support until 2028-08-09, followed by LTS until 2030-06-30, subject to package/architecture coverage. |
-| PostgreSQL image OS | Debian 12 Bookworm | Actual inspected base; Debian LTS through 2028-06-30 with package/architecture limitations. This differs from the API/Neo4j Debian 13 base. |
+| PostgreSQL image OS | Alpine3.24 candidate; previous release Debian12 | Candidate main-branch support through2028-06-01, not LTS or coverage until PostgreSQL18 EOL. Separate community-package cadence and exact-image acceptance apply. See ADR008; application/Neo4j Debian bases are unchanged. |
 | uv | Pinned stable (runtime baseline) | Stable pinned tooling; no formal LTS designation. |
 | FastAPI, OpenAI SDK, psycopg | `uv.lock` | Maintained stable packages; no universal LTS policy. Review compiler/framework/auth changes manually. |
 | OpenTelemetry Python | Stable SDK/OTLP APIs when adopted | No formal LTS; use manual allowlisted instrumentation and stable exporters. SDK/HTTP exporter 1.45.1 pulls vendor semantic conventions 0.66b1: reviewed beta dependency exception, not an all-stable graph. |
@@ -87,8 +87,11 @@ Additional official references: [LangChain/LangGraph LTS](https://docs.langchain
 [Redis Open Source support](https://redis.io/docs/latest/operate/oss_and_stack/install/version-mgmt/),
 [Collector stability](https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md).
 
-[Debian 12 LTS coverage](https://www.debian.org/releases/bookworm/) applies to the
-actual pgvector image base; do not report every container as Debian 13.
+[Debian12 LTS coverage](https://www.debian.org/releases/bookworm/) applies to the
+previous pgvector image base. The [Alpine lifecycle](https://www.alpinelinux.org/releases/)
+and [candidate ADR008](adrs/008-supported-postgres-base.md) describe the evaluated
+replacement. Do not report all containers as Debian13 or treat a maintained OS
+candidate as an accepted production artifact.
 
 ## Historical Dependabot #48 lock review
 

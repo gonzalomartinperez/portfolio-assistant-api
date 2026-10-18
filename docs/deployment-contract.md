@@ -268,16 +268,17 @@ authorized tested digest; local image IDs are not registry manifests.
 
 The inherited entrypoint/docker command initializes a fresh cluster only when
 PGDATA is empty, then execs postgres. It binds internal TCP 5432 and exposes no
-production host port. UID/GID 999 needs ownership of the /var/lib/postgresql parent mount (PGDATA=/var/lib/postgresql/18/docker); an
+production host port. The candidate supported-base recipe uses UID/GID70, which needs ownership of the /var/lib/postgresql parent mount (PGDATA=/var/lib/postgresql/18/docker); an
 existing volume is not automatically chowned. Mount only the reviewed data volume
-and writable /tmp plus /var/run/postgresql (UID/GID 999, mode 3775). Read-only root,
-dropped capabilities and no-new-privileges were tested. pg_isready checks server
+and writable /tmp plus /var/run/postgresql (UID/GID70, mode3775). Read-only root,
+dropped capabilities and no-new-privileges remain required; candidate verification
+is separate from the previous Debian evidence. TCP-only pg_isready checks server
 acceptance, not application schema/corpus readiness; API /health/ready remains
 the application readiness check. Allow at least the tested 30-second stop grace;
 PostgreSQL's inherited signal/entrypoint owns database shutdown.
 
 Fresh initialization requires POSTGRES_USER, POSTGRES_DB and secret POSTGRES_PASSWORD
-or the official entrypoint's POSTGRES_PASSWORD_FILE mechanism, readable by UID 999.
+or the official entrypoint's POSTGRES_PASSWORD_FILE mechanism, readable by UID70.
 Never use trust authentication. Deliver credentials privately through Coolify;
 retain separate schema-owner and restricted API roles. Changing bootstrap variables
 does not change credentials in an existing cluster. Runtime PostgreSQL options
@@ -295,6 +296,17 @@ are managed by vps-ops; do not enable parameter/statement logging for private ch
 [Database image evidence and unresolved findings](verification/database-images-2026-10-10.md)
 are production assessment gates, not waivers. Publication approval, visibility,
 compatible artifact selection and restoration remain external owner decisions.
+
+The maintained-base candidate and its acceptance limits are recorded in
+[ADR008](adrs/008-supported-postgres-base.md). PostgreSQL18.6/pgvector0.8.7 and all
+bootstrap/role/HBA resources remain unchanged. Alpine's libc, UID and locale
+behavior require fresh verification; an immutable base pin is not security acceptance.
+Local Compose intentionally uses a new `postgres18_alpine_data` volume. Existing
+Debian data stays untouched and is never automatically chowned, reused or deleted.
+This candidate supports fresh initialization; migrating existing data requires
+separate cross-distribution logical restore and collation/index verification.
+The [dated candidate evidence](verification/postgres-supported-base-2026-10-18.md)
+records exact tested source/image identities and outstanding gates.
 
 The [vps-ops dispatch request](vps-ops-request.md) connects these application contracts to the separate operations owner without granting deployment authority.
 
