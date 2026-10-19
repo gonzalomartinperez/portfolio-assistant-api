@@ -56,3 +56,15 @@ SHA-256 is `b67ad0e6b215b29d69f44a9bace9f35e788ced3f5d898193362a7c4416d31e6f`.
 No secrets, model calls, production deployment or registry publication were involved.
 Reproduce through the [image verification procedure](neo4j-vendor-refresh-2026-10-17.md)
 and current runtime/CI commands; database freshness and findings change over time.
+
+
+## Completed patched-image verification
+
+The baseline above remains historical. The
+[final artifact closeout](final-artifact-closeout-2026-10-18.md) records the new
+source-bound image, successful unchanged LZMA/source payload assertions and complete
+inventory/SBOM. Its unknown count is 4 rather than 6; 49 unresolved high findings and
+the separate Neo4j findings remain. The full assessment did not pass under the
+policy then applied. The owner's subsequent deployment policy makes dependency/
+image CVEs advisory without rewriting these results; see the final closeout's
+current-decision section. The VPS and production activation remain unavailable.

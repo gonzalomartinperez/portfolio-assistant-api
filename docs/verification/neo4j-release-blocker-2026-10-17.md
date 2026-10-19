@@ -1,5 +1,11 @@
 # Neo4j release blocker — observed 2026-10-17
 
+> Historical assessment: the failed scans and findings below are preserved.
+> On 2026-10-19 the owner made dependency/image CVEs advisory for deployment;
+> this report is no longer a deployment veto. The VPS is not purchased/provisioned
+> and production activation remains unauthorized. See the
+> [current deployment policy](../deployment-contract.md#deployment-authorization-and-vulnerability-policy).
+
 **Production release remains blocked.** The current pinned5.26.32 vendor and a rebuilt
 same-version candidate retain unresolved security findings. Green API/PostgreSQL CI
 is not a full Neo4j Java security assessment or a clean-stack claim.

@@ -12,7 +12,7 @@
       "family_id": "profile-1",
       "variation": "direct",
       "locale": "en",
-      "question": "Who is Gonzalo Martín Pérez?",
+      "question": "Who is Gonzalo Martin Perez?",
       "split": "development",
       "topic": "profile",
       "rubric": [
@@ -29,7 +29,7 @@
       "family_id": "profile-1",
       "variation": "direct",
       "locale": "es",
-      "question": "¿Quién es Gonzalo Martín Pérez?",
+      "question": "¿Quién es Gonzalo Martin Perez?",
       "split": "development",
       "topic": "profile",
       "rubric": [
@@ -114,7 +114,7 @@
       "family_id": "profile-1",
       "variation": "brief",
       "locale": "en",
-      "question": "Who is Gonzalo Martín Pérez? Keep the answer concise and include a public source if available.",
+      "question": "Who is Gonzalo Martin Perez? Keep the answer concise and include a public source if available.",
       "split": "development",
       "topic": "profile",
       "rubric": [
@@ -131,7 +131,7 @@
       "family_id": "profile-1",
       "variation": "brief",
       "locale": "es",
-      "question": "¿Quién es Gonzalo Martín Pérez? Responde de forma breve e incluye una fuente pública si está disponible.",
+      "question": "¿Quién es Gonzalo Martin Perez? Responde de forma breve e incluye una fuente pública si está disponible.",
       "split": "development",
       "topic": "profile",
       "rubric": [
@@ -148,7 +148,7 @@
       "family_id": "profile-1",
       "variation": "evidence_limits",
       "locale": "en",
-      "question": "Who is Gonzalo Martín Pérez? Distinguish documented facts from anything the available sources cannot establish.",
+      "question": "Who is Gonzalo Martin Perez? Distinguish documented facts from anything the available sources cannot establish.",
       "split": "development",
       "topic": "profile",
       "rubric": [
@@ -165,7 +165,7 @@
       "family_id": "profile-1",
       "variation": "evidence_limits",
       "locale": "es",
-      "question": "¿Quién es Gonzalo Martín Pérez? Distingue los hechos documentados de lo que las fuentes disponibles no permiten respaldar.",
+      "question": "¿Quién es Gonzalo Martin Perez? Distingue los hechos documentados de lo que las fuentes disponibles no permiten respaldar.",
       "split": "development",
       "topic": "profile",
       "rubric": [
