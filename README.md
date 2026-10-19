@@ -13,9 +13,9 @@ owns the reasoning, contracts and persistence behind it.
 
 > **Current state:** implemented and verified locally with deterministic fixtures and
 > separately documented real-model evaluations. The public portfolio assistant remains
-> disabled. Production release remains blocked by the
-> [dated Neo4j vendor findings](docs/verification/neo4j-release-blocker-2026-10-17.md).
-> Source validation does not waive that hold. Publication, deployment and monitoring
+> disabled. Production release remains blocked by unresolved API and Neo4j
+> security findings; see the [final local artifact evidence](docs/verification/final-artifact-closeout-2026-10-18.md).
+> Source validation does not waive those holds. Publication, deployment and monitoring
 > activation require separate approval.
 
 ## What this backend does
