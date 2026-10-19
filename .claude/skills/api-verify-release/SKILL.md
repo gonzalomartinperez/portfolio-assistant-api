@@ -84,7 +84,16 @@ vps-ops-owned; record unresolved scanner/image availability findings in the hand
 
 Runtime patch verification uses Python 3.14.8 with uv 0.13.1; the older uv download
 metadata cannot provision that interpreter. Confirm frozen installation on a clean
-environment, then run the maintained commands. Image verification includes a full
+environment, then run the maintained commands.
+
+Deployment policy update, 2026-10-19: the owner made dependency/image CVEs advisory
+for deployment. Preserve scanner failures/findings; do not rewrite historical
+receipts or weaken source, identity, coverage, secret, health or data-safety checks.
+The VPS is not purchased/provisioned and activation requires future owner approval.
+This decision does not modify existing source CI or authorize publication/deployment.
+Read the current deployment contract before interpreting historical release holds.
+
+Image verification includes a full
 Trivy report and `scripts.image_security`: any CRITICAL or fixable HIGH finding
 blocks CI. Unfixed HIGH findings remain visible and require production assessment;
 a green remediation gate is not deployment approval. Check base-interpreter pip

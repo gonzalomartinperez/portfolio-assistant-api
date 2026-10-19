@@ -1,4 +1,4 @@
-# Implementation status · 2026-10-18
+# Implementation status · 2026-10-19
 
 Current priorities, verified deliverables and external blockers are maintained in
 [the single work checklist](docs/work-checklist.md). Application software is MIT;
@@ -13,6 +13,13 @@ portfolio→real API/PostgreSQL→authenticated backoffice fixture proof is sepa
 attributed; production collection remains off. Source merging is distinct from
 image publication, production activation and Neo4j vendor acceptance. No new paid
 model campaign, VPS capacity or live OAuth claim follows from fixture CI.
+
+The [final local artifact closeout](docs/verification/final-artifact-closeout-2026-10-18.md)
+records source promotion, completed image/payload/SBOM verification and the
+remaining API/Neo4j findings and the owner's current advisory deployment policy.
+The unavailable VPS and future owner activation remain deployment prerequisites.
+Its artifact source is explicitly pinned;
+later documentation updates do not relabel it or repeat those tests.
 
 ## Dated historical implementation evidence
 
