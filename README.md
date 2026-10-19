@@ -270,8 +270,9 @@ explicit authority, trigger review and current source verification; a tag grants
 publication, deployment or paid-call authority.
 
 These are local/test-environment results, not field performance or production guarantees.
-Known vendor image findings, effective proxy behavior, backup/restore, live OAuth pairing
-and physical-device acceptance remain documented release gates.
+Dependency/image vulnerability findings remain advisory under the current owner policy.
+Effective proxy behavior, backup/restore, live OAuth pairing and physical-device
+acceptance remain separately documented verification requirements.
 
 ## Deployment and documentation
 
@@ -295,6 +296,7 @@ not an implemented or tested production topology. API and IAM remain separate da
 | Install, configure and connect | [Local development](docs/local-development.md) · [Environment](docs/environment.md) |
 | Understand policy and boundaries | [Architecture](docs/architecture.md) · [Engineering coordination](docs/engineering-coordination.md) · [Threat model](docs/threat-model.md) |
 | Integrate a client or refresh types | [API contract](docs/api-contract.md) · [Frontend handoff](docs/frontend-handoff.md) |
+| Verify direct website collection and country trust | [Direct-edge v1 contract](docs/coordination/analytics-direct-edge-v1.md) |
 | Maintain public knowledge | [Knowledge synchronization](docs/knowledge-sync.md) |
 | Operate private measurements | [Observability](docs/private-observability.md) |
 | Prepare a compatible VPS release | [Runtime contract](docs/deployment-contract.md) · [vps-ops handoff](docs/vps-ops-request.md) |

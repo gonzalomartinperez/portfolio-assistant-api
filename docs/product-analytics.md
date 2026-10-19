@@ -189,6 +189,9 @@ and cells refer to different selections; do not invent a conversion/attention ra
 
 ### Optional Cloudflare country boundary
 
+The [direct-edge v1 coordination contract](coordination/analytics-direct-edge-v1.md)
+freezes the collection path, exact settings and API/Ops acceptance responsibilities.
+
 Default `PRODUCT_ANALYTICS_COUNTRY_ENABLED=false` yields unknown. When separately
 approved, set `PRODUCT_ANALYTICS_COUNTRY_PROXY_IPS` to exact socket-peer addresses
 (up to 16, no DNS names, CIDR or wildcard). Attribution requires that enabled flag,

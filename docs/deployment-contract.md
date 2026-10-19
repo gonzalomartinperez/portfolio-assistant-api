@@ -401,6 +401,17 @@ for quotas, provisional local retention and private route exclusion. The mainten
 job must continue expiry when collection is off; backup expiry/restore, lawful basis,
 notice and production resource acceptance remain owner/ops gates.
 
+## Direct website analytics ingress
+
+Follow [analytics-direct-edge-v1](coordination/analytics-direct-edge-v1.md): the
+website-owned browser collector sends directly to the project's HTTPS API through
+Cloudflare and the single Coolify proxy. There is no Business BFF or relay token.
+Keep collection/country off until authorized, verify effective edge/header/origin
+isolation and actual socket peers, and retain `--no-proxy-headers`. Owner-reported
+Cloudflare/Hostinger CDN settings are not evidence of the ingestion traffic order.
+The contract distinguishes API tests, simulated proxy checks and later real VPS
+verification; no network configuration or activation is performed here.
+
 ## Deployment authorization and vulnerability policy
 
 Owner decision, 2026-10-19: dependency/image vulnerability findings are advisory

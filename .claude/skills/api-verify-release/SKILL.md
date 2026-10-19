@@ -181,3 +181,11 @@ and run `uv run pytest -q tests/test_provider_http.py tests/test_provider_lifecy
 Keep SDK-native and compatibility transports distinct; verify redirect rejection,
 explicit TLS/environment policy, constructor ownership and failure/cancellation
 cleanup. Synthetic tests do not establish real TLS negotiation or VPS throughput.
+
+For website country/collector work read [analytics-direct-edge-v1](../../../docs/coordination/analytics-direct-edge-v1.md).
+Preserve the direct browser→Cloudflare→Coolify proxy→API path and actual socket-peer
+validation. No Business BFF, relay credential or new country enum is required.
+Current country settings are production-capable but default-off; adapter/real-PG
+fixtures do not certify Cloudflare or origin isolation. Ops owns spoof/bypass
+network verification. Keep unknown when the trust chain is not verified and do
+not infer country from a website server, locale, JSON or forwarded-IP header.
