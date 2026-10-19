@@ -13,10 +13,12 @@ owns the reasoning, contracts and persistence behind it.
 
 > **Current state:** implemented and verified locally with deterministic fixtures and
 > separately documented real-model evaluations. The public portfolio assistant remains
-> disabled. Production release remains blocked by unresolved API and Neo4j
-> security findings; see the [final local artifact evidence](docs/verification/final-artifact-closeout-2026-10-18.md).
-> Source validation does not waive those holds. Publication, deployment and monitoring
-> activation require separate approval.
+> disabled. The VPS is not yet purchased/provisioned and production activation is
+> not authorized. Dependency/image vulnerability findings are advisory for deployment
+> by owner decision; they remain visible in the
+> [final local artifact evidence](docs/verification/final-artifact-closeout-2026-10-18.md).
+> This does not certify a clean stack or waive source, integrity, secret, health or
+> data-safety checks. Publication and activation require separate approval.
 
 ## What this backend does
 
@@ -314,9 +316,11 @@ Shared runtime/version acceptance: [runtime baseline](docs/runtime-baseline.md).
 Volunteered context supports useful follow-ups; it is not automatic model training.
 [Context minimization and the human improvement loop](docs/feedback-and-improvement.md)
 describe actual patterns, original-history retention, private rating aggregates and limits.
-The [current Neo4j security blocker](docs/verification/neo4j-release-blocker-2026-10-17.md)
-prevents a production-ready claim; the rebuilt vendor candidate did not resolve its
-fixable Jackson findings. No deployment or collection activation is authorized.
+The [dated Neo4j assessment](docs/verification/neo4j-release-blocker-2026-10-17.md)
+retains unresolved Jackson findings and its original failed results. Under the
+[current deployment policy](docs/deployment-contract.md#deployment-authorization-and-vulnerability-policy),
+dependency/image CVEs inform maintenance rather than veto deployment. No VPS,
+deployment or collection activation is authorized or verified.
 
 ## Software license
 

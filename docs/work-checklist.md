@@ -9,7 +9,7 @@ calls; a merged plan grants none of those permissions.
 | Priority / deliverable | Implemented and verified | Remaining acceptance |
 | --- | --- | --- |
 | 1 Conversations and compatibility | Native portfolio HTTP/SSE contract, optional bounded visitor context, ownership/CSRF, history/cancellation, bilingual voice and source mapping. Product events and current-rating summaries are private, validated and default-off. | The portfolio owner controls activation. Broader model factuality and physical-device acceptance remain separate from fixture and bounded live evidence. |
-| 1 Security and reliability | Explicit provider origin, verified TLS, no redirects or inherited proxy/CA environment, zero generation retries, constructor ownership and independent resource cleanup. Pure policy and architectural negative tests remain mandatory. | Native TLS negotiation and future VPS load are not certified by synthetic transport tests. API and Neo4j security acceptance remain blocked. |
+| 1 Security and reliability | Explicit provider origin, verified TLS, no redirects or inherited proxy/CA environment, zero generation retries, constructor ownership and independent resource cleanup. Pure policy and architectural negative tests remain mandatory. | Native TLS negotiation and future VPS load are not certified by synthetic transport tests. API/Neo4j CVEs remain advisory for deployment, visible and unresolved. Source/integrity/secret/health/data-safety checks remain mandatory. |
 | 2 Repository quality and skills | Five canonical skills with relative Codex discovery links, maintained structural/scenario checks, strict inner-layer mypy, capability adapter packages and pinned parallel CI. Standard MIT software licensing retains separate content rights. | Model-based skill selection and untested client versions are not certified. Existing checks and review requirements remain authoritative. |
 | 3 Runtime and integration handoff | Application images, private OPS/product/feedback contracts, PostgreSQL artifact, measured database access paths and Coolify runtime/migration contract. | Immutable image publication, registry visibility, real OAuth, shared monitoring, VPS resources, effective routing/headers and recovery belong to separately authorized verification. |
 
@@ -46,7 +46,10 @@ calls; a merged plan grants none of those permissions.
   tree; both post-merge six-job runs passed 819 offline and 47 real-service tests.
   [Final local artifact evidence](verification/final-artifact-closeout-2026-10-18.md)
   records the corrected payload, 183-package inventory/184-component SBOM,
-  preserved archive-harness failures and the API/Neo4j production security holds.
+  preserved archive-harness failures and unresolved API/Neo4j findings. The owner
+  subsequently made dependency/image CVEs advisory for deployment; original failed
+  receipts remain unchanged. The VPS is not purchased/provisioned and production
+  activation remains unauthorized.
   No new paid campaign, publication or deployment was authorized.
 
 - **Completed:** PR91/92 calendar analytics, real native-ingest/readback evidence and

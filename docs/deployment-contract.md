@@ -401,6 +401,17 @@ for quotas, provisional local retention and private route exclusion. The mainten
 job must continue expiry when collection is off; backup expiry/restore, lawful basis,
 notice and production resource acceptance remain owner/ops gates.
 
+## Deployment authorization and vulnerability policy
+
+Owner decision, 2026-10-19: dependency/image vulnerability findings are advisory
+for deployment, not a deployment veto. Preserve complete scans, unresolved findings,
+remediation priorities and original failed receipts; do not report a clean or fixed
+stack. This decision does not change existing source CI or authorize registry
+publication, image adoption or production execution. Identity, inventory coverage,
+payload, secret, health, network exposure and data-safety checks remain mandatory.
+The Hostinger VPS is not yet purchased/provisioned; future owner activation and
+vps-ops/Coolify verification are still required. No production trigger is enabled.
+
 ## Neo4j immutable vendor refresh
 
 The same-version5.26.32 candidate was rejected after deep scanning; runtime retains
@@ -410,12 +421,15 @@ procedure](verification/neo4j-vendor-refresh-2026-10-17.md). Normal API/PG CI al
 does not scan the complete Neo4j Java inventory. Manually dispatch Quality with
 `verify_vendor_image=true` for the reviewed source and preserve the full scanner receipt
 before release selection. A normal green dispatch or source tag is not this assessment.
-Unresolved critical applicability, store recovery and actual VPS acceptance remain
-release gates; no clean-stack or production-approval claim is made.
-## Current release hold and feedback read
+Unresolved critical applicability remains visible for remediation. Store recovery
+and actual VPS acceptance remain technical requirements; no clean-stack or
+production-approval claim is made. Historical CVE rejection is not a current
+deployment veto under the owner policy above.
+## Security findings and feedback read
 
 The [dated Neo4j security assessment](verification/neo4j-release-blocker-2026-10-17.md)
-blocks production selection; ordinary API/PG CI is not vendor Java acceptance.
+retains its original failed assessment; CVEs are now advisory for deployment.
+Ordinary API/PG CI is not vendor Java acceptance or deployment approval.
 `FEEDBACK_OVERVIEW_ENABLED=false` gates the optional private current-rating read
 using existing OPS_READ_TOKEN. No migration, service or new volume is required.
 See [privacy and feedback](feedback-and-improvement.md); no raw conversations or

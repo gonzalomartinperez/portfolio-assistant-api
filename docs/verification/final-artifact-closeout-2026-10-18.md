@@ -1,7 +1,9 @@
 # Final local artifact verification · 2026-10-18
 
-Documentation reconciled on 2026-10-19. **Application source is verified; production
-security acceptance remains blocked.** This records completed local work rather
+Documentation reconciled on 2026-10-19. **Application source is verified; the VPS
+is unavailable and production activation is not authorized.** Dependency/image
+CVEs are advisory for deployment under the owner's current decision; findings and
+original failed assessments remain visible. This records completed local work rather
 than a deployment, registry publication or new live-model evaluation.
 
 ## Source and functional evidence
@@ -88,8 +90,8 @@ of the unchanged PostgreSQL, backoffice or Neo4j images occurred.
 | Unidentified packages | 0 |
 
 Coverage was complete for the policy. **The full policy rejected the artifact and
-requires manual security review.** The successful inventory is not a clean-image
-claim. The LZMA correction removed two unknown-severity entries from the
+required manual security review under the policy then applied.** The successful
+inventory is not a clean-image claim. The LZMA correction removed two unknown-severity entries from the
 [earlier API baseline](container-security-2026-10-18.md); the four remaining entries
 concern CVE-2026-82560 across Perl packages. No severity override was applied.
 
@@ -99,8 +101,20 @@ Pod::Text 6.1.1 is not evidence that a supported Debian package is available.
 The [official Neo4j catalog](https://neo4j.com/current-neo4j-versions/) and
 [release archive](https://neo4j.com/release-notes/database/) still list 5.26.32
 as the newest confirmed 5.26 patch. The separate
-[Neo4j vendor security hold](neo4j-release-blocker-2026-10-17.md) remains unchanged.
+[Neo4j vendor assessment](neo4j-release-blocker-2026-10-17.md) retains its findings.
 These official metadata checks were not new scans or remediation.
+
+### Current deployment decision
+
+On 19 October the owner made dependency/image vulnerability findings advisory for
+deployment. Historical scanner exits and `policy_pass=false` are not rewritten,
+and no finding is declared fixed or suppressed. These CVEs alone no longer veto
+deployment selection. The VPS has not been purchased/provisioned and the owner
+has not authorized production activation. Source checks, artifact identity and
+inventory completeness, secret protection, health, ports and data safety remain
+independent requirements. Existing source CI is unchanged by this documentation
+decision; no scanner rerun, new image or deployment occurred. See the
+[runtime policy](../deployment-contract.md#deployment-authorization-and-vulnerability-policy).
 
 Do not patch vendor jars, suppress unknown findings, silently switch server majors
 or drop Git without preserving the corpus worker. A supported repair or separately

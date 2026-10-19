@@ -64,4 +64,7 @@ The baseline above remains historical. The
 [final artifact closeout](final-artifact-closeout-2026-10-18.md) records the new
 source-bound image, successful unchanged LZMA/source payload assertions and complete
 inventory/SBOM. Its unknown count is 4 rather than 6; 49 unresolved high findings and
-the separate Neo4j hold remain. The full production assessment did not pass.
+the separate Neo4j findings remain. The full assessment did not pass under the
+policy then applied. The owner's subsequent deployment policy makes dependency/
+image CVEs advisory without rewriting these results; see the final closeout's
+current-decision section. The VPS and production activation remain unavailable.
