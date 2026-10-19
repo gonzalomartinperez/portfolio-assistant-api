@@ -2,7 +2,7 @@
 
 **A grounded conversation about Gonzalo’s work — backed by public evidence.**
 
-The backend for Gonzalo Martín Pérez’s professional assistant: bilingual conversations,
+The backend for Gonzalo Martin Perez’s professional assistant: bilingual conversations,
 public-portfolio synchronization, hybrid retrieval, streamed answers and private
 operational measurements. The public chat lives in the portfolio; this repository
 owns the reasoning, contracts and persistence behind it.

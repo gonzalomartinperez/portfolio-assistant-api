@@ -1,6 +1,6 @@
 # Contributing
 
-Developed and maintained exclusively by Gonzalo Martín Pérez. Suggestions, bug reports
+Developed and maintained exclusively by Gonzalo Martin Perez. Suggestions, bug reports
 and constructive feedback are welcome through the repository’s available channels.
 Development priorities, implementation, reviews and releases remain the maintainer’s
 responsibility. Security reports use the private channel in [SECURITY.md](SECURITY.md).
@@ -107,3 +107,6 @@ Review invariants, cancellation and transaction ownership rather than folder nam
 `uv run pytest -q` includes both the guard and its negative regression probes in CI.
 Adding a layer exception requires a concrete compatibility reason, focused tests and an
 architecture documentation update. Do not broaden an allowlist to silence a violation.
+
+Use the owner name exactly as **Gonzalo Martin Perez** in both languages; do not
+remove accents from other Spanish text or rewrite historical evidence.
