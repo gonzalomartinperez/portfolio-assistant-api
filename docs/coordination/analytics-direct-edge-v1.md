@@ -46,6 +46,7 @@ reference does not certify that product's implementation or consent behavior.
 
 | Setting / boundary | Portfolio behavior |
 | --- | --- |
+| Website `ANALYTICS_ENABLED` | Defaults disabled; the site mounts its collector only when explicitly enabled; independent of the API flags |
 | Public collector destination | HTTPS `ANALYTICS_INGEST_URL`, exact `/api/v1/analytics/events`; no URL credentials, query or fragment |
 | `PRODUCT_ANALYTICS_ENABLED` | Defaults `false`; disabled ingestion returns 404 |
 | `PRODUCT_ANALYTICS_COUNTRY_ENABLED` | Defaults `false`; disabled attribution remains `unknown` even if a country header arrives |
@@ -104,7 +105,7 @@ Page views deduplicated by event UUID are not unique visitors or people.
 
 | Check | Expected result | Evidence owner |
 | --- | --- | --- |
-| Both collection flags off | No production collection; public route disabled | Product/API configuration |
+| Website and API event collection off | No production collection; API ingestion disabled | Product/API configuration |
 | Events enabled, country off | Counts can be accepted; country stays unknown | API adapter/persistence tests |
 | Country on, exact peer, one valid edge code | Real aggregate stores that code; a report publishes it only after the threshold | API persistence plus Ops ingress proof |
 | Untrusted/missing peer or forged forwarded-IP header | Country stays unknown | API boundary tests |
