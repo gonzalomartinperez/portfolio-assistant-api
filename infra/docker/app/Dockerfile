@@ -3,7 +3,7 @@ FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4c
 # The reviewed public-source CLI uses Git; no HTTP endpoint exposes it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git=1:2.47.3-0+deb13u1 libpcre2-8-0=10.46-1~deb13u3 \
-    liblzma5=5.8.1-1+deb13u2 \
+    liblzma5=5.8.1-1+deb13u2 libbrotli1=1.1.0-2+deb13u1 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
