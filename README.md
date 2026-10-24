@@ -1,6 +1,6 @@
 # Portfolio Assistant API
 
-**A grounded conversation about Gonzalo’s work — backed by public evidence.**
+**A grounded conversation about Gonzalo’s work, backed by public evidence.**
 
 The backend for Gonzalo Martin Perez’s professional assistant: bilingual conversations,
 public-portfolio synchronization, hybrid retrieval, streamed answers and private
@@ -89,7 +89,7 @@ are included. The portfolio working tree and disabled rollout were not changed.
 ## How it works
 
 <p align="center">
-  <a href="docs/assets/architecture-overview.svg"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview.svg"><source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries — click for the full-size diagram"></picture></a>
+  <a href="docs/assets/architecture-overview.svg"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview.svg"><source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries. Click for the full-size diagram"></picture></a>
 </p>
 
 Solid arrows show requests or synchronization; dashed arrows show returned data.
