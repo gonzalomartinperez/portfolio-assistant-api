@@ -303,6 +303,7 @@ not an implemented or tested production topology. API and IAM remain separate da
 | Review CI and dependency updates | [CI](docs/ci.md) · [Dependency policy](docs/dependency-updates.md) |
 | Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/agent-skills.md) |
 | Review support and remaining work | [Supported versions](docs/support-policy.md) · [Acceptance checklist](docs/work-checklist.md) |
+| Review the future improvement plan (planning only) | [Master plan 2026-10](docs/master-plan/README.md) |
 
 Software licensing and content scope are documented [below](#software-license).
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
