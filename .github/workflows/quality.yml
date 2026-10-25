@@ -90,7 +90,7 @@ jobs:
       run: python3 -m scripts.ci_identity
       env:
         CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
       with:
         version: 0.13.1
         enable-cache: true
@@ -152,7 +152,7 @@ jobs:
         ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
         path: public-portfolio
         persist-credentials: false
-    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
       with:
         version: 0.13.1
         save-cache: false
@@ -282,7 +282,7 @@ jobs:
         ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
         path: public-portfolio
         persist-credentials: false
-    - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
       with:
         version: 0.13.1
         save-cache: false
