@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
-FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS runtime-base
+FROM python:3.14.8-slim-trixie@sha256:fbecd461fc72d21b2143c6eaba25143738079154a6d0ea3da3aec724f50eed4a AS runtime-base
 # The reviewed public-source CLI uses Git; no HTTP endpoint exposes it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git=1:2.47.3-0+deb13u1 libpcre2-8-0=10.46-1~deb13u3 \
