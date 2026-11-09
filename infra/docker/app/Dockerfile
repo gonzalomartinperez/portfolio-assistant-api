@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
-FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS runtime-base
+FROM python:3.14.9-slim-trixie@sha256:35caba83af2fe6da9a5d922f9b0156f21d1246a48278c58a08bd253303ba42e8 AS runtime-base
 # The reviewed public-source CLI uses Git; no HTTP endpoint exposes it.
 # apt, libapt-pkg7.0 and zlib1g are pinned to their fixed Debian security versions.
 RUN apt-get update && apt-get install -y --no-install-recommends \
