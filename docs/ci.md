@@ -125,14 +125,15 @@ remain immutable SHA references, checked against the upstream release tag. Check
 7.0.1 and Buildx setup 4.4.1 use Node 24 on compatible GitHub-hosted runners; no unsafe
 fork-checkout override or persisted credentials are enabled.
 
-Dependabot groups routine minor/patch version updates by ecosystem to reduce
-repeated PR pipelines. Major updates remain individual reviewable PRs; grouping
-never grants automatic merge. Python minor/major image changes are excluded from
-routine updates because changing Python requires an explicit project decision.
-Security alerts and default-branch security PRs must still be reviewed separately
-from the scheduled version updates targeting develop. Before merging any update,
-review its diff/upstream notes, run the full gate on the current head and honor
-strict base freshness. Promotion to main receives its own complete check.
+Dependabot opens a single weekly PR (multi-ecosystem group `weekly-all`: uv,
+GitHub Actions and Docker together, Monday 09:00 America/Argentina/Buenos_Aires,
+target `develop`, open-PR limit 1, 7-day cooldown). Grouping never grants automatic
+merge. Python minor/major image changes are excluded from routine updates because
+changing Python requires an explicit project decision. Security alerts and
+default-branch security PRs must still be reviewed separately from the scheduled
+version updates targeting develop. Before merging any update, review its
+diff/upstream notes, run the full gate on the current head and honor strict base
+freshness. Promotion to main receives its own complete check.
 
 Sources: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
 [checkout release](https://github.com/actions/checkout/releases/tag/v7.0.1),

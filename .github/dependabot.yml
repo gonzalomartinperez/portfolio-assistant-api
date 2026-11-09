@@ -1,49 +1,38 @@
 version: 2
+multi-ecosystem-groups:
+  weekly-all:
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Argentina/Buenos_Aires
+    target-branch: develop
+    open-pull-requests-limit: 1
+    labels:
+      - dependencies
 updates:
   - package-ecosystem: uv
     directory: /
-    target-branch: develop
-    schedule:
-      interval: weekly
-    rebase-strategy: auto
-    cooldown:
-      default-days: 7
-    open-pull-requests-limit: 3
+    multi-ecosystem-group: weekly-all
+    patterns: ["*"]
     allow:
       - dependency-type: all
-    groups:
-      test-runner-patches:
-        patterns: ["pytest"]
-        update-types: [patch]
-      ini-parser-compatible:
-        patterns: ["iniconfig"]
-        update-types: [minor, patch]
-      python-review:
-        patterns: ["*"]
-        exclude-patterns: ["pytest", "iniconfig"]
-        update-types: [minor, patch]
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-patch-days: 3
   - package-ecosystem: github-actions
     directory: /
-    target-branch: develop
-    schedule:
-      interval: weekly
-    rebase-strategy: auto
-    open-pull-requests-limit: 2
-    groups:
-      actions-compatible:
-        patterns: ["*"]
-        update-types: [minor, patch]
+    multi-ecosystem-group: weekly-all
+    patterns: ["*"]
+    cooldown:
+      default-days: 7
   - package-ecosystem: docker
     directories: ["/infra/docker/app", "/infra/docker/postgres"]
-    target-branch: develop
-    schedule:
-      interval: weekly
-    rebase-strategy: auto
-    open-pull-requests-limit: 2
-    groups:
-      images-compatible:
-        patterns: ["*"]
-        update-types: [minor, patch]
+    multi-ecosystem-group: weekly-all
+    patterns: ["*"]
+    cooldown:
+      default-days: 7
     ignore:
       # Python minor/major changes need an explicit project decision.
       - dependency-name: python
