@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Literal
 
@@ -10,6 +11,8 @@ from pydantic import BaseModel, Field, ValidationError
 
 class Vulnerability(BaseModel):
     vulnerability_id: str = Field(alias='VulnerabilityID', min_length=1)
+    package: str = Field(default='', alias='PkgName')
+    installed_version: str = Field(default='', alias='InstalledVersion')
     severity: Literal['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] = Field(
         alias='Severity'
     )
@@ -32,6 +35,18 @@ class Report(BaseModel):
     artifact_type: Literal['container_image'] = Field(alias='ArtifactType')
     metadata: Metadata = Field(alias='Metadata')
     results: list[Result] = Field(alias='Results', min_length=1)
+
+
+def blocking_findings(raw: str) -> list[str]:
+    report = Report.model_validate_json(raw, strict=True)
+    return [
+        f'{item.severity} {item.package} {item.installed_version} -> '
+        f'{item.fixed_version} {item.vulnerability_id}'
+        for result in report.results
+        for item in result.vulnerabilities
+        if item.severity == 'CRITICAL'
+        or (item.severity == 'HIGH' and item.fixed_version.strip())
+    ]
 
 
 def evaluate(raw: str, image_id: str) -> dict[str, int]:
@@ -72,6 +87,7 @@ def main() -> None:
         ) from None
     print(json.dumps(summary, sort_keys=True))
     if summary['critical'] or summary['fixable_high']:
+        print(*blocking_findings(args.report.read_text()), sep='\n', file=sys.stderr)
         raise SystemExit('Image contains critical or fixable high vulnerabilities')
 
 

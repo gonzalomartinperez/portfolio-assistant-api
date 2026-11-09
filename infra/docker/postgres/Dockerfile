@@ -14,6 +14,7 @@ FROM postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c666
 COPY --from=vector-build /extension/ /
 # Root startup/ownership repair is unsupported; preserve XML, ICU and the official entrypoint.
 RUN apk add --no-cache libxml2=2.13.9-r2 brotli-libs=1.2.1-r0 \
+    zlib=1.4-r0 musl=1.2.6-r3 musl-utils=1.2.6-r3 libcurl=8.23.0-r0 \
     && rm /usr/local/bin/gosu \
     && test "$(id -u postgres)" = 70 && test "$(id -g postgres)" = 70 \
     && apk info -v > /usr/share/assistant-postgres-packages.txt
