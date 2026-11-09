@@ -1,0 +1,676 @@
+{
+ "totals": {
+  "num_statements": 3575,
+  "percent_covered": 77.57669388655926,
+  "num_branches": 956,
+  "covered_branches": 657,
+  "percent_branches_covered": 68.72384937238493
+ },
+ "files": [
+  {
+   "file": "app/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/neo4j/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/neo4j/projection.py",
+   "stmts": 28,
+   "line_pct": 8.3,
+   "branches": 8,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/neo4j/read_queries.py",
+   "stmts": 35,
+   "line_pct": 100.0,
+   "branches": 16,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/adapters/observability/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/observability/evaluation_export.py",
+   "stmts": 37,
+   "line_pct": 97.7,
+   "branches": 6,
+   "branch_pct": 83.3
+  },
+  {
+   "file": "app/adapters/observability/telemetry.py",
+   "stmts": 79,
+   "line_pct": 98.8,
+   "branches": 6,
+   "branch_pct": 83.3
+  },
+  {
+   "file": "app/adapters/portfolio/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/portfolio/indexing.py",
+   "stmts": 231,
+   "line_pct": 70.9,
+   "branches": 92,
+   "branch_pct": 62.0
+  },
+  {
+   "file": "app/adapters/portfolio/projection.py",
+   "stmts": 64,
+   "line_pct": 89.7,
+   "branches": 14,
+   "branch_pct": 71.4
+  },
+  {
+   "file": "app/adapters/portfolio/watch.py",
+   "stmts": 53,
+   "line_pct": 50.9,
+   "branches": 4,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/postgres/analytics.py",
+   "stmts": 42,
+   "line_pct": 26.0,
+   "branches": 8,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/analytics_report.py",
+   "stmts": 31,
+   "line_pct": 21.2,
+   "branches": 2,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/checkpoints.py",
+   "stmts": 15,
+   "line_pct": 88.2,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/adapters/postgres/conversations.py",
+   "stmts": 96,
+   "line_pct": 20.2,
+   "branches": 18,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/db.py",
+   "stmts": 21,
+   "line_pct": 81.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/postgres/feedback.py",
+   "stmts": 10,
+   "line_pct": 50.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/postgres/ledger.py",
+   "stmts": 58,
+   "line_pct": 31.9,
+   "branches": 14,
+   "branch_pct": 7.1
+  },
+  {
+   "file": "app/adapters/postgres/migrations.py",
+   "stmts": 44,
+   "line_pct": 51.6,
+   "branches": 20,
+   "branch_pct": 60.0
+  },
+  {
+   "file": "app/adapters/postgres/operations.py",
+   "stmts": 90,
+   "line_pct": 75.5,
+   "branches": 16,
+   "branch_pct": 75.0
+  },
+  {
+   "file": "app/adapters/postgres/retention.py",
+   "stmts": 14,
+   "line_pct": 12.5,
+   "branches": 2,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/runs.py",
+   "stmts": 41,
+   "line_pct": 28.9,
+   "branches": 4,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/adapters/postgres/web_ledger.py",
+   "stmts": 26,
+   "line_pct": 100.0,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/adapters/providers/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/providers/answer.py",
+   "stmts": 75,
+   "line_pct": 85.4,
+   "branches": 28,
+   "branch_pct": 78.6
+  },
+  {
+   "file": "app/adapters/providers/embedding.py",
+   "stmts": 61,
+   "line_pct": 76.0,
+   "branches": 14,
+   "branch_pct": 64.3
+  },
+  {
+   "file": "app/adapters/providers/http.py",
+   "stmts": 20,
+   "line_pct": 100.0,
+   "branches": 4,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/adapters/providers/language.py",
+   "stmts": 26,
+   "line_pct": 100.0,
+   "branches": 10,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/adapters/providers/voice.py",
+   "stmts": 5,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/adapters/providers/web_search.py",
+   "stmts": 73,
+   "line_pct": 81.2,
+   "branches": 28,
+   "branch_pct": 71.4
+  },
+  {
+   "file": "app/adapters/retrieval.py",
+   "stmts": 83,
+   "line_pct": 51.4,
+   "branches": 24,
+   "branch_pct": 25.0
+  },
+  {
+   "file": "app/ai/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/ai/retrieval.py",
+   "stmts": 147,
+   "line_pct": 82.7,
+   "branches": 96,
+   "branch_pct": 74.0
+  },
+  {
+   "file": "app/ai/workflow.py",
+   "stmts": 59,
+   "line_pct": 95.8,
+   "branches": 12,
+   "branch_pct": 83.3
+  },
+  {
+   "file": "app/application/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/analytics.py",
+   "stmts": 12,
+   "line_pct": 92.9,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/application/answer.py",
+   "stmts": 30,
+   "line_pct": 86.4,
+   "branches": 14,
+   "branch_pct": 78.6
+  },
+  {
+   "file": "app/application/contracts.py",
+   "stmts": 27,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/conversation_context.py",
+   "stmts": 40,
+   "line_pct": 90.0,
+   "branches": 20,
+   "branch_pct": 80.0
+  },
+  {
+   "file": "app/application/conversations.py",
+   "stmts": 66,
+   "line_pct": 48.6,
+   "branches": 8,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/application/embeddings.py",
+   "stmts": 4,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/evaluation_export.py",
+   "stmts": 21,
+   "line_pct": 100.0,
+   "branches": 10,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/application/feedback.py",
+   "stmts": 5,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/knowledge.py",
+   "stmts": 11,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/knowledge_watch.py",
+   "stmts": 41,
+   "line_pct": 88.2,
+   "branches": 10,
+   "branch_pct": 80.0
+  },
+  {
+   "file": "app/application/language.py",
+   "stmts": 27,
+   "line_pct": 95.1,
+   "branches": 14,
+   "branch_pct": 85.7
+  },
+  {
+   "file": "app/application/observability.py",
+   "stmts": 29,
+   "line_pct": 97.0,
+   "branches": 4,
+   "branch_pct": 75.0
+  },
+  {
+   "file": "app/application/presentation_context.py",
+   "stmts": 7,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/request_context.py",
+   "stmts": 2,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/application/runs.py",
+   "stmts": 174,
+   "line_pct": 93.1,
+   "branches": 44,
+   "branch_pct": 86.4
+  },
+  {
+   "file": "app/application/web_context.py",
+   "stmts": 21,
+   "line_pct": 100.0,
+   "branches": 4,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/bootstrap/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/bootstrap/config.py",
+   "stmts": 148,
+   "line_pct": 87.7,
+   "branches": 56,
+   "branch_pct": 76.8
+  },
+  {
+   "file": "app/bootstrap/container.py",
+   "stmts": 144,
+   "line_pct": 82.4,
+   "branches": 26,
+   "branch_pct": 61.5
+  },
+  {
+   "file": "app/bootstrap/evaluation_export.py",
+   "stmts": 42,
+   "line_pct": 69.6,
+   "branches": 14,
+   "branch_pct": 78.6
+  },
+  {
+   "file": "app/bootstrap/indexing.py",
+   "stmts": 37,
+   "line_pct": 77.8,
+   "branches": 8,
+   "branch_pct": 50.0
+  },
+  {
+   "file": "app/bootstrap/logging.py",
+   "stmts": 20,
+   "line_pct": 90.9,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/bootstrap/maintenance.py",
+   "stmts": 18,
+   "line_pct": 55.6,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/bootstrap/migrations.py",
+   "stmts": 7,
+   "line_pct": 71.4,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/domain/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/domain/analytics.py",
+   "stmts": 17,
+   "line_pct": 100.0,
+   "branches": 6,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/domain/analytics_country.py",
+   "stmts": 3,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/domain/analytics_interactions.py",
+   "stmts": 23,
+   "line_pct": 93.9,
+   "branches": 10,
+   "branch_pct": 90.0
+  },
+  {
+   "file": "app/domain/analytics_periods.py",
+   "stmts": 24,
+   "line_pct": 93.8,
+   "branches": 8,
+   "branch_pct": 87.5
+  },
+  {
+   "file": "app/domain/analytics_report.py",
+   "stmts": 33,
+   "line_pct": 88.6,
+   "branches": 2,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/domain/budget.py",
+   "stmts": 19,
+   "line_pct": 100.0,
+   "branches": 8,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/domain/conversations.py",
+   "stmts": 11,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/domain/errors.py",
+   "stmts": 9,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/domain/evidence.py",
+   "stmts": 70,
+   "line_pct": 88.2,
+   "branches": 32,
+   "branch_pct": 81.2
+  },
+  {
+   "file": "app/domain/fixture.py",
+   "stmts": 101,
+   "line_pct": 73.9,
+   "branches": 52,
+   "branch_pct": 65.4
+  },
+  {
+   "file": "app/domain/graph.py",
+   "stmts": 43,
+   "line_pct": 69.2,
+   "branches": 22,
+   "branch_pct": 59.1
+  },
+  {
+   "file": "app/domain/knowledge.py",
+   "stmts": 13,
+   "line_pct": 100.0,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/domain/portfolio_paths.py",
+   "stmts": 21,
+   "line_pct": 80.6,
+   "branches": 10,
+   "branch_pct": 70.0
+  },
+  {
+   "file": "app/domain/privacy.py",
+   "stmts": 11,
+   "line_pct": 100.0,
+   "branches": 4,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/domain/web_budget.py",
+   "stmts": 16,
+   "line_pct": 100.0,
+   "branches": 4,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/domain/web_policy.py",
+   "stmts": 47,
+   "line_pct": 91.0,
+   "branches": 20,
+   "branch_pct": 95.0
+  },
+  {
+   "file": "app/knowledge_sync.py",
+   "stmts": 4,
+   "line_pct": 83.3,
+   "branches": 2,
+   "branch_pct": 50.0
+  },
+  {
+   "file": "app/knowledge_watch.py",
+   "stmts": 35,
+   "line_pct": 0.0,
+   "branches": 8,
+   "branch_pct": 0.0
+  },
+  {
+   "file": "app/main.py",
+   "stmts": 2,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/migrate.py",
+   "stmts": 3,
+   "line_pct": 100.0,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/presentation/__init__.py",
+   "stmts": 0,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/presentation/analytics.py",
+   "stmts": 64,
+   "line_pct": 82.4,
+   "branches": 10,
+   "branch_pct": 70.0
+  },
+  {
+   "file": "app/presentation/analytics_country.py",
+   "stmts": 17,
+   "line_pct": 100.0,
+   "branches": 6,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/presentation/analytics_report_models.py",
+   "stmts": 54,
+   "line_pct": 96.4,
+   "branches": 2,
+   "branch_pct": 50.0
+  },
+  {
+   "file": "app/presentation/events.py",
+   "stmts": 27,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/presentation/feedback.py",
+   "stmts": 29,
+   "line_pct": 93.9,
+   "branches": 4,
+   "branch_pct": 75.0
+  },
+  {
+   "file": "app/presentation/http.py",
+   "stmts": 119,
+   "line_pct": 62.2,
+   "branches": 16,
+   "branch_pct": 50.0
+  },
+  {
+   "file": "app/presentation/interaction_models.py",
+   "stmts": 21,
+   "line_pct": 100.0,
+   "branches": 2,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/presentation/middleware.py",
+   "stmts": 80,
+   "line_pct": 97.9,
+   "branches": 14,
+   "branch_pct": 92.9
+  },
+  {
+   "file": "app/presentation/models.py",
+   "stmts": 42,
+   "line_pct": 100.0,
+   "branches": 0,
+   "branch_pct": null
+  },
+  {
+   "file": "app/presentation/operations.py",
+   "stmts": 85,
+   "line_pct": 99.0,
+   "branches": 16,
+   "branch_pct": 93.8
+  },
+  {
+   "file": "app/presentation/streaming.py",
+   "stmts": 32,
+   "line_pct": 89.5,
+   "branches": 6,
+   "branch_pct": 100.0
+  },
+  {
+   "file": "app/retention.py",
+   "stmts": 3,
+   "line_pct": 0.0,
+   "branches": 2,
+   "branch_pct": 0.0
+  }
+ ]
+}

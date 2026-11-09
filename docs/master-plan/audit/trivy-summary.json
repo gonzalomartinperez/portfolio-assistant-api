@@ -1,0 +1,37 @@
+{
+ "artifact": "portfolio-assistant-api:ci",
+ "total": 60,
+ "by_severity": {
+  "HIGH": 60
+ },
+ "with_fix": 4,
+ "packages": [
+  "apt",
+  "bsdutils",
+  "libacl1",
+  "libapt-pkg7.0",
+  "libblkid1",
+  "libcurl3t64-gnutls",
+  "libexpat1",
+  "liblastlog2-2",
+  "libmount1",
+  "libncursesw6",
+  "libperl5.40",
+  "libsmartcols1",
+  "libsqlite3-0",
+  "libsystemd0",
+  "libtinfo6",
+  "libudev1",
+  "libuuid1",
+  "login",
+  "mount",
+  "ncurses-base",
+  "ncurses-bin",
+  "perl",
+  "perl-base",
+  "perl-modules-5.40",
+  "util-linux",
+  "zlib1g"
+ ],
+ "note": "summary of audit trivy.json (full report 868 KB not copied)"
+}

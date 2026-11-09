@@ -1,0 +1,140 @@
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 35%]
+........................................................................ [ 43%]
+........................................................................ [ 52%]
+........................................................................ [ 61%]
+........................................................................ [ 70%]
+........................................................................ [ 79%]
+........................................................................ [ 87%]
+........................................................................ [ 96%]
+...........................                                              [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.14.8-final-0 ________________
+
+Name                                              Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------------------------
+app/__init__.py                                       0      0      0      0   100%
+app/adapters/__init__.py                              0      0      0      0   100%
+app/adapters/neo4j/__init__.py                        0      0      0      0   100%
+app/adapters/neo4j/projection.py                     28     25      8      0     8%
+app/adapters/neo4j/read_queries.py                   35      0     16      0   100%
+app/adapters/observability/__init__.py                0      0      0      0   100%
+app/adapters/observability/evaluation_export.py      37      0      6      1    98%
+app/adapters/observability/telemetry.py              79      0      6      1    99%
+app/adapters/portfolio/__init__.py                    0      0      0      0   100%
+app/adapters/portfolio/indexing.py                  231     59     92     21    71%
+app/adapters/portfolio/projection.py                 64      4     14      4    90%
+app/adapters/portfolio/watch.py                      53     24      4      0    51%
+app/adapters/postgres/__init__.py                     0      0      0      0   100%
+app/adapters/postgres/analytics.py                   42     29      8      0    26%
+app/adapters/postgres/analytics_report.py            31     24      2      0    21%
+app/adapters/postgres/checkpoints.py                 15      2      2      0    88%
+app/adapters/postgres/conversations.py               96     73     18      0    20%
+app/adapters/postgres/db.py                          21      4      0      0    81%
+app/adapters/postgres/feedback.py                    10      5      0      0    50%
+app/adapters/postgres/ledger.py                      58     36     14      1    32%
+app/adapters/postgres/migrations.py                  44     23     20      0    52%
+app/adapters/postgres/operations.py                  90     22     16      2    75%
+app/adapters/postgres/retention.py                   14     12      2      0    12%
+app/adapters/postgres/runs.py                        41     28      4      0    29%
+app/adapters/postgres/web_ledger.py                  26      0      2      0   100%
+app/adapters/providers/__init__.py                    0      0      0      0   100%
+app/adapters/providers/answer.py                     75      9     28      4    85%
+app/adapters/providers/embedding.py                  61     13     14      3    76%
+app/adapters/providers/http.py                       20      0      4      0   100%
+app/adapters/providers/language.py                   26      0     10      0   100%
+app/adapters/providers/voice.py                       5      0      0      0   100%
+app/adapters/providers/web_search.py                 73     11     28      8    81%
+app/adapters/retrieval.py                            83     34     24      6    51%
+app/ai/__init__.py                                    0      0      0      0   100%
+app/ai/retrieval.py                                 147     17     96     23    83%
+app/ai/workflow.py                                   59      1     12      2    96%
+app/application/__init__.py                           0      0      0      0   100%
+app/application/analytics.py                         12      1      2      0    93%
+app/application/answer.py                            30      3     14      1    86%
+app/application/contracts.py                         27      0      0      0   100%
+app/application/conversation_context.py              40      2     20      2    90%
+app/application/conversations.py                     66     30      8      0    49%
+app/application/embeddings.py                         4      0      0      0   100%
+app/application/evaluation_export.py                 21      0     10      0   100%
+app/application/feedback.py                           5      0      0      0   100%
+app/application/knowledge.py                         11      0      0      0   100%
+app/application/knowledge_watch.py                   41      4     10      2    88%
+app/application/language.py                          27      0     14      2    95%
+app/application/observability.py                     29      0      4      1    97%
+app/application/presentation_context.py               7      0      0      0   100%
+app/application/request_context.py                    2      0      0      0   100%
+app/application/runs.py                             174      9     44      6    93%
+app/application/web_context.py                       21      0      4      0   100%
+app/bootstrap/__init__.py                             0      0      0      0   100%
+app/bootstrap/config.py                             148     12     56     13    88%
+app/bootstrap/container.py                          144     20     26      6    82%
+app/bootstrap/evaluation_export.py                   42     14     14      1    70%
+app/bootstrap/indexing.py                            37      6      8      2    78%
+app/bootstrap/logging.py                             20      2      2      0    91%
+app/bootstrap/maintenance.py                         18      8      0      0    56%
+app/bootstrap/migrations.py                           7      2      0      0    71%
+app/domain/__init__.py                                0      0      0      0   100%
+app/domain/analytics.py                              17      0      6      0   100%
+app/domain/analytics_country.py                       3      0      0      0   100%
+app/domain/analytics_interactions.py                 23      1     10      1    94%
+app/domain/analytics_periods.py                      24      1      8      1    94%
+app/domain/analytics_report.py                       33      2      2      0    89%
+app/domain/budget.py                                 19      0      8      0   100%
+app/domain/conversations.py                          11      0      0      0   100%
+app/domain/errors.py                                  9      0      0      0   100%
+app/domain/evidence.py                               70      6     32      4    88%
+app/domain/fixture.py                               101     22     52      8    74%
+app/domain/graph.py                                  43     11     22      5    69%
+app/domain/knowledge.py                              13      0      2      0   100%
+app/domain/portfolio_paths.py                        21      3     10      3    81%
+app/domain/privacy.py                                11      0      4      0   100%
+app/domain/web_budget.py                             16      0      4      0   100%
+app/domain/web_policy.py                             47      5     20      1    91%
+app/knowledge_sync.py                                 4      0      2      1    83%
+app/knowledge_watch.py                               35     35      8      0     0%
+app/main.py                                           2      0      0      0   100%
+app/migrate.py                                        3      0      2      0   100%
+app/presentation/__init__.py                          0      0      0      0   100%
+app/presentation/analytics.py                        64     10     10      1    82%
+app/presentation/analytics_country.py                17      0      6      0   100%
+app/presentation/analytics_report_models.py          54      1      2      1    96%
+app/presentation/events.py                           27      0      0      0   100%
+app/presentation/feedback.py                         29      1      4      1    94%
+app/presentation/http.py                            119     43     16      2    62%
+app/presentation/interaction_models.py               21      0      2      0   100%
+app/presentation/middleware.py                       80      1     14      1    98%
+app/presentation/models.py                           42      0      0      0   100%
+app/presentation/operations.py                       85      0     16      1    99%
+app/presentation/streaming.py                        32      4      6      0    89%
+app/retention.py                                      3      3      2      0     0%
+-----------------------------------------------------------------------------------
+TOTAL                                              3575    717    956    143    78%
+Coverage JSON written to file /home/gmperez/projects/github/gonzalomartinperez/reports/master-plans-2026-11/audit/portfolio-assistant-api/coverage.json
+819 passed, 47 deselected in 31.68s
+	Command being timed: "uv run --with pytest-cov pytest -q -p no:cacheprovider -m not integration --cov=app --cov-branch --cov-report=json:/home/gmperez/projects/github/gonzalomartinperez/reports/master-plans-2026-11/audit/portfolio-assistant-api/coverage.json --cov-report=term"
+	User time (seconds): 21.99
+	System time (seconds): 2.37
+	Percent of CPU this job got: 66%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:36.77
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 289572
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 5
+	Minor (reclaiming a frame) page faults: 149016
+	Voluntary context switches: 2245
+	Involuntary context switches: 18948
+	Swaps: 0
+	File system inputs: 9032
+	File system outputs: 1280
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+exit=0

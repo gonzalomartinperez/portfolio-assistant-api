@@ -1,0 +1,294 @@
+{
+  "mode": "fixture embeddings; real PostgreSQL and Neo4j; no model calls",
+  "results": [
+    {
+      "strategy": "vector",
+      "case": "project",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 148.5,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "vector",
+      "case": "education-es",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 129.1,
+      "sources": 2,
+      "paths": [
+        "content/es/education.ts",
+        "content/es/projects.ts"
+      ]
+    },
+    {
+      "strategy": "vector",
+      "case": "stack",
+      "kind": "relationship",
+      "passed": false,
+      "elapsed_ms": 175.6,
+      "sources": 2,
+      "paths": [
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "vector",
+      "case": "role",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 200.4,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "vector",
+      "case": "shared",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 119.9,
+      "sources": 5,
+      "paths": [
+        "content/en/education.ts",
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "vector",
+      "case": "shared-es",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 103.7,
+      "sources": 2,
+      "paths": [
+        "content/es/projects.ts"
+      ]
+    },
+    {
+      "strategy": "vector",
+      "case": "ambiguous",
+      "kind": "ambiguity",
+      "passed": true,
+      "elapsed_ms": 0.5,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "vector",
+      "case": "unknown",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 141.8,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "vector",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": false,
+      "elapsed_ms": 206.2,
+      "sources": 3,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/profile.ts",
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "project",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 689.1,
+      "sources": 2,
+      "paths": [
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "education-es",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 123.7,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "graph",
+      "case": "stack",
+      "kind": "relationship",
+      "passed": false,
+      "elapsed_ms": 144.6,
+      "sources": 2,
+      "paths": [
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "role",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 212.8,
+      "sources": 3,
+      "paths": [
+        "content/en/experience.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "shared",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 207.7,
+      "sources": 5,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "shared-es",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 426.4,
+      "sources": 5,
+      "paths": [
+        "content/es/experience.ts",
+        "content/es/projects.ts"
+      ]
+    },
+    {
+      "strategy": "graph",
+      "case": "ambiguous",
+      "kind": "ambiguity",
+      "passed": true,
+      "elapsed_ms": 0.5,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "graph",
+      "case": "unknown",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 259.3,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "graph",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 191.8,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "hybrid",
+      "case": "project",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 138.5,
+      "sources": 5,
+      "paths": [
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "education-es",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 132.1,
+      "sources": 5,
+      "paths": [
+        "content/es/education.ts",
+        "content/es/projects.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "stack",
+      "kind": "relationship",
+      "passed": false,
+      "elapsed_ms": 126.7,
+      "sources": 5,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "role",
+      "kind": "direct",
+      "passed": false,
+      "elapsed_ms": 177.9,
+      "sources": 2,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/profile.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "shared",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 218.4,
+      "sources": 5,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/projects.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "shared-es",
+      "kind": "multi-hop",
+      "passed": false,
+      "elapsed_ms": 184.2,
+      "sources": 5,
+      "paths": [
+        "content/es/experience.ts",
+        "content/es/projects.ts"
+      ]
+    },
+    {
+      "strategy": "hybrid",
+      "case": "ambiguous",
+      "kind": "ambiguity",
+      "passed": true,
+      "elapsed_ms": 0.7,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "hybrid",
+      "case": "unknown",
+      "kind": "no-answer",
+      "passed": true,
+      "elapsed_ms": 195.4,
+      "sources": 0,
+      "paths": []
+    },
+    {
+      "strategy": "hybrid",
+      "case": "unsupported-employer",
+      "kind": "no-answer",
+      "passed": false,
+      "elapsed_ms": 133.5,
+      "sources": 3,
+      "paths": [
+        "content/en/experience.ts",
+        "content/en/projects.ts"
+      ]
+    }
+  ]
+}

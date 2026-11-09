@@ -1,0 +1,78 @@
+...............................F..............F                          [100%]
+=================================== FAILURES ===================================
+_________ test_hybrid_retrieval_evaluation_and_relationship_provenance _________
+
+    @pytest.mark.integration
+    @pytest.mark.skipif(
+        os.getenv('TEST_INTEGRATION') != '1', reason='requires real seeded indexes'
+    )
+    def test_hybrid_retrieval_evaluation_and_relationship_provenance():
+        from neo4j import GraphDatabase
+    
+        from app.bootstrap.config import settings
+        from app.bootstrap.maintenance import connect
+        from tests.support import retrieve
+    
+        for case in json.loads(Path('evals/retrieval.json').read_text()):
+            rows, _ = retrieve(case['question'], case['locale'])
+            if not case['paths']:
+>               assert not rows, case['id']
+E               AssertionError: unsupported-employer
+E               assert not [{'id': '2aab836e321b362f2a332b8d9b416e429f3c7250d1060cbd31a4b61ad4332463', 'title': 'src/content/en/experience.ts', '...folio/blob/b06c81e302f007fa1f353ad306f4a5ea3331b534/src/content/en/experience.ts#L36-L70', 'source_type': 'code', ...}]
+
+tests/test_knowledge.py:36: AssertionError
+----------------------------- Captured stderr call -----------------------------
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 5, "duration_ms": 102.4, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 4, "duration_ms": 107.1, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 5, "duration_ms": 102.1, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 2, "duration_ms": 148.7, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": true, "sources": 5, "duration_ms": 123.5, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": true, "sources": 5, "duration_ms": 132.9, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 0, "duration_ms": 113.1, "request_id": null, "level": "info"}
+{"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 2, "duration_ms": 96.6, "request_id": null, "level": "info"}
+------------------------------ Captured log call -------------------------------
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 5, "duration_ms": 102.4}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 4, "duration_ms": 107.1}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 5, "duration_ms": 102.1}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 2, "duration_ms": 148.7}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": true, "sources": 5, "duration_ms": 123.5}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": true, "sources": 5, "duration_ms": 132.9}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 0, "duration_ms": 113.1}
+INFO     portfolio_assistant:retrieval.py:378 {"operation": "retrieval", "strategy": "hybrid", "graph_expansion": false, "sources": 2, "duration_ms": 96.6}
+_________ test_neo4j_effective_vendor_reporting_settings_are_disabled __________
+
+    @pytest.mark.integration
+    @pytest.mark.skipif(
+        os.getenv('TEST_INTEGRATION') != '1', reason='requires isolated Neo4j fixture'
+    )
+    def test_neo4j_effective_vendor_reporting_settings_are_disabled():
+        config = settings()
+        names = ['dbms.usage_report.enabled', 'server.bolt.telemetry.enabled']
+        with (
+            GraphDatabase.driver(
+                config.neo4j_uri,
+                auth=(config.neo4j_user, config.neo4j_password),
+                max_transaction_retry_time=0,
+            ) as driver,
+            driver.session(database=config.neo4j_database) as session,
+        ):
+            values = {
+                row['name']: row['value']
+                for row in session.run(
+                    'SHOW SETTINGS YIELD name,value WHERE name IN $names RETURN name,value',
+                    names=names,
+                )
+            }
+>       assert values == {name: 'false' for name in names}
+E       AssertionError: assert {'dbms.usage_...led': 'false'} == {'dbms.usage_...led': 'false'}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'dbms.usage_report.enabled': 'true'} != {'dbms.usage_report.enabled': 'false'}
+E         Use -v to get more diff
+
+tests/test_service_privacy.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_knowledge.py::test_hybrid_retrieval_evaluation_and_relationship_provenance
+FAILED tests/test_service_privacy.py::test_neo4j_effective_vendor_reporting_settings_are_disabled
+2 failed, 45 passed, 819 deselected in 108.08s (0:01:48)

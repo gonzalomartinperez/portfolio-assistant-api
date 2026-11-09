@@ -51,3 +51,11 @@ This repository owns the API image, runtime contract, migrations and local tests
 Do not edit vps-ops, install a controller, activate deployment triggers or treat
 image publication as deployment approval. Production controller/stack references are retired; local proxy fixtures are
 tests only. Follow docs/deployment-contract.md and use explicit canonical Docker paths.
+
+## Master plan (2026-11)
+
+The excellence refactor is planned in [`docs/master-plan/`](docs/master-plan/README.md). Before
+acting on anything it covers, read
+[`docs/master-plan/owner-decisions.md`](docs/master-plan/owner-decisions.md) (binding owner
+decisions) and, to continue the work from any session,
+[`docs/master-plan/RESUME.md`](docs/master-plan/RESUME.md).
