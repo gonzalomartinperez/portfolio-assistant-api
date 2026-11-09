@@ -1,0 +1,22 @@
+1085	S101    	[ ] assert
+  92	PT018   	[ ] pytest-composite-assertion
+  37	PT011   	[ ] pytest-raises-too-broad
+  28	S603    	[ ] subprocess-without-shell-equals-true
+  27	S607    	[ ] start-process-with-partial-path
+  13	B008    	[ ] function-call-in-default-argument
+  13	PT006   	[ ] pytest-parametrize-names-wrong-type
+  10	RUF100  	[*] unused-noqa
+   8	S105    	[ ] hardcoded-password-string
+   8	S108    	[ ] hardcoded-temp-file
+   5	S104    	[ ] hardcoded-bind-all-interfaces
+   5	S106    	[ ] hardcoded-password-func-arg
+   4	PT012   	[ ] pytest-raises-with-multiple-statements
+   3	RUF005  	[ ] collection-literal-concatenation
+   3	S608    	[ ] hardcoded-sql-expression
+   2	RUF001  	[ ] ambiguous-unicode-character-string
+   2	RUF021  	[*] parenthesize-chained-operators
+   2	S310    	[ ] suspicious-url-open-usage
+   1	ASYNC109	[ ] async-function-with-timeout
+   1	SIM105  	[ ] suppressible-exception
+Found 1349 errors.
+[*] 12 fixable with `--fix` (109 unsafe fixes available with `--fix --unsafe-fixes`).

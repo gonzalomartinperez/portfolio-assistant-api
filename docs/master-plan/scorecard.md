@@ -1,76 +1,115 @@
 # Scorecard
 
-Scores are 0–100, assigned with the fixed [rubrics](rubrics/) and backed by the
-automated measurements below. Baseline: `origin/develop` at `44ae6c7`, audited
-2026-10-24 ([baseline audit](research/audit-baseline.md)).
+Rubrics: [rubrics.md](rubrics.md) (ecosystem rubrics v2, frozen). Baseline: `origin/develop` `e749ca7`, 2026-11-09. Evidence: [audit.md](audit.md). Rule from the rubric: a criterion without evidence is unmet; 95-100 means every criterion met with evidence; 85-94 means every critical criterion (C) met; below 85 means a C criterion is unmet. Caps: a failing required check caps the lens at 70; a committed secret caps Security at 40; a contract break without a major path caps Architecture at 60.
 
-## Axes, baselines and targets
+**How to read the baseline.** Axes marked *auto* are computed from measured numbers by the rubric rules. Axes marked *judged* are the planner's score anchored to cited evidence; they are replaced by the first independent evaluator-agent score at M3 (rubric: evaluators never see the planner's reasoning). The baseline replaces the v1 weighted score of 72 (v1 used ten different axes and weights; v2 does not weight or average across axes).
 
-| Axis | Lens | Weight | Baseline | Research target | Owner target | Main baseline evidence |
-|---|---|---|---|---|---|---|
-| Code quality | developer | ×1 | **72** | 95 | ≥ 95 | minimal ruff (no B/S/SIM/C90/ANN), `search` CC 48, hardcoded keywords and TS regexes, ~1 KB inline prompt in `adapters/providers/answer.py`, `domain/fixture.py` with TS-format knowledge |
-| Architecture | developer | ×1.5 | **80** | 96 | ≥ 95 | six layers + AST guard with bypass probes, 19 `Protocol` ports, composition root; weak: mypy strict only on inner layers, sync DB through `asyncio.to_thread` mixed with an async pool, loose entrypoints in `app/*.py`, `ai/` imports application functions (`generate`) instead of receiving capabilities |
-| Tests | developer | ×1 | **74** | 95 | ≥ 95 | 866 fast tests, real services in CI, cancellation/SIGTERM probes; missing: coverage gate, branch coverage, Hypothesis, mutation, layout by type (52 flat files), `application/conversations.py` 55% |
-| Eval quality (RAG) | developer | ×1.5 | **58** | 95 | ≥ 95 | 1,000-question bank split by family, 40 adversarial, 300 documented live turns; missing: qrels (9 retrieval cases), Recall@k/nDCG, validated judge, formal regression/capability suites, eval on PRs |
-| Security | developer | ×1 | **76** | 95 | ≥ 95 | threat model, CSRF, sessions with ownership, non-root image with digests, gated Trivy, in-house secret scanner; missing: GitHub secret scanning/push protection, CodeQL, dependency review, SBOM/attestation, VEX; Neo4j open findings; `git` in the runtime image |
-| Perf / latency / cost | developer | ×1 | **70** | 95 | ≥ 95 | atomic spend reservations, USD 10/month cap, `run_timeout_seconds=60`, 15 s SSE heartbeat, query-plan benchmarks; missing: load test, TTFT/p95 SLOs, measurement under concurrency; fixture retrieval p50 ~280 ms hybrid and 824 ms graph |
-| Observability | developer | ×1 | **72** | 94 | ≥ 95 | private status/metrics, Prometheus, opt-in OTLP with allowlist, per-stage `phase()`; missing: OTel GenAI semconv, run_id↔trace correlation, versioned dashboards/SLOs, prompt/corpus version in metrics |
-| CI reliability | developer | ×1 | **82** | 96 | ≥ 95 | SHA-pinned actions, aggregate gate, `merge_group`, concurrency, 4 min; weak: duplicated Postgres build+migrate+index in `database` and `container`, no coverage/junit summary, no flake detection, no build-once image |
-| Docs / showcase | recruiter | ×1 | **66** | 96 | ≥ 95 | README with real gallery and diagrams; 7 ADRs; weak: defensive tone, 80 doc files without Diátaxis hierarchy, dated evidence mixed with living docs, no CHANGELOG/releases, ADR 007 missing, no eval numbers in README |
-| DX | developer | ×1 | **74** | 95 | ≥ 95 | uv + fixture mode + `scripts.demo`; weak: 8-command quickstart with port exports, no task runner, no pre-commit, no devcontainer, uv version inconsistent with the installed one |
-| **Weighted** | — | — | **72** | **95+** | ≥ 95 | weights: AI quality (eval) and architecture ×1.5; the rest ×1 |
+## 1. Lens 1: senior developer
 
-The weighted score is `Σ(weight × score) / Σ(weight)` with a weight sum of 11.
+| Axis | Baseline | Basis | Target | Why not higher today (unmet critical criteria) |
+|---|---|---|---|---|
+| D1 Architecture | **82** judged | Six layers, AST guard with negative probes, empty violation baseline, composition root in `bootstrap`, 32 `Protocol` references; but guard is custom (no import-linter contracts), domain parses portfolio TypeScript, `ai` layer imports application functions, mypy covers 41% of files | 95 | Guard lacks `forbidden`/`independence` contracts; domain not format-free |
+| D2 Code quality | **58** auto | `mypy --strict app`: 199 errors, scope 39/95 files; C901 above 10 in 11 functions (max 48); no dead-code check; ecosystem ruff families not selected | 95 | Zero type errors, complexity at most 10, dead-code check |
+| D3 Tests | **66** auto | 866 tests; 2 integration failures in the audit run (cap 70 applied until CI conditions are shown green); coverage 77.6% line, 68.7% branch against 85% floor; no diff-coverage, mutation, property, flake detection | 95 | Branch floor, diff coverage 90%, mutation score, 0 failing |
+| D4 CI/CD | **70** judged | Aggregate gate exists, SHA-pinned; not dynamic, duplicated setup, no build-once, weekly single-PR rule violated | 95 | Dynamic affected-only profiles, weekly single PR, build once and deploy same digest |
+| D5 Security and supply chain | **68** judged | Threat model, non-root image with digest pins, in-house secret scan, Trivy gate; no CodeQL, SBOM, provenance, zizmor, dependency-review; `pull_request_target` workflow; 4 fixable HIGH image findings | 95 | CodeQL, SBOM plus provenance, zizmor, vulnerability SLA, fixable HIGH at 0 |
+| D6 Performance | **62** judged | Atomic spend, run timeout, SSE heartbeat, query-plan benchmarks; no enforced latency/TTFT/cost budget, no load test, image 992 MB | 95 | Budgets enforced in CI (stubbed-model load, cost and latency on recordings, image size ratchet) |
+| D7 Observability | **72** judged | Private status and metrics, Prometheus, opt-in OTLP with allowlist, per-stage timing; no `gen_ai.*` centralization, no run-to-trace id correlation test, no SLO definitions | 90 floor, 95 after Phase V | SLO burn alerts and real dashboards need the VPS |
+| D8 Docs and DX | **64** judged | README 339 lines, 34 docs plus 46 dated reports without hierarchy, 7 ADRs, no CHANGELOG, no community files beyond SECURITY, skills without evals, no task runner | 95 | README template, MADR current, one-command setup, CHANGELOG, community files, skill activation evals |
 
-Lens scores (separate from the axes, each 0–100 from its rubric):
+## 2. Lens 2: senior product designer, API and conversational UX
 
-| Lens | Rubric | Baseline | Owner target |
-|---|---|---|---|
-| Senior developer | [senior-developer.md](rubrics/senior-developer.md) | the axis table above (weighted 72) | ≥ 95 |
-| Senior designer (API/streaming UX) | [senior-designer.md](rubrics/senior-designer.md) | not yet scored numerically; qualitative findings in the [audit](research/audit-baseline.md#api-ux-designer-lens) | ≥ 95 |
-| Senior recruiter (public showcase) | [senior-recruiter.md](rubrics/senior-recruiter.md) | not yet scored numerically; closest axis is Docs/showcase 66 | ≥ 95 |
+| Axis (API meaning) | Baseline | Basis | Target | Note |
+|---|---|---|---|---|
+| P1 Error and response contract clarity | **78** judged | Typed errors and closed SSE terminal events; messages not enumerated, no `retryable`, no RFC 9457 `type`; EN and ES copy partly in the consumer | 95 | Additive v1.1 (PAA-D17) |
+| P2 Streaming UX | **80** judged | First delta 75-206 ms in fixture mode (audit), heartbeat 15 s, cancel and disconnect handled; few progress phases | 95 | Time to first token budget on live recordings needs paid calls |
+| P3 Assistant message quality | **50** judged | No golden set, 1,000 cases never answer-reviewed, no validated judge, language policy tested only in fixture mode, retrieval eval stale (P0-1) | 95 (provisional 90 until the owner's 20% spot check) | Recording, snapshot and judge runs are pre-authorized within the DR-04 caps; the only dependency is the owner's one-time 20% spot check of the agent-bootstrapped labels (DR-05), which validates the judge |
+| P4 Contract docs and examples | **80** judged | OpenAPI, SSE schema, examples, frontend handoff; no breaking-change gate, no Schemathesis | 95 | oasdiff plus Schemathesis in CI |
+| P5 Consistency with consumers | **74** judged | Byte comparison with backoffice contracts, consumer pinned at a SHA; no scheduled cross-repo compile job | 95 | Cross job (ecosystem 18.1) |
+| P6 Consistency and identity across the two APIs | **70** judged | Near-duplicate CI, Dockerfile and skills with the sibling; no shared template, naming and health endpoints differ | 95 | Standards templates, aligned health contract |
 
-**Owner requirement vs. research targets.** The owner requires 95+ on every axis. The
-research target for Observability is 94 and reaches 95 only in P6; Eval quality tops
-out at ~90 without P6. Both therefore depend on P6 authorization and, for online parts,
-on the VPS.
+## 3. Lens 3: senior recruiter (public showcase)
 
-## Expected score by phase
+| Criterion | Baseline | Evidence |
+|---|---|---|
+| First-screen clarity | 60 | README opens with value but caveats precede results; 339 lines |
+| Proof (measured results) | 55 | No results table; evidence is dated reports that say "pending review" |
+| Writing quality | 72 | Dense; defensive qualifiers |
+| Credibility | 80 | Real architecture, tests, threat model; honest limits |
+| Calls to action | 55 | No release, no demo command shorter than 8 steps |
+| Polish | 70 | Gallery screenshots exist; no badges policy, no CHANGELOG |
+| Differentiation | 85 | Evidence-grounded RAG with graph provenance, atomic spend cap, SSE contract |
+| **Lens score** | **66** judged | Minimum-anchored; target 95 |
 
-| Axis | Base | P0 | P1 | P2 | P3 | P4 | P5 | P6 |
-|---|---|---|---|---|---|---|---|---|
-| Code quality | 72 | 76 | 77 | 93 | 94 | 94 | 95 | 95 |
-| Architecture | 80 | 80 | 81 | 95 | 95 | 96 | 96 | 96 |
-| Tests | 74 | 76 | 80 | 84 | 95 | 95 | 95 | 95 |
-| Eval quality | 58 | 58 | 85 | 87 | 88 | 88 | 90 | 95 |
-| Security | 76 | 86 | 86 | 88 | 90 | 95 | 95 | 96 |
-| Perf/latency/cost | 70 | 70 | 74 | 82 | 92 | 92 | 92 | 95 |
-| Observability | 72 | 72 | 75 | 88 | 89 | 92 | 94 | 95 |
-| CI reliability | 82 | 85 | 87 | 88 | 92 | 96 | 96 | 96 |
-| Docs/showcase | 66 | 72 | 74 | 76 | 78 | 82 | 96 | 97 |
-| DX | 74 | 78 | 79 | 85 | 88 | 92 | 95 | 95 |
+## 4. Targets and the explicit floors
 
-These are research expectations, not results. A phase is credited only with the
-measured evidence below.
+| Axis | Target | Floor and reason |
+|---|---|---|
+| All axes except those below | 95 | none |
+| D7 Observability | 95 | **90** until the VPS exists (Phase V): SLO burn alerting, dashboards and online evals cannot be exercised without a deployed service |
+| P3 Assistant message quality | 95 | **90 provisional** until the owner completes the one-time 20% spot check of the bootstrapped judge labels (DR-05); the judge is then validated and judged quality counts. Recording, embeddings snapshot and judge runs are pre-authorized within the DR-04 caps (USD 2 per campaign, USD 8 per month), so P3 is not blocked by spend; only exceeding a cap needs the owner. Reasoning for 90 and not 95: the judged part of P3 (tone, completeness) is unvalidated without that spot check, so credit stops at the deterministic gate |
+| D6 Performance (live part) | 95 | Offline budgets (stubbed model, recordings) are enough for 95; live TTFT and cost p95 are an extra row in Phase V |
 
-## Automated measurement
+## 5. Automatic measurement
 
-Each axis has measurable inputs. Commands marked *exists* run today; *planned* items are
-introduced by the named phase. The rubric reviewer reads these outputs; numbers are not
-converted into scores mechanically.
+`scorecard/` (Python package, `uv run python -m scorecard`) aggregates CI artifacts into `scorecard.json`: per-axis inputs and pass or fail per criterion of rubrics v2, nightly and on release; it exits non-zero on regression against `scorecard/ratchets/scorecard.json`. Judgement axes are filled from `docs/evidence/scores/<date>.md` written by the independent evaluator agent.
 
-| Axis | Measured inputs | Command / source | Status |
-|---|---|---|---|
-| Code quality | ruff findings by rule, C901 count > 10, mypy strict error count | `uv run ruff check app tests contracts scripts`; `uv run ruff check --select C90 app`; `uv run mypy app --strict` | exists (strict scope and extended selection planned, P0/P2) |
-| Architecture | guard violations, probe results, `to_thread` count in adapters, per-layer third-party allowlist | `uv run python -m scripts.check_architecture`; `grep -rc to_thread app/adapters` | guard exists; extended rules planned (P2) |
-| Tests | test count, combined branch coverage per layer, diff coverage, mutation score per layer, Hypothesis property count | `uv run pytest -q`; coverage + `diff-cover`; `mutmut` nightly | partial; gates planned (P0 measure, P3 gate) |
-| Eval quality | Recall@5, nDCG@5, MRR@10, Hit@1 per locale × kind × strategy; EN–ES gap; regression pass rate; judge κ/TPR/TNR; live capability metrics | `scripts/evaluate_retrieval.py --metrics` (ranx); regression suite; capability suite | planned (P1; live P6) |
-| Security | secret-scanning alerts, CodeQL high count, dependency-review result, osv/pip-audit findings, Trivy gate, OpenSSF Scorecard score | GitHub security APIs; CodeQL; `osv-scanner`; Trivy; Scorecard | Trivy and in-house scanner exist; rest planned (P0/P4) |
-| Perf / latency / cost | retrieval p95, API overhead to first delta p95, TTFT p50/p95, full-answer p95, cost per answer p95, monthly ledger | Locust + `phase()`; capability suite; ledger | ledger exists; load and SLOs planned (P3/P6) |
-| Observability | GenAI semconv attribute coverage, `prompt_version`/`corpus_version` presence, run_id↔trace correlation | OTLP fixture receiver payload review | planned (P2/P4) |
-| CI reliability | PR wall p95, per-job duration, failure and flake rate (nightly ×3), duplicated setup time | `gh run list` / job timings | data exists; summary planned (P4) |
-| Docs / showcase | README length (≤ 250 lines), results table present with date/commit, broken links, Diátaxis placement, ADR numbering continuity | rubric review + link check | planned (P0/P5) |
-| DX | commands to first fixture answer, time to first answer, uv version consistency | `just demo` timing | planned (P0/P5) |
+| Axis | Criterion IDs and automatic inputs | Source artifact |
+|---|---|---|
+| D1 | `D1.guard_violations == 0`, `D1.negative_fixtures_pass`, import-linter contracts kept, domain and application stdlib-only | `artifacts/arch.json` |
+| D2 | `D2.mypy_errors == 0` over `src/`, `D2.ruff_findings == 0`, `D2.max_cc <= 10`, `D2.dead_code == 0` (vulture) | `artifacts/static.json` |
+| D3 | `D3.branch_coverage >= floor`, `D3.diff_coverage >= 90`, `D3.mutation_score >= target` per package, `D3.flaky_30d == 0` | `coverage.xml`, `mutmut` results, flake report |
+| D4 | `D4.pr_p50`, `D4.pr_p95` within budget, `D4.single_dependabot_pr`, `D4.build_once_digest` | `gh run list --json`, guard report |
+| D5 | `D5.pinned_actions == 100%`, `D5.zizmor_high == 0`, `D5.codeql_open_high == 0`, `D5.sbom_attested`, `D5.provenance_verified`, `D5.fixable_high == 0`, `D5.secrets == 0` | zizmor SARIF, `gh attestation verify`, Grype JSON |
+| D6 | `D6.ttfe_p95_stubbed`, `D6.error_rate`, `D6.rss_growth`, `D6.answer_cost_p95_recorded`, `D6.image_mb <= ratchet` | Locust report, eval report, `docker image inspect` |
+| D7 | `D7.log_redaction_test`, `D7.request_id_propagation_test`, `D7.health_contract`, SLO definitions file present | pytest results |
+| D8 | `D8.readme_headings`, `D8.links_ok`, `D8.adr_index`, `D8.changelog_current`, `D8.community_files`, `D8.skill_trigger_accuracy`, `D8.agents_commands_match` | docs checks, skills evals |
+| P1-P6 | `P1.problem_schema_valid`, `P2.ttft_budget`, `P3.golden_pass == 100%` (cassette), `P3.full_set_metrics` (reported), `P4.oasdiff_clean`, `P4.schemathesis`, `P5.consumer_compile`, `P6.standards_drift == 0` | eval report, oasdiff, cross job |
+| Recruiter | `R.readme_lines <= 250`, results table dated within 30 days of release, release exists, one-command demo timed | docs checks, release workflow |
 
-A future `scripts/scorecard` report that gathers these inputs into one dated JSON file
-under `docs/evidence/` is a candidate P4/P5 item; it does not exist yet.
+## 6. Ratchet files (only tighten; loosening needs an ADR and the owner)
+
+| File | Holds |
+|---|---|
+| `scorecard/ratchets/static.json` | mypy error count, ruff findings per rule, files outside strict scope, max complexity, vulture count |
+| `scorecard/ratchets/tests.json` | line and branch coverage per layer, diff-coverage floor, mutation score per package, test counts per lane |
+| `scorecard/ratchets/ci.json` | duration budgets p50 and p95 per profile |
+| `scorecard/ratchets/image.json` | image size in MB, fixable HIGH count, layer count |
+| `evals/baselines/golden.json` | per-stratum pass counts (must stay 100%), item counts per stratum and locale |
+| `evals/baselines/full.json` | per-family and per-locale metrics of the last accepted full run, EN-ES gap |
+| `evals/baselines/retrieval.json` | Recall@5, nDCG@5, MRR@10 per strategy, locale, family; the absolute floor |
+| `evals/baselines/budgets.json` | latency, TTFT, tokens, cost p95 of the last accepted recording |
+| `scorecard/ratchets/scorecard.json` | last accepted axis scores |
+
+## 7. Re-score cadence
+
+| Cadence | What |
+|---|---|
+| Every PR | Static, tests, golden cassette lane (profile `assistant-quality`), ratchet checks |
+| Nightly | Full mutation (scoped), flake detector, Schemathesis long run, stubbed SSE load, osv, Scorecard job, `scorecard.json` and regression check |
+| Weekly | Dependabot PR and guard, link check, drift check, CI duration report, Scorecard |
+| Monthly | Judge calibration re-run (once a judge exists), skill staleness, flaky review, quarantine review |
+| Per release | Full set run (on demand tier) with report in the PR, independent evaluator scores for judged axes, live golden pass^3 (pre-authorized within DR-04 caps) |
+| Quarterly | Golden set review (add incident items, retire with reason), independent re-audit, standards review, token rotation |
+
+## 8. Forecast by milestone (expectations, credited only with measured evidence)
+
+| Axis | M0 | M2 | M3 | M4 | M6 |
+|---|---|---|---|---|---|
+| D1 | 82 | 84 | 85 | 96 | 96 |
+| D2 | 58 | 70 | 82 | 96 | 96 |
+| D3 | 66 | 90 | 92 | 94 | 96 |
+| D4 | 70 | 90 | 94 | 95 | 96 |
+| D5 | 68 | 88 | 92 | 95 | 96 |
+| D6 | 62 | 85 | 90 | 94 | 95 |
+| D7 | 72 | 76 | 80 | 84 | 90 |
+| D8 | 64 | 72 | 92 | 94 | 96 |
+| P1 | 78 | 78 | 80 | 80 | 95 (M5) |
+| P2 | 80 | 80 | 82 | 84 | 95 (M5) |
+| P3 | 50 | 85 | 88 | 90 | 95 (90 until spot check) |
+| P4 | 80 | 92 | 94 | 95 | 96 |
+| P5 | 74 | 80 | 90 | 94 | 95 |
+| P6 | 70 | 80 | 90 | 95 | 95 |
+| Recruiter | 66 | 70 | 90 | 92 | 96 |
+
+**Milestone acceptance rule.** A milestone is reached only if `scorecard.json` shows every axis at or above its forecast in the nearest column at or before that milestone (M1 uses M0, M5 uses M4, M7 uses M6; D7 and P3 use their stated floors), or the axis has a newer independent evaluator score at or above it (evaluator scores replace judged numbers from M3). A missed axis blocks the checkpoint tag until a gap list with owner task IDs is in `progress.md`.
