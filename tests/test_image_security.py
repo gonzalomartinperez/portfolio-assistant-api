@@ -77,7 +77,7 @@ def test_language_findings_are_not_ignored():
 
 
 @pytest.mark.parametrize(('severity', 'fixed'), [('CRITICAL', ''), ('HIGH', '2.0')])
-def test_cli_rejects_blocking_findings(tmp_path, monkeypatch, severity, fixed):
+def test_cli_rejects_blocking_findings(tmp_path, monkeypatch, capsys, severity, fixed):
     from scripts.image_security import main
 
     path = tmp_path / 'report.json'
@@ -87,3 +87,4 @@ def test_cli_rejects_blocking_findings(tmp_path, monkeypatch, severity, fixed):
     )
     with pytest.raises(SystemExit, match='critical or fixable high'):
         main()
+    assert severity in capsys.readouterr().err
