@@ -1,0 +1,10 @@
+{
+  "whole": 70,
+  "domain": 78,
+  "application": 82,
+  "ai": 75,
+  "adapters": 57,
+  "presentation": 88,
+  "bootstrap": 67,
+  "entrypoints": 100
+}

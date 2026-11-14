@@ -136,7 +136,18 @@ jobs:
     - name: Enforce architecture and run offline and contract tests
       run: |
         mkdir -p artifacts
-        uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+        uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml --cov --cov-branch --cov-report=xml:artifacts/coverage-unit.xml
+      env:
+        COVERAGE_FILE: artifacts/coverage-unit.data
+    - name: Retain offline coverage data for the combined gate
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: coverage-unit
+        path: |
+          artifacts/coverage-unit.data
+          artifacts/coverage-unit.xml
+        retention-days: 7
+        if-no-files-found: error
     - name: Verify public contract drift
       run: uv run python -m contracts.export && git diff --exit-code contracts
   database:
@@ -159,6 +170,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         persist-credentials: false
+        fetch-depth: 0
     - name: Bind exact source and build inputs
       run: python3 -m scripts.ci_identity
       env:
@@ -240,9 +252,11 @@ jobs:
     - name: Run real-service integration tests
       run: |
         mkdir -p artifacts
-        uv run pytest -q -m integration --junitxml=artifacts/integration.xml
+        uv run pytest -q -m integration --junitxml=artifacts/integration.xml \
+          --cov --cov-branch --cov-report=xml:artifacts/coverage-integration.xml
       env:
         TEST_INTEGRATION: '1'
+        COVERAGE_FILE: artifacts/coverage-integration.data
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
     - name: Exercise representative bilingual question families
@@ -261,6 +275,42 @@ jobs:
         mkdir -p artifacts
         docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
         docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
+    - name: Retain integration coverage data
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: coverage-integration
+        path: |
+          artifacts/coverage-integration.data
+          artifacts/coverage-integration.xml
+        retention-days: 7
+        if-no-files-found: ignore
+    - name: Retrieve offline coverage data from the static job
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: coverage-unit
+        path: artifacts/coverage-unit
+    - name: Combine both lanes and enforce the coverage floors
+      run: |
+        uv run coverage combine --keep artifacts/coverage-unit/coverage-unit.data artifacts/coverage-integration.data
+        uv run coverage xml -o artifacts/coverage.xml
+        uv run coverage report --skip-covered
+        uv run python -m scripts.coverage_gate artifacts/coverage.xml
+      env:
+        COVERAGE_FILE: artifacts/coverage-combined.data
+    - name: Require 90 percent coverage on the lines this pull request changes
+      if: github.event_name == 'pull_request'
+      run: uv run diff-cover artifacts/coverage.xml --compare-branch="origin/${BASE_REF}" --fail-under=90
+      env:
+        BASE_REF: ${{ github.base_ref }}
+    - name: Retain the combined coverage report
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: coverage-combined
+        path: artifacts/coverage.xml
+        retention-days: 7
+        if-no-files-found: ignore
     - name: Retain safe synthetic database verification receipt
       if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
