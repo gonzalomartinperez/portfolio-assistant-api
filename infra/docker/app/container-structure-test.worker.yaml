@@ -1,0 +1,28 @@
+# Run: container-structure-test test --image portfolio-assistant-api-worker:ci --config infra/docker/app/container-structure-test.worker.yaml
+schemaVersion: 2.0.0
+metadataTest:
+  user: "65532:65532"
+  cmd: ["assistant-knowledge-watch"]
+  labels:
+    - key: org.opencontainers.image.title
+      value: portfolio-assistant-api-worker
+    - key: org.opencontainers.image.source
+      value: https://github.com/gonzalomartinperez/portfolio-assistant-api
+    - key: org.opencontainers.image.licenses
+      value: MIT
+fileExistenceTests:
+  - name: git is present for the public-source CLI
+    path: /usr/bin/git
+    shouldExist: true
+  - name: console scripts exist
+    path: /app/.venv/bin/assistant-knowledge-watch
+    shouldExist: true
+  - name: sync console script exists
+    path: /app/.venv/bin/assistant-knowledge-sync
+    shouldExist: true
+  - name: migrations are present
+    path: /app/migrations
+    shouldExist: true
+  - name: pip is absent
+    path: /usr/local/bin/pip
+    shouldExist: false

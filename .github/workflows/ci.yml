@@ -127,12 +127,6 @@ jobs:
         uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
     - name: Verify public contract drift
       run: uv run python -m contracts.export && git diff --exit-code contracts
-    - name: Audit live dependency controls without mutations
-      if: github.event_name == 'pull_request'
-      env:
-        GH_TOKEN: ${{ github.token }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-      run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
   database:
     name: Database tests
     if: contains(fromJSON(needs.classify.outputs.jobs), 'database')

@@ -11,6 +11,7 @@ Run from repository root; supported release target is linux/amd64:
 
 ```sh
 docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .
+docker buildx bake   # api and worker targets, see docker-bake.hcl and ADR017
 docker build --platform linux/amd64 -f infra/docker/postgres/Dockerfile -t portfolio-assistant-postgres:local .
 docker compose -f infra/compose/local.yaml -p assistant-local config --quiet
 ```
