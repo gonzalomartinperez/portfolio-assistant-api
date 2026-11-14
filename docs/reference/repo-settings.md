@@ -48,7 +48,7 @@ gh api repos/gonzalomartinperez/portfolio-assistant-api/actions/permissions
 | Actions | Default `GITHUB_TOKEN` permission | read | read |
 | Actions | Actions may approve PR reviews | no | no |
 | Environments | `eval-live`, `production` | none exist | `eval-live` (branch restriction, no reviewer, separate provider key, DR-04 caps in code); `production` (owner as required reviewer), created at MV |
-| Apps | GitHub App for release-please | none | installed with contents and pull-request scope (E5) before release automation lands |
+| Apps | GitHub App for release-please | none | not needed: releases follow engineering-standards ADR 0003 (OD-78), a version-bump PR plus `release.yml` with `GITHUB_TOKEN` |
 
 ## Owner checklist (one pass; none of these blocks agent work)
 
@@ -76,7 +76,6 @@ Later, when the matching task lands (an agent records the request in the PR):
 
 - [ ] M1-3: when the `ci-gate` transition PR is merged, set `ci-gate` as the required check on `develop` and `main`, then remove `Required checks`.
 - [ ] Rulesets: run the `engineering-standards` ruleset script once it exists (E1).
-- [ ] E5: install the release-please GitHub App before release automation (M7).
 - [ ] Create environments `eval-live` (M2 recording) and `production` (MV).
 
 ## Criteria that stay unmet until the toggles are set

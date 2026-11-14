@@ -64,6 +64,25 @@ streaming changes. CI also builds and smokes the production container. Include
 what changed, why, tests actually run and remaining limits in each PR. Keep
 migration history immutable. Do not alter CI gates merely to obtain a pass.
 
+The PR template (`.github/PULL_REQUEST_TEMPLATE.md`) is the shared ecosystem
+copy and is checked byte for byte by the standards drift job, so put
+repository-specific items in the PR body: tests at the right layer (domain,
+application, adapter, HTTP/SSE contract), regenerated contracts when HTTP
+changed, fixture mode still the default, no secrets or private career-ops
+material, and fixture versus live verification stated separately.
+
+## Changelog and releases
+
+Add user-visible changes under `## [Unreleased]` in `CHANGELOG.md` (Keep a
+Changelog sections: Added, Changed, Fixed, Removed, Security). The release
+version is `[project].version` in `pyproject.toml`. A release is a normal PR into
+`develop` that bumps that version and moves the Unreleased entries under
+`## [X.Y.Z] - YYYY-MM-DD`; after the owner-approved promotion to `main`,
+`.github/workflows/release.yml` tags `vX.Y.Z` on the merge commit and publishes
+an immutable GitHub Release with that section. Nothing happens when the release
+already exists. This follows engineering-standards ADR 0003 (owner decision
+OD-78); no GitHub App or personal token is involved.
+
 ## Legal and security
 
 Application software and first-party engineering documentation use the standard
