@@ -14,14 +14,20 @@
       "Bash(uv run pytest:*)",
       "Bash(uv run ruff:*)",
       "Bash(uv run mypy:*)",
-      "Bash(uv run python -m scripts.:*)",
       "Bash(uv run python -m contracts.export)",
       "Bash(just:*)",
-      "Bash(git branch:*)",
       "Bash(git fetch:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr diff:*)",
-      "Bash(gh issue view:*)"
+      "Bash(gh issue view:*)",
+      "Bash(uv run python -m scripts.validate_skills)",
+      "Bash(uv run python -m scripts.check_license)",
+      "Bash(uv run python -m scripts.check_architecture)",
+      "Bash(uv run python -m scripts.build_assistant_bank --check)",
+      "Bash(uv run python -m scripts.ci_profile)",
+      "Bash(git branch --show-current)",
+      "Bash(git branch --list:*)",
+      "Bash(git branch -vv)"
     ],
     "ask": [
       "Bash(git push:*)",
@@ -48,7 +54,18 @@
       "Read(**/.env.staging)",
       "Read(./evals/full/holdout.sealed.jsonl)",
       "Read(**/holdout.sealed.jsonl)",
-      "Bash(cat evals/full/holdout.sealed.jsonl:*)"
+      "Bash(cat evals/full/holdout.sealed.jsonl:*)",
+      "Bash(head evals/full/holdout.sealed.jsonl:*)",
+      "Bash(tail evals/full/holdout.sealed.jsonl:*)",
+      "Bash(less evals/full/holdout.sealed.jsonl:*)",
+      "Bash(more evals/full/holdout.sealed.jsonl:*)",
+      "Bash(sed evals/full/holdout.sealed.jsonl:*)",
+      "Bash(grep evals/full/holdout.sealed.jsonl:*)",
+      "Bash(awk evals/full/holdout.sealed.jsonl:*)",
+      "Bash(cp evals/full/holdout.sealed.jsonl:*)",
+      "Bash(python3 -c evals/full/holdout.sealed.jsonl:*)",
+      "Bash(python -c evals/full/holdout.sealed.jsonl:*)",
+      "Bash(cat ./evals/full/holdout.sealed.jsonl:*)"
     ]
   },
   "hooks": {
