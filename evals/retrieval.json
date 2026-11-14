@@ -4,9 +4,9 @@
     "kind": "direct",
     "question": "What is Filomena?",
     "locale": "en",
-    "paths": [
-      "src/content/en/projects.ts"
-    ],
+    "qrels": {
+      "en/projects": 1
+    },
     "contains": [
       "Filomena"
     ]
@@ -16,9 +16,9 @@
     "kind": "direct",
     "question": "¿Dónde estudió Gonzalo?",
     "locale": "es",
-    "paths": [
-      "src/content/es/education.ts"
-    ],
+    "qrels": {
+      "es/education": 1
+    },
     "contains": [
       "Universidad Nacional del Sur"
     ]
@@ -28,9 +28,9 @@
     "kind": "relationship",
     "question": "Which technologies were used in Filomena?",
     "locale": "en",
-    "paths": [
-      "src/content/en/projects.ts"
-    ],
+    "qrels": {
+      "en/projects": 1
+    },
     "contains": [
       "Laravel"
     ]
@@ -40,9 +40,9 @@
     "kind": "direct",
     "question": "What did Gonzalo do at Rampy?",
     "locale": "en",
-    "paths": [
-      "src/content/en/experience.ts"
-    ],
+    "qrels": {
+      "en/experience": 1
+    },
     "contains": [
       "Rampy"
     ]
@@ -52,10 +52,10 @@
     "kind": "multi-hop",
     "question": "Which roles share technologies with Filomena?",
     "locale": "en",
-    "paths": [
-      "src/content/en/projects.ts",
-      "src/content/en/experience.ts"
-    ],
+    "qrels": {
+      "en/projects": 1,
+      "en/experience": 1
+    },
     "contains": [
       "Filomena",
       "stack:"
@@ -66,10 +66,10 @@
     "kind": "multi-hop",
     "question": "¿Qué roles comparten tecnologías con Filomena?",
     "locale": "es",
-    "paths": [
-      "src/content/es/projects.ts",
-      "src/content/es/experience.ts"
-    ],
+    "qrels": {
+      "es/projects": 1,
+      "es/experience": 1
+    },
     "contains": [
       "Filomena",
       "stack:"
@@ -80,7 +80,7 @@
     "kind": "ambiguity",
     "question": "What about it?",
     "locale": "en",
-    "paths": [],
+    "qrels": {},
     "contains": []
   },
   {
@@ -88,7 +88,7 @@
     "kind": "no-answer",
     "question": "quasar xylophone",
     "locale": "en",
-    "paths": [],
+    "qrels": {},
     "contains": []
   },
   {
@@ -96,7 +96,7 @@
     "kind": "no-answer",
     "question": "Did Gonzalo work at Google?",
     "locale": "en",
-    "paths": [],
+    "qrels": {},
     "contains": []
   }
 ]
