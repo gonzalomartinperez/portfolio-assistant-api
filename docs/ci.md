@@ -42,8 +42,8 @@ profiles add to the base (`secrets` and `security`, always).
 | --- | --- | --- |
 | docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, security, static (offline tests validate docs and skills); no database or container job |
 | harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, security, static |
-| workflow | `.github/**` | secrets, security, workflows, static, database, container |
-| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container |
+| workflow | `.github/**` | secrets, security, workflows, static, database, container, contract |
+| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container, contract |
 | deps-weekly | branch `dependabot/**` or label `deps-weekly` | every job |
 | release | develop -> main promotion | every job |
 
@@ -404,3 +404,45 @@ endpoint. The size ratchet fails when `docker image inspect` reports a size abov
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
 `hadolint ignore=DL3003,DL4006` with its reason.
+
+## Contract job and breaking-change policy
+
+The `contract` job (selected by the `workflow` and `code` profiles, so every change under
+`contracts/**` or `app/presentation/**`) runs `pytest -m contract` and then
+`python -m scripts.contract_diff --base-sha <PR base>`. oasdiff v1.37.0 (linux_amd64 tarball,
+SHA-256 `eac87307d31d08c36800c58a409c247f1c5db37fbb72e2544402f22a87cbca3c`, from the release
+`checksums.txt`) is downloaded as a pinned binary and verified before use. The job sets
+`REQUIRE_OASDIFF=1`, so the planted-break tests fail instead of skipping; locally they skip with a
+reason when `oasdiff` is absent.
+
+- `oasdiff breaking <base> <head> --fail-on ERR` compares `contracts/openapi.json` with the base
+  revision (`git show <base_sha>:contracts/openapi.json`).
+- `contracts/sse.schema.json` is compared with a stdlib check: a removed event name or removed
+  required field is breaking; additions are allowed (expand, then contract).
+- The `contract-major` PR label accepts a break: findings are still printed, the gate passes, and
+  the cross-repo consumer job below must be green against the new snapshot.
+- Schema examples (`contracts/*.examples.json`) validate against their schemas; SSE frames are
+  checked for grammar, the closed event set, one terminal event and the 15 s heartbeat constant.
+- Schemathesis 4 fuzzes the committed OpenAPI against the in-process app with fakes (no databases):
+  `SCHEMATHESIS_EXAMPLES` defaults to 50 on PRs; the nightly run sets 500. Session routes are
+  exercised through auth and validation negative paths only (the fake rejects every cookie); the SSE
+  200 body is not validated by the tool (contract type `string`) and is covered by the SSE tests.
+  Known gaps skipped by name: positive-data acceptance for `recordProductEvent`, the `Allow`
+  header check (Starlette partial `Allow` on multi-route paths), and framework `400` replies to
+  malformed JSON, which the contract does not document.
+
+### Cross-repo consumer job
+
+Runs nightly in `.github/workflows/cross-repo.yml` (added by a separate PR), not on PRs. It checks
+out this repository at the commit under test, then, for the portfolio site and the backoffice:
+
+1. copy `contracts/` into the consumer checkout as its contract snapshot;
+2. regenerate the typed client (`openapi.json`) and SSE types (`sse.schema.json`) with the
+   consumer's own generator script, for example `pnpm run generate:api`;
+3. type-check and build against the snapshot (`pnpm run typecheck` and `pnpm run build`), plus the
+   consumer's contract tests when present.
+
+A red consumer means the contract change is not yet safe to ship. A PR with the `contract-major`
+label signals an intentional break: it merges only after the consumer pull requests that adopt the
+new snapshot are ready, and it ships with a CHANGELOG entry. Consumer repositories are never edited
+from this repository.
