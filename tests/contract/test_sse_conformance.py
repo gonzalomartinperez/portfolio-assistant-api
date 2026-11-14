@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import jsonschema
 import pytest
+from pydantic import ValidationError
 
 from app.presentation.http import execute_run
 from app.presentation.streaming import heartbeat
@@ -89,7 +90,7 @@ def test_frames_are_well_formed_schema_valid_and_ordered(name):
 
 
 def test_unknown_event_name_cannot_reach_the_wire():
-    with pytest.raises(Exception):  # noqa: B017 - pydantic rejects the unlisted event
+    with pytest.raises(ValidationError):
         collect([('run.internal', {'secret': 'x'})])
 
 

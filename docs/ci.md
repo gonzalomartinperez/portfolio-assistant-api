@@ -415,7 +415,7 @@ SHA-256 `eac87307d31d08c36800c58a409c247f1c5db37fbb72e2544402f22a87cbca3c`, from
 `REQUIRE_OASDIFF=1`, so the planted-break tests fail instead of skipping; locally they skip with a
 reason when `oasdiff` is absent.
 
-- `oasdiff breaking <base> <head> --fail-on ERR` compares `contracts/openapi.json` with the base
+- `oasdiff breaking <base> <head> --fail-on WARN` compares `contracts/openapi.json` with the base
   revision (`git show <base_sha>:contracts/openapi.json`).
 - `contracts/sse.schema.json` is compared with a stdlib check: a removed event name or removed
   required field is breaking; additions are allowed (expand, then contract).
@@ -424,7 +424,7 @@ reason when `oasdiff` is absent.
 - Schema examples (`contracts/*.examples.json`) validate against their schemas; SSE frames are
   checked for grammar, the closed event set, one terminal event and the 15 s heartbeat constant.
 - Schemathesis 4 fuzzes the committed OpenAPI against the in-process app with fakes (no databases):
-  `SCHEMATHESIS_EXAMPLES` defaults to 50 on PRs; the nightly run sets 500. Session routes are
+  `SCHEMATHESIS_EXAMPLES` defaults to 50 on PRs; a nightly run with 500 is planned (nightly workflow, M2-14). Session routes are
   exercised through auth and validation negative paths only (the fake rejects every cookie); the SSE
   200 body is not validated by the tool (contract type `string`) and is covered by the SSE tests.
   Known gaps skipped by name: positive-data acceptance for `recordProductEvent`, the `Allow`

@@ -553,14 +553,17 @@ jobs:
         REQUIRE_OASDIFF: '1'
         SCHEMATHESIS_EXAMPLES: '50'
     - name: Block breaking contract changes against the base
+      # The gate decides on pull requests, where the contract-major label is visible. Push,
+      # merge-group and manual runs have no label payload; the PR run already gated them.
+      if: github.event_name == 'pull_request'
       run: |
-        if [ -z "${BASE_SHA}" ] || [ "${BASE_SHA}" = 0000000000000000000000000000000000000000 ]; then
-          echo 'No base revision to compare (new branch); breaking-change diff skipped.'
-          exit 0
+        if [ -z "${BASE_SHA}" ]; then
+          echo '::error title=contract::pull request base SHA is missing; refusing to skip the breaking-change diff'
+          exit 1
         fi
         uv run python -m scripts.contract_diff --base-sha "${BASE_SHA}"
       env:
-        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
         CONTRACT_MAJOR: ${{ contains(github.event.pull_request.labels.*.name, 'contract-major') }}
   ci-gate:
     name: ci-gate

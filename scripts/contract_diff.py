@@ -1,6 +1,7 @@
 """Breaking-change gate for the public contracts (expand-then-contract).
 
-OpenAPI is compared with oasdiff (`breaking --fail-on ERR`); the SSE JSON Schema is compared with a
+OpenAPI is compared with oasdiff (`breaking --fail-on WARN`, so removing an optional response property or a documented
+response also blocks); the SSE JSON Schema is compared with a
 stdlib check that flags a removed event name or a removed required field. Both compare the working
 tree with the pull request base. The `contract-major` label (CONTRACT_MAJOR=true) accepts a break:
 the findings are still printed, the exit status is 0, and cross-repo consumers must follow
@@ -63,7 +64,7 @@ def openapi_breaking(base: Path, head: Path) -> subprocess.CompletedProcess:
             'oasdiff is not on PATH; install the pinned release (docs/ci.md)'
         )
     return subprocess.run(
-        [binary, 'breaking', str(base), str(head), '--fail-on', 'ERR'],
+        [binary, 'breaking', str(base), str(head), '--fail-on', 'WARN'],
         capture_output=True,
         check=False,
         text=True,
