@@ -33,6 +33,55 @@ EXTRA_NEEDS = {
     'container': ['static'],
 }
 PINNED = re.compile(r'[a-zA-Z0-9._/-]+@([a-f0-9]{40})')
+IMAGE_SIZE_PATH = 'infra/docker/app/image.json'
+# Container-job steps that must exist, with the text each must contain. Every release
+# download names its checksum and verifies it before the binary is executed.
+IMAGE_CHECKS = {
+    'Lint Dockerfiles with the pinned hadolint binary': (
+        '/hadolint/hadolint/releases/download/v',
+        'sha256sum --check',
+        '--config .hadolint.yaml',
+        'infra/docker/app/Dockerfile',
+        'infra/docker/postgres/Dockerfile',
+    ),
+    'Verify pinned container-structure-test': (
+        '/container-structure-test/releases/download/v',
+        'sha256sum --check',
+    ),
+    'Test the API image structure': (
+        'container-structure-test test --image portfolio-assistant-api:ci',
+        '--config infra/docker/app/container-structure-test.yaml',
+    ),
+    'Test the worker image structure': (
+        'container-structure-test test --image portfolio-assistant-api-worker:ci',
+        '--config infra/docker/app/container-structure-test.worker.yaml',
+    ),
+    'Verify pinned Dockle': (
+        '/goodwithtech/dockle/releases/download/v',
+        'sha256sum --check',
+    ),
+    'Lint the API image with Dockle': (
+        '--exit-code 1 --exit-level warn',
+        'portfolio-assistant-api:ci',
+    ),
+    'Lint the worker image with Dockle': (
+        '--exit-code 1 --exit-level warn',
+        'portfolio-assistant-api-worker:ci',
+    ),
+    'Inventory the worker image and reject critical or fixable high findings': (
+        'portfolio-assistant-api-worker:ci',
+        'python -m scripts.image_security',
+        '--report artifacts/worker-vulnerabilities.json --image-id "$image_id"',
+    ),
+    'Enforce the image size ratchet': (
+        IMAGE_SIZE_PATH,
+        '.api_max_bytes',
+        '.worker_max_bytes',
+        "docker image inspect --format '{{.Size}}'",
+    ),
+}
+IMAGE_SCAN_BYPASSES = ('--ignore-unfixed', '--severity ', '|| true')
+BUILD_ARGS = ('VERSION=', 'REVISION=', 'CREATED=')
 PROFILE_KEYS = {'base', 'required', 'profiles'}
 PROFILE_NAMES = {
     'docs',
@@ -239,9 +288,55 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
         errors.append(
             'container: complete PostgreSQL inventory and all-critical gate required'
         )
+    errors += image_check_errors(jobs.get('container', {}).get('steps', []))
     if workflow.get('defaults', {}).get('run', {}).get('shell') != 'bash':
         errors.append('runtime gates require the explicit bash pipefail shell')
     errors += profile_map_errors(jobs, profile_map)
+    return errors
+
+
+def image_check_errors(steps: list) -> list[str]:
+    """The container job must lint, build, test, scan and size-check both images."""
+    errors = []
+    by_name = {step.get('name'): step for step in steps}
+    for name, fragments in IMAGE_CHECKS.items():
+        text = by_name.get(name, {}).get('run', '')
+        if not text or any(fragment not in text for fragment in fragments):
+            errors.append(f'container: image check {name!r} absent or weakened')
+        if any(bypass in text for bypass in IMAGE_SCAN_BYPASSES):
+            errors.append(f'container: image check {name!r} filters findings')
+    builds = {
+        step['with'].get('target'): step
+        for step in steps
+        if step.get('uses', '').startswith('docker/build-push-action@')
+        and step.get('with', {}).get('file') == 'infra/docker/app/Dockerfile'
+    }
+    expected_tags = {
+        'api': 'portfolio-assistant-api:ci',
+        'worker': 'portfolio-assistant-api-worker:ci',
+    }
+    if set(builds) != set(expected_tags):
+        errors.append('container: api and worker targets must both be built')
+    for target, build in builds.items():
+        options = build['with']
+        if (
+            options.get('tags') != expected_tags.get(target)
+            or options.get('load') is not True
+            or options.get('push') is not False
+            or any(
+                argument not in str(options.get('build-args', ''))
+                for argument in BUILD_ARGS
+            )
+        ):
+            errors.append(f'container: {target} build options')
+        if target == 'worker' and 'cache-to' in options:
+            errors.append('container: worker build cannot export cache')
+    for step in steps:
+        text = step.get('run', '')
+        if 'curl' in text and 'sha256sum --check' not in text:
+            errors.append(
+                f'container: download in {step.get("name")!r} lacks checksum check'
+            )
     return errors
 
 

@@ -1,0 +1,9 @@
+{
+  "api_max_bytes": 600000000,
+  "worker_max_bytes": 720000000,
+  "measured": {
+    "api_bytes": null,
+    "worker_bytes": null,
+    "note": "Ratchet at the first measured CI value (ADR 017); lower the maxima after the first run."
+  }
+}

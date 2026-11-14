@@ -326,6 +326,25 @@ jobs:
         PY
     - name: Validate private networks and container limits
       run: uv run python -m scripts.validate_compose
+    - name: Lint Dockerfiles with the pinned hadolint binary
+      run: |
+        mkdir -p /tmp/image-lint
+        # Source: https://github.com/hadolint/hadolint/releases/download/v2.15.1/checksums.sha256
+        curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+          https://github.com/hadolint/hadolint/releases/download/v2.15.1/hadolint-linux-x86_64 \
+          --output /tmp/image-lint/hadolint
+        echo 'c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507  /tmp/image-lint/hadolint' | sha256sum --check
+        chmod +x /tmp/image-lint/hadolint
+        /tmp/image-lint/hadolint --config .hadolint.yaml infra/docker/app/Dockerfile infra/docker/postgres/Dockerfile
+    - name: Compute image build metadata
+      run: |
+        {
+          echo "IMAGE_VERSION=sha-${REVISION::7}"
+          echo "IMAGE_REVISION=${REVISION}"
+          echo "IMAGE_CREATED=$(git show --no-patch --format=%cI "$REVISION")"
+        } >> "$GITHUB_ENV"
+      env:
+        REVISION: ${{ github.sha }}
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       with:
         cache-binary: false
@@ -357,11 +376,30 @@ jobs:
       with:
         context: .
         file: infra/docker/app/Dockerfile
+        target: api
         load: true
+        push: false
         tags: portfolio-assistant-api:ci
         cache-from: type=gha,scope=api-linux-amd64
         cache-to: type=gha,mode=max,scope=api-linux-amd64
         labels: org.opencontainers.image.revision=${{ github.sha }}
+        build-args: |
+          VERSION=${{ env.IMAGE_VERSION }}
+          REVISION=${{ env.IMAGE_REVISION }}
+          CREATED=${{ env.IMAGE_CREATED }}
+    - name: Build and load the worker image
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
+      with:
+        context: .
+        file: infra/docker/app/Dockerfile
+        target: worker
+        load: true
+        push: false
+        tags: portfolio-assistant-api-worker:ci
+        build-args: |
+          VERSION=${{ env.IMAGE_VERSION }}
+          REVISION=${{ env.IMAGE_REVISION }}
+          CREATED=${{ env.IMAGE_CREATED }}
     - name: Verify pinned image scanner
       run: |
         mkdir -p /tmp/image-scanner artifacts
@@ -378,6 +416,14 @@ jobs:
         image_id=$(docker image inspect portfolio-assistant-api:ci --format '{{.Id}}')
         uv run python -m scripts.image_security \
           --report artifacts/image-vulnerabilities.json --image-id "$image_id" | tee artifacts/image-security-summary.json
+    - name: Inventory the worker image and reject critical or fixable high findings
+      run: |
+        /tmp/image-scanner/trivy --config '' image --image-src docker \
+          --ignorefile '' --scanners vuln --format json \
+          --output artifacts/worker-vulnerabilities.json portfolio-assistant-api-worker:ci
+        image_id=$(docker image inspect portfolio-assistant-api-worker:ci --format '{{.Id}}')
+        uv run python -m scripts.image_security \
+          --report artifacts/worker-vulnerabilities.json --image-id "$image_id" | tee artifacts/worker-security-summary.json
     - name: Inventory PostgreSQL and reject critical or fixable high findings
       run: |
         /tmp/image-scanner/trivy --config '' image --image-src docker \
@@ -400,6 +446,53 @@ jobs:
           --report artifacts/neo4j-vulnerabilities.json \
           --image-id-file artifacts/neo4j-image-id.txt \
           --scanner-version artifacts/scanner-version.json --reference "$reference"
+    - name: Verify pinned container-structure-test
+      run: |
+        mkdir -p /tmp/image-tests
+        # Source: https://github.com/GoogleContainerTools/container-structure-test/releases/download/v1.22.1/checksums.txt
+        curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+          https://github.com/GoogleContainerTools/container-structure-test/releases/download/v1.22.1/container-structure-test-linux-amd64 \
+          --output /tmp/image-tests/container-structure-test
+        echo 'fa35e89512a8978585f76cf41397956d2e3a30c62c2ad3fb857b1597074d14ca  /tmp/image-tests/container-structure-test' | sha256sum --check
+        chmod +x /tmp/image-tests/container-structure-test
+    - name: Test the API image structure
+      run: |
+        /tmp/image-tests/container-structure-test test --image portfolio-assistant-api:ci \
+          --config infra/docker/app/container-structure-test.yaml
+    - name: Test the worker image structure
+      run: |
+        /tmp/image-tests/container-structure-test test --image portfolio-assistant-api-worker:ci \
+          --config infra/docker/app/container-structure-test.worker.yaml
+    - name: Verify pinned Dockle
+      run: |
+        mkdir -p /tmp/image-dockle
+        # Source: https://github.com/goodwithtech/dockle/releases/download/v0.4.15/dockle_0.4.15_checksums.txt
+        curl --fail --silent --show-error --location --retry 3 --max-time 120 \
+          https://github.com/goodwithtech/dockle/releases/download/v0.4.15/dockle_0.4.15_Linux-64bit.tar.gz \
+          --output /tmp/image-dockle/dockle.tar.gz
+        echo '8bfc9183d1d3d67800edb45bea4bb63ddf1d28bec5f89944075a07007d79caad  /tmp/image-dockle/dockle.tar.gz' | sha256sum --check
+        tar -xzf /tmp/image-dockle/dockle.tar.gz -C /tmp/image-dockle dockle
+    - name: Lint the API image with Dockle
+      # Exit on WARN and FATAL. CIS-DI-0005 (content trust) is a client-side pull setting; base images are
+      # pinned by digest instead.
+      run: |
+        /tmp/image-dockle/dockle --exit-code 1 --exit-level warn \
+          -i CIS-DI-0005 portfolio-assistant-api:ci
+    - name: Lint the worker image with Dockle
+      # Same as the API image, plus CIS-DI-0006: the worker is a background watcher with no HTTP endpoint,
+      # so it has no readiness probe to declare as a HEALTHCHECK.
+      run: |
+        /tmp/image-dockle/dockle --exit-code 1 --exit-level warn \
+          -i CIS-DI-0005 -i CIS-DI-0006 portfolio-assistant-api-worker:ci
+    - name: Enforce the image size ratchet
+      run: |
+        api_max=$(jq -er '.api_max_bytes' infra/docker/app/image.json)
+        worker_max=$(jq -er '.worker_max_bytes' infra/docker/app/image.json)
+        api_size=$(docker image inspect --format '{{.Size}}' portfolio-assistant-api:ci)
+        worker_size=$(docker image inspect --format '{{.Size}}' portfolio-assistant-api-worker:ci)
+        echo "api ${api_size} bytes (max ${api_max}); worker ${worker_size} bytes (max ${worker_max})"
+        test "$api_size" -le "$api_max"
+        test "$worker_size" -le "$worker_max"
     - name: Verify image streaming and graceful shutdown
       run: uv run python -m scripts.container_smoke --image portfolio-assistant-api:ci > artifacts/container-smoke.json
     - name: Verify proxy routing and stream cancellation

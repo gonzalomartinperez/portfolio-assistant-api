@@ -595,3 +595,116 @@ def test_scorecard_runs_on_main_pushes_weekly_and_manually():
     events = events.get('on', events.get(True))
     assert events['push'] == {'branches': ['main']}
     assert events['schedule'] and 'workflow_dispatch' in events
+
+
+def container_steps(value):
+    return value['jobs']['container']['steps']
+
+
+def test_container_job_runs_every_image_check():
+    value = workflow()
+    assert not profile_errors(value, profile_map())
+    names = {step.get('name') for step in container_steps(value)}
+    assert {
+        'Lint Dockerfiles with the pinned hadolint binary',
+        'Build and load the worker image',
+        'Test the API image structure',
+        'Test the worker image structure',
+        'Lint the API image with Dockle',
+        'Lint the worker image with Dockle',
+        'Enforce the image size ratchet',
+        'Inventory the worker image and reject critical or fixable high findings',
+    } <= names
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        'Lint Dockerfiles with the pinned hadolint binary',
+        'Test the API image structure',
+        'Test the worker image structure',
+        'Lint the API image with Dockle',
+        'Lint the worker image with Dockle',
+        'Enforce the image size ratchet',
+        'Inventory the worker image and reject critical or fixable high findings',
+    ],
+)
+def test_image_check_steps_cannot_be_removed_or_neutralized(name):
+    for mutation in ('remove', 'neutralize'):
+        value = workflow()
+        steps = container_steps(value)
+        step = next(step for step in steps if step.get('name') == name)
+        if mutation == 'remove':
+            steps.remove(step)
+        else:
+            step['run'] = 'true'
+        assert profile_errors(value, profile_map())
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        'Verify pinned container-structure-test',
+        'Verify pinned Dockle',
+        'Lint Dockerfiles with the pinned hadolint binary',
+    ],
+)
+def test_image_tool_downloads_verify_their_checksum(name):
+    step = next(
+        step for step in container_steps(workflow()) if step.get('name') == name
+    )
+    assert re.search(r"echo '[a-f0-9]{64}  ", step['run'])
+    assert step['run'].index('sha256sum --check') < step['run'].index(
+        'chmod +x' if 'chmod +x' in step['run'] else 'tar -xzf'
+    )
+    value = workflow()
+    target = next(s for s in container_steps(value) if s.get('name') == name)
+    target['run'] = target['run'].replace('sha256sum --check', 'true')
+    assert profile_errors(value, profile_map())
+
+
+@pytest.mark.parametrize('mutation', ['missing', 'cache', 'push', 'arg', 'tag'])
+def test_worker_image_is_built_like_the_api_image(mutation):
+    value = workflow()
+    steps = container_steps(value)
+    build = next(
+        step for step in steps if step.get('name') == 'Build and load the worker image'
+    )
+    assert build['with']['target'] == 'worker'
+    assert build['with']['tags'] == 'portfolio-assistant-api-worker:ci'
+    assert 'cache-to' not in build['with']
+    api = next(step for step in steps if step.get('with', {}).get('target') == 'api')
+    assert api['with']['build-args'] == build['with']['build-args']
+    if mutation == 'missing':
+        steps.remove(build)
+    elif mutation == 'cache':
+        build['with']['cache-to'] = 'type=gha'
+    elif mutation == 'push':
+        build['with']['push'] = True
+    elif mutation == 'arg':
+        build['with']['build-args'] = 'VERSION=dev'
+    else:
+        build['with']['tags'] = 'portfolio-assistant-api:ci'
+    assert profile_errors(value, profile_map())
+
+
+def test_image_dockle_exceptions_are_documented_and_scoped():
+    steps = {step.get('name'): step for step in container_steps(workflow())}
+    api = steps['Lint the API image with Dockle']
+    worker = steps['Lint the worker image with Dockle']
+    assert '-i CIS-DI-0005' in api['run'] and 'CIS-DI-0006' not in api['run']
+    assert '-i CIS-DI-0006' in worker['run']
+
+
+def test_image_size_ratchet_file_is_valid_and_read_by_ci():
+    limits = json.loads(Path('infra/docker/app/image.json').read_text())
+    for key in ('api_max_bytes', 'worker_max_bytes'):
+        assert type(limits[key]) is int and limits[key] > 0
+    assert isinstance(limits['measured'], dict)
+    step = next(
+        step
+        for step in container_steps(workflow())
+        if step.get('name') == 'Enforce the image size ratchet'
+    )
+    assert 'infra/docker/app/image.json' in step['run']
+    assert '.api_max_bytes' in step['run'] and '.worker_max_bytes' in step['run']

@@ -56,11 +56,15 @@ def test_workflow_builds_the_explicit_application_recipe():
         for step in steps
         if step.get('uses', '').startswith('docker/build-push-action@')
     ]
-    assert len(builds) == 2
+    assert len(builds) == 3
     assert {build['file'] for build in builds} == {
         'infra/docker/app/Dockerfile',
         'infra/docker/postgres/Dockerfile',
     }
+    assert sorted(build['target'] for build in builds if 'target' in build) == [
+        'api',
+        'worker',
+    ]
     for build in builds:
         assert build['context'] == '.'
         assert build['load'] is True
