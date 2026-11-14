@@ -28,7 +28,8 @@ defaults:
     shell: bash
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded pull request runs only; push runs on develop and main always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   AI_PROVIDER: fixture
   ALLOW_PAID_AI: 'false'
