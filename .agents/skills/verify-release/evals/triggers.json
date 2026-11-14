@@ -1,0 +1,76 @@
+{
+  "skill": "verify-release",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Verify the v1.4.0 release",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Check the develop to main promotion is ready",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Did the deploy of the last release work?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Confirm build-info matches the merge SHA",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Run the release checks before tagging",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Check the release notes, tag and SBOM",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Review this small PR",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Implement the release workflow",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Update dependencies before release",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write an ADR about the release process",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

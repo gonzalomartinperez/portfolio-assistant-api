@@ -1,0 +1,30 @@
+{
+  "skill": "verify-release",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "verify-release-1",
+      "prompt": "Verify the v1.4.0 release",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "verify-release-2",
+      "prompt": "Check the develop to main promotion is ready",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "verify-release-3",
+      "prompt": "Did the deploy of the last release work?",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

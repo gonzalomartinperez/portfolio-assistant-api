@@ -1,0 +1,30 @@
+{
+  "skill": "score-repo",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "score-repo-1",
+      "prompt": "What is the repo score now?",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "score-repo-2",
+      "prompt": "Run the scorecard and compare with baselines",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "score-repo-3",
+      "prompt": "Prepare the evidence pack for the milestone",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "skill": "resume-refactor",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "resume-refactor-1",
+      "prompt": "Where were we on the refactor?",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "resume-refactor-2",
+      "prompt": "Continue the master refactor",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "resume-refactor-3",
+      "prompt": "Resume from the last checkpoint",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

@@ -11,7 +11,21 @@ import yaml
 
 from scripts.scan_secrets import matches
 
-NAME = re.compile(r'api-[a-z0-9]+(?:-[a-z0-9]+)*')
+NAME = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*')
+# Shared harness skills from engineering-standards keep their catalog names; every
+# repository-specific skill uses the `api-` prefix.
+SHARED_NAMES = frozenset(
+    {
+        'implement-task',
+        'review-change',
+        'verify-release',
+        'update-dependencies',
+        'write-adr',
+        'resume-refactor',
+        'score-repo',
+    }
+)
+METADATA_KEYS = frozenset({'owner', 'last-reviewed', 'version'})
 LINK = re.compile(r'\[[^\]]*\]\(([^)\s]+)\)')
 PRIVATE_PATH = re.compile(r'/home/|/Users/|/mnt/[cd]/|[A-Z]:\\')
 
@@ -41,17 +55,27 @@ def validate(root: Path) -> list[str]:
                 raise ValueError
             metadata = yaml.safe_load(front[1])
             node = yaml.compose(front[1])
-            if not isinstance(metadata, dict) or set(metadata) != {
+            if not isinstance(metadata, dict) or not {
                 'name',
                 'description',
-            }:
+            } <= set(metadata) <= {'name', 'description', 'metadata'}:
                 raise ValueError
-            if not isinstance(node, yaml.MappingNode) or len(node.value) != 2:
+            if not isinstance(node, yaml.MappingNode) or len(node.value) != len(
+                metadata
+            ):
+                raise ValueError
+            extra = metadata.get('metadata')
+            if 'metadata' in metadata and (
+                not isinstance(extra, dict)
+                or set(extra) != METADATA_KEYS
+                or not all(isinstance(v, str) and v for v in extra.values())
+            ):
                 raise ValueError
             name, description = metadata['name'], metadata['description']
             if (
                 not isinstance(name, str)
                 or not NAME.fullmatch(name)
+                or not (name.startswith('api-') or name in SHARED_NAMES)
                 or len(name) > 64
                 or name != folder.name
                 or name in names
