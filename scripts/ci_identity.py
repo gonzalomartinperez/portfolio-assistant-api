@@ -11,6 +11,9 @@ from pathlib import Path
 BUILD_INPUTS = (
     'infra/docker/app/Dockerfile',
     'infra/docker/app/Dockerfile.dockerignore',
+    'infra/docker/app/container-structure-test.yaml',
+    'infra/docker/app/container-structure-test.worker.yaml',
+    'docker-bake.hcl',
     'infra/docker/postgres/Dockerfile',
     'infra/docker/postgres/Dockerfile.dockerignore',
     'infra/compose/local.yaml',
