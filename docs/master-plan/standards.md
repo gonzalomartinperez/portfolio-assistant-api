@@ -32,7 +32,7 @@ Applies ecosystem section 10.2 (Python) and 10.3 (enforcement). Source: [10](res
 | S4 | Golden tier has no sealed holdout; holdout lives in the full tier (PAA-D16) | Regression items must be readable by whoever fixes them | none |
 | S5 | No LangSmith dataset mirror, tracing stays off (PAA-D8) | Privacy decision encoded in settings validation | Phase V, if the owner wants hosted viewing of synthetic eval runs only |
 | S6 | Test mix target 45% integration by M6 instead of 60% (testing.md T1) | Evals and pure domain tests are large and cheap | M6 review |
-| S7 | `psycopg` (LGPL-3.0) is a runtime dependency outside the licence allow-list | Required by `langgraph-checkpoint-postgres`; dynamic use as a library, unmodified | ADR at M1 with the exception recorded; re-check on each major |
+| S7 | `psycopg` (LGPL-3.0) is a runtime dependency outside the licence allow-list | Required by `langgraph-checkpoint-postgres`; dynamic use as a library, unmodified | Recorded in [ADR009](../adrs/009-psycopg-lgpl-exception.md) (M1-10); re-check on each major |
 
 ## 3. Enforcement
 

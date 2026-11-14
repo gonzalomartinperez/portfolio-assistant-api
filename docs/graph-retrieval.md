@@ -70,8 +70,11 @@ Run `uv run python -m scripts.evaluate_retrieval` against the documented isolate
 fixture environment. `evals/retrieval.json` covers direct facts, relationships,
 shared-technology paths, ambiguity and no-answer cases in both locales.
 `evals/fixture-results.json` records actual vector/graph/hybrid outcomes and total
-retrieval latency, including the evaluation harness's driver setup. Pass means
-required source paths and evidence text were retrieved, not that a model produced
+retrieval latency, including the evaluation harness's driver setup. Expected
+evidence is written as layout-neutral qrels (`en/projects`, see
+[ADR012](adrs/012-layout-neutral-evidence-keys.md)), so the same cases grade the
+`content/` and legacy `src/content/` roots. Pass means
+required evidence keys and evidence text were retrieved, not that a model produced
 a correct answer. Hash embeddings are a transport/development fixture and are
 not a semantic embedding quality claim. Hybrid acceptance is enforced in CI;
 we report weaker individual strategies rather than weakening the test cases.
