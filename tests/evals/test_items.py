@@ -25,7 +25,12 @@ ITEM = {
     'expected_behavior': 'answer',
     'required_facts': [{'id': 'uns', 'match': 'Universidad Nacional del Sur'}],
     'gold_evidence_ids': ['es/education'],
-    'assertions': ['language_is:es', 'citations_in_retrieved', 'no_canary'],
+    'assertions': [
+        'language_is:es',
+        'citations_in_retrieved',
+        'citations_nonempty',
+        'no_canary',
+    ],
     'provenance': 'distilled:legacy-2026-10:education-3',
     'reviewer': 'owner',
     'created': '2026-11-20',
@@ -76,6 +81,9 @@ def test_assertion_names_match_the_registry():
         {'status': 'retired'},
         {'retired_reason': 'obsolete'},
         {'expected_behavior': 'abstain'},
+        {
+            'assertions': ['required_facts_present']
+        },  # answer item without citations_nonempty
         {'locale': 'en', 'assertions': ['language_is:es']},
         {'required_facts': [{'id': 'a', 'match': 'x'}, {'id': 'a', 'match': 'y'}]},
         {'forbidden_claims': [{'id': 'a', 'match': 'x'}, {'id': 'a', 'match': 'y'}]},
