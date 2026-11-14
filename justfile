@@ -1,5 +1,5 @@
 # One entry point for local verification. `just check` runs the same commands as the
-# CI static job (`.github/workflows/quality.yml`); tests/harness/test_agents_commands.py
+# CI static job (`.github/workflows/ci.yml`); tests/test_agents_commands.py
 # keeps the two in step. Recipes never read `.env*` files and never call paid providers.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
