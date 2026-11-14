@@ -15,7 +15,7 @@ are preserved unless an ADR says otherwise.
 
 ## Checklist
 
-- [ ] [API contract](../../../docs/api-contract.md) and [frontend handoff](../../../docs/frontend-handoff.md) read
+- [ ] [API contract](../../../docs/reference/api-contract.md) and [frontend handoff](../../../docs/reference/frontend-handoff.md) read
 - [ ] Change classified: additive (optional field, new optional value) or breaking (removal, rename, type change)
 - [ ] `uv run python -m contracts.export` run; every changed artifact explained by the source change
 - [ ] Examples and contract tests updated; consumer steps listed
@@ -25,7 +25,7 @@ are preserved unless an ADR says otherwise.
 
 `contracts/export.py` writes the artifacts and `contracts/manifest.json` (sha256 per artifact); `just check` and the
 CI static job fail on drift (`git diff --exit-code contracts`). The CI `contract` job ([contract job and
-breaking-change policy](../../../docs/ci.md)) runs `uv run pytest -q -m contract` (SSE conformance, schema example
+breaking-change policy](../../../docs/reference/ci.md)) runs `uv run pytest -q -m contract` (SSE conformance, schema example
 tests, Schemathesis, planted-break tests) and then `uv run python -m scripts.contract_diff --base-sha <PR base>`,
 which runs oasdiff (`oasdiff breaking ... --fail-on WARN`, pinned v1.37.0, CI downloads it) on `contracts/openapi.json`
 and a stdlib check on `contracts/sse.schema.json`. A PR label `contract-major` accepts a break: findings still print,
@@ -42,12 +42,12 @@ not installed. Not available yet: the consumer cross job that regenerates the po
 3. Regenerate: `uv run python -m contracts.export`, then `git diff --stat contracts`. Each changed artifact must
    trace to the edit; `contracts/manifest.json` changes with them.
 4. Update examples when the change is visible on the wire (`contracts/send-message.examples.json`,
-   `contracts/sse.examples.json`, [API contract](../../../docs/api-contract.md)).
+   `contracts/sse.examples.json`, [API contract](../../../docs/reference/api-contract.md)).
 5. Prove it is additive: `uv run pytest -q -m contract -p no:cacheprovider` and
    `uv run python -m scripts.contract_diff --base-sha origin/develop` (needs `oasdiff` on PATH; if absent, say the
    diff was not run locally and that CI runs it). Then `just check` and `just test` through the test-runner agent.
 6. List the consumer steps: the portfolio and backoffice import a committed snapshot in their own PRs and are never
-   edited from here; record the API commit they should pin in [the frontend handoff](../../../docs/frontend-handoff.md)
+   edited from here; record the API commit they should pin in [the frontend handoff](../../../docs/reference/frontend-handoff.md)
    when the owner asks.
 
 ## Feedback loop

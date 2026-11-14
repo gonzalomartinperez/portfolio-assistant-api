@@ -10,7 +10,7 @@ metadata:
 # api-refresh-corpus
 
 Tools: Read, Grep, Glob, Bash, Edit. This skill does not authorize commits, pushes, merges, paid calls or
-deployment (AGENTS.md). Only approved public portfolio content enters the corpus ([ADR016](../../../docs/adrs/016-frozen-public-corpus-snapshot.md)):
+deployment (AGENTS.md). Only approved public portfolio content enters the corpus ([ADR016](../../../docs/decisions/016-frozen-public-corpus-snapshot.md)):
 never career-ops, private exports or arbitrary remotes. Do not edit the portfolio checkout; only read it.
 
 ## Checklist
@@ -28,14 +28,14 @@ never career-ops, private exports or arbitrary remotes. Do not edit the portfoli
 2. Choose the portfolio commit: `git -C <portfolio-checkout> rev-parse <ref>` gives the full SHA. The script
    refuses any `origin` outside the approved allowlist and any file type that is not a regular blob.
 3. Refresh: `uv run python -m scripts.refresh_corpus --source <portfolio-checkout> --ref <full-sha>`. It prints
-   `added keys` and `removed keys` (canonical keys, [ADR012](../../../docs/adrs/012-layout-neutral-evidence-keys.md)).
+   `added keys` and `removed keys` (canonical keys, [ADR012](../../../docs/decisions/012-layout-neutral-evidence-keys.md)).
 4. Check gold keys: search the removed keys in `evals/golden/golden.jsonl`, `evals/full/full.jsonl` and
    `evals/retrieval/qrels.jsonl` (`gold_evidence_ids` and qrels) and in the legacy `evals/retrieval.json`. Never grep
    `evals/full/holdout.sealed.jsonl`; for it, ask the owner to check. Any hit is a loud failure: report the item
    ids and propose new keys; do not loosen expectations to pass. Golden changes need owner review (CODEOWNERS), then
    `uv run python -m evals.harness.distill --write-manifest`.
 5. Update what names the commit: the `PINNED` constant in `tests/tooling/test_corpus_snapshot.py` and the
-   snapshot id and commit in [ADR016](../../../docs/adrs/016-frozen-public-corpus-snapshot.md).
+   snapshot id and commit in [ADR016](../../../docs/decisions/016-frozen-public-corpus-snapshot.md).
 6. Verify: `uv run python -m scripts.refresh_corpus --check`, then
    `uv run pytest -q tests/tooling/test_corpus_snapshot.py tests/evals/test_golden_manifest.py tests/evals/test_full_manifest.py -p no:cacheprovider`
    and `just check`. The retrieval baseline (`evals/baselines/retrieval.json`, `evals/retrieval/BASELINE.md`) names the

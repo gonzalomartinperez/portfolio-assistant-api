@@ -15,7 +15,7 @@ owner-only. Never tune a prompt against held-out answers; never open `evals/full
 
 ## Checklist
 
-- [ ] [ADR014](../../../docs/adrs/014-prompt-registry.md) and the Prompts section of CONTRIBUTING.md read
+- [ ] [ADR014](../../../docs/decisions/014-prompt-registry.md) and the Prompts section of CONTRIBUTING.md read
 - [ ] Only the intended file under `app/prompts/` edited; placeholders unchanged unless the allowlist changed
 - [ ] `version` bumped for a semantic change, lock regenerated deliberately, lock diff reviewed
 - [ ] Offline prompt tests green; characterization snapshots updated only when the rendered text change is intended
@@ -25,7 +25,7 @@ owner-only. Never tune a prompt against held-out answers; never open `evals/full
 
 1. Identify the piece: `answer.md`, `web-context.md`, `voice-recruiter.md`, `voice.en.md` or `voice.es.md`.
    Voice pieces are assembled per locale in `app/adapters/providers/voice.py`; tone rules are in
-   [assistant voice](../../../docs/assistant-voice.md).
+   [assistant voice](../../../docs/explanation/assistant-voice.md).
 2. Edit the file. Keep the front matter (`id`, `version`, `owner`, `last-reviewed`), keep `{current_date}` and
    `{language}` as the only placeholders, and keep Spanish natural neutral Latin American Spanish.
 3. Bump `version` for a semantic change, then regenerate and review the lock:

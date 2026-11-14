@@ -15,7 +15,7 @@ deployment (AGENTS.md). Hard rules: never open `evals/full/holdout.sealed.jsonl`
 
 ## Checklist
 
-- [ ] AGENTS.md and [the evaluation guide](../../../docs/assistant-evaluation.md) read
+- [ ] AGENTS.md and [the evaluation guide](../../../docs/reference/evals.md) read
 - [ ] Only fixture-mode commands run, against isolated fixtures when a database is needed
 - [ ] Results reported as counts per stratum and locale, never as quoted answer text
 - [ ] Anything that does not exist yet (no cassettes, `eval-record.yml`) is stated as "not available yet"
@@ -25,9 +25,9 @@ deployment (AGENTS.md). Hard rules: never open `evals/full/holdout.sealed.jsonl`
 
 | Piece | Command or path |
 | --- | --- |
-| Item schema, loader, 11 deterministic graders ([ADR011](../../../docs/adrs/011-eval-harness.md)) | `evals/harness/`; `uv run pytest -q tests/evals -p no:cacheprovider` |
+| Item schema, loader, 11 deterministic graders ([ADR011](../../../docs/decisions/011-eval-harness.md)) | `evals/harness/`; `uv run pytest -q tests/evals -p no:cacheprovider` |
 | Golden set, 80 items, frozen, owner is CODEOWNER | `evals/golden/golden.jsonl`, `manifest.json`, `REVIEW.md` |
-| Golden lane (cassette replay, [ADR013](../../../docs/adrs/013-provider-port-cassettes.md)) | `just eval-golden`, which runs `REQUIRE_GOLDEN_CASSETTES=1 uv run python -m evals.harness.golden`; exit 0 pass, 1 failing items, 3 re-record required |
+| Golden lane (cassette replay, [ADR013](../../../docs/decisions/013-provider-port-cassettes.md)) | `just eval-golden`, which runs `REQUIRE_GOLDEN_CASSETTES=1 uv run python -m evals.harness.golden`; exit 0 pass, 1 failing items, 3 re-record required |
 | Full set, 384 development items | `evals/full/full.jsonl`, `evals/full/README.md` (report-only, no gate) |
 | Sealed holdout, 100 items | `evals/full/holdout.sealed.jsonl`: never open it; the harness exposes counts only |
 | Retrieval harness and baseline (ranx, 152 queries) | `uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json`, `--compare`, baseline `evals/baselines/retrieval.json`, notes `evals/retrieval/BASELINE.md` |
@@ -43,7 +43,7 @@ deployment (AGENTS.md). Hard rules: never open `evals/full/holdout.sealed.jsonl`
 
 1. Read the guide above and, for item rules, `evals/harness/items.py` and `evals/schema/item.schema.json`.
 2. Offline harness tests, no services: `uv run pytest -q tests/evals -p no:cacheprovider`.
-3. Golden lane: with isolated fixtures from [local development](../../../docs/local-development.md), `just eval-golden`.
+3. Golden lane: with isolated fixtures from [local development](../../../docs/tutorials/local-development.md), `just eval-golden`.
    Exit 3 is a statement ("re-record required"), not a failure to fix: report it and stop. Never run `--record`:
    it is paid, needs `EVAL_RECORDING=1`, `EVAL_ENVIRONMENT=eval-live` and a budget, and is owner-only.
 4. Retrieval, same isolated fixtures, no model call:

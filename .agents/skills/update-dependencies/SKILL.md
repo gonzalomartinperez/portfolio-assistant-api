@@ -21,7 +21,7 @@ Tools: Read, Grep, Glob, Bash, Edit, Write. Edits stay on the Dependabot branch;
 
 ## Procedure
 
-1. Read the PR body (versions per ecosystem), `docs/dependency-updates.md` and the tracking issue section written by the weekly guard.
+1. Read the PR body (versions per ecosystem), `docs/reference/dependency-updates.md` and the tracking issue section written by the weekly guard.
 2. For each major bump read the upstream changelog and list breaking changes that touch this repo. Check licenses with `uv run python -m scripts.check_license`.
 3. Fix breakages on the Dependabot branch in small commits (this stops Dependabot rebases; the guard handles superseding). Use `uv sync --frozen` to reproduce the lock.
 4. Run `just check` and `just test`; keep `ci-gate` green. Never merge; the owner merges the weekly PR. Never use a real API key or network service beyond the package index.

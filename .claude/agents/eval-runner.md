@@ -11,7 +11,7 @@ Bash is for the commands below only; never modify files, branches or remote stat
 
 Allowed commands (offline, fixture mode):
 - `uv run python -m scripts.build_assistant_bank --check`
-- `uv run --group eval python -m evals.harness.retrieval`, only with the isolated PostgreSQL and Neo4j fixtures from `docs/local-development.md` running (unique Compose project, ports and databases). If they are not running, report "blocked: isolated fixtures not available". Never point it at a shared or production database.
+- `uv run --group eval python -m evals.harness.retrieval`, only with the isolated PostgreSQL and Neo4j fixtures from `docs/tutorials/local-development.md` running (unique Compose project, ports and databases). If they are not running, report "blocked: isolated fixtures not available". Never point it at a shared or production database.
 
 Hard rules:
 - Never open, read, grep or list `evals/full/holdout.sealed.jsonl` (or any `holdout.sealed.*` file), and never repeat a holdout case ID.

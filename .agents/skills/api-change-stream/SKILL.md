@@ -11,7 +11,7 @@ metadata:
 
 Read [AGENTS.md](../../../AGENTS.md) unless already loaded. Obtain the failing or
 requested event sequence, locale and run outcome. An investigation stays read-only
-unless the user also requests a fix. Load [API/SSE behavior](../../../docs/api-contract.md)
+unless the user also requests a fix. Load [API/SSE behavior](../../../docs/reference/api-contract.md)
 and inspect [stream tests](../../../tests/unit/test_workflow.py) before designing changes.
 
 Trace [run policy](../../../app/application/runs.py) → [injected workflow](../../../app/ai/workflow.py)
@@ -29,13 +29,13 @@ Do not pass LangGraph state, SDK objects or HTTP requests into application contr
   and resources. Partial text is not completed history; persistence precedes
   `message.completed`. Unknown usage retains reservations; never silently retry.
 
-For authorized changes, use the maintained [verification commands](../../../docs/local-development.md#verification)
+For authorized changes, use the maintained [verification commands](../../../docs/tutorials/local-development.md#verification)
 and relevant contract/workflow/real-service tests. Export with
 `uv run python -m contracts.export`, then review artifact diffs against the baseline;
 do not blindly regenerate away drift. Production-image and proxy smoke commands
-are in the same guide and [runbook](../../../docs/deployment.md).
+are in the same guide and [runbook](../../../docs/how-to/deploy-with-vps-ops.md).
 
-Publish a committed [frontend handoff](../../../docs/frontend-handoff.md) with an
+Publish a committed [frontend handoff](../../../docs/reference/frontend-handoff.md) with an
 immutable API SHA, artifact paths/examples and compatibility notes when changing
 integration behavior. The frontend owner imports it; never edit their checkout.
 Deliver event/lifecycle evidence and distinguish fixture from paid-provider results.

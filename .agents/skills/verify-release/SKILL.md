@@ -17,7 +17,7 @@ Private vps-ops owns production composition, shared resources and Coolify execut
 ## Checklist
 
 - [ ] Promotion PR (`develop` to `main`) ran the release profile and `ci-gate` is green on the current head
-- [ ] [Release checklist](../../../docs/release-checklist.md) items have evidence from this revision, not an older one
+- [ ] [Release checklist](../../../docs/how-to/release.md) items have evidence from this revision, not an older one
 - [ ] Contracts exported with no drift; image and manifest evidence recorded; scanner findings preserved
 - [ ] Tag, release notes and merge SHA agree; version and CHANGELOG consistent once those exist
 - [ ] Post-deploy checks reported by the production owner (vps-ops), not run here
@@ -25,7 +25,7 @@ Private vps-ops owns production composition, shared resources and Coolify execut
 ## Procedure
 
 1. Release profile: `.github/ci-profile.json` maps `develop -> main` to the `release` profile, which runs every job
-   (secrets, security, workflows, static, database, container, contract; [CI profiles](../../../docs/ci.md)). Read
+   (secrets, security, workflows, static, database, container, contract; [CI profiles](../../../docs/reference/ci.md)). Read
    `gh pr checks <n>`: `Required checks` and `ci-gate` must be green on the current head. Also read what sits
    outside `ci-gate`: the advisory PR `mutation` job and `mutation-weekly.yml` (`scripts.mutation_gate`, ratchets in
    `tests/mutation-baseline.json`), `load-nightly.yml` (budgets in `evals/baselines/budgets.json`), the nightly
@@ -37,7 +37,7 @@ Private vps-ops owns production composition, shared resources and Coolify execut
    lane status (`just eval-golden`; exit 3 "re-record required" is reported as such, never as a pass), then
    `uv run python -m scripts.scan_secrets` (locations and detectors only, never values; a known-pattern scan is not a
    full secret audit) and `uv run python -m scripts.check_license`.
-3. Image and manifest evidence per [deployment contract](../../../docs/deployment-contract.md) and the container
+3. Image and manifest evidence per [deployment contract](../../../docs/reference/deployment-contract.md) and the container
    job in the CI doc: `uv run python -m scripts.container_smoke --image <ref>`, `uv run python -m scripts.proxy_smoke --image <ref>`,
    and the gate `uv run python -m scripts.image_security` over the full Trivy report. Any CRITICAL or fixable HIGH
    finding blocks; unfixed HIGH stays visible for production assessment. Since 2026-10-19 image CVEs are advisory
@@ -68,19 +68,19 @@ Binding rules carried over from the retired `api-verify-release`:
   or a deployment controller without a concrete new request; read the runtime contract before touching worker,
   grants or migrations.
 - Dependency maintenance is manual by owner decision: never reactivate old merge flags, grant writer permissions or
-  arm native auto-merge ([dependency policy](../../../docs/dependency-updates.md); the weekly PR is update-dependencies).
+  arm native auto-merge ([dependency policy](../../../docs/reference/dependency-updates.md); the weekly PR is update-dependencies).
 - Local Compose builds `infra/docker/postgres/Dockerfile` (the maintained-base candidate runs as UID 70 on a new
-  volume): never reuse or chown a Debian PGDATA volume or touch a shared one ([ADR008](../../../docs/adrs/008-supported-postgres-base.md)).
+  volume): never reuse or chown a Debian PGDATA volume or touch a shared one ([ADR008](../../../docs/decisions/008-supported-postgres-base.md)).
   `infra/compose/local.yaml` is local and CI only; validate it with `uv run python -m scripts.validate_compose`.
 - Container smoke must also show pip and ensurepip absent from the base interpreter, not only the application venv.
 - A synthetic evaluation export validates offline by default; `--authorize-export` needs separate current
   external-export authority and a synthetic aggregate, never a raw answer report; automatic tracing stays rejected.
 
-References to load only when the task touches them: [runtime baseline](../../../docs/runtime-baseline.md) (exact tool
-versions), [private observability](../../../docs/private-observability.md), [synthetic evaluation export](../../../docs/synthetic-evaluation-export.md),
-[live-evaluation readiness](../../../docs/live-evaluation-readiness.md) (the historical PostgreSQL-only isolation check
+References to load only when the task touches them: [runtime baseline](../../../docs/reference/runtime-baseline.md) (exact tool
+versions), [private observability](../../../docs/explanation/private-observability.md), [synthetic evaluation export](../../../docs/reference/synthetic-evaluation-export.md),
+[live-evaluation readiness](../../../docs/evidence/archive/2026-10/live-evaluation-readiness.md) (the historical PostgreSQL-only isolation check
 never validated Neo4j; the maintained harness checks both destinations against owned Docker identities),
-[analytics direct-edge contract](../../../docs/coordination/analytics-direct-edge-v1.md) (direct browser to Cloudflare to
+[analytics direct-edge contract](../../../docs/reference/contracts/analytics-direct-edge-v1.md) (direct browser to Cloudflare to
 proxy to API; country settings default-off; ops owns spoof and bypass verification).
 
 ## Feedback loop

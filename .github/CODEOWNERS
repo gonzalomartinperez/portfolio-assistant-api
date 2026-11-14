@@ -24,5 +24,4 @@
 /evals/golden/                      @gonzalomartinperez
 /evals/full/holdout.sealed.jsonl    @gonzalomartinperez
 /app/prompts/                       @gonzalomartinperez
-/docs/adrs/                         @gonzalomartinperez
 /docs/decisions/                    @gonzalomartinperez

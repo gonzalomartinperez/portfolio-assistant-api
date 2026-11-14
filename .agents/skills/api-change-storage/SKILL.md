@@ -16,8 +16,8 @@ isolated fixture database before destructive failure-path testing.
 
 Inspect [migration history](../../../migrations), [migration runner](../../../app/adapters/postgres/migrations.py),
 [storage contracts](../../../app/application), and only the affected concrete
-adapter. Read [transaction/lifecycle ownership](../../../docs/architecture.md) and
-[backup/upgrade procedures](../../../docs/deployment.md) for data-bearing changes.
+adapter. Read [transaction/lifecycle ownership](../../../docs/explanation/architecture.md) and
+[backup/upgrade procedures](../../../docs/how-to/deploy-with-vps-ops.md) for data-bearing changes.
 
 - Preserve every applied migration and checksum; add a new ordered file. Run schema
   and checkpoint setup as explicit operator steps, never import/startup side effects.
@@ -32,7 +32,7 @@ adapter. Read [transaction/lifecycle ownership](../../../docs/architecture.md) a
   Runtime may mutate conversations/accounting/checkpoints but not corpus/schema;
   the maintenance profile uses separate administration credentials.
 
-Use [maintained verification](../../../docs/local-development.md#verification):
+Use [maintained verification](../../../docs/tutorials/local-development.md#verification):
 apply migrations twice in an isolated fixture database, test checksum/order failure,
 real concurrency and rollback/recovery for the changed invariant. Keep the previous
 active corpus and existing data intact. For a restore drill create a new database;

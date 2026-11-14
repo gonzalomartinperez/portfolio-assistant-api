@@ -6,7 +6,7 @@ only by `RecordingCassetteProvider` (`python -m evals.harness.golden --record`),
 refuses to run without `EVAL_RECORDING=1`, `EVAL_ENVIRONMENT=eval-live`, `ALLOW_PAID_AI=true`
 and a `--campaign-budget-usd` of at most 2, and stops before any call that would exceed the
 DR-04 caps (USD 2 per campaign, USD 8 per month). Never edited by hand. See
-[ADR013](../../docs/adrs/013-provider-port-cassettes.md).
+[ADR013](../../docs/decisions/013-provider-port-cassettes.md).
 
 `spend-ledger.json` maps a month (`YYYY-MM`) to the estimated USD spent on recording; it is
 committed and updated by the recorder.

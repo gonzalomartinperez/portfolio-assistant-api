@@ -16,7 +16,7 @@ owns the reasoning, contracts and persistence behind it.
 > disabled. The VPS is not yet purchased/provisioned and production activation is
 > not authorized. Dependency/image vulnerability findings are advisory for deployment
 > by owner decision; they remain visible in the
-> [final local artifact evidence](docs/verification/final-artifact-closeout-2026-10-18.md).
+> [final local artifact evidence](docs/evidence/archive/2026-10/final-artifact-closeout-2026-10-18.md).
 > This does not certify a clean stack or waive source, integrity, secret, health or
 > data-safety checks. Publication and activation require separate approval.
 
@@ -81,7 +81,7 @@ inside the panel; the composer remains separate from the reading surface.
 
 </details>
 
-[Gallery provenance and limits](docs/verification/readme-gallery.md) distinguish recorded
+[Gallery provenance and limits](docs/evidence/archive/2026-10/readme-gallery.md) distinguish recorded
 model output, fixture failures and browser emulation. Captures do not prove physical-device,
 production-routing or live-provider availability. No credentials or private visitor messages
 are included. The portfolio working tree and disabled rollout were not changed.
@@ -94,7 +94,7 @@ are included. The portfolio working tree and disabled rollout were not changed.
 
 Solid arrows show requests or synchronization; dashed arrows show returned data.
 Frames identify trust boundaries. This overview describes implemented responsibilities,
-not production deployment or a security certification. Open the original to zoom. [Diagram source and visual conventions](docs/diagrams.md)
+not production deployment or a security certification. Open the original to zoom. [Diagram source and visual conventions](docs/explanation/architecture.md)
 explain the symbols and review procedure.
 
 
@@ -185,7 +185,7 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
 The source command indexes the frozen, approved public portfolio snapshot in
-`evals/corpus` (no network; see [ADR016](docs/adrs/016-frozen-public-corpus-snapshot.md)).
+`evals/corpus` (no network; see [ADR016](docs/decisions/016-frozen-public-corpus-snapshot.md)).
 Refresh it only by an explicit PR with `uv run python -m scripts.refresh_corpus --source <portfolio checkout> --ref <commit>`;
 `--check` verifies the committed files against `manifest.json`. Fixture
 mode makes **no paid model or embedding calls**. In a second terminal:
@@ -201,8 +201,8 @@ session without printing credentials. Liveness is `/health/live`; readiness is
 
 To stop the selected fixture services, use `docker compose -f infra/compose/local.yaml stop` from the terminal
 where the fixture environment is loaded. Preserve volumes; do not use `down -v` against
-shared environments. [Local development](docs/local-development.md) covers alternate
-ports, real-service tests and local source indexing. [Environment](docs/environment.md)
+shared environments. [Local development](docs/tutorials/local-development.md) covers alternate
+ports, real-service tests and local source indexing. [Environment](docs/reference/environment.md)
 explains private `.env.local` configuration and authorized real-provider setup.
 
 ## Public and private contracts
@@ -233,7 +233,7 @@ No prompts, transcripts, session credentials or visitor identities enter operati
 payloads. Manual OTLP export is opt-in; exporter failures do not retry chat generation.
 Health checks never call the paid provider. Shared Prometheus/Grafana deployment and
 end-to-end production dashboard pairing remain unverified. See
-[the private operations contract](docs/private-observability.md).
+[the private operations contract](docs/explanation/private-observability.md).
 
 ## Verification and evidence
 
@@ -255,14 +255,14 @@ Frozen dependencies, pinned actions, current-head checks and image scans remain 
 
 | Evidence | What was actually verified |
 | --- | --- |
-| [Deep model evaluation](docs/verification/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
-| [Bilingual voice](docs/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
-| [1000-question bank](docs/assistant-evaluation.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
-| [Bounded 2026-10-17 live smoke](docs/verification/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling, tied to source `02b6f2784564669597fe8a4c2adf53bf807737a6`. |
-| [Manual synthetic evaluation export](docs/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after that evaluated source revision. |
-| [Private operations](docs/verification/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
-| [PostgreSQL 18](docs/verification/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
-| [Versioned query plans](docs/verification/database-queries-2026-10-17.md) | Measured ledger/graph access paths, migration 008, source-hashed synthetic receipts and structural CI regressions; no VPS latency claim. |
+| [Deep model evaluation](docs/evidence/archive/2026-10/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
+| [Bilingual voice](docs/explanation/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
+| [1000-question bank](docs/reference/evals.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
+| [Bounded 2026-10-17 live smoke](docs/evidence/archive/2026-10/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling, tied to source `02b6f2784564669597fe8a4c2adf53bf807737a6`. |
+| [Manual synthetic evaluation export](docs/reference/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after that evaluated source revision. |
+| [Private operations](docs/evidence/archive/2026-10/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
+| [PostgreSQL 18](docs/evidence/archive/2026-10/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
+| [Versioned query plans](docs/evidence/archive/2026-10/database-queries-2026-10-17.md) | Measured ledger/graph access paths, migration 008, source-hashed synthetic receipts and structural CI regressions; no VPS latency claim. |
 
 Release tags are immutable by default. The owner explicitly requested a single GitHub
 `v1.0.0` tag for the final verified source on 2026-10-18; prior tag objects must be
@@ -289,42 +289,44 @@ It runs non-root on private port **8000**. Startup does not migrate or ingest kn
 those are explicit operations. vps-ops selects reviewed prebuilt image digests and performs
 separately authorized deployment. Main promotion does not authorize publication or deployment.
 
-Within-project PostgreSQL consolidation is a [proposed compatibility blueprint](docs/adrs/005-project-postgres-consolidation.md),
+Within-project PostgreSQL consolidation is a [proposed compatibility blueprint](docs/decisions/005-project-postgres-consolidation.md),
 not an implemented or tested production topology. API and IAM remain separate databases/identities.
 
 ## Documentation map
 
 | Work | Start here |
 | --- | --- |
-| Install, configure and connect | [Local development](docs/local-development.md) · [Environment](docs/environment.md) |
-| Understand policy and boundaries | [Architecture](docs/architecture.md) · [Engineering coordination](docs/engineering-coordination.md) · [Threat model](docs/threat-model.md) |
-| Integrate a client or refresh types | [API contract](docs/api-contract.md) · [Frontend handoff](docs/frontend-handoff.md) |
-| Verify direct website collection and country trust | [Direct-edge v1 contract](docs/coordination/analytics-direct-edge-v1.md) |
-| Maintain public knowledge | [Knowledge synchronization](docs/knowledge-sync.md) |
-| Operate private measurements | [Observability](docs/private-observability.md) |
-| Prepare a compatible VPS release | [Runtime contract](docs/deployment-contract.md) · [vps-ops handoff](docs/vps-ops-request.md) |
-| Review CI and dependency updates | [CI](docs/ci.md) · [Dependency policy](docs/dependency-updates.md) |
-| Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/agent-skills.md) |
-| Review support and remaining work | [Supported versions](docs/support-policy.md) · [Acceptance checklist](docs/work-checklist.md) |
+| Install, configure and connect | [Local development](docs/tutorials/local-development.md) · [Environment](docs/reference/environment.md) |
+| Understand policy and boundaries | [Architecture](docs/explanation/architecture.md) · [Engineering coordination](docs/explanation/engineering-coordination.md) · [Threat model](docs/explanation/threat-model.md) |
+| Integrate a client or refresh types | [API contract](docs/reference/api-contract.md) · [Frontend handoff](docs/reference/frontend-handoff.md) |
+| Verify direct website collection and country trust | [Direct-edge v1 contract](docs/reference/contracts/analytics-direct-edge-v1.md) |
+| Maintain public knowledge | [Knowledge synchronization](docs/how-to/maintain-knowledge.md) |
+| Operate private measurements | [Observability](docs/explanation/private-observability.md) |
+| Prepare a compatible VPS release | [Runtime contract](docs/reference/deployment-contract.md) · [vps-ops handoff](docs/evidence/archive/2026-10/vps-ops-request.md) |
+| Review CI and dependency updates | [CI](docs/reference/ci.md) · [Dependency policy](docs/reference/dependency-updates.md) |
+| Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/reference/agent-skills.md) |
+| Review support and remaining work | [Supported versions](docs/reference/support-policy.md) · [Roadmap progress](docs/master-plan/progress.md) |
+| Browse all documentation | [Documentation map](docs/README.md) |
+| Read the decisions and the dated evidence | [Decision records](docs/decisions/README.md) · [Evidence index](docs/evidence/README.md) |
 | Review the future improvement plan (planning only) | [Master plan 2026-10](docs/master-plan/README.md) |
 
 Software licensing and content scope are documented [below](#software-license).
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
 
-Optional [official-documentation context](docs/bounded-web-context.md) complements
+Optional [official-documentation context](docs/explanation/bounded-web-context.md) complements
 portfolio evidence through closed technical topics; no autonomous browsing or career
 facts from general search. It defaults off and shares the application spend ceiling.
 
-Shared runtime/version acceptance: [runtime baseline](docs/runtime-baseline.md).
+Shared runtime/version acceptance: [runtime baseline](docs/reference/runtime-baseline.md).
 
 ## Privacy and release gates
 
 Volunteered context supports useful follow-ups; it is not automatic model training.
-[Context minimization and the human improvement loop](docs/feedback-and-improvement.md)
+[Context minimization and the human improvement loop](docs/explanation/feedback-and-improvement.md)
 describe actual patterns, original-history retention, private rating aggregates and limits.
-The [dated Neo4j assessment](docs/verification/neo4j-release-blocker-2026-10-17.md)
+The [dated Neo4j assessment](docs/evidence/archive/2026-10/neo4j-release-blocker-2026-10-17.md)
 retains unresolved Jackson findings and its original failed results. Under the
-[current deployment policy](docs/deployment-contract.md#deployment-authorization-and-vulnerability-policy),
+[current deployment policy](docs/reference/deployment-contract.md#deployment-authorization-and-vulnerability-policy),
 dependency/image CVEs inform maintenance rather than veto deployment. No VPS,
 deployment or collection activation is authorized or verified.
 
