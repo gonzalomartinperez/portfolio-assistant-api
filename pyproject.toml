@@ -59,7 +59,10 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-markers = ["integration: requires isolated PostgreSQL/pgvector and Neo4j"]
+markers = [
+  "integration: requires isolated PostgreSQL/pgvector and Neo4j",
+  "property: Hypothesis property-based tests (profiles ci and nightly)",
+]
 
 [tool.mypy]
 files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "app/adapters/neo4j/read_queries.py"]
