@@ -33,7 +33,7 @@ and existing case IDs are stable; split changes require explicit review. Then ru
 ```sh
 uv run python -m scripts.build_assistant_bank
 uv run python -m scripts.build_assistant_bank --check
-uv run pytest -q tests/test_grounded_assistant.py
+uv run pytest -q tests/unit/test_grounded_assistant.py
 ```
 
 The compiler rejects duplicate normalized wording/identities, missing locales and

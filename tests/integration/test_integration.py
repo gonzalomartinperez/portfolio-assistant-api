@@ -421,7 +421,7 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
     from app.application.contracts import WorkflowEvent
     from app.bootstrap.config import Settings
     from app.bootstrap.container import create_app
-    from tests.test_workflow import SOURCE
+    from tests.unit.test_workflow import SOURCE
 
     sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
 

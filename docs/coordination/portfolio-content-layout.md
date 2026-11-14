@@ -53,9 +53,9 @@ retrieval returned no professional sources. The legacy-layout cases passed.
 The implementation adds tests for profile-format invalidation before embedding I/O,
 both layouts, locale isolation, citations and ambiguous-path rejection.
 
-Run `uv run pytest -q tests/test_content_root_compatibility.py tests/test_index_identity.py`.
-The real-service cases are `tests/test_content_root_integration.py` and
-`tests/test_index_identity_integration.py`: use the documented isolated PostgreSQL/Neo4j
+Run `uv run pytest -q tests/unit/test_content_root_compatibility.py tests/unit/test_index_identity.py`.
+The real-service cases are `tests/integration/test_content_root_integration.py` and
+`tests/integration/test_index_identity_integration.py`: use the documented isolated PostgreSQL/Neo4j
 fixture and explicit `TEST_INTEGRATION=1`. They exercise the actual worker publication
 adapter, repeated polling, path relocation, changed content, reuse, both graph language
 filters, version retirement and supporting citation spans. Synthetic provider transport

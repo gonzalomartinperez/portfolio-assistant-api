@@ -50,7 +50,7 @@ profiles add to the base (`secrets` and `security`, always).
 Fail-closed rules: a changed file outside every profile, an empty or failed diff, or a change to
 the profile map itself runs every job. Push, merge-group and manual runs, and `workflow_call`
 runs (no PR event), run every job. A broken profile map fails `classify`, so the gate goes red.
-`scripts/ci_profile.py` and `tests/test_ci_profile.py` require every tracked file to match a profile.
+`scripts/ci_profile.py` and `tests/harness/test_ci_profile.py` require every tracked file to match a profile.
 
 `ci-gate` is the single required check going forward. It needs every other job, requires every
 selected job to succeed, and tolerates a skip only for unselected jobs. Until the owner switches
@@ -62,6 +62,24 @@ drift. The real-service job exercises ten development cases spanning all topics 
 both locale hints through the HTTP/SSE harness; failed terminals fail the job.
 Full 1000-case fixture runs are recorded locally rather than adding that cost to
 every PR. These checks establish executable coverage, not live-model answer quality.
+
+## Test lanes
+
+Test modules are grouped by purpose. Run individual lanes with these commands:
+
+| Lane | Directory | Command |
+| --- | --- | --- |
+| Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
+| Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
+| Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
+| Tooling | `tests/tooling/` | `uv run pytest -q tests/tooling` |
+| Harness | `tests/harness/` | `uv run pytest -q tests/harness` |
+| Integration | `tests/integration/` (marker `integration`, also used by a few mixed unit files) | `TEST_INTEGRATION=1 uv run pytest -q -m integration` |
+| Container | `tests/container/` | `uv run pytest -q tests/container` |
+
+`tests/support.py` and `tests/fixtures/` remain shared at the `tests/` root.
+The offline suite remains `uv run pytest -q -m 'not integration'`.
 
 Tests are explicitly marked `integration`. Static and database jobs run
 disjoint selections, retaining all coverage. Container smoke owns fresh services;
@@ -122,7 +140,7 @@ can be dispatched manually after that promotion to seed the baseline and the tra
 
 The `security` job is part of the base profile, so `classify` always selects it and `ci-gate` requires it.
 Every third-party action and reusable workflow is pinned to a full commit SHA. zizmor `unpinned-uses` and
-`tests/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
+`tests/harness/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
 `vuln-daily.yml`; the latter two also require an empty top-level `permissions` block and no
 `pull_request_target` or `pull_request` trigger. `docker/setup-buildx-action` steps set
 `cache-binary: false`, and the container job does not use the `setup-uv` cache, to satisfy zizmor `cache-poisoning`.
@@ -211,7 +229,7 @@ weekly PR into `develop`; the owner merges it manually. The shared
 `deps-weekly-guard` workflow (`.github/workflows/deps-weekly-guard.yml`, pinned by
 SHA, no `pull_request_target`) keeps it to one open PR and flags a red one. The
 former dependency-policy workflow, its scripts and the CI audit step were
-removed ([ADR019](adrs/019-weekly-dependency-pr.md)). `tests/test_dependabot_config.py`
+removed ([ADR019](adrs/019-weekly-dependency-pr.md)). `tests/harness/test_dependabot_config.py`
 runs in the offline test suite.
 
 ## Python 3.14 application compatibility
@@ -247,7 +265,7 @@ This is an added remediation gate, not a clean-image or production-security clai
 Scanner network failures fail the job. No production secrets or publishing token
 are available to the job. The required aggregate `checks` remains unchanged.
 
-Local policy tests: `uv run pytest -q tests/test_image_security.py`. Full report
+Local policy tests: `uv run pytest -q tests/container/test_image_security.py`. Full report
 and summary are retained with integration diagnostics even on failure. Scan the
 release digest again at release selection: the vulnerability database changes
 independently of source/image revisions.

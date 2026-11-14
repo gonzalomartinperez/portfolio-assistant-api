@@ -24,7 +24,7 @@ from app.application.observability import Execution, Stage, measurements
 from app.application.runs import RunService
 from app.bootstrap.config import Settings
 from app.presentation.operations import OperationalSnapshot, router
-from tests.test_workflow import GatedProvider, Retrieval, Store
+from tests.unit.test_workflow import GatedProvider, Retrieval, Store
 
 TOKEN = 'fixture-only-operational-token-0000'
 

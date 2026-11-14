@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.domain.fixture import fixture_message
 from app.main import app
+from tests.support import ROOT
 
 
 def test_offline_contract_and_live():
@@ -26,9 +27,7 @@ def test_origin_rejected_without_db():
 
 
 def test_fixture_evaluation_direct_multiple_source_unknown_and_adversarial():
-    fixtures = json.loads(
-        (Path(__file__).parent / 'fixtures/evaluation.json').read_text()
-    )
+    fixtures = json.loads((ROOT / 'tests/fixtures/evaluation.json').read_text())
     for case in fixtures:
         answer = fixture_message(case['question'], case['evidence'], case['locale'])
         assert case['contains'] in answer, case['name']

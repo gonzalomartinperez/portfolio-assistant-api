@@ -21,7 +21,7 @@ from app.bootstrap.container import create_app
 from app.domain.errors import DependencyUnavailableError
 from app.domain.knowledge import suggestions
 from app.presentation.middleware import BodyLimit
-from tests.test_workflow import SOURCE
+from tests.unit.test_workflow import SOURCE
 
 
 @pytest.mark.parametrize(
