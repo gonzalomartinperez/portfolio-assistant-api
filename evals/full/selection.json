@@ -1,0 +1,54 @@
+{
+  "development_family_count": 76,
+  "dropped_adversarial_pairs": [],
+  "dropped_families": [
+    {
+      "basis": "facts",
+      "behavior": "answer",
+      "dropped": "language-58",
+      "gold": {
+        "en": "j",
+        "es": "d"
+      },
+      "kept": "language-57",
+      "reason": "same topic, behavior and gold evidence with required facts overlapping at or above 0.6",
+      "score": 1.0,
+      "topic": "language"
+    },
+    {
+      "basis": "facts",
+      "behavior": "answer",
+      "dropped": "metrics-31",
+      "gold": "e",
+      "kept": "rampy-mobile-startup",
+      "reason": "same topic, behavior and gold evidence with required facts overlapping at or above 0.6",
+      "score": 1.0,
+      "topic": "metrics"
+    },
+    {
+      "basis": "facts",
+      "behavior": "answer",
+      "dropped": "metrics-35",
+      "gold": "j",
+      "kept": "filomena-concurrency",
+      "reason": "same topic, behavior and gold evidence with required facts overlapping at or above 0.6",
+      "score": 1.0,
+      "topic": "metrics"
+    },
+    {
+      "basis": "facts",
+      "behavior": "answer",
+      "dropped": "filomena-legacy-migration",
+      "gold": "j",
+      "kept": "projects-12",
+      "reason": "same topic, behavior and gold evidence with required facts overlapping at or above 0.6",
+      "score": 0.6667,
+      "topic": "projects"
+    }
+  ],
+  "dropped_legacy_scenario": "role-paraphrase (single-turn near-duplicate of fit)",
+  "duplicate_rule": "two families are duplicates only if they share the legacy topic, the expected behavior and the gold evidence keys AND their English required facts have Jaccard >= 0.6 (or, when both have no facts, the Jaccard of distinctive tokens, i.e. folded words minus stopwords and template words, is >= 0.6); a sealed family is never dropped and a family kept for one pair is never dropped later; the plan's \"10 dropped\" is not forced",
+  "holdout_family_count": 20,
+  "size_note": "about 484 items (384 development + 100 sealed), above the plan's 450: only four families are real duplicates and all 40 legacy adversarial prompts are kept",
+  "tool": "evals/harness/distill_full.py"
+}

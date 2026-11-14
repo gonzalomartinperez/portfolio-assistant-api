@@ -3,6 +3,7 @@
 RETIRED after this one run (assistant-quality.md section 5.2): the committed
 ``evals/golden/selection.json`` is its output and ``evals/golden/golden.jsonl`` is the
 frozen result. Do not re-run it to change the golden set; edit items through review.
+The full tier is built by the sibling ``distill_full.py`` (it reuses ``ROOT`` and ``_scenarios``).
 
 No network and no model. It loads the legacy families (``evals/assistant-intents.json``,
 the adversarial prompts of ``evals/assistant.json`` and the scripted conversations of
