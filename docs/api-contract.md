@@ -6,6 +6,13 @@ Regenerate deterministically with `uv run python -m contracts.export`. CI reject
 drift. Schema version remains `1`; the SSE schema now documents existing payloads
 more precisely. Frontend consumers import a committed snapshot themselves.
 
+## Health endpoints
+
+`GET /healthz` (liveness, `{"status","version"}`) and `GET /readyz` (readiness,
+adds `schema_version`, the newest applied migration prefix) are the canonical
+names. `/health/live` and `/health/ready` remain unchanged until vps-ops confirms
+the switch; removal is a later contract phase recorded in an operational ADR.
+
 ## Session and browser requests
 
 Use `credentials: 'include'`. Bootstrap `POST /api/v1/session` with JSON `{}`,

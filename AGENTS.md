@@ -28,7 +28,8 @@ workflow/retrieval with injected capabilities, never concrete I/O. Adapters
 implement persistence/provider/source ports; presentation handles HTTP/SSE;
 bootstrap composes clients and lifespan. Preserve v1 wire artifacts.
 
-Run `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,
+Run `just check` (the CI static checks) and `just test` (offline tests), or the
+underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,
 `uv run ruff format --check app tests contracts scripts`, `uv run mypy`, and
 `uv run pytest -q`. Real integration requires migrations and the pinned approved
 public corpus, then `TEST_INTEGRATION=1 uv run pytest -q`. Export contracts with
