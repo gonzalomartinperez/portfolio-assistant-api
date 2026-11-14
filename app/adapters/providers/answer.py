@@ -3,7 +3,7 @@
 import asyncio
 import json
 from collections.abc import AsyncGenerator, Callable
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 
 from openai import APIError
@@ -16,11 +16,66 @@ from app.application.conversation_context import (
     retrieval_question,
 )
 from app.application.presentation_context import PresentationContext
-from app.application.web_context import WebSearch, supplement
+from app.application.web_context import WebSearch, WebSupplement, supplement
 from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS
 from app.domain.errors import ProviderUnavailableError
 from app.domain.fixture import fixture_message
 from app.domain.privacy import minimize_visitor_text
+
+REASONING_EFFORT = 'medium'
+
+
+@dataclass(frozen=True)
+class ModelRequest:
+    """The exact messages sent to the model and the prompt_version that produced them."""
+
+    messages: list[dict[str, str]]
+    prompt_version: str
+
+
+def visitor_inputs(
+    question: str, history: tuple[Turn, ...]
+) -> tuple[str, tuple[Turn, ...]]:
+    """Minimize the visitor question and bound the history before they reach a prompt."""
+    return minimize_visitor_text(question), bounded_history(history)
+
+
+def assemble_request(
+    question: str,
+    evidence: str,
+    locale: str,
+    history: tuple[Turn, ...],
+    context: PresentationContext | None,
+    web: WebSupplement | None,
+    today: date,
+) -> ModelRequest:
+    """Pure assembly of the model messages; inputs are already from ``visitor_inputs``.
+
+    Shared by the real provider and the eval cassette key, so a recorded key always
+    describes the request the provider would send.
+    """
+    developer, prompt_version = developer_prompt(locale, bool(web), today)
+    messages = [
+        {'role': 'developer', 'content': developer},
+        {
+            'role': 'user',
+            'content': json.dumps(
+                {
+                    'public_evidence': evidence,
+                    'untrusted_external_technical_context': asdict(web)
+                    if web
+                    else None,
+                    'untrusted_conversation': [asdict(turn) for turn in history],
+                    'untrusted_presentation_context': asdict(context)
+                    if context
+                    else None,
+                    'question': question,
+                },
+                ensure_ascii=False,
+            ),
+        },
+    ]
+    return ModelRequest(messages, prompt_version)
 
 
 class FixtureProvider:
@@ -66,30 +121,12 @@ class ResponsesProvider:
         if not evidence:
             yield fixture_message(question, evidence, locale)
             return
-        question = minimize_visitor_text(question)
-        history = bounded_history(history)
+        question, history = visitor_inputs(question, history)
         web = await supplement(question, evidence, self.web_search)
-        developer, prompt_version = developer_prompt(locale, bool(web), self.today())
-        messages = [
-            {'role': 'developer', 'content': developer},
-            {
-                'role': 'user',
-                'content': json.dumps(
-                    {
-                        'public_evidence': evidence,
-                        'untrusted_external_technical_context': asdict(web)
-                        if web
-                        else None,
-                        'untrusted_conversation': [asdict(turn) for turn in history],
-                        'untrusted_presentation_context': asdict(context)
-                        if context
-                        else None,
-                        'question': question,
-                    },
-                    ensure_ascii=False,
-                ),
-            },
-        ]
+        request = assemble_request(
+            question, evidence, locale, history, context, web, self.today()
+        )
+        messages, prompt_version = request.messages, request.prompt_version
         # Bound the escaped text actually sent, with room for message framing.
         input_bytes = sum(
             len(message['content'].encode('utf-8')) for message in messages
@@ -101,7 +138,7 @@ class ResponsesProvider:
                 model=self.model,
                 input=messages,
                 max_output_tokens=MAX_OUTPUT_TOKENS,
-                reasoning={'effort': 'medium'},
+                reasoning={'effort': REASONING_EFFORT},
                 store=False,
                 stream=True,
             )

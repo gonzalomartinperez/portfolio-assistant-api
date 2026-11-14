@@ -1,0 +1,9 @@
+{
+  "budgets": {
+    "ttfe_p95_ms": 1500,
+    "gap_p95_ms": 500,
+    "error_rate": 0.005,
+    "rss_growth": 0.2
+  },
+  "baseline": {}
+}

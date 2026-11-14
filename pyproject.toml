@@ -50,6 +50,9 @@ dev = [
 eval = [
     "ranx>=0.3.21",
 ]
+load = [
+    "locust>=2.47.0",
+]
 
 [tool.ruff.lint]
 extend-select = ["I", "N", "UP", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
