@@ -186,7 +186,7 @@ def test_committed_descriptor_matches_both_tested_service_references():
 
     expected = json.loads(Path('deploy/neo4j-image.json').read_text())
     compose = yaml.safe_load(Path('infra/compose/local.yaml').read_text())
-    workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    workflow = yaml.safe_load(Path('.github/workflows/ci.yml').read_text())
     assert compose['services']['neo4j']['image'] == expected['reference']
     for job in ('database', 'container'):
         assert (
@@ -262,7 +262,7 @@ def test_vendor_assessment_is_explicit_and_cannot_be_softened():
 
     import yaml
 
-    workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    workflow = yaml.safe_load(Path('.github/workflows/ci.yml').read_text())
     triggers = workflow.get('on', workflow.get(True))
     option = triggers['workflow_dispatch']['inputs']['verify_vendor_image']
     assert option['type'] == 'boolean' and option['default'] is False

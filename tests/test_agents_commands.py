@@ -28,7 +28,7 @@ def recipes() -> dict[str, list[str]]:
 
 
 def static_job_commands() -> list[str]:
-    workflow = yaml.safe_load((ROOT / '.github/workflows/quality.yml').read_text())
+    workflow = yaml.safe_load((ROOT / '.github/workflows/ci.yml').read_text())
     commands = []
     for step in workflow['jobs']['static']['steps']:
         if 'run' not in step or step.get('if'):

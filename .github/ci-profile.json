@@ -1,0 +1,104 @@
+{
+  "base": [
+    "secrets"
+  ],
+  "required": "ci-gate",
+  "profiles": {
+    "docs": {
+      "paths": [
+        "**/*.md",
+        "docs/**",
+        "LICENSE",
+        ".github/ISSUE_TEMPLATE/**",
+        ".github/pull_request_template.md"
+      ],
+      "adds": [
+        "static"
+      ],
+      "budgetP50Minutes": 2,
+      "budgetP95Minutes": 4
+    },
+    "harness": {
+      "paths": [
+        ".agents/**",
+        ".claude/**",
+        ".codex/**",
+        ".worktreeinclude",
+        "justfile"
+      ],
+      "adds": [
+        "static"
+      ],
+      "budgetP50Minutes": 3,
+      "budgetP95Minutes": 5
+    },
+    "workflow": {
+      "paths": [
+        ".github/workflows/**",
+        ".github/dependabot.yml",
+        ".github/*.json",
+        ".github/*.yml",
+        "scripts/check_workflows.sh",
+        "scripts/ci_identity.py",
+        "scripts/ci_profile.py"
+      ],
+      "adds": [
+        "workflows",
+        "static",
+        "database",
+        "container"
+      ],
+      "budgetP50Minutes": 10,
+      "budgetP95Minutes": 15
+    },
+    "code": {
+      "paths": [
+        "app/**",
+        "tests/**",
+        "scripts/**",
+        "contracts/**",
+        "migrations/**",
+        "evals/**",
+        "infra/**",
+        "deploy/**",
+        "artifacts/**",
+        "pyproject.toml",
+        "uv.lock",
+        ".python-version",
+        ".dockerignore",
+        ".gitignore",
+        ".gitleaksignore",
+        ".env.example",
+        "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "docker-bake.hcl",
+        ".hadolint.yaml"
+      ],
+      "adds": [
+        "static",
+        "database",
+        "container"
+      ],
+      "budgetP50Minutes": 10,
+      "budgetP95Minutes": 15
+    },
+    "deps-weekly": {
+      "trigger": "branch dependabot/** or label deps-weekly",
+      "adds": [
+        "all-profiles"
+      ]
+    },
+    "release": {
+      "trigger": "develop -> main promotion",
+      "adds": [
+        "all-profiles"
+      ]
+    },
+    "hotfix": {
+      "trigger": "hotfix/** -> main (owner-authorized only)",
+      "adds": [
+        "all-profiles"
+      ]
+    }
+  }
+}
