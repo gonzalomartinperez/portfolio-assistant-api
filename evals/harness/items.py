@@ -137,6 +137,18 @@ class Item(Strict):
         return self
 
 
+class SealedItem(Item):
+    """An item of the sealed holdout: its repr never shows the questions or answers."""
+
+    def __repr__(self) -> str:
+        return '<SealedItem redacted>'
+
+    __str__ = __repr__
+
+    def __repr_args__(self) -> list[tuple[str | None, object]]:
+        return []
+
+
 def normalized_question(item: Item) -> str:
     """Casefolded, accent-free, punctuation-free text of the scripted turns."""
     text = ' || '.join(turn.text for turn in item.turns)
