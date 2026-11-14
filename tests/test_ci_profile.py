@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scripts.ci_profile import GATED, NAMES, profile_errors
+from scripts.ci_profile import GATED, NAMES, profile_errors, standalone_errors
 
 
 def workflow():
@@ -66,7 +66,7 @@ def test_actual_profile_has_no_filtered_or_missing_required_work():
 def test_profile_map_is_valid_json_with_the_expected_keys():
     value = profile_map()
     assert set(value) == {'base', 'required', 'profiles'}
-    assert value['base'] == ['secrets']
+    assert value['base'] == ['secrets', 'security']
     assert value['required'] == 'ci-gate'
     assert set(value['profiles']) == {
         'docs',
@@ -129,7 +129,7 @@ def test_profiles_run_the_documented_jobs():
     assert profiles['docs']['adds'] == ['static']
     assert profiles['harness']['adds'] == ['static']
     assert set(profiles['code']['adds']) == {'static', 'database', 'container'}
-    assert set(profiles['workflow']['adds']) == set(GATED)
+    assert set(profiles['workflow']['adds']) == set(GATED) - {'security'}
 
 
 @pytest.mark.parametrize('key', NAMES)
@@ -389,6 +389,7 @@ def assert_postgres_cache_policy(value):
         ]
         assert len(builders) == 1
         assert builders[0]['with'] == {
+            'cache-binary': False,
             'version': 'v0.38.0',
             'driver-opts': 'image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea',
         }
@@ -536,3 +537,61 @@ def test_image_and_workflow_inputs_trigger_their_verifying_jobs():
     ):
         assert 'workflows' in jobs(workflow_script)
     assert profiles['hotfix']['adds'] == ['all-profiles']
+
+
+def test_security_job_is_gated_in_base_profile_and_in_the_gate():
+    value = workflow()
+    job = value['jobs']['security']
+    assert job['needs'] == 'classify'
+    assert job['permissions'] == {'contents': 'read', 'pull-requests': 'read'}
+    assert job['uses'].startswith(
+        'gonzalomartinperez/engineering-standards/.github/workflows/security.yml@'
+    )
+    assert job['with']['dependency-review'] is True
+    assert 'LGPL-3.0-only' in job['with']['allow-licenses']
+    assert 'security' in value['jobs']['ci-gate']['needs']
+    assert 'security' in profile_map()['base']
+    mutated = profile_map()
+    mutated['base'] = ['secrets']
+    assert profile_errors(value, mutated)
+
+
+def test_buildx_never_caches_its_binary():
+    steps = [
+        step
+        for job in workflow()['jobs'].values()
+        for step in job.get('steps', [])
+        if step.get('uses', '').startswith('docker/setup-buildx-action@')
+    ]
+    assert len(steps) == 2
+    assert all(step['with']['cache-binary'] is False for step in steps)
+
+
+@pytest.mark.parametrize('name', ['scorecard', 'vuln-daily'])
+def test_scheduled_security_workflows_are_pinned_and_token_less(name):
+    path = Path(f'.github/workflows/{name}.yml')
+    value = yaml.safe_load(path.read_text())
+    assert standalone_errors(name, value) == []
+    assert 'pull_request_target' not in value.get('on', value.get(True, {}))
+    assert 'ubuntu-latest' not in path.read_text()
+    for mutation in (
+        lambda v: v.update(permissions={'contents': 'read'}),
+        lambda v: v.get('on', v.get(True)).update(pull_request_target={}),
+    ):
+        broken = deepcopy(value)
+        mutation(broken)
+        assert standalone_errors(name, broken)
+    broken = deepcopy(value)
+    job = next(iter(broken['jobs'].values()))
+    if 'uses' in job:
+        job['uses'] = job['uses'].split('@')[0] + '@main'
+    else:
+        job['steps'][0]['uses'] = job['steps'][0]['uses'].split('@')[0] + '@v2'
+    assert standalone_errors(name, broken)
+
+
+def test_scorecard_runs_on_main_pushes_weekly_and_manually():
+    events = yaml.safe_load(Path('.github/workflows/scorecard.yml').read_text())
+    events = events.get('on', events.get(True))
+    assert events['push'] == {'branches': ['main']}
+    assert events['schedule'] and 'workflow_dispatch' in events
