@@ -3,7 +3,8 @@
 This application implements first-party operational measurements. Export to a private
 OpenTelemetry collector is optional and disabled by default. No production monitoring
 stack or deployment is created here. Automatic LangSmith/LangChain tracing remains
-disabled. A separate [manual synthetic-summary command](synthetic-evaluation-export.md)
+disabled, and git (not a hosted registry) holds prompts and eval datasets
+([ADR021](adrs/021-tracing-off-no-hosted-prompt-registry.md)). A separate [manual synthetic-summary command](synthetic-evaluation-export.md)
 is implemented with no automatic API export. vps-ops owns collector, Prometheus,
 Grafana, storage, access and Coolify.
 
