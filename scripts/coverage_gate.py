@@ -34,7 +34,7 @@ CONDITION = re.compile(r'\((\d+)/(\d+)\)')
 
 
 def normalize(filename: str) -> str:
-    path = filename.replace('\\', '/').lstrip('./')
+    path = filename.replace('\\', '/').removeprefix('./')
     return path if path.startswith('app/') else f'app/{path}'
 
 
@@ -84,7 +84,11 @@ def main(argv: list[str] | None = None) -> int:
         '--print', action='store_true', help='print measured values only; no gate'
     )
     args = parser.parse_args(argv)
-    measured = measure(branch_counts(args.report))
+    counts = branch_counts(args.report)
+    if not counts or not sum(total for _, total in counts.values()):
+        print('FAIL coverage report has no measured files or branches', file=sys.stderr)
+        return 1
+    measured = measure(counts)
     if args.print:
         print(json.dumps(measured, indent=2, sort_keys=True))
         return 0

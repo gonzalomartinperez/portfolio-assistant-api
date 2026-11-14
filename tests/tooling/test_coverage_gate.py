@@ -56,3 +56,15 @@ def test_committed_floors_name_known_groups():
     floors = json.loads((ROOT / 'tests/coverage-floors.json').read_text())
     assert set(floors) <= set(coverage_gate.GROUPS)
     assert {'whole', 'adapters', 'entrypoints', 'domain', 'application'} <= set(floors)
+
+
+def test_an_empty_report_fails_instead_of_passing_every_floor(tmp_path, capsys):
+    empty = tmp_path / 'empty.xml'
+    empty.write_text('<?xml version="1.0" ?><coverage><packages/></coverage>')
+    assert coverage_gate.main([str(empty), '--print']) == 1
+    assert 'no measured files' in capsys.readouterr().err
+
+
+def test_normalize_strips_only_a_leading_dot_slash():
+    assert coverage_gate.normalize('./domain/a.py') == 'app/domain/a.py'
+    assert coverage_gate.normalize('.hidden/x.py') == 'app/.hidden/x.py'
