@@ -70,6 +70,7 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Lane | Directory | Command |
 | --- | --- | --- |
 | Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Property | `tests/property/` (marker `property`; Hypothesis profile `ci` by default) | `uv run pytest -q tests/property`; nightly: `HYPOTHESIS_PROFILE=nightly uv run pytest -q tests/property` |
 | Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
 | Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
 | Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
@@ -79,7 +80,10 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Container | `tests/container/` | `uv run pytest -q tests/container` |
 
 `tests/support.py` and `tests/fixtures/` remain shared at the `tests/` root.
-The offline suite remains `uv run pytest -q -m 'not integration'`.
+The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
+property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
+(1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
+exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
 
 Tests are explicitly marked `integration`. Static and database jobs run
 disjoint selections, retaining all coverage. Container smoke owns fresh services;
