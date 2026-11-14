@@ -16,8 +16,8 @@ sync:
 check:
     uv run python -m scripts.validate_skills
     uv run python -m scripts.check_license
-    uv run ruff check app tests contracts scripts
-    uv run ruff format --check app tests contracts scripts
+    uv run ruff check app tests contracts scripts evals
+    uv run ruff format --check app tests contracts scripts evals
     uv run mypy
     uv run python -m scripts.build_assistant_bank --check
     uv run python -m contracts.export && git diff --exit-code contracts

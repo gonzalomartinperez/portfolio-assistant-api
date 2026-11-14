@@ -235,8 +235,8 @@ end-to-end production dashboard pairing remain unverified. See
 ## Verification and evidence
 
 ```sh
-uv run ruff check app tests contracts scripts
-uv run ruff format --check app tests contracts scripts
+uv run ruff check app tests contracts scripts evals
+uv run ruff format --check app tests contracts scripts evals
 uv run mypy
 uv run pytest -q
 uv run python -m scripts.validate_skills

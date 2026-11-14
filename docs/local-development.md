@@ -39,8 +39,8 @@ answer text and deletes its session. It does not print credentials.
 ## Verification
 
 ```sh
-uv run ruff check app tests contracts scripts
-uv run ruff format --check app tests contracts scripts
+uv run ruff check app tests contracts scripts evals
+uv run ruff format --check app tests contracts scripts evals
 uv run mypy
 uv run pytest -q                         # Pure/contract tests; real-service tests skip.
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.

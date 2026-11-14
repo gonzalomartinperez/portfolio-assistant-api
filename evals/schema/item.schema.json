@@ -1,0 +1,278 @@
+{
+  "$defs": {
+    "JsonValue": {},
+    "Match": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "match": {
+          "minLength": 1,
+          "title": "Match",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "match"
+      ],
+      "title": "Match",
+      "type": "object"
+    },
+    "Quarantine": {
+      "additionalProperties": false,
+      "properties": {
+        "deadline": {
+          "format": "date",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "issue": {
+          "minLength": 1,
+          "title": "Issue",
+          "type": "string"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue",
+        "owner",
+        "deadline"
+      ],
+      "title": "Quarantine",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "const": "user",
+          "default": "user",
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Turn",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assertions": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Assertions",
+      "type": "array"
+    },
+    "assistant": {
+      "const": "portfolio",
+      "default": "portfolio",
+      "title": "Assistant",
+      "type": "string"
+    },
+    "corpus_snapshot_id": {
+      "minLength": 1,
+      "title": "Corpus Snapshot Id",
+      "type": "string"
+    },
+    "created": {
+      "format": "date",
+      "title": "Created",
+      "type": "string"
+    },
+    "expected_behavior": {
+      "enum": [
+        "answer",
+        "abstain",
+        "refuse",
+        "clarify"
+      ],
+      "title": "Expected Behavior",
+      "type": "string"
+    },
+    "forbidden_claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Match"
+      },
+      "title": "Forbidden Claims",
+      "type": "array"
+    },
+    "gold_evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Gold Evidence Ids",
+      "type": "array"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "judge_rubric_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Judge Rubric Id"
+    },
+    "last_verified": {
+      "format": "date",
+      "title": "Last Verified",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "memory_fixture": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Fixture"
+    },
+    "provenance": {
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "quarantine": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Quarantine"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "required_facts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Match"
+      },
+      "title": "Required Facts",
+      "type": "array"
+    },
+    "retired_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retired Reason"
+    },
+    "reviewer": {
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "default": "active",
+      "enum": [
+        "active",
+        "quarantined",
+        "retired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "strata": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Strata",
+      "type": "array"
+    },
+    "tools": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tools"
+    },
+    "turns": {
+      "items": {
+        "$ref": "#/$defs/Turn"
+      },
+      "minItems": 1,
+      "title": "Turns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "locale",
+    "strata",
+    "turns",
+    "expected_behavior",
+    "assertions",
+    "provenance",
+    "reviewer",
+    "created",
+    "last_verified",
+    "corpus_snapshot_id"
+  ],
+  "title": "Item",
+  "type": "object"
+}

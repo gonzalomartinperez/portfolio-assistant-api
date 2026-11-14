@@ -126,9 +126,9 @@ jobs:
     - name: Validate software licensing and separate content scope
       run: uv run python -m scripts.check_license
     - name: Lint Python
-      run: uv run ruff check app tests contracts scripts
+      run: uv run ruff check app tests contracts scripts evals
     - name: Check Python formatting
-      run: uv run ruff format --check app tests contracts scripts
+      run: uv run ruff format --check app tests contracts scripts evals
     - name: Type-check application boundaries
       run: uv run mypy
     - name: Verify authored bilingual question bank
