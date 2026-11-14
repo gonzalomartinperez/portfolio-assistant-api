@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "label.schema.json",
+  "title": "Judge calibration label",
+  "description": "One human or agent label for one (criterion, item, answer). The answer text is never stored here; answer_ref points to a private artifact outside git.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "criterion", "item_id", "locale", "question", "answer_ref", "label", "labeller", "labeller_kind", "rationale", "split", "created", "spot_checked", "spot_check_label"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$", "maxLength": 80},
+    "criterion": {"enum": ["helpful_complete", "tone_fit"]},
+    "item_id": {"type": "string", "minLength": 1, "maxLength": 80},
+    "locale": {"enum": ["en", "es"]},
+    "question": {"type": "string", "minLength": 1, "maxLength": 1000},
+    "answer_ref": {"type": "string", "pattern": "^private://[A-Za-z0-9._/#-]+$", "maxLength": 200},
+    "label": {"enum": ["pass", "fail"]},
+    "labeller": {"type": "string", "minLength": 1, "maxLength": 80},
+    "labeller_kind": {"enum": ["agent", "owner"]},
+    "rationale": {"type": "string", "maxLength": 500},
+    "split": {"enum": ["train", "dev", "test"]},
+    "created": {"type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "spot_checked": {"type": "boolean"},
+    "spot_check_label": {"enum": ["pass", "fail", null]}
+  }
+}

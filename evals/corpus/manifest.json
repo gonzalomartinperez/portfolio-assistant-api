@@ -1,0 +1,80 @@
+{
+  "repository": "gonzalomartinperez/portfolio",
+  "commit": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+  "date": "2026-09-26T14:55:58-03:00",
+  "corpus_snapshot_id": "corpus-a4e4aa84b466",
+  "files": [
+    {
+      "path": "README.md",
+      "key": "README.md",
+      "sha256": "1cec99ff1a6be9235155aec4ce5e2a1f40570d36bdc7957dedf46453602803a4",
+      "bytes": 8968
+    },
+    {
+      "path": "docs/development.md",
+      "key": "docs/development.md",
+      "sha256": "2bf753f8fae71ed3aa4d388a7e848bca8a3a6240fc51f6cdcd2f0192d61412d1",
+      "bytes": 15309
+    },
+    {
+      "path": "docs/editorial-guidelines.md",
+      "key": "docs/editorial-guidelines.md",
+      "sha256": "aef0cb2a5902ae6ad08105f8391a6dc06ff1a5c8b9b91c843228d9762054b136",
+      "bytes": 4560
+    },
+    {
+      "path": "docs/public-content.md",
+      "key": "docs/public-content.md",
+      "sha256": "b45bdf0740585ad0cd4daa291302dc9d28ff437bcfda964b788acfe59908f220",
+      "bytes": 4184
+    },
+    {
+      "path": "src/content/en/education.ts",
+      "key": "en/education",
+      "sha256": "34add24f41193a2dc365402fa134857d46262d2653cd0e686e01b8aa05b6e951",
+      "bytes": 3554
+    },
+    {
+      "path": "src/content/en/experience.ts",
+      "key": "en/experience",
+      "sha256": "6caddcf548edf50473f9058b174c35c6bfd875e156bd3310f91df048b02a46f1",
+      "bytes": 12322
+    },
+    {
+      "path": "src/content/en/profile.ts",
+      "key": "en/profile",
+      "sha256": "d91562882f809c19f36e554cb137e8f249e808a0f5830e3c0446fbbb4074cf64",
+      "bytes": 3078
+    },
+    {
+      "path": "src/content/en/projects.ts",
+      "key": "en/projects",
+      "sha256": "a91b1a9d93a3151a812b97fe9057b1d414db7828332df8276d123674a9cb8694",
+      "bytes": 9566
+    },
+    {
+      "path": "src/content/es/education.ts",
+      "key": "es/education",
+      "sha256": "56f37fbc8cd0aabfc52933a81a571bd84dc0e80b1d3e51f5876db8714914401b",
+      "bytes": 3556
+    },
+    {
+      "path": "src/content/es/experience.ts",
+      "key": "es/experience",
+      "sha256": "6d818a6c0e7c0b058ab99962b2bf383ca9d4f5980d20548920818c7d4fc3b2ba",
+      "bytes": 13191
+    },
+    {
+      "path": "src/content/es/profile.ts",
+      "key": "es/profile",
+      "sha256": "05b3bcf2fab506de4fb8ff82df122d44f5083ba03d079d959acf6f1c91ea9f47",
+      "bytes": 3088
+    },
+    {
+      "path": "src/content/es/projects.ts",
+      "key": "es/projects",
+      "sha256": "e323217b346470aabe13233a45ea2466f1572046c43cd4044df4b27c7c36ffef",
+      "bytes": 10258
+    }
+  ]
+}

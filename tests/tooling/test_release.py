@@ -41,8 +41,8 @@ def test_optional_backoffice_pairing_checks_current_private_contracts():
 
     import yaml
 
-    workflow = yaml.safe_load(Path('.github/workflows/ci.yml').read_text())
-    steps = workflow['jobs']['container']['steps']
+    workflow = yaml.safe_load(Path('.github/workflows/cross-repo.yml').read_text())
+    steps = workflow['jobs']['contract-bytes']['steps']
     checkout = next(
         step
         for step in steps
@@ -62,4 +62,4 @@ def test_optional_backoffice_pairing_checks_current_private_contracts():
     ):
         assert name in guard['run']
     assert 'sse.schema.json' not in guard['run']
-    assert guard['if'] == "inputs.frontend_commit != ''"
+    assert workflow['jobs']['contract-bytes']['if'] == "inputs.frontend_commit != ''"

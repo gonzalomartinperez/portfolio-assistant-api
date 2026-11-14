@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -32,27 +33,19 @@ def _git(repo: Path, *args: str) -> str:
 
 
 def _layouts(source: Path, repo: Path) -> dict[str, str]:
-    """Clone the approved public corpus and commit the other content root next to it."""
-    subprocess.run(
-        ['git', 'clone', '-q', '--no-hardlinks', str(source), str(repo)], check=True
-    )
+    """Commit the frozen snapshot (legacy root) and then the same files under content/."""
+    shutil.copytree(source, repo, ignore=shutil.ignore_patterns('manifest.json'))
+    _git(repo, 'init', '-q')
     _git(repo, 'config', 'user.name', 'Synthetic layout fixture')
     _git(repo, 'config', 'user.email', 'fixture@example.test')
     _git(repo, 'config', 'commit.gpgsign', 'false')
-    _git(repo, 'remote', 'set-url', 'origin', PUBLIC_REMOTE)
-    original = _git(repo, 'rev-parse', 'HEAD')
-    if (repo / 'src/content').is_dir():
-        _git(repo, 'mv', 'src/content', 'content')
-        moved = 'current'
-    else:
-        (repo / 'src').mkdir(exist_ok=True)
-        _git(repo, 'mv', 'content', 'src/content')
-        moved = 'legacy'
-    _git(repo, 'commit', '-qm', f'synthetic {moved} content root')
-    other = _git(repo, 'rev-parse', 'HEAD')
-    if moved == 'current':
-        return {'legacy': original, 'current': other}
-    return {'legacy': other, 'current': original}
+    _git(repo, 'remote', 'add', 'origin', PUBLIC_REMOTE)
+    _git(repo, 'add', '-A')
+    _git(repo, 'commit', '-qm', 'synthetic legacy content root')
+    legacy = _git(repo, 'rev-parse', 'HEAD')
+    _git(repo, 'mv', 'src/content', 'content')
+    _git(repo, 'commit', '-qm', 'synthetic current content root')
+    return {'legacy': legacy, 'current': _git(repo, 'rev-parse', 'HEAD')}
 
 
 def _outcomes(index: KnowledgeIndex, cases: list[dict]) -> dict[str, tuple]:
@@ -76,11 +69,8 @@ def _outcomes(index: KnowledgeIndex, cases: list[dict]) -> dict[str, tuple]:
 
 
 def test_retrieval_cases_are_layout_neutral(tmp_path, monkeypatch):
-    source = Path(os.getenv('PUBLIC_PORTFOLIO_REPO', 'public-portfolio'))
-    if not (source / '.git').exists():
-        pytest.skip('requires the pinned approved public corpus checkout')
     repo = tmp_path / 'portfolio'
-    revisions = _layouts(source, repo)
+    revisions = _layouts(Path('evals/corpus'), repo)
     cases = json.loads(Path('evals/retrieval.json').read_text())
     config = Settings(_env_file=None).model_copy(
         update={
