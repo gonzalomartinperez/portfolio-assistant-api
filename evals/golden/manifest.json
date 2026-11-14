@@ -1,0 +1,150 @@
+{
+  "corpus_snapshot_id": "corpus-a4e4aa84b466",
+  "counts": {
+    "es_variant": 9,
+    "locales": {
+      "en": 40,
+      "es": 40
+    },
+    "strata": {
+      "abstain": 18,
+      "adversarial": 12,
+      "answerable_core": 22,
+      "graph_multihop": 12,
+      "memory": 4,
+      "multi_turn": 6,
+      "tool_use": 6
+    },
+    "strata_by_locale": {
+      "abstain": {
+        "en": 9,
+        "es": 9
+      },
+      "adversarial": {
+        "en": 6,
+        "es": 6
+      },
+      "answerable_core": {
+        "en": 11,
+        "es": 11
+      },
+      "graph_multihop": {
+        "en": 6,
+        "es": 6
+      },
+      "memory": {
+        "en": 2,
+        "es": 2
+      },
+      "multi_turn": {
+        "en": 3,
+        "es": 3
+      },
+      "tool_use": {
+        "en": 3,
+        "es": 3
+      }
+    }
+  },
+  "hash": {
+    "algorithm": "sha256",
+    "canonical_json": "sort_keys, separators (\",\", \":\"), ensure_ascii=false, utf-8"
+  },
+  "item_count": 80,
+  "items": {
+    "gold-en-abs-001": "6e7a9ad06a6da6aa89f43e1070cbf56a6e2f1ac62a070233547bfa64e6abbfc6",
+    "gold-en-abs-002": "ff93081d332d2311d2e8d6e82c8d6e97ed995b0562a3b8c84f7c7abefef80a9d",
+    "gold-en-abs-003": "4203b37fc0becf1136e7ad985013497022392e0a770c7f1bd577cd84a195ead4",
+    "gold-en-abs-004": "c1b26c86fadfc475073d417ad7b47c65254cfad09554c7c53d4919faba35313f",
+    "gold-en-abs-005": "79c432013470f19dfb133f6ec984c0d506ee3e30a4de21e2d3be1badfd9307ad",
+    "gold-en-abs-006": "619ad6f544b940c498e99348b72b8a9b43dc7a4d46d147274db6c45d13057a34",
+    "gold-en-abs-007": "617b2be87701a5a01de1f067c507a74f9c6d6885247bf3f419e1bc84d2cda07f",
+    "gold-en-abs-008": "75925250592f698b1fded4b43b9048ec06f64eed7252084826c4acfda4bc81cd",
+    "gold-en-abs-009": "1ff356210ef72caa8a59b0c096ea8d4aec226961b27211f7aa10559ee8f06347",
+    "gold-en-adv-001": "bc2e8ee05ae65b4158a95eb693570fd28caaa77fa13faf90f560bea228405636",
+    "gold-en-adv-002": "83060095d2494f2e412d975df8204f02ad8c2286427780564670c79b55949a2b",
+    "gold-en-adv-003": "f224e15726170f97e12fe687a1cffdca1801d67c5162518de3bfa511879fd624",
+    "gold-en-adv-004": "da47dbb04b78e805a3bf762eb25d557db75212799029018e74ce393697739eaa",
+    "gold-en-adv-005": "8641f0cac5575ddc5e7c39230e39ed492f5527f9ac939a2394a42502c1b5a4c5",
+    "gold-en-adv-006": "627f0cc3e88515245630b91db6c827d045cda8df0de7374939bdd34b2d830822",
+    "gold-en-ans-001": "ad57c3dcf152fba05dce72ffd281b154cc3396fa931a114133b987681a7f7e59",
+    "gold-en-ans-002": "03771471cec807def94674ea0bde93994228c89a7cc6519b18b0b9d3690f9030",
+    "gold-en-ans-003": "958a61985019beaff013e3d1f7a88fd2644bf49b5a071f4f46bda53322e07f54",
+    "gold-en-ans-004": "b76d99943e8036ed2823dfe8a1c7c4f805f660ac92997552d5d8684f7530c77c",
+    "gold-en-ans-005": "4c689bc8764aea2c44e03e8f54b29abee0c3715bf1f3138733064c0aa4dc242a",
+    "gold-en-ans-006": "ccb374888086dade3815b752e468bfd9a048a7ba5a4b6c879a18923bcdb47a6c",
+    "gold-en-ans-007": "5fcb2db0ca1108211e3f89c4a5dff70db4a399b5cf44bc7db1dcd75c5f98f743",
+    "gold-en-ans-008": "82bfab668e71f474d897fecb3dbc54aa0fb0f4e08a63154330cf1ead439944c3",
+    "gold-en-ans-009": "8c7096c127a2e15a227fba93dd8184afc0416a4fc1ff050da18e69032be0b68c",
+    "gold-en-ans-010": "d376cd9458ae8fb2affee1c1007c322dd0afaa4f9b951cbde4eae8af35520f6b",
+    "gold-en-ans-011": "929e9f3c7e26a88edd63e96e95fcae0e0e8f14b752c1d391ce2daf13b30095ec",
+    "gold-en-gra-001": "46546aacb4e192052173777afb2aa7a2f7d4432c03f59a9d6ed7941d3c4e5372",
+    "gold-en-gra-002": "fd4d01733b41dc12ca6a170557ecec74fc542d1c441efc83ea718b104a859088",
+    "gold-en-gra-003": "3362cf05c274a05cefd42df2732e4ffbda31abfd18b3d0ec513b752b080e9a51",
+    "gold-en-gra-004": "76f10a2c5f12805a633fde9494caee0b4fb8ad281b1d042014cbe1d9cd06261b",
+    "gold-en-gra-005": "3440a24618a4de5ce27a08539dc4263e4ef9a0e188294fdf731154e4325278c8",
+    "gold-en-gra-006": "4c7e25ae2e6ba6f4e23a4055b163283133daef568dcd7f4899609423435f4d44",
+    "gold-en-mem-001": "3fcde32bec811acc67badb09191d11adacce72e8c5326806f578c4b5b0692561",
+    "gold-en-mem-002": "a29044868bdf105f36eb4d3ba25aafae495868f22af0815ac7a559ec21d225b4",
+    "gold-en-mul-001": "5cfba2940ac3f2d68271d8e34eed6ce6e63e6c8b17d33bc94733afd2577abf78",
+    "gold-en-mul-002": "09745235298de844b12d6dbbdb07895fc2dd8ab4d53c72efd4a9bf3d8fe660c2",
+    "gold-en-mul-003": "d40c35665e74abd46e541019a6fca425775d10464700fd8b3f658b9c94a73532",
+    "gold-en-too-001": "90e71af3340366b1db0a89ff9da54daf698383f4e9076441e601454f4f3cacea",
+    "gold-en-too-002": "c4be29427132dea4cf3588eebd6a3a4b62565bc0679988f0c5e2b34252fc54a5",
+    "gold-en-too-003": "59eadecde3e95bc59809034a287dfb1b14f6ba9bf8db8f60c1c17b81e235a2d4",
+    "gold-es-abs-001": "ba7c2f116fcdb4d810755b0472ad036bd96c8927a1b3713ca4221c65e96347ac",
+    "gold-es-abs-002": "2fb3032793349aede26d6cd3df4705c6333923f09d6bb23a64972ca4b9c13eb9",
+    "gold-es-abs-003": "f7efed18870f4d0a874e7ed5df98a12136810bad9802cc772060548fcb70e539",
+    "gold-es-abs-004": "0869c54d6c4cf8e9cf3b5ff11fefb46cbcb96ec8ddc58990664bd16bbeb23422",
+    "gold-es-abs-005": "42157cfa45fe3e96b355191ca64a00dcfcc13b04aedf4e99a037fd576b8bdd01",
+    "gold-es-abs-006": "31581b247c3ec76fa5908bbfca27fa6a18aa70e5d4ee9a47a53106dfc33f4b97",
+    "gold-es-abs-007": "c0c0a37dae6d9b4506da590a2ed44aad7e7d9e08514c8692c5c8c95b8873a71f",
+    "gold-es-abs-008": "d559c634574f2396194dd1da8cf2b99e0dae21bf21d86a16b264d3fcd3940eb4",
+    "gold-es-abs-009": "87f99efcb8c734c44447c21e009fd8f02ad76e1622d1fd47b62f8a43f750067c",
+    "gold-es-adv-001": "74c28f8638f5d5dceb8ec868ccaf0672605b3027ee2308cf70e9be51b044606a",
+    "gold-es-adv-002": "f20272a585cb78e22984a59725ccf4f002f698c435b25e5d1bd2bff9de3468f8",
+    "gold-es-adv-003": "240f17d89a1148008fdc56430405f1ef626b1c2a52c91418a649deff3779455f",
+    "gold-es-adv-004": "2132daea98ecabb146b59bd9a03294bd55abade2e516d4db972127f0f29e050b",
+    "gold-es-adv-005": "a48ac9bc0de89a2c7ad46fb2b6d0950c1c070c70c6da97fb0b83e8f63a87ee9c",
+    "gold-es-adv-006": "3cfa4316e13e2b2e9e1449beb05566231846cbf3dbd7a672582ce7e5789bc0d3",
+    "gold-es-ans-001": "60754c8d42108737244204931bafe2028e230907960d64f9a8ee80128113f3e1",
+    "gold-es-ans-002": "35ee8682b7f697cfa8b7bb2233567b4674afaaf69829c038ed118920fea6d3ae",
+    "gold-es-ans-003": "ab3c9b85f984c881d8b1031bd64702cab6df92f1f4c49f2077b05a24ce736003",
+    "gold-es-ans-004": "34920d91fa584575f142b1cc13664f9bde789805f717fe3956b7d618784d3d1b",
+    "gold-es-ans-005": "7cce6324e950e31d802768b445dd99df44ea356ea3c0333b236ff04952e4ce46",
+    "gold-es-ans-006": "f5d23d3ff9bfccede454838f411d8fe095bee189487e4541354ca8a81a6daf29",
+    "gold-es-ans-007": "0795cc4cb6bdbd303fd6bedb6c19968564d9ac6dab9eec04ecde300bc539c58a",
+    "gold-es-ans-008": "970129507aff78eadb245823809bf834c92c737af3ba93f8cb1281853201bc64",
+    "gold-es-ans-009": "c26d7179ce8ef45e026a67a866b3774fd866a2c7f505fdd7ca8dc39fb301ad30",
+    "gold-es-ans-010": "1e5c909baafa70c9135ef309c212418d0250300c4446fc561f789995253d98c7",
+    "gold-es-ans-011": "1feb7a75af00c3c87a6e46b8079d0feeaaa902f48c1be085c2f16d38264a21ab",
+    "gold-es-gra-001": "96597794faed53d07212bb09854134e57714bfc838da04649281a7ebf8d2f4eb",
+    "gold-es-gra-002": "0f024511787a94249732a5983da103e6631528a3781969ca91b1dafc8ec58162",
+    "gold-es-gra-003": "68c397e9ac56cb127badd469405b53499824b249ae9952bda888098421bd051b",
+    "gold-es-gra-004": "c24ba842f58e4a5119f66e7c546bb43c0f9ebe579069732de403b238ec28c2ad",
+    "gold-es-gra-005": "23221c368ef2617c1ac11d4f98a6639d73c9f48b4201189666510b2ba529457f",
+    "gold-es-gra-006": "ec03f65c1b9799f29be676b1c792c7fbae9b737ac70108b9cd107d239d3fff6d",
+    "gold-es-mem-001": "479f483720ece2dcd8e2b2ca7e53343d793e389abe2ae5a3e4fbff2695641094",
+    "gold-es-mem-002": "568741c392becf0fcc4b754c923ded200997634d8116fe7d2249a1659b3e281b",
+    "gold-es-mul-001": "d330bcde1dfa23071db3ca45cd73ad382c049abdf2e7a6210801709079c8dd5e",
+    "gold-es-mul-002": "18a10d4eb4f66cd7ad0047aaf1a0f9d893caf7d7463804e2c7fe6e66d4ad1719",
+    "gold-es-mul-003": "e149d95e1bb3796cd3bb1e32a69edd36f2b6640e0d007d706486839731a8511c",
+    "gold-es-too-001": "2a47dbafeaa5897f399b7a62f496d0d38ae23caa089e03df59017ec606ad24eb",
+    "gold-es-too-002": "03a2e572eb04eeba57b060b42b6b291c2eeb78f2c612b4578825961259cc61e1",
+    "gold-es-too-003": "c9888edd9ffb5c8dc70d48514412dd2457b80d13e8b1a349cedd349e51b5e578"
+  },
+  "no_retrieval_ablation": "pending: requires a live model run under DR-04 (eval-live), not run by agents",
+  "quotas": {
+    "abstain": 18,
+    "adversarial": 12,
+    "answerable_core": 22,
+    "graph_multihop": 12,
+    "locales": {
+      "en": 40,
+      "es": 40
+    },
+    "memory": 4,
+    "multi_turn": 6,
+    "tool_use": 6
+  }
+}
