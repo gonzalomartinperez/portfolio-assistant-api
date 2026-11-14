@@ -1,8 +1,10 @@
 """Load the git-versioned prompt files and verify them against prompts.lock."""
 
+from collections.abc import Mapping
 from functools import cache
 from importlib.resources import files
 from importlib.resources.abc import Traversable
+from types import MappingProxyType
 
 from app.domain.prompts import PromptSpec, verify_lock
 
@@ -23,5 +25,5 @@ def load_prompts(root: Traversable | None = None) -> dict[str, PromptSpec]:
 
 
 @cache
-def default_prompts() -> dict[str, PromptSpec]:
-    return load_prompts()
+def default_prompts() -> Mapping[str, PromptSpec]:
+    return MappingProxyType(load_prompts())

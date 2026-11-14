@@ -12,7 +12,14 @@ import pytest
 
 from app.adapters.prompts import default_prompts, load_prompts, prompt_files
 from app.adapters.providers import answer
-from app.domain.prompts import PromptError, PromptSpec, prompt_version, render
+from app.domain.prompts import (
+    PromptError,
+    PromptSpec,
+    lock_text,
+    parse_prompt,
+    prompt_version,
+    render,
+)
 
 PROMPTS = Path(answer.__file__).parents[2] / 'prompts'
 SNAPSHOTS = Path(__file__).parent / 'snapshots'
@@ -27,9 +34,24 @@ def copy_prompts(tmp_path: Path) -> Path:
 def test_committed_lock_matches_every_prompt_file():
     # Fails when a prompt changes without `python -m scripts.update_prompts_lock --write`.
     specs = load_prompts(PROMPTS)
-    assert {spec.id for spec in specs.values()} == set(specs)
-    names = {name for name in prompt_files(PROMPTS)}
-    assert names == {path.name for path in PROMPTS.glob('*.md')} and len(names) == 5
+    assert specs
+    assert set(prompt_files(PROMPTS)) == {path.name for path in PROMPTS.glob('*.md')}
+    assert lock_text(prompt_files(PROMPTS)) == (PROMPTS / 'prompts.lock').read_text()
+
+
+def test_default_prompts_are_read_only():
+    with pytest.raises(TypeError):
+        default_prompts()['answer'] = None  # type: ignore[index]
+
+
+def test_duplicate_prompt_id_fails(tmp_path):
+    root = copy_prompts(tmp_path)
+    (root / 'dup.md').write_text(
+        (root / 'voice.en.md').read_text().replace('voice-en', 'voice-es')
+    )
+    (root / 'prompts.lock').write_text(lock_text(prompt_files(root)))
+    with pytest.raises(PromptError, match='duplicate'):
+        load_prompts(root)
 
 
 def test_edited_prompt_without_lock_update_fails(tmp_path):
@@ -61,8 +83,6 @@ def test_every_prompt_file_has_complete_front_matter():
 
 
 def test_missing_front_matter_fails():
-    from app.domain.prompts import parse_prompt
-
     with pytest.raises(PromptError):
         parse_prompt(b'No front matter here\n')
 
@@ -135,3 +155,64 @@ def test_developer_message_is_byte_identical_to_the_inline_original(
     name = f'developer_{locale}_{"web" if web else "plain"}.txt'
     assert captured['message'] == (SNAPSHOTS / name).read_text(encoding='utf-8')
     assert usage.prompt_version.startswith('web-context@' if web else 'answer@')
+
+
+HEAD = b'---\nid: x\nversion: 1\nowner: o\nlast-reviewed: 2026-11-14\n---\n'
+
+
+@pytest.mark.parametrize(
+    'body',
+    [
+        b'stray } brace',
+        b'open { brace',
+        b'{language!r}',
+        b'{current_date:>20}',
+        b'{nope}',
+    ],
+)
+def test_invalid_placeholders_fail_at_parse(body):
+    with pytest.raises(PromptError):
+        parse_prompt(HEAD + body + b'\n')
+
+
+def test_escaped_braces_render_literally():
+    spec = parse_prompt(HEAD + b'Use {{ok}} on {current_date}\n')
+    assert render(spec, current_date='d') == 'Use {ok} on d'
+
+
+def test_startup_fails_fast_on_a_bad_prompt_registry(monkeypatch):
+    from app.bootstrap import container
+    from app.bootstrap.config import Settings
+
+    def broken():
+        raise PromptError('stale lock')
+
+    monkeypatch.setattr(container, 'default_prompts', broken)
+    with pytest.raises(PromptError):
+        container.create_app(Settings(_env_file=None))
+
+
+def test_usage_settled_log_has_prompt_version_and_no_prompt_text(caplog):
+    import contextlib
+    from decimal import Decimal
+
+    from app.adapters.postgres import ledger
+
+    @contextlib.contextmanager
+    def connection():
+        yield SimpleNamespace(execute=lambda *args: None)
+
+    version = 'answer@1+b4f38ad5eabb'
+    with caplog.at_level('INFO', logger='portfolio_assistant'):
+        ledger.settle(
+            '00000000-0000-0000-0000-000000000001',
+            1,
+            2,
+            connection=connection,
+            input_price=Decimal(1),
+            output_price=Decimal(1),
+            prompt_version=version,
+        )
+    text = ' '.join(record.getMessage() for record in caplog.records)
+    assert version in text
+    assert 'AI assistant' not in text

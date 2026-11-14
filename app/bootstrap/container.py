@@ -22,6 +22,7 @@ from app.adapters.postgres.migrations import check_schema
 from app.adapters.postgres.operations import OperationalObserver, PostgresOperations
 from app.adapters.postgres.runs import PostgresRuns
 from app.adapters.postgres.web_ledger import WebAccounting
+from app.adapters.prompts import default_prompts
 from app.adapters.providers.answer import (
     FixtureProvider,
     ResponsesProvider,
@@ -54,6 +55,7 @@ def create_app(
     """Compose one API lifespan; a fixture-only provider override supports safe tests."""
     config = config or settings()
     configure()
+    default_prompts()  # Fail fast on a stale lock or missing prompt file.
     if provider_override is not None and config.ai_provider != 'fixture':
         raise ValueError('provider overrides require fixture mode')
 

@@ -50,7 +50,13 @@ copies `app/`, so the files ship without packaging changes.
 
 ## Consequences
 
-- A prompt edit needs a lock update and a reviewed version bump, and is visible in diffs.
+- A prompt edit needs a lock update and is visible in diffs. The sha256 prefix in
+  `prompt_version` changes on any edit; a `version` bump is expected for semantic changes but
+  is not enforced.
+- Bodies are whitespace-normalised into one line (lines joined by single spaces), so
+  paragraph breaks are not expressible. Placeholders must be plain allowlisted names
+  (no conversions or format specs); `{{`/`}}` escape literal braces. Startup loads the
+  registry in `create_app` and fails fast on a stale lock.
 - Cassette keys (assistant-quality section 12) can add the prompt id and sha256 later.
 - Prompt gate by profile `assistant-quality` is a later task.
 

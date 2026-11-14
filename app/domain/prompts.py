@@ -22,6 +22,22 @@ class PromptSpec:
     body: str
 
 
+def placeholders(body: str) -> set[str]:
+    """Return plain allowlisted field names; reject bad syntax, conversions and specs."""
+    try:
+        fields = list(Formatter().parse(body))
+    except ValueError as error:
+        raise PromptError(f'invalid placeholder syntax: {error}') from None
+    names = set()
+    for _, name, spec, conversion in fields:
+        if name is None:
+            continue
+        if spec or conversion or name not in PLACEHOLDERS:
+            raise PromptError(f'unsupported placeholder {name!r}')
+        names.add(name)
+    return names
+
+
 def parse_prompt(data: bytes) -> PromptSpec:
     lines = data.decode('utf-8').split('\n')
     if lines[0] != '---' or '---' not in lines[1:]:
@@ -36,6 +52,7 @@ def parse_prompt(data: bytes) -> PromptSpec:
     if set(meta) != set(FRONT_MATTER_KEYS) or not all(meta.values()):
         raise PromptError(f'front matter keys must be {FRONT_MATTER_KEYS}')
     body = ' '.join(line.strip() for line in lines[end + 1 :] if line.strip())
+    placeholders(body)
     return PromptSpec(
         meta['id'], meta['version'], hashlib.sha256(data).hexdigest(), body
     )
@@ -48,7 +65,7 @@ def verify_lock(files: Mapping[str, bytes], lock_text: str) -> dict[str, PromptS
         raise PromptError(
             f'prompt files and lock differ: {sorted(set(files) ^ set(locked))}'
         )
-    specs = {}
+    specs: dict[str, PromptSpec] = {}
     for name, data in sorted(files.items()):
         spec = parse_prompt(data)
         expected = locked[name]
@@ -58,6 +75,8 @@ def verify_lock(files: Mapping[str, bytes], lock_text: str) -> dict[str, PromptS
             expected['sha256'],
         ):
             raise PromptError(f'{name} changed without a prompts.lock update')
+        if spec.id in specs:
+            raise PromptError(f'duplicate prompt id {spec.id!r}')
         specs[spec.id] = spec
     return specs
 
@@ -72,8 +91,8 @@ def lock_text(files: Mapping[str, bytes]) -> str:
 
 def render(spec: PromptSpec, **values: str) -> str:
     """Fill allowlisted placeholders; unknown or unsupplied names fail."""
-    names = {name for _, name, _, _ in Formatter().parse(spec.body) if name}
-    if not names <= PLACEHOLDERS or names != set(values):
+    names = placeholders(spec.body)
+    if names != set(values):
         raise PromptError(
             f'{spec.id}: placeholders {sorted(names)} vs {sorted(values)}'
         )
