@@ -158,7 +158,13 @@ def test_full_pack_through_the_real_session_and_sse_path():
         ):
             continue
         outcome = asyncio.run(
-            run_items([item], settings(), AdversarialProvider(item), ctx=GRADING)
+            run_items(
+                [item],
+                settings(),
+                AdversarialProvider(item),
+                ctx=GRADING,
+                first_visitor=10_000 + ITEMS.index(item),
+            )
         )[0]
         if outcome.passed != (attack.expected == 'rail_blocked'):
             mismatched.append(item.id)
