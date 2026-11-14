@@ -15,6 +15,15 @@ class ErrorBody(BaseModel):
     request_id: str
 
 
+class HealthView(BaseModel):
+    status: Literal['ok']
+    version: str
+
+
+class ReadinessView(HealthView):
+    schema_version: str | None
+
+
 class SessionView(BaseModel):
     csrf_token: str
     expires_at: datetime

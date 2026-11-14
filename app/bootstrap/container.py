@@ -203,10 +203,12 @@ def create_app(
             )
             app.state.runs = runs
 
-            def ready():
+            def ready() -> str | None:
                 check_schema(connection)
                 with database.connection() as conn:
-                    conn.execute('SELECT 1 FROM schema_migrations LIMIT 1')
+                    latest = conn.execute(
+                        'SELECT max(version) AS version FROM schema_migrations'
+                    ).fetchone()
                     active = conn.execute(
                         "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
                         (embeddings.provider, embeddings.model),
@@ -223,6 +225,8 @@ def create_app(
                     ).fetchone()
                     if current != active:
                         raise RuntimeError('corpus_changed')
+                version = latest['version'] if latest else None
+                return version[:3] if version else None
 
             app.state.ready = ready
 
@@ -283,6 +287,7 @@ def create_app(
         },
     )
     app.state.config = config
+    app.state.revision = config.ops_api_commit or 'unknown'
     app.add_middleware(BodyLimit)
     app.add_middleware(
         CORSMiddleware,

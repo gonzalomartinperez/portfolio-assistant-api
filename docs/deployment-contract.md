@@ -96,6 +96,19 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 <full-SHA>` before initial readiness. Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
+Console scripts are equivalent to the `python -m` forms and both are supported:
+`assistant-api` (uvicorn on 0.0.0.0:8000, as the image command),
+`assistant-migrate` (`app.migrate`), `assistant-retention` (`app.retention`),
+`assistant-knowledge-sync` (`app.knowledge_sync`) and `assistant-knowledge-watch`
+(`app.knowledge_watch`). They exist wherever the project is installed (a checkout
+after `uv sync`); the current runtime image installs dependencies only
+(`--no-install-project`), so it keeps using `uvicorn` and the `python -m` forms until
+the canonical Dockerfile (master plan M1-4) installs the project.
+
+`/healthz` and `/readyz` are the canonical health names; `/health/live` and
+`/health/ready` remain until vps-ops confirms the switch (contract phase later,
+operational ADR then).
+
 Current application schema includes ordered migrations 001–009, plus the locked
 LangGraph checkpoint schema. Migration 004 adds semantic vectors, lexical search,
 embedding identity, freshness state and a single-active-version constraint. Migration 005 persists public embeddings after each successful call for crash-safe

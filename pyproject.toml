@@ -22,6 +22,21 @@ dependencies = [
     "uvicorn>=0.54.0",
 ]
 
+[project.scripts]
+assistant-api = "app.bootstrap.entrypoints:api"
+assistant-migrate = "app.bootstrap.entrypoints:migrate"
+assistant-retention = "app.bootstrap.entrypoints:retention"
+assistant-knowledge-sync = "app.bootstrap.entrypoints:knowledge_sync"
+assistant-knowledge-watch = "app.bootstrap.entrypoints:knowledge_watch"
+
+[build-system]
+requires = ["uv_build==0.13.1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+module-root = ""
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
