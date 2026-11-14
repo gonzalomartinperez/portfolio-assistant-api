@@ -1,0 +1,26 @@
+# Run: container-structure-test test --image portfolio-assistant-api:ci --config infra/docker/app/container-structure-test.yaml
+schemaVersion: 2.0.0
+metadataTest:
+  user: "65532:65532"
+  exposedPorts: ["8000"]
+  cmd: ["assistant-api"]
+  labels:
+    - key: org.opencontainers.image.title
+      value: portfolio-assistant-api
+    - key: org.opencontainers.image.source
+      value: https://github.com/gonzalomartinperez/portfolio-assistant-api
+    - key: org.opencontainers.image.licenses
+      value: MIT
+fileExistenceTests:
+  - name: console script exists
+    path: /app/.venv/bin/assistant-api
+    shouldExist: true
+  - name: migrations are present
+    path: /app/migrations
+    shouldExist: true
+  - name: git is absent from the API image
+    path: /usr/bin/git
+    shouldExist: false
+  - name: pip is absent
+    path: /usr/local/bin/pip
+    shouldExist: false

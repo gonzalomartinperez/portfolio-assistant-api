@@ -140,7 +140,7 @@ def main():
                         name,
                         'python',
                         '-c',
-                        'import shutil; assert shutil.which("git"); '
+                        'import shutil; assert not shutil.which("git"); '
                         'assert not shutil.which("uv"); assert not shutil.which("uvx")',
                     )
                     docker(
