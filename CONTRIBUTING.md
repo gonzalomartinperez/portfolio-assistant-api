@@ -82,6 +82,9 @@ version is `[project].version` in `pyproject.toml`. A release is a normal PR int
 an immutable GitHub Release with that section. Nothing happens when the release
 already exists. This follows engineering-standards ADR 0003 (owner decision
 OD-78); no GitHub App or personal token is involved.
+The tag `v1.0.0` already exists, so the first release after this change must bump
+the version; promoting `1.0.0` again makes the workflow stop with an error instead
+of attaching a release to the old tag.
 
 ## Legal and security
 

@@ -70,8 +70,13 @@ jobs:
             echo "release $tag already exists; nothing to do"
             exit 0
           fi
-          if git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${tag}" >/dev/null; then
+          status=0
+          git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${tag}" >/dev/null || status=$?
+          if [ "$status" -eq 0 ]; then
             echo "::error title=release::tag $tag exists without a release; create the release from the existing tag manually"
+            exit 1
+          elif [ "$status" -ne 2 ]; then
+            echo "::error title=release::cannot check whether tag $tag exists (git ls-remote exit $status)"
             exit 1
           fi
           gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$tag" \

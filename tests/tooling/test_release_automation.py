@@ -8,6 +8,7 @@ import sys
 import tomllib
 from pathlib import Path
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -128,3 +129,14 @@ def test_community_files_follow_the_standard():
     )
     assert (ROOT / '.github' / 'PULL_REQUEST_TEMPLATE.md').is_file()
     assert not (ROOT / '.github' / 'pull_request_template.md').exists()
+
+
+def test_release_notes_reject_an_empty_section_and_a_bad_version(tmp_path):
+    with pytest.raises(subprocess.CalledProcessError):
+        run_notes(
+            tmp_path,
+            '1.2.3',
+            '## [1.2.3] - 2026-01-01\n\n## [1.2.2] - 2025-12-01\n\n- old\n',
+        )
+    with pytest.raises(subprocess.CalledProcessError):
+        run_notes(tmp_path, '1.2', '## [1.2] - 2026-01-01\n\n- x\n')
