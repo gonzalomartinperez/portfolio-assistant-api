@@ -194,7 +194,8 @@ The PostgreSQL initialization role (`assistant_admin` in the example) is privile
 and must **never** be used by the HTTP runtime. Its separate private migration
 configuration is mounted only by the `maintenance` profile's `migrate` service.
 Use `--profile maintenance run --rm migrate` for schema installation and that
-service with `python -m app.knowledge_sync ...` for index administration.
+service for local-source index administration; `--source github` needs Git and runs
+with the `worker` image target (the `api` target has no Git).
 After migrations, execute `deploy/runtime-grants.sql` as the schema owner. Create a
 separate `assistant_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION`
 role, set its password through an approved interactive secret procedure, and grant

@@ -1,0 +1,3 @@
+# Dockerfile lint policy. No rule is ignored: package versions are pinned (DL3008)
+# and every FROM carries a digest.
+failure-threshold: warning

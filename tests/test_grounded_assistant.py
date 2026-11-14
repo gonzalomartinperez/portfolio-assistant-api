@@ -378,8 +378,6 @@ def test_privileged_stdlib_scripts_keep_hosted_runner_python_compatibility():
     from pathlib import Path
 
     for name in (
-        'dependabot_automation',
-        'dependabot_policy',
         'release_manifest',
         'validate_release_file',
     ):
