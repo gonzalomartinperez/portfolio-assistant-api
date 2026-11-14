@@ -29,8 +29,8 @@ implement persistence/provider/source ports; presentation handles HTTP/SSE;
 bootstrap composes clients and lifespan. Preserve v1 wire artifacts.
 
 Run `just check` (the CI static checks) and `just test` (offline tests), or the
-underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,
-`uv run ruff format --check app tests contracts scripts`, `uv run mypy`, and
+underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts scripts evals`,
+`uv run ruff format --check app tests contracts scripts evals`, `uv run mypy`, and
 `uv run pytest -q`. Real integration requires migrations and the pinned approved
 public corpus, then `TEST_INTEGRATION=1 uv run pytest -q`. Export contracts with
 `uv run python -m contracts.export`; inspect drift before committing.
