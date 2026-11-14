@@ -50,5 +50,6 @@ the expected data, not from retrieval.
 - `tests/test_retrieval_layouts_integration.py` (integration lane): indexes the
   pinned public corpus under both content roots with fixture embeddings, runs
   every retrieval case with hybrid retrieval, requires identical per-case
-  outcomes on both layouts, and requires every case to pass (answerable cases
+  outcomes on both layouts (pass/fail and the retrieved qrels keys; tie-ranked
+  secondary evidence may differ because chunk ids include the physical path), and requires every case to pass (answerable cases
   retrieve their qrels; no-answer and ambiguity cases retrieve nothing).
