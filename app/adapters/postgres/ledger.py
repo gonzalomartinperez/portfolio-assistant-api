@@ -35,6 +35,7 @@ def settle(
     connection,
     input_price: Decimal,
     output_price: Decimal,
+    prompt_version: str | None = None,
 ) -> None:
     if input_tokens < 0 or output_tokens < 0:
         raise ValueError('usage cannot be negative')
@@ -54,6 +55,7 @@ def settle(
                 'input_tokens': input_tokens,
                 'output_tokens': output_tokens,
                 'cost_usd': str(cost),
+                'prompt_version': prompt_version,
             }
         )
     )
@@ -82,6 +84,7 @@ class PostgresAccounting:
             connection=self.connection,
             input_price=self.budget.input_price,
             output_price=self.budget.output_price,
+            prompt_version=usage.prompt_version,
         )
 
 

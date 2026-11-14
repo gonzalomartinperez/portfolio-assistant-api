@@ -63,7 +63,7 @@ For a new skill, create its relative Claude Code link from the repository root:
 ```sh
 ln -s ../../.agents/skills/api-new-task .claude/skills/api-new-task
 uv run python -m scripts.validate_skills
-uv run pytest -q tests/test_skills.py
+uv run pytest -q tests/harness/test_skills.py
 ```
 
 Replace the example name with the actual canonical directory. The validator uses
