@@ -93,7 +93,7 @@ set to null. See [privacy and threats](threat-model.md) and [operations](deploym
 See [ADR 001](adrs/001-dependency-direction.md), [ADR 014](adrs/014-prompt-registry.md), [GraphRAG](graph-retrieval.md),
 and [stream contract](api-contract.md) for decisions and behavior details. The offline
 evaluation harness (`evals/harness`, outside the image) is recorded in
-[ADR011](adrs/011-eval-harness.md).
+[ADR011](adrs/011-eval-harness.md); its cassette lane in [ADR013](adrs/013-provider-port-cassettes.md).
 
 ## Bounded conversational context
 
