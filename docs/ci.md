@@ -178,32 +178,15 @@ gap was closed without changing its review count, administrator enforcement,
 conversation-resolution or force-push/deletion restrictions. Merges cannot rely
 only on an operator remembering to wait for CI.
 
-## Conservative dependency automation
+## Dependency updates
 
-See [dependency maintenance](dependency-updates.md) for the allowlist, manual path,
-activation prerequisites and protection evidence. The existing static job now runs
-a read-only GitHub API audit on PRs and retains `dependency-policy-audit.json`; it
-has only contents/pull-request read permissions and does not authorize merging.
-A denied protection query is recorded as `permission_blocked` with eligibility
-and protection readiness false; the privileged controller still fails closed on
-unreadable controls. This diagnostic is not the required authorization gate. Offline policy tests run
-in the existing test suite, without duplicating builds or integration tests.
-
-`dependency-policy.yml` is a separate trusted-metadata controller. Its single job
-checks out the trusted workflow SHA, installs no PR dependencies, uses no PR cache
-or artifact, and can only manage a required policy check and native auto-merge.
-It does not run the test suite. Completion of CI triggers revalidation of the
-actual PR/current head, not unconditional merging. Per-head concurrency serializes
-competing decisions; new heads need a new required policy result. No path filter
-can omit the policy on an ordinary PR after activation. Manual/unverifiable updates
-receive an explicit action-required result, not a permanently pending hidden job.
-API failures leave a blocking hold, recoverable through explicit reevaluation.
-
-As of the 2026-10-04 audit, trusted policy files already exist on main. Required
-policy-check configuration, privileged-token verification and authorized variable
-enablement remain pending; file presence alone does not activate automation.
-Confirm ordinary-PR check emission before making it required. See the dated state
-in dependency-updates.md. Production workflows remain absent/disabled.
+See [dependency maintenance](dependency-updates.md). Dependabot opens one grouped
+weekly PR into `develop`; the owner merges it manually. The shared
+`deps-weekly-guard` workflow (`.github/workflows/deps-weekly-guard.yml`, pinned by
+SHA, no `pull_request_target`) keeps it to one open PR and flags a red one. The
+former dependency-policy workflow, its scripts and the CI audit step were
+removed ([ADR019](adrs/019-weekly-dependency-pr.md)). `tests/test_dependabot_config.py`
+runs in the offline test suite.
 
 ## Python 3.14 application compatibility
 
