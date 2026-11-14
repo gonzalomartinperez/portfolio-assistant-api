@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import asdict
+from pathlib import Path
 
 from neo4j import GraphDatabase
 
@@ -9,6 +10,8 @@ from app.adapters.retrieval import KnowledgeIndex
 from app.ai.retrieval import PublicRetrieval
 from app.bootstrap.config import settings
 from app.bootstrap.maintenance import connect
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def retrieve(question, locale='en', *, strategy='hybrid'):
