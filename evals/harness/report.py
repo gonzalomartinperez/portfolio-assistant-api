@@ -5,6 +5,7 @@ import os
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from math import sqrt
 from pathlib import Path
 
 from evals.harness.result import GradeResult
@@ -16,10 +17,22 @@ class ItemOutcome:
     locale: str
     strata: tuple[str, ...]
     grades: tuple[GradeResult, ...]
+    status: str = 'active'
 
     @property
     def passed(self) -> bool:
         return all(g.passed for g in self.grades)
+
+
+def wilson_interval(passed: int, total: int, z: float = 1.96) -> list[float]:
+    """Wilson score 95% interval for a pass rate; ``[0, 1]`` when there is no data."""
+    if total == 0:
+        return [0.0, 1.0]
+    p = passed / total
+    denominator = 1 + z * z / total
+    centre = (p + z * z / (2 * total)) / denominator
+    margin = z * sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denominator
+    return [round(max(0.0, centre - margin), 4), round(min(1.0, centre + margin), 4)]
 
 
 def build_report(
@@ -29,10 +42,22 @@ def build_report(
     run_id: str,
     pins: Mapping[str, str] | None = None,
 ) -> dict[str, object]:
-    """Pure aggregation. ``pins`` (prompt, corpus, model...) are recorded when known."""
+    """Pure aggregation over the gate (active items); ``pins`` are recorded when known.
 
-    def tally(rows: Sequence[ItemOutcome]) -> dict[str, int]:
-        return {'total': len(rows), 'passed': sum(r.passed for r in rows)}
+    Retired items are dropped and quarantined items are listed separately, outside
+    every count. Each tally carries its pass rate and Wilson 95% interval.
+    """
+
+    def tally(rows: Sequence[ItemOutcome]) -> dict[str, object]:
+        passed = sum(r.passed for r in rows)
+        return {
+            'total': len(rows),
+            'passed': passed,
+            'wilson95': wilson_interval(passed, len(rows)),
+        }
+
+    quarantined = {o.item_id: o.passed for o in outcomes if o.status == 'quarantined'}
+    outcomes = [o for o in outcomes if o.status == 'active']
 
     by_locale: dict[str, list[ItemOutcome]] = defaultdict(list)
     by_stratum: dict[str, list[ItemOutcome]] = defaultdict(list)
@@ -44,6 +69,7 @@ def build_report(
         'tier': tier,
         'run_id': run_id,
         'pins': dict(pins or {}),
+        'quarantined': dict(sorted(quarantined.items())),
         'totals': tally(outcomes),
         'by_locale': {k: tally(v) for k, v in sorted(by_locale.items())},
         'by_stratum': {

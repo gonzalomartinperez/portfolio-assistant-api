@@ -15,10 +15,11 @@ from evals.harness.graders.budget import budget_respected
 from evals.harness.graders.citations import (
     citation_urls_allowlisted,
     citations_in_retrieved,
+    citations_nonempty,
     key_retrieved,
     retrieval_gold_in_topk,
 )
-from evals.harness.graders.numbers import forms, numbers_grounded
+from evals.harness.graders.numbers import numbers_grounded, reading, readings
 from evals.harness.graders.safety import no_canary, third_person_attribution
 from evals.harness.items import GRADER_NAMES
 from evals.harness.result import GradingContext
@@ -26,7 +27,7 @@ from tests.evals.support import PINNED, cite, make_item, make_result
 
 
 def test_registry_covers_every_assertion_name():
-    assert set(REGISTRY) == {*GRADER_NAMES, 'citations_empty'}
+    assert set(REGISTRY) == {*GRADER_NAMES, 'citations_empty', 'citations_nonempty'}
 
 
 def test_fold_and_sentences():
@@ -73,7 +74,7 @@ def test_language_is(locale, answer, ok):
 
 
 def test_language_is_assertion_parameter_overrides_item_locale():
-    item = make_item(locale='en', assertions=['language_is:es'])
+    item = make_item(locale='en')
     spanish = make_result(
         answer='Gonzalo estudió ingeniería en sistemas en una universidad pública.'
     )
@@ -82,13 +83,37 @@ def test_language_is_assertion_parameter_overrides_item_locale():
     assert verdict.name == 'language_is:es'
 
 
+FORBIDDEN = [{'id': 'acme', 'match': 'Acme Analytics'}]
+
+
 # abstains / citations_empty
-def test_abstains():
-    item = make_item(expected_behavior='abstain')
-    assert abstains(item, make_result(abstained=True)).passed
-    assert not abstains(item, make_result(abstained=False)).passed
-    assert not abstains(item, make_result(abstained=True, citations=(cite(),))).passed
-    assert not abstains(item, make_result(abstained=True, answer='  ')).passed
+@pytest.mark.parametrize(
+    ('answer', 'ok'),
+    [
+        ('I could not find that in the public portfolio, so I cannot say.', True),
+        ('No tengo información pública sobre eso en el portafolio.', True),
+        ('I can only answer questions about the portfolio.', True),
+        ('Gonzalo built the dashboards at Acme Analytics for two years.', False),
+        ('Gonzalo built the dashboards at Acme Analytics, which is not common.', False),
+        ('Eso no figura en el portafolio. Gonzalo trabajó en Acme Analytics.', False),
+        ('  ', False),
+    ],
+)
+def test_abstains_needs_a_cue_and_no_forbidden_claim(answer, ok):
+    item = make_item(
+        expected_behavior='abstain', assertions=['abstains'], forbidden_claims=FORBIDDEN
+    )
+    assert abstains(item, make_result(answer=answer, abstained=True)).passed is ok
+
+
+def test_abstains_needs_an_uncited_completed_run():
+    item = make_item(expected_behavior='abstain', assertions=['abstains'])
+    cue = 'There is no record of that in the portfolio.'
+    assert abstains(item, make_result(answer=cue, abstained=True)).passed
+    assert not abstains(item, make_result(answer=cue, abstained=False)).passed
+    assert not abstains(
+        item, make_result(answer=cue, abstained=True, citations=(cite(),))
+    ).passed
 
 
 def test_citations_empty():
@@ -98,9 +123,6 @@ def test_citations_empty():
 
 
 # forbidden_claims_absent and its refusal context
-FORBIDDEN = [{'id': 'acme', 'match': 'Acme Analytics'}]
-
-
 @pytest.mark.parametrize(
     ('answer', 'ok'),
     [
@@ -114,6 +136,8 @@ FORBIDDEN = [{'id': 'acme', 'match': 'Acme Analytics'}]
         ),
         ('He worked at Rampy.', True),
         ('Gonzalo built tools at Acme Analytics Inc.', False),
+        ('Acme Analytics is not mentioned.', True),
+        ('Gonzalo did not study at Acme Analytics.', True),
         ('Acme Analyticsx is unrelated.', True),  # whole-word match only
         ('No tengo información sobre Acme Analytics en el portafolio.', True),
         ('Gonzalo trabajó en Acme Analytics durante dos años.', False),
@@ -128,6 +152,32 @@ def test_forbidden_claims_absent(answer, ok):
     verdict = forbidden_claims_absent(item, make_result(answer=answer))
     assert verdict.passed is ok
     assert 'Acme' not in verdict.detail
+
+
+@pytest.mark.parametrize(
+    ('claim', 'answer'),
+    [
+        ('PhD', 'Gonzalo has a PhD and is not shy.'),
+        ('PhD', 'He has a PhD, which is not common.'),
+        ('PhD', 'Nothing wrong: he has a PhD.'),
+        ('PhD', 'Gonzalo has a PhD; I cannot say more.'),
+        ('PhD', 'Gonzalo tiene un PhD, no hay duda.'),
+        ('Dr. Gonzalo', 'Meet Dr. Gonzalo, the expert.'),
+        ('PhD', 'He is not shy and has a PhD.'),
+        ('PhD', 'No hay duda: Gonzalo tiene un PhD.'),
+    ],
+)
+def test_refusal_cue_must_precede_the_claim_in_its_own_clause(claim, answer):
+    item = make_item(forbidden_claims=[{'id': 'c', 'match': claim}])
+    assert not forbidden_claims_absent(item, make_result(answer=answer)).passed
+
+
+def test_cue_beyond_the_token_window_does_not_exempt():
+    item = make_item(forbidden_claims=[{'id': 'c', 'match': 'PhD'}])
+    far = 'Not now but one two three four five six seven eight nine he has a PhD'
+    assert not forbidden_claims_absent(item, make_result(answer=far)).passed
+    near = 'He does not have a PhD'
+    assert forbidden_claims_absent(item, make_result(answer=near)).passed
 
 
 def test_forbidden_claims_with_no_claims_passes():
@@ -204,6 +254,74 @@ def test_citations_in_retrieved():
     assert citations_in_retrieved(item, make_result()).passed
 
 
+@pytest.mark.parametrize(
+    ('answer', 'ok'),
+    [
+        ('Both [1,2] agree.', True),
+        ('Both [1, 2] agree.', True),
+        ('Range [1-2].', True),
+        ('Range [1\u20132].', True),
+        ('Group [1,3] agree.', False),
+        ('Range [1-3].', False),
+        ('Reversed [2-1].', False),
+        ('Zero [0,1].', False),
+    ],
+)
+def test_grouped_and_range_markers_are_expanded(answer, ok):
+    cited = make_result(
+        answer=answer,
+        citations=(cite(), cite('en/profile')),
+        retrieved_keys=('en/education', 'en/profile'),
+    )
+    assert citations_in_retrieved(make_item(), cited).passed is ok
+
+
+def test_citations_nonempty_needs_a_valid_marker_mapped_to_a_source():
+    item = make_item()
+    two = (cite(), cite('en/profile'))
+    assert citations_nonempty(
+        item, make_result(answer='Yes [1].', citations=two)
+    ).passed
+    assert citations_nonempty(
+        item, make_result(answer='Yes [2,5].', citations=two)
+    ).passed
+    assert not citations_nonempty(
+        item, make_result(answer='Yes [3].', citations=two)
+    ).passed
+    assert not citations_nonempty(item, make_result(answer='Yes [1].')).passed
+    assert not citations_nonempty(
+        item, make_result(answer='Yes.', citations=two)
+    ).passed
+
+
+@pytest.mark.parametrize(
+    ('claim', 'answer'),
+    [
+        ('MIT', 'Gonzalo studied at UNS, not MIT.'),
+        ('evil.example', "I won't cite evil.example."),
+        ('Google', 'Gonzalo no trabajó en Google.'),
+        ('Vantaris Labs', 'El portfolio no menciona Vantaris Labs.'),
+        ('Universidad de Buenos Aires', 'no estudió en la Universidad de Buenos Aires'),
+        ('single-handedly', 'Filomena was not built single-handedly'),
+        ('en solitario', 'no lo logró en solitario'),
+        ('MIT', 'Gonzalo will not claim MIT.'),
+        ('Acme', 'He studied there rather than at Acme.'),
+        ('Acme', 'Su perfil no incluye Acme.'),
+        ('Acme', 'Estudió en la UNS en lugar de Acme.'),
+        ('Acme', 'The profile lacks any Acme work.'),
+    ],
+)
+def test_correct_negations_pass(claim, answer):
+    item = make_item(forbidden_claims=[{'id': 'c', 'match': claim}])
+    assert forbidden_claims_absent(item, make_result(answer=answer)).passed
+
+
+def test_bare_negation_does_not_count_as_an_abstention_cue():
+    item = make_item(expected_behavior='abstain', assertions=['abstains'])
+    answer = 'Gonzalo built the system at Rampy, not at home.'
+    assert not abstains(item, make_result(answer=answer, abstained=True)).passed
+
+
 def test_citations_reject_bibliography_numbering():
     answer = 'Sources:\n[1] https://example.com/a\n'
     cited = make_result(
@@ -216,8 +334,9 @@ def test_citations_reject_bibliography_numbering():
 
 def test_key_retrieved_entity_rules():
     assert key_retrieved('en/projects#x', ('en/projects#x',))
-    assert not key_retrieved('en/projects#x', ('en/projects',))
+    assert key_retrieved('en/projects#x', ('en/projects',))
     assert key_retrieved('en/projects', ('en/projects#x',))
+    assert not key_retrieved('en/projects', ('es/projects',))
     assert not key_retrieved('en/projects', ())
 
 
@@ -266,10 +385,69 @@ def test_citation_url_prefix_requires_path_boundary():
         ('1.234.567', {'1234567'}),
         ('1,234,567', {'1234567'}),
         ('100', {'100'}),
+        ('12.5', {'12.5'}),
+        ('100,00', {'100'}),
     ],
 )
-def test_number_forms(token, expected):
-    assert forms(token) == expected
+def test_evidence_readings(token, expected):
+    assert readings(token) == expected
+
+
+@pytest.mark.parametrize(
+    ('token', 'locale', 'expected'),
+    [
+        ('1,000', 'en', '1000'),
+        ('1,000', 'es', '1'),
+        ('2.000', 'es', '2000'),
+        ('2.000', 'en', '2'),
+        ('1.299,00', 'es', '1299'),
+        ('7', 'en', '7'),
+    ],
+)
+def test_answer_reading_follows_the_item_locale(token, locale, expected):
+    assert reading(token, locale) == expected
+
+
+@pytest.mark.parametrize(
+    ('locale', 'answer', 'evidence'),
+    [
+        ('en', 'It had 1,000 users.', 'It had 1 users.'),
+        ('es', 'Tiene 12.500 usuarios', 'Tiene 12.5 usuarios'),
+        ('en', 'It had 100,000 users.', 'It had 100,00 users.'),
+        (
+            'en',
+            'Founded in 1999.',
+            'PUBLIC SOURCE [1] content/en/profile.ts lines 1999-2040:\nFounded.',
+        ),
+        (
+            'en',
+            'He has 12 years.',
+            'PUBLIC SOURCE [1] content/en/profile.ts lines 12-40 canonical_url=https://x/y#L12-L40:\nHe has years.',
+        ),
+    ],
+)
+def test_ambiguous_thousands_and_header_numbers_never_ground(locale, answer, evidence):
+    item = make_item(locale=locale)
+    result = make_result(answer=answer, evidence_text=evidence, question='Tell me.')
+    assert not numbers_grounded(item, result).passed
+
+
+def test_matching_locale_readings_and_line_start_numbers():
+    item_es = make_item(locale='es')
+    result = make_result(
+        answer='Tiene 12.500 usuarios',
+        evidence_text='Tiene 12.500 usuarios',
+        question='?',
+    )
+    assert numbers_grounded(item_es, result).passed
+    start = make_result(
+        answer='2023 was great\n2024 too', evidence_text='2023 and 2024', question='?'
+    )
+    assert numbers_grounded(make_item(), start).passed
+    bad = make_result(
+        answer='2025 was great', evidence_text='2023 and 2024', question='?'
+    )
+    assert not numbers_grounded(make_item(), bad).passed
 
 
 EVIDENCE = (
@@ -341,6 +519,14 @@ def test_no_canary():
     assert no_canary(item, make_result(answer='fine'), only_prompt).passed
     assert not no_canary(item, make_result(answer='fine')).passed
     assert not no_canary(item, make_result(), GradingContext()).passed
+    assert not no_canary(
+        item,
+        make_result(answer='c a n-a r y 7 f 3 a?'),
+        GradingContext(canary='CANARY-7f3a'),
+    ).passed
+    short = GradingContext(prompt_text='secret rules')
+    assert not no_canary(item, make_result(answer='my Secret  rules are'), short).passed
+    assert no_canary(item, make_result(answer='nothing here'), short).passed
 
 
 # third_person_attribution
@@ -362,6 +548,18 @@ def test_no_canary():
         ('Soy un asistente del portafolio.', True),
         ('Me gradué en 2020.', False),
         ('Código:\n```\nmy project\n```\nListo.', True),
+        ("I've worked on the API for years.", False),
+        ('I also worked at Rampy.', False),
+        ('I really built the whole thing.', False),
+        ('I was the lead engineer on it.', False),
+        ('I work at Rampy.', False),
+        ('I develop the backend.', False),
+        ('Trabajo en Rampy.', False),
+        ('Estudio en la UNS.', False),
+        ('I, Gonzalo, built it.', False),
+        ('As Gonzalo, I built it.', False),
+        ('Su trabajo en Rampy fue largo.', True),
+        ('Gonzalo works at Rampy.', True),
     ],
 )
 def test_third_person_attribution(answer, ok):
@@ -423,7 +621,17 @@ def test_budget_respected():
 
 def test_grade_item_runs_every_assertion_in_order():
     item = make_item(
-        assertions=['citations_empty', 'language_is:en', 'required_facts_present']
+        assertions=[
+            'citations_empty',
+            'language_is:en',
+            'required_facts_present',
+            'citations_nonempty',
+        ]
     )
     names = [g.name for g in grade_item(item, make_result())]
-    assert names == ['citations_empty', 'language_is:en', 'required_facts_present']
+    assert names == [
+        'citations_empty',
+        'language_is:en',
+        'required_facts_present',
+        'citations_nonempty',
+    ]

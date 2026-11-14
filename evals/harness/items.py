@@ -33,7 +33,7 @@ GRADER_NAMES = (
     'retrieval_gold_in_topk',
     'budget_respected',
 )
-ASSERTION_NAMES = (*GRADER_NAMES, 'citations_empty')
+ASSERTION_NAMES = (*GRADER_NAMES, 'citations_empty', 'citations_nonempty')
 _LANGUAGE_ASSERTION = re.compile(r'language_is:(en|es)')
 _EVIDENCE_KEY = re.compile(EVIDENCE_KEY_PATTERN)
 
@@ -113,6 +113,27 @@ class Item(Strict):
             raise ValueError(
                 'retired_reason is required exactly when status is retired'
             )
+        return self
+
+    @model_validator(mode='after')
+    def _consistent_content(self) -> Self:
+        if self.expected_behavior == 'abstain' and 'abstains' not in self.assertions:
+            raise ValueError('abstain items must assert abstains')
+        if (
+            self.expected_behavior == 'answer'
+            and 'citations_nonempty' not in self.assertions
+        ):
+            raise ValueError('answer items must assert citations_nonempty')
+        for name in self.assertions:
+            if name.startswith('language_is:') and name[-2:] != self.locale:
+                raise ValueError(f'{name} contradicts locale {self.locale}')
+        for label, ids in (
+            ('required_facts', [f.id for f in self.required_facts]),
+            ('forbidden_claims', [c.id for c in self.forbidden_claims]),
+            ('gold_evidence_ids', self.gold_evidence_ids),
+        ):
+            if len(set(ids)) != len(ids):
+                raise ValueError(f'duplicate ids in {label}')
         return self
 
 

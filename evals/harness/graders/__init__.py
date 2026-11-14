@@ -14,6 +14,7 @@ from evals.harness.graders.budget import budget_respected
 from evals.harness.graders.citations import (
     citation_urls_allowlisted,
     citations_in_retrieved,
+    citations_nonempty,
     retrieval_gold_in_topk,
 )
 from evals.harness.graders.numbers import numbers_grounded
@@ -36,6 +37,7 @@ REGISTRY: dict[str, Grader] = {
     'retrieval_gold_in_topk': retrieval_gold_in_topk,
     'budget_respected': budget_respected,
     'citations_empty': citations_empty,
+    'citations_nonempty': citations_nonempty,
 }
 
 

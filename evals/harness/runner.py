@@ -1,9 +1,12 @@
 """Run scripted items through the real session, conversation and SSE endpoints.
 
-The provider is injected: any object satisfying ``app.application.contracts.Provider``.
-Today that is the fixture provider (``provider=None`` keeps the app default) or a test
-double; the cassette replayer of M2-7 plugs into the same ``Provider`` port. The wire
-exposes no abstention flag, so ``abstained`` means a completed run with no citations.
+The provider is injected and required: any object satisfying
+``app.application.contracts.Provider`` (the fixture provider or a test double today; the
+cassette replayer of M2-7 plugs into the same port). The wire exposes no abstention
+flag, so ``abstained`` means a completed run with no citations and the ``abstains``
+grader adds a text cue check. ``first_delta_ms`` is measured inside ``RecordingProvider``
+at the first yielded text, because the ASGI transport buffers the response body; it is
+therefore relative to the turn start but excludes transport delivery.
 """
 
 import json
@@ -11,6 +14,7 @@ import re
 import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
+from dataclasses import replace
 from uuid import uuid4
 
 import httpx
@@ -28,6 +32,7 @@ from evals.harness.report import ItemOutcome
 from evals.harness.result import CitedSource, GradingContext, RunResult
 from scripts.evaluation_isolation import EvaluationContainer, inspect_containers
 
+_CANONICAL_URL = re.compile(r'canonical_url=(\S+?):?(?=\s|$)')
 _SOURCE = re.compile(r'^PUBLIC SOURCE \[\d+\] (\S+) lines \d+-\d+', re.MULTILINE)
 
 
@@ -38,6 +43,7 @@ class RecordingProvider:
         self.inner = inner
         self.evidence: list[str] = []
         self.usage: list[Usage] = []
+        self.first_text_at: list[float | None] = []  # parallel to ``evidence``
 
     async def stream(
         self,
@@ -48,12 +54,16 @@ class RecordingProvider:
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[str | Usage]:
         self.evidence.append(evidence)
+        self.first_text_at.append(None)
+        call = len(self.first_text_at) - 1
         async with aclosing(
             self.inner.stream(question, evidence, locale, history, context)
         ) as stream:
             async for item in stream:
                 if isinstance(item, Usage):
                     self.usage.append(item)
+                elif self.first_text_at[call] is None:
+                    self.first_text_at[call] = time.perf_counter()
                 yield item
 
 
@@ -114,6 +124,24 @@ def collect(
     )
 
 
+def item_context(
+    item: Item, result: RunResult, base: GradingContext | None = None
+) -> GradingContext:
+    """Extend the grading context with this item's approved URLs.
+
+    ``tools.host_allowed`` (a host string or a list of hosts) approves ``https://<host>``
+    and its paths; canonical source URLs the provider was shown are approved exactly.
+    """
+    base = base or GradingContext()
+    hosts = (item.tools or {}).get('host_allowed')
+    names = (
+        [hosts] if isinstance(hosts, str) else hosts if isinstance(hosts, list) else []
+    )
+    approved = {f'https://{h}' for h in names if isinstance(h, str) and h}
+    approved |= set(_CANONICAL_URL.findall(result.evidence_text or ''))
+    return replace(base, approved_urls=base.approved_urls | frozenset(approved))
+
+
 async def run_item(
     item: Item,
     client: httpx.AsyncClient,
@@ -138,7 +166,6 @@ async def run_item(
             mark = (len(recorder.evidence), len(recorder.usage))
             started = time.perf_counter()
             body = ''
-            first = None
             async with client.stream(
                 'POST',
                 path,
@@ -147,9 +174,9 @@ async def run_item(
             ) as stream:
                 stream.raise_for_status()
                 async for chunk in stream.aiter_text():
-                    if first is None and 'event: message.delta' in chunk:
-                        first = round((time.perf_counter() - started) * 1000, 2)
                     body += chunk
+            stamps = [t for t in recorder.first_text_at[mark[0] :] if t is not None]
+            first = round((stamps[0] - started) * 1000, 2) if stamps else None
             result = collect(
                 parse_sse(body),
                 question=turn.text,
@@ -173,19 +200,23 @@ async def run_items(
         [tuple[str, str]], list[EvaluationContainer]
     ] = inspect_containers,
 ) -> list[ItemOutcome]:
-    """Grade items against the in-process app; refuses unless the isolation guard passes."""
+    """Grade items against the in-process app; refuses unless the isolation guard passes.
+
+    Retired items are skipped; quarantined items run and are reported separately.
+    """
     require_isolated(config, inspect=inspect)
     # Synthetic loopback visitors: trust the forwarded address so per-subject limits apply.
     config = config.model_copy(update={'trusted_proxy_ips': '127.0.0.1'})
     recorder = RecordingProvider(provider)
     app = create_app(config, provider_override=recorder)
     outcomes = []
+    runnable = [item for item in items if item.status != 'retired']
     async with app.router.lifespan_context(app):
         transport = httpx.ASGITransport(app=app, client=('127.0.0.1', 50000))
         async with httpx.AsyncClient(
             transport=transport, base_url='http://eval.local', timeout=130
         ) as client:
-            for index, item in enumerate(items):
+            for index, item in enumerate(runnable):
                 result = await run_item(
                     item,
                     client,
@@ -198,7 +229,8 @@ async def run_items(
                         item.id,
                         item.locale,
                         tuple(item.strata),
-                        grade_item(item, result, ctx),
+                        grade_item(item, result, item_context(item, result, ctx)),
+                        item.status,
                     )
                 )
     return outcomes

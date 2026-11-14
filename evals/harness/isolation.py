@@ -1,6 +1,7 @@
 """Isolation guard (closes gap A1): evaluation touches only fixture or loopback stores."""
 
-from collections.abc import Callable
+import os
+from collections.abc import Callable, Mapping
 from urllib.parse import urlparse
 
 from psycopg import ProgrammingError
@@ -23,12 +24,23 @@ def _loopback(host: str) -> bool:
     return host.strip('[]').lower() in LOOPBACK_HOSTS
 
 
-def check_postgres_dsn(dsn: str) -> None:
-    """Accept loopback hosts or an explicit unix socket directory; reject all else."""
+def check_postgres_dsn(dsn: str, environ: Mapping[str, str] | None = None) -> None:
+    """Accept only explicit loopback hosts.
+
+    Unix sockets are rejected: ``validate_targets`` needs a loopback host and a
+    published container port, so accepting them here would be inconsistent. libpq lets
+    ``PGHOSTADDR`` override the connect address, so a non-loopback ``PGHOST`` or
+    ``PGHOSTADDR`` in the environment is rejected too.
+    """
     try:
         params = conninfo_to_dict(dsn)
     except ProgrammingError:
         raise IsolationError('PostgreSQL DSN is not parseable') from None
+    env = os.environ if environ is None else environ
+    for name in ('PGHOST', 'PGHOSTADDR'):
+        for host in env.get(name, '').split(','):
+            if host and not _loopback(host):
+                raise IsolationError(f'{name} points at a non-local host; refusing')
     hosts = [
         h for key in ('host', 'hostaddr') for h in str(params.get(key, '')).split(',')
     ]
@@ -38,9 +50,9 @@ def check_postgres_dsn(dsn: str) -> None:
             'PostgreSQL DSN has no explicit host; refusing to evaluate'
         )
     for host in hosts:
-        if not (host.startswith('/') or _loopback(host)):
+        if not _loopback(host):
             raise IsolationError(
-                f'PostgreSQL host {host!r} is not local; refusing to evaluate'
+                f'PostgreSQL host {host!r} is not a loopback host; refusing to evaluate'
             )
 
 
