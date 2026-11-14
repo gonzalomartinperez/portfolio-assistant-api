@@ -310,3 +310,16 @@ def test_real_app_run_through_the_sse_path():
         run_items([item], settings(), Provider(), ctx=GradingContext())
     )
     assert outcomes[0].passed
+
+
+def test_visitor_addresses_are_distinct_and_stay_in_the_benchmark_range():
+    import pytest as _pytest
+
+    from evals.harness.runner import visitor_address
+
+    addresses = {visitor_address(i) for i in range(0, 70_000, 7)}
+    assert len(addresses) == len(range(0, 70_000, 7))
+    assert visitor_address(0) == '198.18.0.1'
+    assert all(a.startswith(('198.18.', '198.19.')) for a in addresses)
+    with _pytest.raises(ValueError):
+        visitor_address(128_000)

@@ -1,0 +1,14 @@
+{
+  "source": "PROVISIONAL: plan section 11 limits, not measured from live or replayed calls; `measured` is filled by the first cassette replay",
+  "lane": "stub and cassette (every PR)",
+  "limits": {
+    "first_delta_ms_p95": 250,
+    "answer_ms_p95": 1000,
+    "retrieval_ms_p95": 400,
+    "tokens_in_p95": 6000,
+    "tokens_out_p95": 800,
+    "cost_usd_p95": 0.02,
+    "llm_calls_per_turn": 6
+  },
+  "measured": {}
+}
