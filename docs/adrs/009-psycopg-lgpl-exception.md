@@ -1,6 +1,7 @@
 # ADR009: Accept psycopg (LGPL-3.0-only) as a licence exception
 
-Status: accepted (2026-11-14, master plan task M1-10, standards deviation S7).
+Status: accepted (2026-11-14, master plan task M1-10; the exception was
+pre-approved as standards deviation S7 in the owner-approved master plan).
 
 ## Context and problem
 
@@ -11,9 +12,11 @@ else needs a recorded exception.
 `psycopg`, `psycopg-binary` and `psycopg-pool` 3.3 are licensed
 **LGPL-3.0-only** (verified 2026-11-14 from the installed wheel metadata
 `License-Expression` and from deps.dev). The API uses them for all PostgreSQL and
-pgvector access. `langgraph-checkpoint-postgres` also depends on them directly
-(`uv tree --invert --package psycopg`), so the durable run checkpointer cannot work
-without psycopg.
+pgvector access. `langgraph-checkpoint-postgres` also requires `psycopg` and
+`psycopg-pool` (`uv tree --invert --package psycopg`), so the durable run
+checkpointer cannot work without them.
+
+This ADR records an engineering policy decision, not legal advice.
 
 ## Considered options
 
@@ -34,13 +37,21 @@ Keep `psycopg[binary,pool]` as an unmodified runtime library dependency.
 - The container image installs the unmodified wheels from PyPI, pinned by
   `uv.lock`. Their licence files stay in the installed `*.dist-info` directories.
   A recipient can replace the library inside the image (LGPL-3.0 section 4).
-- `psycopg-binary` bundles native libraries in `psycopg_binary.libs/` (libpq,
-  OpenSSL, Kerberos, LDAP and SASL client libraries). They carry their own
-  permissive licences and are redistributed unmodified inside the wheel. They
-  are covered by the existing third-party notice that the image's MIT label does
-  not relicense included components.
-- Never patch psycopg in-tree. A change to psycopg itself would trigger
-  LGPL source-offer duties and needs a new ADR.
+- `psycopg-binary` bundles native libraries in `psycopg_binary.libs/`: libpq,
+  OpenSSL (libssl, libcrypto), Kerberos (libkrb5, libk5crypto, libkrb5support,
+  libgssapi_krb5, libcom_err), OpenLDAP (libldap, liblber), Cyrus SASL, libpcre,
+  libselinux, libkeyutils and libcrypt. They carry separate third-party licences,
+  mostly permissive; at least libkeyutils and libcrypt are LGPL-2.1-or-later. They
+  are shipped unmodified inside the wheel and are covered by the existing notice
+  that the image's MIT label does not relicense included components. The wheel's
+  embedded SBOM (`auditwheel.cdx.json`) shows they come from an older
+  manylinux base; the M4 dependency review re-checks this.
+- `[binary]` is used because the slim runtime image has no compiler or system
+  libpq. Switching to `psycopg[c]` with the Debian libpq package would remove the
+  bundled copies; that is an option for the M1-4 image work, not a requirement.
+- Never patch psycopg in-tree. A modified psycopg would likely bring LGPL
+  source-offer duties once the image is conveyed to anyone (it is not published
+  today, PAA-D15), so it needs a new ADR first.
 
 ## Consequences
 
@@ -57,6 +68,8 @@ Keep `psycopg[binary,pool]` as an unmodified runtime library dependency.
   transitive MPL-2.0 packages `certifi`, `orjson` (MPL-2.0 AND (Apache-2.0 OR MIT))
   and `pathspec`. MPL-2.0 is file-level copyleft and applies only if those files
   are modified. They are listed in `docs/master-plan/dependencies.md`.
+- If the image is ever distributed, ship the GPL-3.0 text next to the LGPL-3.0
+  text (LGPL-3.0 section 4) together with the bundled-library notices.
 
 ## Confirmation
 
