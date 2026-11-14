@@ -1,4 +1,7 @@
 FROM postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395 AS vector-build
+# DL3003: the pgvector make steps need one working directory inside this single build layer.
+# DL4006: the only pipe feeds the pinned checksum to sha256sum, which fails the layer on mismatch.
+# hadolint ignore=DL3003,DL4006
 RUN apk add --no-cache build-base=0.5-r4 clang21=21.1.8-r3 llvm21-dev=21.1.8-r1 \
     && wget -O /tmp/pgvector.tar.gz https://codeload.github.com/pgvector/pgvector/tar.gz/refs/tags/v0.8.7 \
     && echo 'cac0b10c360f05b2d521200105ba3697e773d4cd3731f5a915a7e37ebe0bea85  /tmp/pgvector.tar.gz' | sha256sum -c - \
