@@ -15,7 +15,12 @@ from app.bootstrap.config import settings
 
 
 def sync(
-    repo: Path, ref: str = 'HEAD', *, watched: bool = False, stop: Event | None = None
+    repo: Path,
+    ref: str = 'HEAD',
+    *,
+    watched: bool = False,
+    stop: Event | None = None,
+    snapshot: bool = False,
 ):
     config = settings()
     return sync_projection(
@@ -25,18 +30,27 @@ def sync(
         connection=partial(connect, config.database_url),
         watched=watched,
         stop=stop,
+        snapshot=snapshot,
     )
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--repo', type=Path)
-    parser.add_argument('--source', choices=['local', 'github'], default='local')
+    parser.add_argument(
+        '--repo', type=Path, help='Git checkout, or the frozen corpus directory'
+    )
+    parser.add_argument(
+        '--source', choices=['local', 'github', 'snapshot'], default='local'
+    )
     parser.add_argument(
         '--ref', help='Local Git ref, or main/develop/full commit SHA for GitHub'
     )
     args = parser.parse_args()
-    if args.source == 'local':
+    if args.source == 'snapshot':
+        if not args.repo:
+            parser.error('--repo (the corpus directory) is required for snapshot sync')
+        result = sync(args.repo, snapshot=True)
+    elif args.source == 'local':
         if not args.repo:
             parser.error('--repo is required for local sync')
         result = sync(args.repo, args.ref or 'HEAD')
