@@ -41,6 +41,7 @@ module-root = ""
 dev = [
     "httpx>=0.28.1",
     "hypothesis>=6",
+    "mutmut>=3",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pyyaml==6.0.3",
@@ -72,3 +73,31 @@ quote-style = "single"
 # Privileged stdlib-only jobs use the hosted runner's system Python, not application dependencies.
 "scripts/release_manifest.py" = "py312"
 "scripts/validate_release_file.py" = "py312"
+
+[tool.mutmut]
+paths_to_mutate = [
+    "app/domain/budget.py",
+    "app/domain/privacy.py",
+    "app/domain/evidence.py",
+    "app/domain/analytics_periods.py",
+    "app/domain/web_policy.py",
+    "app/application/answer.py",
+    "app/application/runs.py",
+    "app/application/contracts.py",
+    "app/ai/retrieval.py",
+]
+tests_dir = [
+    "tests/unit/test_operations.py",
+    "tests/unit/test_visitor_privacy.py",
+    "tests/unit/test_quality.py",
+    "tests/unit/test_analytics_periods.py",
+    "tests/unit/test_web_context.py",
+    "tests/unit/test_workflow.py",
+    "tests/unit/test_citation_mapping.py",
+    "tests/unit/test_content_root_compatibility.py",
+    "tests/unit/test_conversation_context.py",
+    "tests/unit/test_presentation_context.py",
+]
+also_copy = ["app", "contracts"]
+process_isolation = "fork"
+pytest_add_cli_args = ["-q", "-p", "no:cacheprovider", "-m", "not integration"]

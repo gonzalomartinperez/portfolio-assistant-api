@@ -8,3 +8,7 @@ __pycache__/
 artifacts/
 .env.production
 deploy/*.private.env
+
+.mutmut-cache
+mutants/
+.mypy_cache/
