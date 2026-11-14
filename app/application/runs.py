@@ -262,51 +262,55 @@ class RunService:
                 yield RunEvent('run.cancelled', {})
                 return
             yield RunEvent('run.started', {'state': 'running'})
-            async with asyncio.timeout(self.timeout_seconds):
-                async with aclosing(
-                    self.workflow.stream(
-                        AnswerCommand(
-                            str(run_id),
-                            question,
-                            locale,
-                            bounded_history(
-                                await self.store.history(run_id, conversation_id)
-                            ),
-                            context,
-                        )
+            # An explicit deadline, not asyncio.timeout: the SSE heartbeat advances this
+            # generator from a new task per event, and a timeout scope binds to one task.
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + self.timeout_seconds
+            async with aclosing(
+                self.workflow.stream(
+                    AnswerCommand(
+                        str(run_id),
+                        question,
+                        locale,
+                        bounded_history(
+                            await self.store.history(run_id, conversation_id)
+                        ),
+                        context,
                     )
-                ) as stream:
-                    while True:
-                        pending = asyncio.create_task(anext(stream))
-                        # Poll persisted cancellation even while the upstream provider is silent.
-                        try:
-                            while not pending.done():
-                                await asyncio.wait({pending}, timeout=0.1)
-                                if not await self.store.running(run_id):
-                                    pending.cancel()
-                                    await asyncio.gather(
-                                        pending, return_exceptions=True
-                                    )
-                                    yield RunEvent('run.cancelled', {})
-                                    return
-                        except BaseException:
-                            pending.cancel()
-                            await asyncio.gather(pending, return_exceptions=True)
-                            raise
-                        try:
-                            event = pending.result()
-                        except StopAsyncIteration:
-                            break
-                        if event.kind == 'evidence':
-                            sources = event.sources
-                            yield RunEvent(
-                                'run.status',
-                                {'phase': 'evidence_found', 'sources': len(sources)},
-                            )
-                        elif event.kind == 'delta':
-                            yield RunEvent('message.delta', {'text': event.text})
-                        elif event.kind == 'answer':
-                            answer = event.text
+                )
+            ) as stream:
+                while True:
+                    pending = asyncio.create_task(anext(stream))
+                    # Poll persisted cancellation even while the upstream provider is silent.
+                    try:
+                        while not pending.done():
+                            remaining = deadline - loop.time()
+                            if remaining <= 0:
+                                raise TimeoutError('run deadline exceeded')
+                            await asyncio.wait({pending}, timeout=min(0.1, remaining))
+                            if not await self.store.running(run_id):
+                                pending.cancel()
+                                await asyncio.gather(pending, return_exceptions=True)
+                                yield RunEvent('run.cancelled', {})
+                                return
+                    except BaseException:
+                        pending.cancel()
+                        await asyncio.gather(pending, return_exceptions=True)
+                        raise
+                    try:
+                        event = pending.result()
+                    except StopAsyncIteration:
+                        break
+                    if event.kind == 'evidence':
+                        sources = event.sources
+                        yield RunEvent(
+                            'run.status',
+                            {'phase': 'evidence_found', 'sources': len(sources)},
+                        )
+                    elif event.kind == 'delta':
+                        yield RunEvent('message.delta', {'text': event.text})
+                    elif event.kind == 'answer':
+                        answer = event.text
             with phase('finalization'):
                 refs = citations(sources, answer, self.fixture)
                 if not self.fixture:
