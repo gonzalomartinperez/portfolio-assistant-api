@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import time
+from dataclasses import replace
 from uuid import uuid4
 
 import httpx
@@ -15,12 +16,14 @@ import pytest
 
 from app.application.contracts import Usage
 from app.bootstrap.config import Settings
+from evals.harness.graders.citations import citation_urls_allowlisted
 from evals.harness.isolation import IsolationError
 from evals.harness.items import Item
-from evals.harness.result import GradingContext
+from evals.harness.result import GradingContext, RunResult
 from evals.harness.runner import (
     RecordingProvider,
     collect,
+    item_context,
     parse_sse,
     run_item,
     run_items,
@@ -152,7 +155,7 @@ def fake_app(
 def test_run_item_replays_every_turn_and_returns_the_last():
     item: Item = make_item(
         turns=[{'text': 'Where did he study?'}, {'text': 'Shorten it'}],
-        assertions=['citations_in_retrieved', 'budget_respected'],
+        assertions=['citations_in_retrieved', 'budget_respected', 'citations_nonempty'],
     )
     recorder = RecordingProvider(None)  # type: ignore[arg-type]
     calls: list[tuple[str, str]] = []
@@ -223,6 +226,42 @@ def test_first_delta_is_taken_from_the_provider_not_the_buffered_body():
     assert stamps[-1] > first + 0.15
 
 
+def test_item_context_approves_allowlisted_hosts_and_canonical_urls():
+    evidence = f'PUBLIC SOURCE [1] content/en/profile.ts lines 1-5 canonical_url={PINNED}:\nText'
+    result = RunResult(
+        answer='See https://docs.python.org/3/library/ and https://evil.example/x and '
+        f'{PINNED}.',
+        evidence_text=evidence,
+    )
+    plain = make_item()
+    hosted = make_item(tools={'host_allowed': ['docs.python.org']})
+    assert not citation_urls_allowlisted(
+        plain, result, item_context(plain, result)
+    ).passed
+    only_docs = replace(result, answer='See https://docs.python.org/3/library/.')
+    assert citation_urls_allowlisted(
+        hosted, only_docs, item_context(hosted, only_docs)
+    ).passed
+    assert not citation_urls_allowlisted(
+        plain, only_docs, item_context(plain, only_docs)
+    ).passed
+    assert not citation_urls_allowlisted(
+        hosted, result, item_context(hosted, result)
+    ).passed  # evil.example stays rejected
+    canonical = replace(result, answer=f'Source: {PINNED}.')
+    assert citation_urls_allowlisted(
+        plain, canonical, item_context(plain, canonical)
+    ).passed
+    single = make_item(tools={'host_allowed': 'docs.python.org'})
+    assert citation_urls_allowlisted(
+        single, only_docs, item_context(single, only_docs)
+    ).passed
+    flag = make_item(tools={'host_allowed': True})
+    assert item_context(flag, only_docs).approved_urls == frozenset({PINNED})
+    base = GradingContext(approved_urls=frozenset({'https://x.example'}))
+    assert 'https://x.example' in item_context(plain, only_docs, base).approved_urls
+
+
 def test_recording_provider_passes_text_and_usage_through():
     class Inner:
         async def stream(self, question, evidence, locale, history=(), context=None):
@@ -264,7 +303,7 @@ def test_real_app_run_through_the_sse_path():
             yield Usage(10, 10)
 
     item = make_item(
-        assertions=['required_facts_present'],
+        assertions=['required_facts_present', 'citations_nonempty'],
         required_facts=[{'id': 'uns', 'match': 'Universidad Nacional del Sur'}],
     )
     outcomes = asyncio.run(

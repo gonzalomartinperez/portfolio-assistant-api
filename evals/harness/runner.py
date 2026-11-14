@@ -14,6 +14,7 @@ import re
 import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
+from dataclasses import replace
 from uuid import uuid4
 
 import httpx
@@ -31,6 +32,7 @@ from evals.harness.report import ItemOutcome
 from evals.harness.result import CitedSource, GradingContext, RunResult
 from scripts.evaluation_isolation import EvaluationContainer, inspect_containers
 
+_CANONICAL_URL = re.compile(r'canonical_url=(\S+?):?(?=\s|$)')
 _SOURCE = re.compile(r'^PUBLIC SOURCE \[\d+\] (\S+) lines \d+-\d+', re.MULTILINE)
 
 
@@ -122,6 +124,24 @@ def collect(
     )
 
 
+def item_context(
+    item: Item, result: RunResult, base: GradingContext | None = None
+) -> GradingContext:
+    """Extend the grading context with this item's approved URLs.
+
+    ``tools.host_allowed`` (a host string or a list of hosts) approves ``https://<host>``
+    and its paths; canonical source URLs the provider was shown are approved exactly.
+    """
+    base = base or GradingContext()
+    hosts = (item.tools or {}).get('host_allowed')
+    names = (
+        [hosts] if isinstance(hosts, str) else hosts if isinstance(hosts, list) else []
+    )
+    approved = {f'https://{h}' for h in names if isinstance(h, str) and h}
+    approved |= set(_CANONICAL_URL.findall(result.evidence_text or ''))
+    return replace(base, approved_urls=base.approved_urls | frozenset(approved))
+
+
 async def run_item(
     item: Item,
     client: httpx.AsyncClient,
@@ -209,7 +229,7 @@ async def run_items(
                         item.id,
                         item.locale,
                         tuple(item.strata),
-                        grade_item(item, result, ctx),
+                        grade_item(item, result, item_context(item, result, ctx)),
                         item.status,
                     )
                 )
