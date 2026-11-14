@@ -78,12 +78,30 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Harness | `tests/harness/` | `uv run pytest -q tests/harness` |
 | Integration | `tests/integration/` (marker `integration`, also used by a few mixed unit files) | `TEST_INTEGRATION=1 uv run pytest -q -m integration` |
 | Container | `tests/container/` | `uv run pytest -q tests/container` |
+| Resilience | `tests/resilience/` | `uv run pytest -q tests/resilience` |
+| Load | `tests/load/` (Locust, not collected by pytest except `test_budgets.py`) | `uv run --group load python -m tests.load.run_load --profile smoke` |
 
-`tests/support.py` and `tests/fixtures/` remain shared at the `tests/` root.
+`tests/support.py`, `tests/support_app.py` (the real routers and workflow over in-process fakes) and
+`tests/fixtures/` remain shared at the `tests/` root.
 The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
 property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
 (1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
 exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
+
+### Resilience, security matrix and load
+
+`tests/resilience/` injects PostgreSQL, Neo4j, provider, budget, rate-limit and
+knowledge-updating faults over the HTTP/SSE path and asserts the documented problem
+code and never a 500 (graph failure degrades to lexical and vector retrieval).
+`tests/contract/test_security_matrix.py` enumerates every OpenAPI operation and fails
+until a new route has an access class. Limit: the matrix and resilience tests use an in-memory
+store, so ownership comes from `FakeStore._check` and its `session()` ignores expiry (the real rule is
+SQL `expires_at>now()`); `tests/integration/test_conversation_store_contract.py` runs the ownership and
+expiry cases against `PostgresConversations`. The first two run in the PR offline suite.
+`.github/workflows/load-nightly.yml` runs `tests.load.run_load` (Locust with an httpx
+SSE client against the stubbed app: 30 users, 15-minute soak) nightly and uploads
+`load-report.json`; budgets and the baseline rule live in
+[ADR024](adrs/024-load-budgets-baseline.md). It is not part of `ci-gate`.
 
 Tests are explicitly marked `integration`. Static and database jobs run
 disjoint selections, retaining all coverage. Container smoke owns fresh services;
@@ -133,7 +151,7 @@ visibility decision are separate release gates. A merge cannot publish or deploy
 | gitleaks | `security` job (shared `security.yml`) | PR commits on pull requests, pushed commits on push, skipped on merge groups |
 | zizmor | `security` job | Workflow audit at the shared default severity (`medium` and above fails); `unpinned-uses` enforces SHA pins |
 | actionlint | `security` job and the `workflows` job | Pinned `actionlint-py==1.7.12.25` |
-| Dependency review | `security` job, pull requests only | Fails on high severity and on licences outside the allow-list: the shared default list plus `LGPL-3.0-only` for psycopg (ADR 009) |
+| Dependency review | `security` job, pull requests only | Fails on high severity and on licences outside the allow-list: the shared default list plus `LGPL-3.0-only` for psycopg (ADR 009) and `ZPL-2.1` for `zope.event` and `zope.interface`, pulled in by locust and gevent in the `load` dependency group only (not shipped in the image; ADR 024) |
 | CodeQL | GitHub default setup (`actions`, `python`) | Not a workflow in this repository; the owner toggles it, see reference/repo-settings.md |
 | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Weekly (Monday), on pushes to `main` and on manual dispatch; publishes results and uploads SARIF |
 | vuln-daily | `.github/workflows/vuln-daily.yml` | Daily shared job; silent tracking issue, with the weekly summary posted on Monday (OD-75); no images listed here (`images: ""`) |
@@ -450,6 +468,24 @@ verified locally. The local profile guard explicitly permits this one independen
 job while preserving every existing required dependency. This also means mutation
 shortfalls do not block merging through `ci-gate`, including after warning expiry;
 promoting mutation to a required check needs verified shared-gate semantics.
+
+## Coverage gates
+
+The static job collects branch coverage from the offline suite and the database job from the
+integration suite; a later step combines both and runs `scripts/coverage_gate.py`, which compares
+branch coverage per group (`whole`, `domain`, `application`, `ai`, `adapters`, `presentation`,
+`bootstrap`, `entrypoints`) with `tests/coverage-floors.json`. On pull requests `diff-cover`
+additionally requires 90% coverage of the changed lines.
+
+Floors only ratchet up. After a run that exceeds a floor, raise that value (rounded down to an
+integer) in the same PR; never lower one. Roadmap exit targets for M2 are whole-repo at least 80%,
+adapters at least 70% and entry points at least 75%. The floors were set from the combined
+offline and integration coverage of CI run 43623496149 (2026-11-14: whole 83.54, domain 90.53,
+application 87.69, ai 85.19, adapters 78.65, presentation 90.79, bootstrap 74.11, entry points
+100), rounded down; `ai` and `bootstrap` keep one extra point of headroom because their margin
+was under half a point. Measure locally with
+`uv run pytest -q -m 'not integration' --cov --cov-branch --cov-report=xml:/tmp/cov.xml` and
+`uv run python -m scripts.coverage_gate /tmp/cov.xml --print` (offline only, so adapters read low).
 
 ## Contract job and breaking-change policy
 

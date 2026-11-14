@@ -39,15 +39,23 @@ module-root = ""
 
 [dependency-groups]
 dev = [
+    "diff-cover>=11.0.2",
     "httpx>=0.28.1",
     "hypothesis>=6",
     "jsonschema>=4.26.0",
     "mutmut>=3",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "pyyaml==6.0.3",
     "ruff>=0.17.1",
     "schemathesis>=4.33.4",
+]
+eval = [
+    "ranx>=0.3.21",
+]
+load = [
+    "locust>=2.47.0",
 ]
 
 [tool.ruff.lint]
@@ -107,3 +115,12 @@ tests_dir = [
 also_copy = ["app", "contracts"]
 process_isolation = "fork"
 pytest_add_cli_args = ["-q", "-p", "no:cacheprovider", "-m", "not integration"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

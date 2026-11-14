@@ -1,0 +1,37 @@
+{"query_id": "rq-001", "key": "en/experience", "relevance": 1, "rationale": "Roles add context to who he is, but the profile already answers."}
+{"query_id": "rq-002", "key": "es/experience", "relevance": 1, "rationale": "Roles add context to who he is, but the profile already answers."}
+{"query_id": "rq-005", "key": "en/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-006", "key": "es/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-013", "key": "en/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-014", "key": "es/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-017", "key": "en/education", "relevance": 0, "rationale": "Degree background is only thematic to an AI-role fit; no quotable fact needed."}
+{"query_id": "rq-018", "key": "es/education", "relevance": 0, "rationale": "Degree background is only thematic to an AI-role fit; no quotable fact needed."}
+{"query_id": "rq-055", "key": "en/experience", "relevance": 1, "rationale": "Roles add context to who he is, but the profile already answers."}
+{"query_id": "rq-056", "key": "es/experience", "relevance": 1, "rationale": "Roles add context to who he is, but the profile already answers."}
+{"query_id": "rq-059", "key": "en/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-060", "key": "es/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-067", "key": "en/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-068", "key": "es/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-071", "key": "en/education", "relevance": 0, "rationale": "Degree background is only thematic to an AI-role fit; no quotable fact needed."}
+{"query_id": "rq-072", "key": "es/education", "relevance": 0, "rationale": "Degree background is only thematic to an AI-role fit; no quotable fact needed."}
+{"query_id": "rq-087", "key": "en/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-101", "key": "en/profile", "relevance": 1, "rationale": "Summary cites Filomena in five institutions and promotions processing, corroborating production use."}
+{"query_id": "rq-102", "key": "es/profile", "relevance": 1, "rationale": "Summary cites Filomena in five institutions and promotions processing, corroborating production use."}
+{"query_id": "rq-105", "key": "en/profile", "relevance": 1, "rationale": "Summary says five institutions but does not name them; projects names them."}
+{"query_id": "rq-106", "key": "es/profile", "relevance": 1, "rationale": "Summary says five institutions but does not name them; projects names them."}
+{"query_id": "rq-113", "key": "en/profile", "relevance": 1, "rationale": "Open-to list and summary support the fit, but do not carry the answer."}
+{"query_id": "rq-114", "key": "es/profile", "relevance": 1, "rationale": "Open-to list and summary support the fit, but do not carry the answer."}
+{"query_id": "rq-115", "key": "en/profile", "relevance": 1, "rationale": "Open-to list and summary support the fit, but do not carry the answer."}
+{"query_id": "rq-116", "key": "es/profile", "relevance": 1, "rationale": "Open-to list and summary support the fit, but do not carry the answer."}
+{"query_id": "rq-121", "key": "en/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-122", "key": "es/projects", "relevance": 1, "rationale": "Filomena metrics carry measured-vs-observed qualifiers, a corroborating mention."}
+{"query_id": "rq-131", "key": "en/experience", "relevance": 1, "rationale": "On-topic context for problems he solves; profile is the main document."}
+{"query_id": "rq-131", "key": "en/projects", "relevance": 1, "rationale": "On-topic context for problems he solves; profile is the main document."}
+{"query_id": "rq-132", "key": "es/experience", "relevance": 1, "rationale": "On-topic context for problems he solves; profile is the main document."}
+{"query_id": "rq-132", "key": "es/projects", "relevance": 1, "rationale": "On-topic context for problems he solves; profile is the main document."}
+{"query_id": "rq-139", "key": "en/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-140", "key": "es/profile", "relevance": 1, "rationale": "Profile summary mentions Rampy work only briefly; experience is the essential document."}
+{"query_id": "rq-149", "key": "en/projects", "relevance": 1, "rationale": "Filomena notes smoke tests and regression priorities, a supporting mention."}
+{"query_id": "rq-150", "key": "es/projects", "relevance": 1, "rationale": "Filomena notes smoke tests and regression priorities, a supporting mention."}
+{"query_id": "rq-151", "key": "en/profile", "relevance": 1, "rationale": "Summary mentions large-scale promotions processing; the workflow detail is in experience."}
+{"query_id": "rq-152", "key": "es/profile", "relevance": 1, "rationale": "Summary mentions large-scale promotions processing; the workflow detail is in experience."}
