@@ -3,6 +3,8 @@ from pathlib import Path
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
+from app.adapters.postgres.db import Connect
+
 
 def validate_history(migrations: list[Path], applied: dict[str, str]) -> None:
     names = [path.name for path in migrations]
@@ -31,7 +33,7 @@ def migration_paths() -> list[Path]:
     return paths
 
 
-def migrate(connection, database_url: str) -> None:
+def migrate(connection: Connect, database_url: str) -> None:
     migrations = migration_paths()
     with connection() as conn:
         conn.execute('SELECT pg_advisory_xact_lock(472021)')
@@ -59,7 +61,7 @@ def migrate(connection, database_url: str) -> None:
         checkpointer.setup()
 
 
-def check_schema(connection) -> None:
+def check_schema(connection: Connect) -> None:
     """Refuse readiness when this checkout's full migration history is not installed."""
     paths = migration_paths()
     with connection() as conn:

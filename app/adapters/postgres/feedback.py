@@ -2,11 +2,12 @@
 
 from datetime import UTC, datetime
 
+from app.adapters.postgres.db import Connect
 from app.application.feedback import FeedbackSummary
 
 
 class PostgresFeedback:
-    def __init__(self, connection):
+    def __init__(self, connection: Connect) -> None:
         self.connection = connection
 
     def read(self) -> FeedbackSummary:

@@ -1,0 +1,84 @@
+# Release automation (engineering-standards ADR 0003, owner decision OD-78). A PR into develop bumps
+# [project].version in pyproject.toml and moves the CHANGELOG Unreleased entries under
+# `## [X.Y.Z] - YYYY-MM-DD`; after the owner-approved promotion to main this workflow creates the tag
+# vX.Y.Z on the merge commit and an immutable GitHub Release with that CHANGELOG section. Nothing
+# happens when the release already exists. No GitHub App or personal token is used.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read version and release notes
+        id: notes
+        shell: python
+        run: |
+          import os, re, sys, tomllib
+          with open("pyproject.toml", "rb") as fh:
+              version = str(tomllib.load(fh)["project"]["version"])
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              print(f"::error title=release::version {version!r} is not X.Y.Z"); sys.exit(1)
+          changelog = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|^\[[^\]]+\]: |\Z)", changelog, re.M | re.S)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"version={version}\n")
+              out.write(f"has_section={'true' if m else 'false'}\n")
+          if m and not m.group(1).strip():
+              print(f"::error title=release::CHANGELOG section [{version}] is empty"); sys.exit(1)
+          if m:
+              with open(os.path.join(os.environ["RUNNER_TEMP"], "notes.md"), "w", encoding="utf-8") as fh:
+                  fh.write(m.group(1).strip() + "\n")
+      - name: Fail when the version has no CHANGELOG section and no release
+        if: steps.notes.outputs.has_section != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.notes.outputs.version }}
+        run: |
+          if gh release view "v${VERSION}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            exit 0
+          fi
+          echo "::error title=release::version ${VERSION} has no CHANGELOG section and no release"
+          exit 1
+      - name: Create tag and release
+        if: steps.notes.outputs.has_section == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.notes.outputs.version }}
+          SHA: ${{ github.sha }}
+        run: |
+          tag="v${VERSION}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $tag already exists; nothing to do"
+            exit 0
+          fi
+          status=0
+          git ls-remote --exit-code --tags "https://github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${tag}" >/dev/null || status=$?
+          if [ "$status" -eq 0 ]; then
+            echo "::error title=release::tag $tag exists without a release; create the release from the existing tag manually"
+            exit 1
+          elif [ "$status" -ne 2 ]; then
+            echo "::error title=release::cannot check whether tag $tag exists (git ls-remote exit $status)"
+            exit 1
+          fi
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$tag" \
+            --notes-file "$RUNNER_TEMP/notes.md" --latest
+          echo "created $tag at $SHA"

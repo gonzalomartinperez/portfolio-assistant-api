@@ -1,8 +1,13 @@
-from contextlib import contextmanager
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, contextmanager
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+
+# A connection capability: calling it yields a context-managed dict-row connection.
+type Connect = Callable[[], AbstractContextManager[Any]]
 
 
 def pool(database_url: str) -> ConnectionPool:
@@ -22,7 +27,7 @@ def pool(database_url: str) -> ConnectionPool:
 
 
 @contextmanager
-def connect(database_url: str):
+def connect(database_url: str) -> Iterator[Any]:
     # CLI operations own short-lived connections; the HTTP composition injects a pool.
     with psycopg.connect(
         database_url,
@@ -33,14 +38,14 @@ def connect(database_url: str):
         yield conn
 
 
-def translated(connection):
+def translated(connection: Connect) -> Connect:
     """Wrap a connection capability with a safe, application-owned failure type."""
     from psycopg_pool import PoolTimeout, TooManyRequests
 
     from app.domain.errors import DependencyUnavailableError
 
     @contextmanager
-    def operation():
+    def operation() -> Iterator[Any]:
         try:
             with connection() as conn:
                 yield conn
