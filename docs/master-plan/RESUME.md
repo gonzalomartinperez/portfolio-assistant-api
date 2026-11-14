@@ -27,7 +27,7 @@ git fetch -q && git checkout develop && git pull --ff-only
 git tag --list 'checkpoint/*'           # last safe point; start at or after it
 sed -n 1,40p docs/master-plan/progress.md
 uv sync --frozen                         # uv 0.13.1, Python 3.14.x from .python-version
-uv run ruff check app tests contracts scripts && uv run ruff format --check app tests contracts scripts
+uv run ruff check app tests contracts scripts evals && uv run ruff format --check app tests contracts scripts
 uv run mypy && uv run pytest -q -m 'not integration'
 ```
 

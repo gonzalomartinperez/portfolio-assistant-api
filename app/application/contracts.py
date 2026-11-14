@@ -49,6 +49,7 @@ class Usage:
 
     input_tokens: int
     output_tokens: int
+    prompt_version: str | None = None
 
 
 class Retrieval(Protocol):

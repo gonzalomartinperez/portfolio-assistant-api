@@ -23,7 +23,7 @@ GitHub-managed and are recorded by Actions.
 | secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None (always runs) |
 | security / Security checks | Shared engineering-standards `security.yml`: zizmor, actionlint, gitleaks, dependency review with licence allow-list | classify |
 | static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | classify |
-| database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | classify, static |
+| database / Database tests | Real PostgreSQL/Neo4j migrations, snapshot indexing, integration and bilingual fixture evaluation | classify, static |
 | container / Container verification | Own isolated databases/corpus, hadolint on both Dockerfiles, explicit api and worker builds (`VERSION`, `REVISION`, `CREATED` build args), container-structure-test and Dockle on both images, size ratchet (`infra/docker/app/image.json`), full Trivy scans of api, worker and PostgreSQL, non-root streaming/SIGTERM/proxy and tested image identity | classify, static |
 | ci-gate / ci-gate | Always-evaluated fail-closed aggregate: every job classify selected must succeed; unselected jobs may be skipped | Every other job |
 | checks / Required checks | Transitional alias that passes only when `ci-gate` succeeds | ci-gate |
@@ -70,6 +70,7 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Lane | Directory | Command |
 | --- | --- | --- |
 | Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Property | `tests/property/` (marker `property`; Hypothesis profile `ci` by default) | `uv run pytest -q tests/property`; nightly: `HYPOTHESIS_PROFILE=nightly uv run pytest -q tests/property` |
 | Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
 | Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
 | Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
@@ -79,7 +80,10 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Container | `tests/container/` | `uv run pytest -q tests/container` |
 
 `tests/support.py` and `tests/fixtures/` remain shared at the `tests/` root.
-The offline suite remains `uv run pytest -q -m 'not integration'`.
+The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
+property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
+(1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
+exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
 
 Tests are explicitly marked `integration`. Static and database jobs run
 disjoint selections, retaining all coverage. Container smoke owns fresh services;
@@ -90,7 +94,7 @@ is pinned to 0.13.1, matching the production image. Only the static job saves th
 shared dependency cache; runtime jobs restore it and installs the same frozen lock
 without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
 cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
-`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt is uploaded for seven days.
+`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt from the cross-repository workflow is uploaded for seven days.
 Other test diagnostics remain in Actions logs; no public image archive is uploaded.
 
 Both service jobs build/load the PostgreSQL fixture with the same explicit
@@ -344,22 +348,25 @@ critical finding remain mandatory **external release-selection gates** for vps-o
 No publication/deployment controller is activated here. The rejected candidate run and
 known baseline findings remain recorded; no source tag waives them.
 
-The optional `workflow_call` inputs retain their historical `frontend_commit` /
-`frontend_image` names for caller compatibility. The selected source is now canonical
-`portfolio-backoffice`, and pairing compares the actual private operations, product
+The optional `workflow_call` input `frontend_image` keeps its historical name for caller
+compatibility; the former `frontend_commit` input moved to `cross-repo.yml` as a
+`workflow_dispatch` input. The selected source is now canonical
+`portfolio-backoffice`, and pairing (now in `cross-repo.yml`, as its `frontend_commit` dispatch input) compares the actual private operations, product
 and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
 chat consumer and cannot establish native portfolio compatibility. Current native
 browser/API verification belongs to the portfolio. This opt-in source comparison is
 not live OAuth/HTTPS pairing or a release-controller/deployment authorization.
 
-The real-services job also reads an exact committed backoffice revision, installs
-its frozen dependencies with a lock-keyed Node cache, and exercises both applications'
-actual migrations/authentication against a fresh restricted project engine. The
-owned fixture runner verifies independent recovery, restart and fresh-cluster
-restore; it never uses the job's corpus fixture for destructive recovery. Only its
-synthetic aggregate receipt is retained, not IAM logs, credentials or archives.
-The required `checks` gate still requires both existing jobs. This adds application
-compatibility coverage without a second API image build or privileged PR execution.
+The database and container jobs index the frozen public corpus snapshot in
+`evals/corpus` ([ADR016](adrs/016-frozen-public-corpus-snapshot.md)) and check out no
+other repository. The pinned backoffice IAM compatibility run (real migrations and
+authentication against a fresh restricted project engine, independent recovery,
+restart and fresh-cluster restore, with only its synthetic aggregate receipt retained)
+and the optional `frontend_commit` private-contract byte comparison run in
+`.github/workflows/cross-repo.yml`, nightly at 06:00 UTC and on `workflow_dispatch`,
+outside the pull request path. It is not part of `ci-gate`. GitHub runs schedules only
+from the default branch (`main`), so the nightly run starts after the M7 promotion to
+`main`; `workflow_dispatch` works earlier.
 
 
 ## Paired profile source and artifact privacy

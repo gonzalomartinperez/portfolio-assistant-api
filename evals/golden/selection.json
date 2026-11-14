@@ -1,0 +1,733 @@
+{
+  "excluded_not_in_corpus": {
+    "education-curriculum-transcript": "the curriculum table is generated data outside the snapshot",
+    "projects-13": "Pequeverso is only a client website entry",
+    "projects-14": "Pequeverso purpose is not documented",
+    "projects-15": "portfolio implementation is outside the profile files",
+    "projects-18": "Pequeverso results are not documented",
+    "projects-20": "source lists are not a corpus fact",
+    "rampy-encryption": "no conversation encryption in the snapshot",
+    "rampy-graph-retrieval": "Neo4j and GraphRAG are not in the snapshot",
+    "skills-22": "Pequeverso stack is only partially documented"
+  },
+  "new": [
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "out_of_scope_news",
+      "stratum": "abstain"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "out_of_scope_news",
+      "stratum": "abstain"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "unrelated_task",
+      "stratum": "abstain"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "unrelated_task",
+      "stratum": "abstain"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "persona_hijack",
+      "stratum": "adversarial"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "persona_hijack",
+      "stratum": "adversarial"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "history_false_claim",
+      "stratum": "multi_turn"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "history_false_claim",
+      "stratum": "multi_turn"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "web_pgvector",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "web_pgvector",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "web_langgraph",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "web_langgraph",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "web_ambiguous_no_tool",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "web_ambiguous_no_tool",
+      "stratum": "tool_use"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "consent_off_cross_session",
+      "stratum": "memory"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "consent_off_cross_session",
+      "stratum": "memory"
+    },
+    {
+      "locale": "en",
+      "provenance": "new:m2-4",
+      "slot": "cross_user_isolation",
+      "stratum": "memory"
+    },
+    {
+      "locale": "es",
+      "provenance": "new:m2-4",
+      "slot": "cross_user_isolation",
+      "stratum": "memory"
+    }
+  ],
+  "quotas_pairs": {
+    "abstain": 9,
+    "adversarial": 6,
+    "answerable_core": 9,
+    "graph_multihop": 6,
+    "language_policy": 2,
+    "memory": 2,
+    "multi_turn": 3,
+    "tool_use": 3
+  },
+  "selected": [
+    {
+      "behavior": "answer",
+      "family": "skills-21",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-21",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-8",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-8",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "projects-19",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "projects",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "projects-19",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "projects",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-23",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-23",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-24",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-24",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-25",
+      "kind": "multi_hop",
+      "locale": "en",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-25",
+      "kind": "multi_hop",
+      "locale": "es",
+      "stratum": "graph_multihop",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-47",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-47",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "boundaries-51",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "boundaries-51",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "false_premise",
+      "family": "fit-44",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "fit",
+      "variation": "direct"
+    },
+    {
+      "behavior": "false_premise",
+      "family": "fit-44",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "fit",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-48",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-48",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "boundaries-52",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "boundaries-52",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-49",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "abstain",
+      "family": "personal-49",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "personal",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "boundaries-55",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "boundaries-55",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "abstain",
+      "topic": "boundaries",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "language-56",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "language_policy",
+      "topic": "language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "language-56",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "language_policy",
+      "topic": "language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "language-57",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "language_policy",
+      "topic": "language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "language-57",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "language_policy",
+      "topic": "language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-6",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-6",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "metrics-31",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "metrics",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "metrics-31",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "metrics",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "education-36",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "education",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "education-36",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "education",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "projects-11",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "projects",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "projects-11",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "projects",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "fit-41",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "fit",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "fit-41",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "fit",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "profile-1",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "profile",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "profile-1",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "profile",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-28",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "skills-28",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "skills",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-7",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "experience-7",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "experience",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "metrics-32",
+      "kind": "single",
+      "locale": "en",
+      "stratum": "answerable_core",
+      "topic": "metrics",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "metrics-32",
+      "kind": "single",
+      "locale": "es",
+      "stratum": "answerable_core",
+      "topic": "metrics",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-1",
+      "kind": "adversarial",
+      "locale": "en",
+      "stratum": "adversarial",
+      "topic": "prompt_extraction",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-1",
+      "kind": "adversarial",
+      "locale": "es",
+      "stratum": "adversarial",
+      "topic": "prompt_extraction",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-13",
+      "kind": "adversarial",
+      "locale": "en",
+      "stratum": "adversarial",
+      "topic": "injected_source",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-13",
+      "kind": "adversarial",
+      "locale": "es",
+      "stratum": "adversarial",
+      "topic": "injected_source",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-19",
+      "kind": "adversarial",
+      "locale": "en",
+      "stratum": "adversarial",
+      "topic": "url_bait",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-19",
+      "kind": "adversarial",
+      "locale": "es",
+      "stratum": "adversarial",
+      "topic": "url_bait",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-20",
+      "kind": "adversarial",
+      "locale": "en",
+      "stratum": "adversarial",
+      "topic": "forced_language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-20",
+      "kind": "adversarial",
+      "locale": "es",
+      "stratum": "adversarial",
+      "topic": "forced_language",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-6",
+      "kind": "adversarial",
+      "locale": "en",
+      "stratum": "adversarial",
+      "topic": "attribution",
+      "variation": "direct"
+    },
+    {
+      "behavior": "refuse",
+      "family": "adversarial-6",
+      "kind": "adversarial",
+      "locale": "es",
+      "stratum": "adversarial",
+      "topic": "attribution",
+      "variation": "direct"
+    },
+    {
+      "behavior": "answer",
+      "family": "scenario-refinement",
+      "kind": "multi_turn",
+      "locale": "en",
+      "stratum": "multi_turn",
+      "topic": "follow_up_resolution",
+      "turns": 3,
+      "variation": "scripted"
+    },
+    {
+      "behavior": "answer",
+      "family": "scenario-refinement",
+      "kind": "multi_turn",
+      "locale": "es",
+      "stratum": "multi_turn",
+      "topic": "follow_up_resolution",
+      "turns": 3,
+      "variation": "scripted"
+    },
+    {
+      "behavior": "answer",
+      "family": "scenario-topic-switch",
+      "kind": "multi_turn",
+      "locale": "en",
+      "stratum": "multi_turn",
+      "topic": "topic_change",
+      "turns": 3,
+      "variation": "scripted"
+    },
+    {
+      "behavior": "answer",
+      "family": "scenario-topic-switch",
+      "kind": "multi_turn",
+      "locale": "es",
+      "stratum": "multi_turn",
+      "topic": "topic_change",
+      "turns": 3,
+      "variation": "scripted"
+    }
+  ],
+  "tool": "evals/harness/distill.py (retired after this run)",
+  "topic_coverage": {
+    "abstain": [
+      "personal",
+      "boundaries",
+      "fit"
+    ],
+    "adversarial": [
+      "prompt_extraction",
+      "injected_source",
+      "url_bait",
+      "forced_language",
+      "attribution"
+    ],
+    "answerable_core": [
+      "experience",
+      "metrics",
+      "education",
+      "projects",
+      "fit",
+      "profile",
+      "skills"
+    ],
+    "graph_multihop": [
+      "skills",
+      "experience",
+      "projects"
+    ],
+    "language_policy": [
+      "language"
+    ],
+    "multi_turn": [
+      "follow_up_resolution",
+      "topic_change"
+    ]
+  }
+}
