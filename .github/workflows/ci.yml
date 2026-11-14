@@ -474,16 +474,17 @@ jobs:
         tar -xzf /tmp/image-dockle/dockle.tar.gz -C /tmp/image-dockle dockle
     - name: Lint the API image with Dockle
       # Exit on WARN and FATAL. CIS-DI-0005 (content trust) is a client-side pull setting; base images are
-      # pinned by digest instead.
+      # pinned by digest instead. DKL-DI-0005 misreads the python base layer's `apt-get dist-clean`;
+      # the structure tests assert that no apt lists remain in the final image.
       run: |
         /tmp/image-dockle/dockle --exit-code 1 --exit-level warn \
-          -i CIS-DI-0005 portfolio-assistant-api:ci
+          -i CIS-DI-0005 -i DKL-DI-0005 portfolio-assistant-api:ci
     - name: Lint the worker image with Dockle
       # Same as the API image, plus CIS-DI-0006: the worker is a background watcher with no HTTP endpoint,
       # so it has no readiness probe to declare as a HEALTHCHECK.
       run: |
         /tmp/image-dockle/dockle --exit-code 1 --exit-level warn \
-          -i CIS-DI-0005 -i CIS-DI-0006 portfolio-assistant-api-worker:ci
+          -i CIS-DI-0005 -i CIS-DI-0006 -i DKL-DI-0005 portfolio-assistant-api-worker:ci
     - name: Enforce the image size ratchet
       run: |
         api_max=$(jq -er '.api_max_bytes' infra/docker/app/image.json)

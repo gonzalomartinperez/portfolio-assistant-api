@@ -380,7 +380,8 @@ hadolint v2.15.1, container-structure-test v1.22.1 and Dockle v0.4.15 are downlo
 pinned release binaries and verified with a recorded SHA-256 before they run (the same
 policy as Trivy and actionlint). Dockle fails on WARN and FATAL; the only accepted
 exceptions are CIS-DI-0005 (content trust is a client pull setting; base images are pinned
-by digest) for both images and CIS-DI-0006 (HEALTHCHECK) for the worker, which has no HTTP
+by digest) and DKL-DI-0005 (Dockle misreads the python base layer's `apt-get dist-clean`;
+the structure tests assert no apt lists remain) for both images, and CIS-DI-0006 (HEALTHCHECK) for the worker, which has no HTTP
 endpoint. The size ratchet fails when `docker image inspect` reports a size above
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped

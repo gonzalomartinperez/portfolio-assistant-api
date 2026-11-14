@@ -24,3 +24,8 @@ fileExistenceTests:
   - name: pip is absent
     path: /usr/local/bin/pip
     shouldExist: false
+commandTests:
+  - name: no apt package lists remain (complements the Dockle DKL-DI-0005 exception)
+    command: sh
+    args: ["-c", "find /var/lib/apt/lists -type f -name '*_Packages*' | wc -l"]
+    expectedOutput: ["^0$"]

@@ -692,8 +692,12 @@ def test_image_dockle_exceptions_are_documented_and_scoped():
     steps = {step.get('name'): step for step in container_steps(workflow())}
     api = steps['Lint the API image with Dockle']
     worker = steps['Lint the worker image with Dockle']
-    assert '-i CIS-DI-0005' in api['run'] and 'CIS-DI-0006' not in api['run']
-    assert '-i CIS-DI-0006' in worker['run']
+    assert set(re.findall(r'-i (\S+)', api['run'])) == {'CIS-DI-0005', 'DKL-DI-0005'}
+    assert set(re.findall(r'-i (\S+)', worker['run'])) == {
+        'CIS-DI-0005',
+        'CIS-DI-0006',
+        'DKL-DI-0005',
+    }
 
 
 def test_image_size_ratchet_file_is_valid_and_read_by_ci():
@@ -708,3 +712,22 @@ def test_image_size_ratchet_file_is_valid_and_read_by_ci():
     )
     assert 'infra/docker/app/image.json' in step['run']
     assert '.api_max_bytes' in step['run'] and '.worker_max_bytes' in step['run']
+
+
+def test_dockle_exceptions_cannot_be_widened():
+    value = workflow()
+    for step in value['jobs']['container']['steps']:
+        if step.get('name') == 'Lint the API image with Dockle':
+            step['run'] = step['run'].replace(
+                '-i DKL-DI-0005', '-i DKL-DI-0005 -i CIS-DI-0001'
+            )
+    assert any(
+        'Dockle exceptions' in error for error in profile_errors(value, profile_map())
+    )
+    value = workflow()
+    for step in value['jobs']['container']['steps']:
+        if step.get('name') == 'Lint the worker image with Dockle':
+            step['run'] = step['run'].replace('--exit-code 1', '--exit-code 1 -ak key')
+    assert any(
+        'Dockle exceptions' in error for error in profile_errors(value, profile_map())
+    )

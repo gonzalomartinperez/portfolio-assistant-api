@@ -59,7 +59,9 @@ PostgreSQL stays on the Alpine 3.24 pgvector image per [ADR008](008-supported-po
 - `uvx --from hadolint-py hadolint infra/docker/app/Dockerfile` with `.hadolint.yaml`.
 - CI builds the `api` and `worker` targets with `VERSION`, `REVISION` and `CREATED` build
   args, then runs hadolint (both Dockerfiles), container-structure-test, Dockle (WARN and
-  FATAL fail; CIS-DI-0005 and, for the worker, CIS-DI-0006 are documented exceptions) and
+  FATAL fail; CIS-DI-0005, DKL-DI-0005 (a false positive on the base image's
+  `apt-get dist-clean`, backed by a structure test that no apt lists remain) and, for the
+  worker, CIS-DI-0006 are documented exceptions) and
   Trivy on both images.
 - The size ratchet in `infra/docker/app/image.json` fails CI above `api_max_bytes` or
   `worker_max_bytes`. The initial maxima are ceilings; the measured sizes replace them after the

@@ -295,10 +295,35 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
     return errors
 
 
+DOCKLE_EXCEPTIONS = {
+    'Lint the API image with Dockle': {'CIS-DI-0005', 'DKL-DI-0005'},
+    'Lint the worker image with Dockle': {'CIS-DI-0005', 'CIS-DI-0006', 'DKL-DI-0005'},
+}
+DOCKLE_ACCEPT_FLAGS = (
+    '--accept-key',
+    '-ak',
+    '--accept-file',
+    '-af',
+    '--accept-file-extension',
+    '-ae',
+    '--ignore',
+)
+
+
 def image_check_errors(steps: list) -> list[str]:
     """The container job must lint, build, test, scan and size-check both images."""
     errors = []
     by_name = {step.get('name'): step for step in steps}
+    for name, allowed in DOCKLE_EXCEPTIONS.items():
+        text = by_name.get(name, {}).get('run', '')
+        ignored = set(re.findall(r'(?<!\S)-i\s+(\S+)', text))
+        if ignored - allowed or any(
+            re.search(rf'(?<!\S){re.escape(flag)}(?!\S)', text)
+            for flag in DOCKLE_ACCEPT_FLAGS
+        ):
+            errors.append(
+                f'container: {name!r} widens the documented Dockle exceptions'
+            )
     for name, fragments in IMAGE_CHECKS.items():
         text = by_name.get(name, {}).get('run', '')
         if not text or any(fragment not in text for fragment in fragments):
