@@ -21,7 +21,7 @@ from evals.harness.items import Item
 from evals.harness.loader import load_items
 from evals.harness.result import GradeResult, RunResult
 from evals.harness.runner import RecordingProvider, collect, item_context
-from tests.test_workflow import Store
+from tests.unit.test_workflow import Store
 
 ATTACKS = Path(__file__).resolve().parents[2] / 'evals' / 'attacks'
 
