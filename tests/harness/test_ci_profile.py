@@ -567,7 +567,7 @@ def test_buildx_never_caches_its_binary():
     assert all(step['with']['cache-binary'] is False for step in steps)
 
 
-@pytest.mark.parametrize('name', ['scorecard', 'vuln-daily'])
+@pytest.mark.parametrize('name', ['scorecard', 'vuln-daily', 'nightly'])
 def test_scheduled_security_workflows_are_pinned_and_token_less(name):
     path = Path(f'.github/workflows/{name}.yml')
     value = yaml.safe_load(path.read_text())

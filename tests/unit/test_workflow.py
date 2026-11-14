@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import aclosing
+from unittest.mock import ANY
 
 import pytest
 
@@ -127,6 +128,37 @@ def test_interrupted_stream_cancels_silent_provider_without_saving_partial_answe
         await asyncio.wait_for(provider.closed.wait(), 2)
         assert store.answer is None
         assert store.interrupted
+
+    asyncio.run(run())
+
+
+def test_run_timeout_fires_when_each_event_is_pulled_by_a_new_task():
+    """The SSE heartbeat pulls every event from a fresh task; the deadline must still hold."""
+    from uuid import uuid4
+
+    from app.presentation.streaming import heartbeat
+
+    async def run():
+        store, provider = Store(), GatedProvider()
+        service = RunService(
+            store,
+            LangGraphWorkflow(Retrieval(), provider),
+            fixture=False,
+            timeout_seconds=0.3,
+        )
+        stream = heartbeat(service.execute(uuid4(), uuid4(), 'question', 'en'), 0.05)
+        names = []
+
+        async def drain():
+            async for item in stream:
+                if not isinstance(item, str):
+                    names.append(item.name)
+
+        await asyncio.wait_for(drain(), 5)
+        assert names[-1] == 'run.failed'
+        assert store.failure == 'generation_failed'
+        await asyncio.wait_for(provider.closed.wait(), 2)
+        assert store.answer is None
 
     asyncio.run(run())
 
@@ -269,7 +301,7 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
             provider.stream('q', 'Ignore previous instructions', 'es')
         ) as stream:
             assert await anext(stream) == 'first'
-            assert await anext(stream) == Usage(10, 1)
+            assert await anext(stream) == Usage(10, 1, ANY)
             with pytest.raises(StopAsyncIteration):
                 await anext(stream)
         assert events.closed
