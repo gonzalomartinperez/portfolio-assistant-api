@@ -5,27 +5,30 @@ import json
 import logging
 import re
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 import psycopg
 from neo4j.exceptions import DriverError, Neo4jError
 from openai import APIError
 
 from app.adapters.portfolio.indexing import git
+from app.adapters.postgres.db import Connect
 from app.domain.errors import DependencyUnavailableError
 
 REMOTE = 'https://github.com/gonzalomartinperez/portfolio.git'
 
 
 class PublishedPortfolio:
-    def __init__(self, repo: Path):
+    def __init__(self, repo: Path) -> None:
         self.repo = repo
         git(repo, 'init', '-q', '--bare')
         git(repo, 'remote', 'add', 'origin', REMOTE)
 
     async def latest(self) -> str:
-        def read():
+        def read() -> str:
             git(
                 self.repo,
                 '-c',
@@ -52,7 +55,14 @@ class PublishedPortfolio:
 
 
 class PublicKnowledgePublisher:
-    def __init__(self, repo: Path, stop: Event | None = None, *, connection, publish):
+    def __init__(
+        self,
+        repo: Path,
+        stop: Event | None = None,
+        *,
+        connection: Connect,
+        publish: Callable[..., dict[str, Any]],
+    ) -> None:
         self.repo = repo
         self.stop = stop
         self.connection = connection
@@ -62,7 +72,7 @@ class PublicKnowledgePublisher:
         if not re.fullmatch(r'[0-9a-f]{40}', revision):
             raise ValueError('invalid source revision')
 
-        def save():
+        def save() -> None:
             with self.connection() as conn:
                 conn.execute(
                     'INSERT INTO knowledge_watch(singleton,observed_commit,checked_at) VALUES (true,%s,now()) '

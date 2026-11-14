@@ -6,14 +6,40 @@ import logging
 import secrets
 from dataclasses import asdict
 from datetime import UTC, datetime
+from typing import Any, Protocol
 
 from psycopg.types.json import Jsonb
 
+from app.adapters.postgres.db import Connect
 from app.application.observability import Execution
 
 
+class OperationsConfig(Protocol):
+    @property
+    def knowledge_freshness_seconds(self) -> int: ...
+    @property
+    def ops_api_commit(self) -> str | None: ...
+    @property
+    def monthly_budget_usd(self) -> str: ...
+    @property
+    def input_usd_per_million(self) -> str: ...
+    @property
+    def output_usd_per_million(self) -> str: ...
+    @property
+    def embedding_usd_per_million(self) -> str: ...
+
+
+class ExecutionStore(Protocol):
+    def save(self, execution: Execution, sampled: bool) -> None: ...
+
+
+class ExecutionExporter(Protocol):
+    def record(self, execution: Execution) -> bool: ...
+    def close(self) -> None: ...
+
+
 class PostgresOperations:
-    def __init__(self, connection, config):
+    def __init__(self, connection: Connect, config: OperationsConfig) -> None:
         self.connection = connection
         self.config = config
 
@@ -35,7 +61,7 @@ class PostgresOperations:
                 ),
             )
 
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, Any]:
         with self.connection() as conn:
             conn.execute('SET LOCAL statement_timeout=2000')
             knowledge = conn.execute(
@@ -116,7 +142,13 @@ class PostgresOperations:
 
 
 class OperationalObserver:
-    def __init__(self, store, *, sample_ratio: float, exporter=None):
+    def __init__(
+        self,
+        store: ExecutionStore,
+        *,
+        sample_ratio: float,
+        exporter: ExecutionExporter | None = None,
+    ) -> None:
         self.store = store
         self.sample_ratio = sample_ratio
         self.exporter = exporter

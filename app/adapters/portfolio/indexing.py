@@ -5,11 +5,12 @@ import json
 import os
 import re
 import subprocess
+from collections.abc import Iterator
 from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
 from threading import Event
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 from urllib.parse import quote
 
 from neo4j import READ_ACCESS, Driver, GraphDatabase
@@ -17,6 +18,7 @@ from neo4j import READ_ACCESS, Driver, GraphDatabase
 from app.adapters.neo4j.projection import project
 from app.adapters.neo4j.read_queries import prepare_reads
 from app.adapters.portfolio.projection import PublicProjection, graph_facts
+from app.adapters.postgres.db import Connect
 from app.adapters.postgres.ledger import EmbeddingAccounting
 from app.adapters.providers.embedding import (
     FixtureEmbeddings,
@@ -93,7 +95,7 @@ def git(repo: Path, *args: str) -> bytes:
     )
 
 
-def manifest_at_commit(repo: Path, commit: str):
+def manifest_at_commit(repo: Path, commit: str) -> list[tuple[str, str]]:
     listed = git(repo, 'ls-tree', '-r', commit).decode().splitlines()
     allowed = []
     profiles = set()
@@ -114,11 +116,11 @@ def manifest_at_commit(repo: Path, commit: str):
     return allowed
 
 
-def citation_url(commit: str, path: str, start: int, end: int):
+def citation_url(commit: str, path: str, start: int, end: int) -> str:
     return f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{quote(path, safe="/")}#L{start}-L{end}'
 
 
-def chunk_id(commit: str, path: str, start: int, content_hash: str):
+def chunk_id(commit: str, path: str, start: int, content_hash: str) -> str:
     return hashlib.sha256(
         f'{CHUNKER_VERSION}:{commit}:{path}:{start}:{content_hash}'.encode()
     ).hexdigest()
@@ -126,7 +128,7 @@ def chunk_id(commit: str, path: str, start: int, content_hash: str):
 
 def corpus_identity(commit: str, provider: str) -> tuple[str, str]:
     if provider == 'fixture':
-        encoder = FixtureEmbeddings
+        encoder: type[FixtureEmbeddings | OpenAIEmbeddings] = FixtureEmbeddings
         expected = ('fixture', 'hash64-v1', 64)
     elif provider == 'openai':
         encoder = OpenAIEmbeddings
@@ -140,7 +142,7 @@ def corpus_identity(commit: str, provider: str) -> tuple[str, str]:
     return version, json.dumps((version, *expected), separators=(',', ':'))
 
 
-def projection_spans(content: str):
+def projection_spans(content: str) -> Iterator[tuple[int, int, str]]:
     decoder = json.JSONDecoder()
     array = re.search(r'"facts"\s*:\s*\[', content)
     if array is None:
@@ -168,7 +170,7 @@ def projection_spans(content: str):
         )
 
 
-def chunks(path: str, content: str, commit: str):
+def chunks(path: str, content: str, commit: str) -> Iterator[dict[str, Any]]:
     lines = content.splitlines()
     if path == 'public/assistant-knowledge.json':
         for start, end, block in projection_spans(content):
@@ -215,7 +217,7 @@ def chunks(path: str, content: str, commit: str):
             }
 
 
-def reused_record(old: dict, commit: str):
+def reused_record(old: dict[str, Any], commit: str) -> dict[str, Any]:
     path = old['path']
     return {
         **old,
@@ -229,10 +231,10 @@ def sync(
     ref: str = 'HEAD',
     *,
     configuration: IndexConfiguration,
-    connection,
+    connection: Connect,
     watched: bool = False,
     stop: Event | None = None,
-):
+) -> dict[str, Any]:
     # The lock spans both projections; only activation changes the authoritative pointer.
     with connection() as lock:
         lock.autocommit = True
@@ -255,10 +257,10 @@ def _sync(
     ref: str,
     *,
     configuration: IndexConfiguration,
-    connection,
+    connection: Connect,
     watched: bool = False,
     stop: Event | None = None,
-):
+) -> dict[str, Any]:
     repo = repo.resolve(strict=True)
     remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
     if remote not in (
@@ -308,8 +310,8 @@ def _sync(
             if previous_version
             else {}
         )
-    file_manifest = []
-    records = []
+    file_manifest: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
     documents = {}
     structured = None
     embedded_chunks = 0
@@ -382,7 +384,7 @@ def _sync(
             f'{namespace}:{record["id"]}'.encode()
         ).hexdigest()
     embedding_client = None
-    encoder = FixtureEmbeddings()
+    encoder: FixtureEmbeddings | OpenAIEmbeddings = FixtureEmbeddings()
     if config.embeddings_provider == 'openai':
         embedding_client = create_sync_client(api_key=config.openai_api_key)
         encoder = OpenAIEmbeddings(

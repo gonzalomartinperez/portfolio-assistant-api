@@ -4,11 +4,14 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Collection
 from uuid import uuid4
 
-from fastapi import HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.application.request_context import request_id
 from app.domain.errors import RejectedError
@@ -16,7 +19,9 @@ from app.domain.errors import RejectedError
 log = logging.getLogger('portfolio_assistant')
 
 
-def error(request: Request, code: str, status: int, message: str | None = None):
+def error(
+    request: Request, code: str, status: int, message: str | None = None
+) -> JSONResponse:
     return JSONResponse(
         status_code=status,
         content={
@@ -27,21 +32,23 @@ def error(request: Request, code: str, status: int, message: str | None = None):
     )
 
 
-def install(app, origins):
+def install(app: FastAPI, origins: Collection[str]) -> None:
     @app.exception_handler(RejectedError)
-    async def rejected(request, exc):
+    async def rejected(request: Request, exc: RejectedError) -> JSONResponse:
         return error(request, exc.code, exc.status)
 
     @app.exception_handler(HTTPException)
-    async def http_error(request, exc):
+    async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
         return error(request, str(exc.detail), exc.status_code)
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error(request, exc):
+    async def validation_error(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         return error(request, 'invalid_request', 422, 'Invalid request')
 
     @app.middleware('http')
-    async def guard(request: Request, call_next):
+    async def guard(request: Request, call_next: RequestResponseEndpoint) -> Response:
         request.state.request_id = uuid4().hex
         request_id.set(request.state.request_id)
         started = time.perf_counter()
@@ -49,7 +56,7 @@ def install(app, origins):
             request.method in ('POST', 'PATCH', 'DELETE')
             and request.headers.get('origin') not in origins
         ):
-            response = error(request, 'origin_denied', 403, 'Origin denied')
+            response: Response = error(request, 'origin_denied', 403, 'Origin denied')
         else:
             try:
                 response = await call_next(request)
@@ -77,12 +84,12 @@ def install(app, origins):
 
 
 class BodyLimit:
-    def __init__(self, app, maximum: int = 32768, timeout: float = 10):
+    def __init__(self, app: ASGIApp, maximum: int = 32768, timeout: float = 10) -> None:
         self.app = app
         self.maximum = maximum
         self.timeout = timeout
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope['type'] != 'http' or scope['method'] not in (
             'POST',
             'PATCH',
@@ -96,7 +103,7 @@ class BodyLimit:
             if scope.get('path') == '/api/v1/analytics/events'
             else self.maximum
         )
-        chunks = []
+        chunks: list[Message] = []
         size = 0
         deadline = asyncio.get_running_loop().time() + self.timeout
         while True:
@@ -136,7 +143,7 @@ class BodyLimit:
             if not message.get('more_body', False):
                 break
 
-        async def buffered():
+        async def buffered() -> Message:
             return chunks.pop(0) if chunks else await receive()
 
         await self.app(scope, buffered, send)

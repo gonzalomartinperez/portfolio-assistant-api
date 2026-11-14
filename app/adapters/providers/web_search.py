@@ -4,7 +4,7 @@ import asyncio
 import time
 from dataclasses import dataclass
 
-from openai import APIError
+from openai import APIError, AsyncOpenAI
 
 from app.application.web_context import SearchAccounting, WebReference, WebSupplement
 from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError
@@ -18,7 +18,9 @@ class CacheEntry:
 
 
 class OpenAIWebSearch:
-    def __init__(self, client, accounting: SearchAccounting, timeout: float = 12):
+    def __init__(
+        self, client: AsyncOpenAI, accounting: SearchAccounting, timeout: float = 12
+    ) -> None:
         self.client = client
         self.accounting = accounting
         self.timeout = timeout
@@ -108,5 +110,6 @@ class OpenAIWebSearch:
         finally:
             lock.release()
 
-    def unavailable(self, topic: WebTopic) -> None:
+    def unavailable(self, topic: WebTopic) -> WebSupplement | None:
         self.cache[topic.name] = CacheEntry(time.monotonic() + 60, None)
+        return None
