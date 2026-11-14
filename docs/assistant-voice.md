@@ -49,7 +49,7 @@ reservations; exact per-run usage remains in ignored local artifacts. Preserve t
 USD 0.50 experiment ceiling. Local response files, prompts and credentials are not
 public artifacts. No production, portfolio activation, fallback or automatic retry.
 
-Run `uv run pytest -q tests/test_assistant_voice.py tests/test_conversation_context.py`
+Run `uv run pytest -q tests/unit/test_assistant_voice.py tests/unit/test_conversation_context.py`
 and the normal lint/type/contract/full checks. Prompt-contract tests verify composition
 and safety settings; they do not prove natural language behavior. Future voice changes
 need a separately authorized real sample plus qualitative review for both locales,

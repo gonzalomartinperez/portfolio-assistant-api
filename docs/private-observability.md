@@ -89,7 +89,7 @@ set `OTEL_SDK_DISABLED=false` and a private origin such as
 `OTEL_PRIVATE_ENDPOINT=http://collector:4318`. This is configuration, not permission
 to deploy a collector or send data to an external vendor.
 
-Run `uv run pytest -q tests/test_private_observability.py` for auth/schema, stream cleanup,
+Run `uv run pytest -q tests/unit/test_private_observability.py` for auth/schema, stream cleanup,
 bounded buffering, safe logging and an actual loopback OTLP protobuf receiver. The
 integration suite verifies real PostgreSQL persistence, deletion independence, trace
 retention window and the status endpoint. No paid model call is required.

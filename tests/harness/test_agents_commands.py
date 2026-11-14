@@ -1,11 +1,11 @@
 """AGENTS.md, the justfile and the CI static job name the same commands (ecosystem 15.6)."""
 
 import re
-from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests.support import ROOT
+
 CI_ONLY = ('python3 -m scripts.ci_identity', 'uv sync --frozen', 'mkdir -p artifacts')
 
 

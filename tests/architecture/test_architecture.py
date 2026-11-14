@@ -1,7 +1,5 @@
 """Dependency direction and regression probes for ways around architectural rules."""
 
-from pathlib import Path
-
 import pytest
 
 from scripts.check_architecture import (
@@ -10,8 +8,9 @@ from scripts.check_architecture import (
     dependencies,
     dependency_errors,
 )
+from tests.support import ROOT as REPO_ROOT
 
-ROOT = Path(__file__).parents[1] / 'app'
+ROOT = REPO_ROOT / 'app'
 
 
 def test_architecture():

@@ -33,7 +33,7 @@ operator used synthetic data: do not derive it from visitor/session records.
 
 ```bash
 uv run python -m app.bootstrap.evaluation_export path/to/summary.json
-uv run pytest -q tests/test_evaluation_export.py tests/test_architecture.py
+uv run pytest -q tests/evals/test_evaluation_export.py tests/architecture/test_architecture.py
 ```
 
 The first command returns `{"status": "disabled"}`. It constructs no SDK client and

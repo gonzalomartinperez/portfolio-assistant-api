@@ -2,14 +2,12 @@
 
 import hashlib
 import re
-from pathlib import Path
 
 import pytest
 import yaml
 
 from scripts.validate_compose import validate_postgres_recipe
-
-ROOT = Path(__file__).parents[1]
+from tests.support import ROOT
 
 
 def test_actual_recipes_have_separate_deny_default_contexts():

@@ -45,7 +45,7 @@ PR supersedes or rebases over it. Close the stale weekly PR first if it conflict
 
 ## Verification and limits
 
-`tests/test_dependabot_config.py` checks the rule offline: one group with the
+`tests/harness/test_dependabot_config.py` checks the rule offline: one group with the
 schedule, target, limit and prefix; every entry joins it; semver cooldowns only
 on `uv`; every Dockerfile and compose directory is covered; the guard pins the
 shared workflow by full SHA with empty top-level permissions. It cannot prove

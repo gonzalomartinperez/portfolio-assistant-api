@@ -1,7 +1,7 @@
 # Architecture and responsibilities
 
 The API is a modular monolith. Six packages express dependency direction and
-cohesive capabilities, enforced by `tests/test_architecture.py`:
+cohesive capabilities, enforced by `tests/architecture/test_architecture.py`:
 
 ```text
 presentation ──► application ──► domain
@@ -112,7 +112,7 @@ See [private observability](private-observability.md) for retention and drop sem
 
 ## Enforced architectural contracts
 
-`tests/test_architecture.py` exercises the real stdlib AST checker in
+`tests/architecture/test_architecture.py` exercises the real stdlib AST checker in
 `scripts/check_architecture.py`, including negative examples. Run it alone with
 `uv run python -m scripts.check_architecture`; the existing required Quality job
 runs the same guard through the offline test suite. No extra build or service is needed.

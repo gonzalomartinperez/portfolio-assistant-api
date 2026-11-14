@@ -416,7 +416,7 @@ def test_pgvector_plain_readme_parameter_is_canonicalized_only_for_reviewed_file
 
 def test_explicit_source_request_receives_verified_canonical_url_without_rewriting_facts():
     from app.application.answer import context
-    from tests.test_workflow import SOURCE
+    from tests.unit.test_workflow import SOURCE
 
     ordinary = context((SOURCE,))
     linked = context((SOURCE,), include_urls=True)

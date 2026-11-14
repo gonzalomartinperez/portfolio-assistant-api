@@ -1,12 +1,10 @@
 import importlib
 import tomllib
-from pathlib import Path
 
 import pytest
 
 from app.bootstrap import entrypoints
-
-ROOT = Path(__file__).parent.parent
+from tests.support import ROOT
 
 
 def scripts():
