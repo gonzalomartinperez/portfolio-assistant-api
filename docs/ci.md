@@ -116,6 +116,10 @@ visibility decision are separate release gates. A merge cannot publish or deploy
 | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Weekly (Monday), on pushes to `main` and on manual dispatch; publishes results and uploads SARIF |
 | vuln-daily | `.github/workflows/vuln-daily.yml` | Daily shared job; silent tracking issue, with the weekly summary posted on Monday (OD-75); no images listed here (`images: ""`) |
 
+GitHub runs `schedule` triggers only from the default branch (`main`), so Scorecard and
+vuln-daily start running once these files reach `main` (M7 promotion); until then they
+can be dispatched manually after that promotion to seed the baseline and the tracking issue.
+
 The `security` job is part of the base profile, so `classify` always selects it and `ci-gate` requires it.
 Every third-party action and reusable workflow is pinned to a full commit SHA. zizmor `unpinned-uses` and
 `tests/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
