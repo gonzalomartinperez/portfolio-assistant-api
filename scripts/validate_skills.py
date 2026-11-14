@@ -20,8 +20,8 @@ def validate(root: Path) -> list[str]:
     """Return location-only findings; malformed text or suspected secrets stay redacted."""
     root = root.resolve()
     errors = []
-    canonical = root / '.claude/skills'
-    discovery = root / '.agents/skills'
+    canonical = root / '.agents/skills'
+    discovery = root / '.claude/skills'
     if not canonical.is_dir() or not discovery.is_dir():
         return ['missing canonical or discovery directory']
     names = set()
@@ -125,9 +125,9 @@ def validate(root: Path) -> list[str]:
     if {entry.name for entry in discovery.iterdir()} != {
         entry.name for entry in folders
     }:
-        errors.append('Codex discovery entries differ from the canonical catalog')
+        errors.append('Claude discovery entries differ from the canonical catalog')
     for entry in discovery.iterdir():
-        expected = '../../.claude/skills/' + entry.name
+        expected = '../../.agents/skills/' + entry.name
         if (
             not entry.is_symlink()
             or os.readlink(entry) != expected
@@ -135,7 +135,7 @@ def validate(root: Path) -> list[str]:
             or not (entry / 'SKILL.md').is_file()
         ):
             errors.append(
-                f'.agents/skills/{entry.name}: invalid relative discovery link'
+                f'.claude/skills/{entry.name}: invalid relative discovery link'
             )
     commands = root / '.claude/commands'
     if commands.is_dir() and any(p.stem in names for p in commands.rglob('*.md')):
