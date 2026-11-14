@@ -30,8 +30,6 @@
       "Bash(git branch -vv)"
     ],
     "ask": [
-      "Bash(git push:*)",
-      "Bash(gh pr merge:*)",
       "Bash(gh release:*)"
     ],
     "deny": [

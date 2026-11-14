@@ -76,10 +76,6 @@ def frames(response):
         pytest.param(
             {'provider': Hang(), 'timeout': 0.3},
             'generation_failed',
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason='RunService asyncio.timeout never fires over HTTP; fixed by PR #178; remove this mark when #178 merges',
-            ),
         ),
         (
             {

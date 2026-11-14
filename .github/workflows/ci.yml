@@ -16,9 +16,6 @@ name: CI
       frontend_image:
         type: string
         default: ''
-      frontend_commit:
-        type: string
-        default: ''
   push:
     branches:
     - develop
@@ -31,7 +28,8 @@ defaults:
     shell: bash
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded pull request runs only; push runs on develop and main always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 env:
   AI_PROVIDER: fixture
   ALLOW_PAID_AI: 'false'
@@ -127,9 +125,9 @@ jobs:
     - name: Validate software licensing and separate content scope
       run: uv run python -m scripts.check_license
     - name: Lint Python
-      run: uv run ruff check app tests contracts scripts
+      run: uv run ruff check app tests contracts scripts evals
     - name: Check Python formatting
-      run: uv run ruff format --check app tests contracts scripts
+      run: uv run ruff format --check app tests contracts scripts evals
     - name: Type-check application boundaries
       run: uv run mypy
     - name: Verify authored bilingual question bank
@@ -164,12 +162,6 @@ jobs:
       run: python3 -m scripts.ci_identity
       env:
         CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        repository: gonzalomartinperez/portfolio
-        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
-        path: public-portfolio
-        persist-credentials: false
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         version: 0.13.1
@@ -180,36 +172,6 @@ jobs:
           .python-version
     - name: Install locked dependencies
       run: uv sync --frozen
-    - name: Read the pinned IAM compatibility source
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        repository: gonzalomartinperez/portfolio-backoffice
-        ref: 5238643d5f5cb1c129b66b7d527f440635f68d33
-        path: artifacts/compat-backoffice
-        persist-credentials: false
-    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
-      with:
-        node-version-file: artifacts/compat-backoffice/.nvmrc
-        cache: npm
-        cache-dependency-path: artifacts/compat-backoffice/package-lock.json
-    - name: Install the pinned IAM fixture dependencies
-      run: npm ci --prefix artifacts/compat-backoffice --no-audit --no-fund
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      if: inputs.frontend_commit != ''
-      with:
-        repository: gonzalomartinperez/portfolio-backoffice
-        ref: ${{ inputs.frontend_commit }}
-        path: frontend-contract
-        sparse-checkout: contracts
-        persist-credentials: false
-    - name: Verify the paired backoffice private contract bytes
-      if: inputs.frontend_commit != ''
-      run: |
-        python - <<'PY'
-        from pathlib import Path
-        for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
-            assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
-        PY
     - name: Validate private networks and container limits
       run: uv run python -m scripts.validate_compose
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
@@ -236,8 +198,8 @@ jobs:
         echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
     - name: Apply and verify migrations
       run: uv run python -m app.migrate
-    - name: Index the pinned approved public corpus
-      run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+    - name: Index the frozen approved public corpus snapshot
+      run: uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
     - name: Run real-service integration tests
       run: |
         mkdir -p artifacts
@@ -251,25 +213,12 @@ jobs:
       env:
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
-    - name: Verify real dual-application identities and independent recovery
-      run: |
-        uv run python -m scripts.verify_project_databases --authorize-fixture \
-          --postgres-image portfolio-assistant-postgres:18.6 \
-          --backoffice-path artifacts/compat-backoffice
     - name: Stop only the owned PostgreSQL fixture
       if: always()
       run: |
         mkdir -p artifacts
         docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
         docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
-    - name: Retain safe synthetic database verification receipt
-      if: always()
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-      with:
-        name: project-database-verification
-        path: artifacts/project-databases.json
-        retention-days: 7
-        if-no-files-found: ignore
     needs:
     - classify
     - static
@@ -297,34 +246,12 @@ jobs:
       run: python3 -m scripts.ci_identity
       env:
         CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        repository: gonzalomartinperez/portfolio
-        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
-        path: public-portfolio
-        persist-credentials: false
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         version: 0.13.1
         enable-cache: false
     - name: Install locked dependencies
       run: uv sync --frozen
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      if: inputs.frontend_commit != ''
-      with:
-        repository: gonzalomartinperez/portfolio-backoffice
-        ref: ${{ inputs.frontend_commit }}
-        path: frontend-contract
-        sparse-checkout: contracts
-        persist-credentials: false
-    - name: Verify the paired backoffice private contract bytes
-      if: inputs.frontend_commit != ''
-      run: |
-        python - <<'PY'
-        from pathlib import Path
-        for name in ('operations.schema.json', 'product-analytics.schema.json', 'feedback.schema.json'):
-            assert Path('contracts', name).read_bytes() == Path('frontend-contract/contracts', name).read_bytes(), name
-        PY
     - name: Validate private networks and container limits
       run: uv run python -m scripts.validate_compose
     - name: Lint Dockerfiles with the pinned hadolint binary
@@ -371,8 +298,8 @@ jobs:
         echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
     - name: Apply and verify migrations
       run: uv run python -m app.migrate
-    - name: Index the pinned approved public corpus
-      run: uv run python -m app.knowledge_sync --repo public-portfolio --ref HEAD
+    - name: Index the frozen approved public corpus snapshot
+      run: uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
     - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
       with:
         context: .
@@ -515,6 +442,50 @@ jobs:
     needs:
     - classify
     - static
+  mutation:
+    name: Mutation tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        version: 0.13.1
+        save-cache: false
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - name: Select changed scoped Python files
+      id: scope
+      run: uv run python -m scripts.mutation_gate --select-changed "$BASE_SHA"
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    - name: Run incremental mutation campaign
+      if: steps.scope.outputs.has_changes == 'true'
+      run: |
+        mkdir -p artifacts
+        uv run mutmut run --max-children 2
+        uv run mutmut results --all true > artifacts/mutation-results.txt
+        uv run mutmut export-cicd-stats
+        uv run python -m scripts.mutation_gate --warn
+    - name: Retain mutation evidence
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: mutation-results
+        path: |
+          artifacts/mutation-results.txt
+          mutants/mutmut-cicd-stats.json
+        retention-days: 14
+        if-no-files-found: ignore
   ci-gate:
     name: ci-gate
     if: always()

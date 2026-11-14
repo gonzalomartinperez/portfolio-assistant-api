@@ -23,7 +23,7 @@ GitHub-managed and are recorded by Actions.
 | secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None (always runs) |
 | security / Security checks | Shared engineering-standards `security.yml`: zizmor, actionlint, gitleaks, dependency review with licence allow-list | classify |
 | static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | classify |
-| database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | classify, static |
+| database / Database tests | Real PostgreSQL/Neo4j migrations, snapshot indexing, integration and bilingual fixture evaluation | classify, static |
 | container / Container verification | Own isolated databases/corpus, hadolint on both Dockerfiles, explicit api and worker builds (`VERSION`, `REVISION`, `CREATED` build args), container-structure-test and Dockle on both images, size ratchet (`infra/docker/app/image.json`), full Trivy scans of api, worker and PostgreSQL, non-root streaming/SIGTERM/proxy and tested image identity | classify, static |
 | ci-gate / ci-gate | Always-evaluated fail-closed aggregate: every job classify selected must succeed; unselected jobs may be skipped | Every other job |
 | checks / Required checks | Transitional alias that passes only when `ci-gate` succeeds | ci-gate |
@@ -70,6 +70,7 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 | Lane | Directory | Command |
 | --- | --- | --- |
 | Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Property | `tests/property/` (marker `property`; Hypothesis profile `ci` by default) | `uv run pytest -q tests/property`; nightly: `HYPOTHESIS_PROFILE=nightly uv run pytest -q tests/property` |
 | Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
 | Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
 | Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
@@ -82,7 +83,10 @@ Test modules are grouped by purpose. Run individual lanes with these commands:
 
 `tests/support.py`, `tests/support_app.py` (the real routers and workflow over in-process fakes) and
 `tests/fixtures/` remain shared at the `tests/` root.
-The offline suite remains `uv run pytest -q -m 'not integration'`.
+The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
+property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
+(1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
+exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
 
 ### Resilience, security matrix and load
 
@@ -108,7 +112,7 @@ is pinned to 0.13.1, matching the production image. Only the static job saves th
 shared dependency cache; runtime jobs restore it and installs the same frozen lock
 without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
 cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
-`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt is uploaded for seven days.
+`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt from the cross-repository workflow is uploaded for seven days.
 Other test diagnostics remain in Actions logs; no public image archive is uploaded.
 
 Both service jobs build/load the PostgreSQL fixture with the same explicit
@@ -362,22 +366,25 @@ critical finding remain mandatory **external release-selection gates** for vps-o
 No publication/deployment controller is activated here. The rejected candidate run and
 known baseline findings remain recorded; no source tag waives them.
 
-The optional `workflow_call` inputs retain their historical `frontend_commit` /
-`frontend_image` names for caller compatibility. The selected source is now canonical
-`portfolio-backoffice`, and pairing compares the actual private operations, product
+The optional `workflow_call` input `frontend_image` keeps its historical name for caller
+compatibility; the former `frontend_commit` input moved to `cross-repo.yml` as a
+`workflow_dispatch` input. The selected source is now canonical
+`portfolio-backoffice`, and pairing (now in `cross-repo.yml`, as its `frontend_commit` dispatch input) compares the actual private operations, product
 and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
 chat consumer and cannot establish native portfolio compatibility. Current native
 browser/API verification belongs to the portfolio. This opt-in source comparison is
 not live OAuth/HTTPS pairing or a release-controller/deployment authorization.
 
-The real-services job also reads an exact committed backoffice revision, installs
-its frozen dependencies with a lock-keyed Node cache, and exercises both applications'
-actual migrations/authentication against a fresh restricted project engine. The
-owned fixture runner verifies independent recovery, restart and fresh-cluster
-restore; it never uses the job's corpus fixture for destructive recovery. Only its
-synthetic aggregate receipt is retained, not IAM logs, credentials or archives.
-The required `checks` gate still requires both existing jobs. This adds application
-compatibility coverage without a second API image build or privileged PR execution.
+The database and container jobs index the frozen public corpus snapshot in
+`evals/corpus` ([ADR016](adrs/016-frozen-public-corpus-snapshot.md)) and check out no
+other repository. The pinned backoffice IAM compatibility run (real migrations and
+authentication against a fresh restricted project engine, independent recovery,
+restart and fresh-cluster restore, with only its synthetic aggregate receipt retained)
+and the optional `frontend_commit` private-contract byte comparison run in
+`.github/workflows/cross-repo.yml`, nightly at 06:00 UTC and on `workflow_dispatch`,
+outside the pull request path. It is not part of `ci-gate`. GitHub runs schedules only
+from the default branch (`main`), so the nightly run starts after the M7 promotion to
+`main`; `workflow_dispatch` works earlier.
 
 
 ## Paired profile source and artifact privacy
@@ -422,3 +429,42 @@ endpoint. The size ratchet fails when `docker image inspect` reports a size abov
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
 `hadolint ignore=DL3003,DL4006` with its reason.
+
+## Mutation testing (M2-11)
+
+[ADR023](adrs/023-mutation-testing-mutmut.md) records the Python 3.14 spike.
+`ci.yml` runs a PR-only `mutation` job (30 minutes, two workers). It diffs
+against the PR base with `git diff base...HEAD`, intersects changed Python files
+with the explicit `[tool.mutmut]` scope, and narrows the disposable checkout's
+configuration before generation. Deleted, unscoped and test files are excluded;
+no matching source files means a clean skip. Tests use the offline unit lane,
+fixture providers and no integration tests. Tests themselves are never mutated.
+
+`mutation-weekly.yml` runs the full configured scope on Mondays at 04:17 UTC or
+by manual dispatch (90 minutes, two workers). Both jobs retain per-mutant text
+results and mutmut's aggregate JSON for 14 days. Only synthetic mutation outcomes
+are uploaded. GitHub schedules begin operating when the workflow reaches the
+default branch; local verification does not establish a successful hosted run.
+
+The stdlib gate reads `mutmut results --all true`: 3.8.1's `export-cicd-stats`
+JSON lacks file identities, so it cannot calculate package scores. The score is
+confirmed kills divided by all measured outcomes, including timeouts, no-tests,
+skips and errors in the denominator. Unchecked mutants are not measured. Scores
+are grouped by domain, application, AI retrieval and graders. Targets are 75%,
+85% for graders and budget math; the break floor is 60%.
+`tests/mutation-baseline.json` records measured ratchets and the exact sample;
+null means unmeasured, not zero-quality evidence. The full weekly run supplies
+the remaining measurements; ratchets may only increase.
+
+Run `uv run python -m scripts.mutation_gate --results PATH` after collecting
+results. `--warn` or `MUTATION_MODE=warn` expresses rollout intent; warning mode
+is also the default through 2026-11-28 UTC. Starting 2026-11-29 it fails below
+60% or the committed ratchet, even with `--warn`. `--enforce` activates failure
+immediately. Invalid or empty evidence always fails.
+
+Mutation remains outside `ci-gate` and the classifier map: the pinned shared
+action's handling of this unclassified PR-only/skipped advisory job has not been
+verified locally. The local profile guard explicitly permits this one independent
+job while preserving every existing required dependency. This also means mutation
+shortfalls do not block merging through `ci-gate`, including after warning expiry;
+promoting mutation to a required check needs verified shared-gate semantics.

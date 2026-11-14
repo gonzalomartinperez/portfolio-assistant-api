@@ -19,3 +19,6 @@
 # Contracts and deploy surface (where present)
 /contracts/               @gonzalomartinperez
 /infra/                   @gonzalomartinperez
+
+# Golden eval set (owner review on any change)
+/evals/golden/            @gonzalomartinperez
