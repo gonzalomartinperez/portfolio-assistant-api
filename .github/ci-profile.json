@@ -48,7 +48,8 @@
         "workflows",
         "static",
         "database",
-        "container"
+        "container",
+        "contract"
       ],
       "budgetP50Minutes": 10,
       "budgetP95Minutes": 15
@@ -79,7 +80,8 @@
       "adds": [
         "static",
         "database",
-        "container"
+        "container",
+        "contract"
       ],
       "budgetP50Minutes": 10,
       "budgetP95Minutes": 15

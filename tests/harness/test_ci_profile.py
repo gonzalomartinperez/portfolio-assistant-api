@@ -128,7 +128,12 @@ def test_profiles_run_the_documented_jobs():
     profiles = profile_map()['profiles']
     assert profiles['docs']['adds'] == ['static']
     assert profiles['harness']['adds'] == ['static']
-    assert set(profiles['code']['adds']) == {'static', 'database', 'container'}
+    assert set(profiles['code']['adds']) == {
+        'static',
+        'database',
+        'container',
+        'contract',
+    }
     assert set(profiles['workflow']['adds']) == set(GATED) - {'security'}
 
 

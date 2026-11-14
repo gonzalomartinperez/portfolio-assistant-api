@@ -41,10 +41,12 @@ module-root = ""
 dev = [
     "httpx>=0.28.1",
     "hypothesis>=6",
+    "jsonschema>=4.26.0",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pyyaml==6.0.3",
     "ruff>=0.17.1",
+    "schemathesis>=4.33.4",
 ]
 
 [tool.ruff.lint]
@@ -59,7 +61,10 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Header"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-markers = ["integration: requires isolated PostgreSQL/pgvector and Neo4j"]
+markers = [
+    "integration: requires isolated PostgreSQL/pgvector and Neo4j",
+    "contract: public API contract, schema and SSE conformance (offline)",
+]
 
 [tool.mypy]
 files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "app/adapters/neo4j/read_queries.py"]
