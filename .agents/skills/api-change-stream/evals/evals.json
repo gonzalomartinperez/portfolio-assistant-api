@@ -1,0 +1,33 @@
+{
+  "skill": "api-change-stream",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "api-change-stream-1",
+      "prompt": "Investigate why cancelling a stream leaves a usage reservation open. Do not edit.",
+      "assertions": [
+        "stays read-only and cites the lifecycle code it inspected",
+        "checks cancellation, terminal event and reservation release together",
+        "does not invent an event name that is not in contracts/sse.schema.json"
+      ]
+    },
+    {
+      "id": "api-change-stream-2",
+      "prompt": "Add a heartbeat comment to the SSE stream",
+      "assertions": [
+        "states the wire contract and the closed event set must stay compatible",
+        "adds or updates an SSE conformance or cancellation test",
+        "runs the offline checks from AGENTS.md and reports fixture versus live evidence separately"
+      ]
+    },
+    {
+      "id": "api-change-stream-3",
+      "prompt": "Change how the provider adapter streams deltas",
+      "assertions": [
+        "keeps delivery incremental and verifies it with a test",
+        "preserves exactly one terminal event per run",
+        "does not call a real provider or read a key"
+      ]
+    }
+  ]
+}

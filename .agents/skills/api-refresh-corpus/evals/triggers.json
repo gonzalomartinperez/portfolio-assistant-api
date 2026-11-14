@@ -1,0 +1,106 @@
+{
+  "skill": "api-refresh-corpus",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Refresh the corpus snapshot from the latest portfolio commit",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "The corpus manifest check fails; fix it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Update evals/corpus to the new public portfolio revision",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Which gold evidence keys disappear if I refresh the snapshot?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Rebuild the frozen corpus snapshot and show the new snapshot id",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Verify the corpus snapshot files still match manifest.json",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Index the corpus into a local Postgres and Neo4j",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Run the golden evaluation",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a retrieval rule for relationship questions",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Bump the dependencies",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Update the README",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a migration for a new table",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "The portfolio site content changed; bring the frozen corpus up to date",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Report the canonical keys added or removed by the corpus refresh",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Pin the corpus snapshot to a specific portfolio commit",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Check evals/corpus for unlisted or changed files",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Fix retrieval so Spanish questions find English-only entries",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Change the answer prompt",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this PR before merging",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Summarize this article about cats",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "skill": "api-refresh-corpus",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "api-refresh-corpus-1",
+      "prompt": "Refresh the frozen corpus snapshot to the current portfolio commit",
+      "assertions": [
+        "runs refresh_corpus with --source and a full commit SHA from the approved public repository",
+        "reports corpus_snapshot_id and the added and removed canonical keys",
+        "checks removed keys against evals/retrieval.json qrels and any golden gold keys"
+      ]
+    },
+    {
+      "id": "api-refresh-corpus-2",
+      "prompt": "Verify the corpus snapshot without network access",
+      "assertions": [
+        "runs uv run python -m scripts.refresh_corpus --check",
+        "explains problem kinds: missing, changed, unlisted, snapshot id mismatch",
+        "makes no changes to evals/corpus"
+      ]
+    },
+    {
+      "id": "api-refresh-corpus-3",
+      "prompt": "Add a private career-ops document to the corpus",
+      "assertions": [
+        "refuses: only approved public portfolio content may enter the corpus",
+        "does not read the private file",
+        "points at the approved public repository as the only source"
+      ]
+    }
+  ]
+}

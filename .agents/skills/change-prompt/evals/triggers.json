@@ -1,0 +1,106 @@
+{
+  "skill": "change-prompt",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Make the answer prompt more concise",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Update the Spanish voice prompt so it sounds more natural",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "prompts.lock is stale after my edit; fix it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a rule to the web-context prompt about not citing blogs",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Change the recruiter voice instructions to avoid overclaiming",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Bump the version of the answer prompt after this wording change",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Run the golden evaluation",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add an eval item from this failing answer",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Change the retrieval ranking rule for graph questions",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a field to the message.completed SSE event",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write an ADR for the prompt registry",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a limerick about robots",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Tighten the abstention wording in the system prompt",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Which prompt pieces are assembled for an English answer, and how do I edit one?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Edit the English voice prompt and tell me which cassettes need re-recording",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Does changing app/prompts/answer.md require updating anything else?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Re-run the unit tests",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Refresh the corpus snapshot from the portfolio repository",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Limit the cost per anonymous session",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this PR before I merge it",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "skill": "api-maintain-knowledge",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Write a new retrieval rule so relationship questions pull in graph neighbors",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "A failed graph projection left the index half-updated; fix the recovery",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Keep the source commit, path and line range on every chunk",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make sure only allowlisted paths from the public portfolio repository get ingested",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a bounded Cypher query for multi-hop project relationships",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Citations point at the wrong source span; fix the grounding",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Run the golden evaluation and report results by stratum",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add an eval item from a failing question",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Refresh the evals/corpus snapshot from the portfolio repository",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Make the answer prompt shorter",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Cap the cost per anonymous session",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What is the capital of France?",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "The worker should keep the last valid corpus active when indexing fails",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Add a new relationship type to the knowledge graph projection",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Change how chunk identities include the embedding profile",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Fix retrieval so Spanish questions find English-only project entries",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Run the retrieval evaluation and compare the strategies",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Add a migration for the corpus versions table",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Stream citations to the browser as they arrive",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Bump the Python dependencies",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

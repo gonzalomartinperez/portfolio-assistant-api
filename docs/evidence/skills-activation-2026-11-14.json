@@ -1,0 +1,3745 @@
+{
+  "generated": "2026-11-14T23:22Z",
+  "router_model": "haiku via claude -p (subscription, no API key)",
+  "split": "validation",
+  "runs_override": null,
+  "threshold": 0.5,
+  "skills": {
+    "api-change-storage": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add forward-only grants for the worker role in a new migration",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Delete a visitor's conversations and checkpoints completely when they ask",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Make usage accounting idempotent when a run is retried",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check the migration history checksums before I add the next migration",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Refresh the frozen corpus snapshot",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for security issues",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change the cancel behavior of the SSE endpoint",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Convert 5 km to miles",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "2c79fe800075",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add forward-only grants for the worker role in a new migration",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Delete a visitor's conversations and checkpoints completely when they ask",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Make usage accounting idempotent when a run is retried",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check the migration history checksums before I add the next migration",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Refresh the frozen corpus snapshot",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for security issues",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change the cancel behavior of the SSE endpoint",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Convert 5 km to miles",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "2c79fe800075",
+        "errors": 0
+      }
+    },
+    "api-change-stream": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Heartbeat comments on the SSE stream are buffered by the proxy; look into it",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check that cancellation during streaming leaves the run in a consistent state",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Trace the run state machine from provider start to message.completed",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Preserve incremental delivery when I swap the provider adapter",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Export the OpenAPI contract and add an example for a new optional field",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Which retrieval strategy is best for multi-hop questions?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this diff before I commit",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain how HTTP caching works",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "d7f25877c6b4",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Heartbeat comments on the SSE stream are buffered by the proxy; look into it",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check that cancellation during streaming leaves the run in a consistent state",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Trace the run state machine from provider start to message.completed",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Preserve incremental delivery when I swap the provider adapter",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Export the OpenAPI contract and add an example for a new optional field",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Which retrieval strategy is best for multi-hop questions?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this diff before I commit",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain how HTTP caching works",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "d7f25877c6b4",
+        "errors": 0
+      }
+    },
+    "api-change-use-case": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add a use case that lists a session's conversations with ownership checks",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change how many messages a conversation accepts before it is closed",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the session ownership rules in the application layer, read-only",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Tighten the rate limit for sessions that open many conversations quickly",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Implement roadmap item M2-9 end to end",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a forward-only migration for a new usage table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Cancel the provider call when the browser disconnects mid-stream",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "57202a50c0cd",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add a use case that lists a session's conversations with ownership checks",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change how many messages a conversation accepts before it is closed",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the session ownership rules in the application layer, read-only",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Tighten the rate limit for sessions that open many conversations quickly",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Implement roadmap item M2-9 end to end",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a forward-only migration for a new usage table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Cancel the provider call when the browser disconnects mid-stream",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "57202a50c0cd",
+        "errors": 0
+      }
+    },
+    "api-maintain-knowledge": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "The worker should keep the last valid corpus active when indexing fails",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a new relationship type to the knowledge graph projection",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change how chunk identities include the embedding profile",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix retrieval so Spanish questions find English-only project entries",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the retrieval evaluation and compare the strategies",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a migration for the corpus versions table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Stream citations to the browser as they arrive",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Bump the Python dependencies",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "d52001bea071",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "The worker should keep the last valid corpus active when indexing fails",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a new relationship type to the knowledge graph projection",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change how chunk identities include the embedding profile",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix retrieval so Spanish questions find English-only project entries",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the retrieval evaluation and compare the strategies",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a migration for the corpus versions table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Stream citations to the browser as they arrive",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Bump the Python dependencies",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "d52001bea071",
+        "errors": 0
+      }
+    },
+    "api-refresh-corpus": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "The portfolio site content changed; bring the frozen corpus up to date",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Report the canonical keys added or removed by the corpus refresh",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Pin the corpus snapshot to a specific portfolio commit",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check evals/corpus for unlisted or changed files",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix retrieval so Spanish questions find English-only entries",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change the answer prompt",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR before merging",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Summarize this article about cats",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "923f0fdbbc60",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "The portfolio site content changed; bring the frozen corpus up to date",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Report the canonical keys added or removed by the corpus refresh",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Pin the corpus snapshot to a specific portfolio commit",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check evals/corpus for unlisted or changed files",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix retrieval so Spanish questions find English-only entries",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-maintain-knowledge",
+              "api-maintain-knowledge",
+              "api-maintain-knowledge"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Change the answer prompt",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR before merging",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Summarize this article about cats",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "923f0fdbbc60",
+        "errors": 0
+      }
+    },
+    "change-prompt": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Tighten the abstention wording in the system prompt",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Which prompt pieces are assembled for an English answer, and how do I edit one?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Edit the English voice prompt and tell me which cassettes need re-recording",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Does changing app/prompts/answer.md require updating anything else?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Re-run the unit tests",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Refresh the corpus snapshot from the portfolio repository",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Limit the cost per anonymous session",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR before I merge it",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "82a1caf6f72c",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Tighten the abstention wording in the system prompt",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Which prompt pieces are assembled for an English answer, and how do I edit one?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Edit the English voice prompt and tell me which cassettes need re-recording",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Does changing app/prompts/answer.md require updating anything else?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "change-prompt",
+              "change-prompt",
+              "change-prompt"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Re-run the unit tests",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Refresh the corpus snapshot from the portfolio repository",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-refresh-corpus",
+              "api-refresh-corpus",
+              "api-refresh-corpus"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Limit the cost per anonymous session",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR before I merge it",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "82a1caf6f72c",
+        "errors": 0
+      }
+    },
+    "evaluate-assistant": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Compare retrieval hit rate between vector, graph and hybrid strategies",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check that a new eval item has canonical gold evidence keys and native Spanish",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the offline eval lane and report counts per stratum",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Did my change lower the golden pass rate?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a migration for the eval results table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for missing tests",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the SSE cancellation bug",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Translate this paragraph to Spanish",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "2a676d0e956b",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Compare retrieval hit rate between vector, graph and hybrid strategies",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Check that a new eval item has canonical gold evidence keys and native Spanish",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the offline eval lane and report counts per stratum",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Did my change lower the golden pass rate?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a migration for the eval results table",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-storage",
+              "api-change-storage",
+              "api-change-storage"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for missing tests",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the SSE cancellation bug",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-stream",
+              "api-change-stream",
+              "api-change-stream"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Translate this paragraph to Spanish",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "802102eb4ffb",
+        "errors": 0
+      }
+    },
+    "implement-task": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Do the next task in the roadmap",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Take this ready item through to a merged PR",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the PR for M1-07",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Write an ADR for task M1-07",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "write-adr",
+              "write-adr",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "74c8073868a4",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Do the next task in the roadmap",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Take this ready item through to a merged PR",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the PR for M1-07",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Write an ADR for task M1-07",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "write-adr",
+              "write-adr",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "74c8073868a4",
+        "errors": 0
+      }
+    },
+    "refresh-contract": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add a new optional property to the feedback schema",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "The CI contract drift check failed; regenerate the artifacts",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What steps do consumers need after the OpenAPI file changes?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Document a new error code in the public API contract",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the golden evaluation",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Limit conversations per session",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for correctness",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Book a flight to Madrid",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "69a9e5bc3c6b",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 8,
+            "tp": 4,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Add a new optional property to the feedback schema",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "The CI contract drift check failed; regenerate the artifacts",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What steps do consumers need after the OpenAPI file changes?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Document a new error code in the public API contract",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "refresh-contract",
+              "refresh-contract",
+              "refresh-contract"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Run the golden evaluation",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "evaluate-assistant",
+              "evaluate-assistant",
+              "evaluate-assistant"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Limit conversations per session",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "api-change-use-case",
+              "api-change-use-case",
+              "api-change-use-case"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this PR for correctness",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Book a flight to Madrid",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "69a9e5bc3c6b",
+        "errors": 0
+      }
+    },
+    "resume-refactor": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Continue the master refactor",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "resume-refactor",
+              "resume-refactor",
+              "resume-refactor"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Start of session: pick up the next milestone item",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "resume-refactor",
+              "resume-refactor",
+              "resume-refactor"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Start milestone M5 now",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.3333,
+            "picks": [
+              "none",
+              "resume-refactor",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Create the M2 roadmap",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "4a709ef158f1",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Continue the master refactor",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "resume-refactor",
+              "resume-refactor",
+              "resume-refactor"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Start of session: pick up the next milestone item",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "resume-refactor",
+              "resume-refactor",
+              "resume-refactor"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Start milestone M5 now",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.3333,
+            "picks": [
+              "none",
+              "resume-refactor",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Create the M2 roadmap",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "4a709ef158f1",
+        "errors": 0
+      }
+    },
+    "review-change": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Can you check this diff for bugs?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the Codex diff in the worktree",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the bug the reviewer found",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Write the release notes",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "554fd4ea24a8",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Can you check this diff for bugs?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the Codex diff in the worktree",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the bug the reviewer found",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Write the release notes",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "554fd4ea24a8",
+        "errors": 0
+      }
+    },
+    "score-repo": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Run the scorecard and compare with baselines",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "score-repo",
+              "score-repo",
+              "score-repo"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Did any quality ratchet regress?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "score-repo",
+              "score-repo",
+              "score-repo"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the coverage regression",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the scorecard code",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "1f849fed498d",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Run the scorecard and compare with baselines",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "score-repo",
+              "score-repo",
+              "score-repo"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Did any quality ratchet regress?",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "score-repo",
+              "score-repo",
+              "score-repo"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Fix the coverage regression",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the scorecard code",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "1f849fed498d",
+        "errors": 0
+      }
+    },
+    "update-dependencies": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Handle this week's dependency update",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Upgrade breakages from the weekly deps PR",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Bump lodash now for a security fix",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the Dependabot config",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "a7c632c7c363",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Handle this week's dependency update",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Upgrade breakages from the weekly deps PR",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Bump lodash now for a security fix",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "implement-task",
+              "implement-task",
+              "implement-task"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the Dependabot config",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "a7c632c7c363",
+        "errors": 0
+      }
+    },
+    "verify-release": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Check the develop to main promotion is ready",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "verify-release",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Confirm build-info matches the merge SHA",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "verify-release",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this small PR",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Update dependencies before release",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "aa82feb61218",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Check the develop to main promotion is ready",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "verify-release",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Confirm build-info matches the merge SHA",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "verify-release",
+              "verify-release",
+              "verify-release"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review this small PR",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "review-change",
+              "review-change",
+              "review-change"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Update dependencies before release",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "update-dependencies",
+              "update-dependencies",
+              "update-dependencies"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "aa82feb61218",
+        "errors": 0
+      }
+    },
+    "write-adr": {
+      "first": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Write an ADR for moving to Vitest",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 0.6667,
+            "picks": [
+              "write-adr",
+              "api-change-storage",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Create a decision record superseding ADR 0004",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "write-adr",
+              "write-adr",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a CHANGELOG entry",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the existing ADRs for typos",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.3333,
+            "picks": [
+              "none",
+              "write-adr",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "70b8f37ca566",
+        "errors": 0
+      },
+      "final": {
+        "splits": {
+          "train": {
+            "queries": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "tn": 0,
+            "precision": null,
+            "recall": null,
+            "accuracy": null,
+            "errored": 0
+          },
+          "validation": {
+            "queries": 6,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0,
+            "tn": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy": 1.0,
+            "errored": 0
+          }
+        },
+        "queries": [
+          {
+            "query": "Write an ADR for moving to Vitest",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 0.6667,
+            "picks": [
+              "write-adr",
+              "api-change-storage",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Create a decision record superseding ADR 0004",
+            "split": "validation",
+            "should_trigger": true,
+            "triggered_fraction": 1.0,
+            "picks": [
+              "write-adr",
+              "write-adr",
+              "write-adr"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Add a CHANGELOG entry",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Review the existing ADRs for typos",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.3333,
+            "picks": [
+              "none",
+              "write-adr",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "Explain what a closure is in JavaScript",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          },
+          {
+            "query": "What's the weather in Buenos Aires?",
+            "split": "validation",
+            "should_trigger": false,
+            "triggered_fraction": 0.0,
+            "picks": [
+              "none",
+              "none",
+              "none"
+            ],
+            "passed": true,
+            "errors": 0
+          }
+        ],
+        "description_sha256": "70b8f37ca566",
+        "errors": 0
+      }
+    }
+  },
+  "overall_first": {
+    "train": {
+      "queries": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": null,
+      "recall": null,
+      "accuracy": null,
+      "errored": 0
+    },
+    "validation": {
+      "queries": 106,
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "tn": 60,
+      "precision": 1.0,
+      "recall": 1.0,
+      "accuracy": 1.0,
+      "errored": 0
+    }
+  },
+  "overall_final": {
+    "train": {
+      "queries": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 0,
+      "precision": null,
+      "recall": null,
+      "accuracy": null,
+      "errored": 0
+    },
+    "validation": {
+      "queries": 106,
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "tn": 60,
+      "precision": 1.0,
+      "recall": 1.0,
+      "accuracy": 1.0,
+      "errored": 0
+    }
+  },
+  "errors_in_file": 0,
+  "errors": 0
+}

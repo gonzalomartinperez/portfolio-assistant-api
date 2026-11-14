@@ -1,0 +1,106 @@
+{
+  "skill": "api-change-use-case",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Add a per-session limit on how many conversations a visitor can create",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make sure a visitor can only read messages of conversations their own session created",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Change the cost-limit rule so a run over the daily cap is refused before it starts",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Fix a race where two parallel requests both pass the per-conversation message limit",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Where should the anonymous-visitor rate-limit policy live in the six-layer architecture?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Require ownership before a conversation can be renamed or deleted",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make the SSE stream send a heartbeat event every 15 seconds",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a SQL migration that adds an index on conversations.session_id",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Why does retrieval rank the education page below the projects page?",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Review this PR for correctness bugs",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Run the unit tests and tell me what fails",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a use case that lists a session's conversations with ownership checks",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Change how many messages a conversation accepts before it is closed",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Review the session ownership rules in the application layer, read-only",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Tighten the rate limit for sessions that open many conversations quickly",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Implement roadmap item M2-9 end to end",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Add a forward-only migration for a new usage table",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Cancel the provider call when the browser disconnects mid-stream",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "skill": "refresh-contract",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Add an optional field to the session response and update the contract",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "contracts.export shows drift in openapi.json; what do I do?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Export the contracts and tell me which artifacts changed",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a new example to contracts/sse.examples.json",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Is removing a field from the message response a breaking change?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Refresh the contract snapshot for the frontend after this API change",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make the SSE stream emit a heartbeat event",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a migration for the new column",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Change the answer prompt to be shorter",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Implement roadmap item M2-12",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write an ADR for dropping the v1 endpoints",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What is a REST API?",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a new optional property to the feedback schema",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "The CI contract drift check failed; regenerate the artifacts",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "What steps do consumers need after the OpenAPI file changes?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Document a new error code in the public API contract",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Run the golden evaluation",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Limit conversations per session",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this PR for correctness",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Book a flight to Madrid",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

@@ -1,6 +1,10 @@
 ---
 name: api-change-use-case
-description: "Implement or review API application rules, conversation/session ownership, rate and cost limits within the six-layer architecture. Use for business-policy changes; streaming, corpus ingestion and schema migrations have narrower workflows."
+description: "Implements or reviews API application rules: conversation and session ownership, rate limits and cost limits within the six-layer architecture. Use when a business-policy change belongs in app/domain or app/application. Not for streaming (use api-change-stream), corpus ingestion or retrieval (use api-maintain-knowledge) or schema migrations (use api-change-storage)."
+metadata:
+  owner: gonzalomartinperez
+  last-reviewed: "2026-11-14"
+  version: "1.0.0"
 ---
 
 # Change an application use case
