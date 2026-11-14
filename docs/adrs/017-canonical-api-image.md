@@ -24,7 +24,9 @@ script existed, and reused a BuildKit cache id copied from vps-ops
 4. OCI labels (title, source, version, revision, created, licenses, description,
    documentation) come from `ARG VERSION`, `REVISION`, `CREATED`. No secret enters
    an `ARG` or `ENV`.
-5. `api` runs `assistant-api` as UID 65532 with a stdlib `/healthz` HEALTHCHECK.
+5. `api` runs `assistant-api` as UID 65532 with a stdlib HEALTHCHECK on `/readyz`
+   (readiness: schema, corpus and graph, the same semantics the old image probed via
+   `/health/ready`; `/healthz` stays the liveness endpoint for orchestrators).
    `worker` runs `assistant-knowledge-watch`; one-shot sync uses the same image.
 6. `docker-bake.hcl` builds both targets (`linux/amd64`) with the same arguments.
 7. `container-structure-test.yaml` and `container-structure-test.worker.yaml` assert
@@ -53,6 +55,6 @@ PostgreSQL stays on the Alpine 3.24 pgvector image per [ADR008](008-supported-po
 
 - `tests/test_container_layout.py`: stage names and order with `api` last, digest
   pins, repository-owned cache id without `vps-ops`, Git only in `worker`,
-  `/healthz` healthcheck, labels, bake targets and structure-test contents.
+  `/readyz` healthcheck, labels, bake targets and structure-test contents.
 - `uvx --from hadolint-py hadolint infra/docker/app/Dockerfile` with `.hadolint.yaml`.
 - CI builds the image; the measured size is recorded after the first run.

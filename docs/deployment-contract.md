@@ -104,7 +104,8 @@ is not one atomic transaction. Retry the same image after resolving failure; nev
 edit an applied migration. Apply reviewed runtime grants from
 `deploy/runtime-grants.sql` after schema/checkpoint creation. Index only an approved
 public immutable revision with `python -m app.knowledge_sync --source github --ref
-<full-SHA>` before initial readiness. Run `python -m app.retention` every minute
+<full-SHA>` before initial readiness; it needs Git, so run it with the `worker` image
+target (the `api` target has no Git). Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
 Console scripts are equivalent to the `python -m` forms and both are supported:
@@ -223,9 +224,8 @@ The optional worker runs the `worker` image target (same source revision, adds G
 with command `assistant-knowledge-watch` (equal to `python -m app.knowledge_watch`). It requires GitHub HTTPS egress, PostgreSQL and
 Neo4j writes, and authorized OpenAI embeddings when enabled. Its bare source cache
 is temporary under writable `/tmp`; no additional persistent application volume is
-required. The worker exposes no HTTP port. Disable the image's inherited API
-HEALTHCHECK for this process (`docker run --no-healthcheck` locally); vps-ops must
-verify the corresponding Coolify override rather than probing port 8000. Monitor
+required. The worker exposes no HTTP port and its image target defines no
+HEALTHCHECK; vps-ops must not probe port 8000 for it. Monitor
 process liveness and the persisted successful `knowledge_watch.checked_at`
 separately from corpus activation/freshness. A failed candidate can have healthy
 source polling while answers remain temporarily unavailable.

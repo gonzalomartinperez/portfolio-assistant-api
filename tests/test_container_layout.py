@@ -189,12 +189,12 @@ def test_git_is_installed_only_in_the_worker_stage():
     assert 'CMD ["assistant-api"]' in stages['api']
 
 
-def test_api_stage_runs_unprivileged_with_healthz_and_labels():
+def test_api_stage_runs_unprivileged_with_readyz_and_labels():
     api = app_stages()['api']
     assert 'USER 65532:65532' in api
     assert 'STOPSIGNAL SIGTERM' in api
     assert 'EXPOSE 8000' in api
-    assert 'http://127.0.0.1:8000/healthz' in api
+    assert 'http://127.0.0.1:8000/readyz' in api
     for key in ('title', 'source', 'version', 'revision', 'created', 'licenses'):
         assert f'org.opencontainers.image.{key}=' in api
     assert 'org.opencontainers.image.title="portfolio-assistant-api"' in api

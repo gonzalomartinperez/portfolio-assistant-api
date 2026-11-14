@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 # Targets: api (default, last stage) and worker (adds git for the public-source CLI).
 FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS base
-# apt, libapt-pkg7.0, zlib1g and liblzma5 are pinned to their fixed Debian security versions.
+# apt, libapt-pkg7.0, zlib1g, liblzma5 and libpcre2-8-0 are pinned to their fixed Debian security versions.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    liblzma5=5.8.1-1+deb13u2 \
+    liblzma5=5.8.1-1+deb13u2 libpcre2-8-0=10.46-1~deb13u3 \
     apt=3.0.4 libapt-pkg7.0=3.0.4 zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/local/bin/python -m pip uninstall --yes pip \
@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.title="portfolio-assistant-api-worker" \
       org.opencontainers.image.documentation="https://github.com/gonzalomartinperez/portfolio-assistant-api/tree/main/docs"
 # The reviewed public-source CLI uses Git; no HTTP endpoint exposes it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git=1:2.47.3-0+deb13u1 libpcre2-8-0=10.46-1~deb13u3 libbrotli1=1.1.0-2+deb13u1 \
+    git=1:2.47.3-0+deb13u1 libbrotli1=1.1.0-2+deb13u1 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app /app
 USER 65532:65532
@@ -63,5 +63,5 @@ USER 65532:65532
 STOPSIGNAL SIGTERM
 EXPOSE 8000
 HEALTHCHECK --interval=20s --timeout=8s --start-period=30s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5)"]
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=5)"]
 CMD ["assistant-api"]
