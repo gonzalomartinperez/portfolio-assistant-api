@@ -6,6 +6,7 @@ import pytest
 from app.bootstrap.config import Settings
 from app.domain.evidence import requested_affiliation, verified
 from app.domain.fixture import fixture_message
+from app.domain.portfolio_paths import canonical_key
 from tests.support import retrieve
 
 
@@ -57,44 +58,44 @@ def test_affiliation_distinguishes_target_roles_from_employer_claims(
     reason='requires the reviewed public corpus in PostgreSQL and Neo4j',
 )
 @pytest.mark.parametrize(
-    ('question', 'locale', 'path', 'needle'),
+    ('question', 'locale', 'key', 'needle'),
     [
         (
             'What is Filomena?',
             'en',
-            'src/content/en/projects.ts',
+            'en/projects',
             'Health-sciences exams',
         ),
         (
             'Which technologies were used in Filomena?',
             'en',
-            'src/content/en/projects.ts',
+            'en/projects',
             'Laravel',
         ),
         (
             'What did Gonzalo do at Rampy?',
             'en',
-            'src/content/en/experience.ts',
+            'en/experience',
             'Rampy',
         ),
         (
             '¿Dónde estudió Gonzalo?',
             'es',
-            'src/content/es/education.ts',
+            'es/education',
             'Universidad Nacional del Sur',
         ),
         ('How is the portfolio built?', 'en', 'README.md', 'Next.js'),
         (
             'Would he be a fit for AI Engineer?',
             'en',
-            'src/content/en/experience.ts',
+            'en/experience',
             'retrieval',
         ),
     ],
 )
-def test_reviewed_direct_questions(question, locale, path, needle):
+def test_reviewed_direct_questions(question, locale, key, needle):
     rows, commits = retrieve(question, locale)
-    assert rows and rows[0]['path'] == path
+    assert rows and canonical_key(rows[0]['path']) == key
     assert len(commits[0]) == 40
     evidence = '\n'.join(
         f'PUBLIC SOURCE {row["path"]} lines {row["start_line"]}-{row["end_line"]}:\n{row["content"]}'
@@ -112,8 +113,8 @@ def test_unknown_question_has_no_evidence_and_graph_is_bounded():
     graph, _ = retrieve('What is Filomena?', 'en', strategy='graph')
     hybrid, _ = retrieve('What is Filomena?', 'en', strategy='hybrid')
     assert graph and hybrid
-    assert all(row['path'] == 'src/content/en/projects.ts' for row in graph)
-    assert hybrid[0]['path'] == 'src/content/en/projects.ts'
+    assert all(canonical_key(row['path']) == 'en/projects' for row in graph)
+    assert canonical_key(hybrid[0]['path']) == 'en/projects'
 
 
 @pytest.mark.integration
@@ -128,7 +129,7 @@ def test_graph_outage_falls_back_to_verified_text(monkeypatch):
         'app.adapters.retrieval.KnowledgeIndex.relationships', unavailable
     )
     rows, _ = retrieve('What is Filomena?', 'en')
-    assert rows and rows[0]['path'] == 'src/content/en/projects.ts'
+    assert rows and canonical_key(rows[0]['path']) == 'en/projects'
 
 
 @pytest.mark.parametrize(
