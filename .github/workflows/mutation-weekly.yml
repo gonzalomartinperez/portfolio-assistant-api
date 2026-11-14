@@ -1,0 +1,52 @@
+name: Weekly mutation tests
+'on':
+  schedule:
+  - cron: '17 4 * * 1'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  AI_PROVIDER: fixture
+  ALLOW_PAID_AI: 'false'
+  LANGSMITH_TRACING: 'false'
+jobs:
+  mutation:
+    name: Full mutation tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        version: 0.13.1
+        save-cache: false
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - name: Run full scoped mutation campaign
+      run: |
+        mkdir -p artifacts
+        uv run mutmut run --max-children 2
+        uv run mutmut results --all true > artifacts/mutation-results.txt
+        uv run mutmut export-cicd-stats
+        uv run python -m scripts.mutation_gate --warn
+    - name: Retain mutation evidence
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: mutation-results
+        path: |
+          artifacts/mutation-results.txt
+          mutants/mutmut-cicd-stats.json
+        retention-days: 14
+        if-no-files-found: ignore

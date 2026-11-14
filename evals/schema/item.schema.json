@@ -1,0 +1,398 @@
+{
+  "$defs": {
+    "Attack": {
+      "additionalProperties": false,
+      "description": "Red-team metadata (assistant-quality.md section 9) of an item in the attack pack.\n\n``bad_output`` is what the scripted adversarial provider emits (``{canary}`` and\n``{prompt}`` are substituted, the text repeats ``repeat`` times); with ``trigger`` it\ncomplies only when that text reached it in the evidence. ``evidence`` adds\nin-memory poisoned documents and ``context`` is the raw presentation context sent.",
+      "properties": {
+        "bad_output": {
+          "default": "",
+          "title": "Bad Output",
+          "type": "string"
+        },
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "context": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context"
+        },
+        "evidence": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "expected": {
+          "enum": [
+            "rail_blocked",
+            "completion_blocked",
+            "model_responsibility"
+          ],
+          "title": "Expected",
+          "type": "string"
+        },
+        "owasp": {
+          "enum": [
+            "LLM01",
+            "LLM02",
+            "LLM05",
+            "LLM07",
+            "LLM08",
+            "LLM09",
+            "LLM10"
+          ],
+          "title": "Owasp",
+          "type": "string"
+        },
+        "rail": {
+          "anyOf": [
+            {
+              "enum": [
+                "citation_markers",
+                "output_bound",
+                "input_length",
+                "presentation_context",
+                "input_minimization",
+                "source_bounds",
+                "language_resolution"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rail"
+        },
+        "repeat": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "trigger": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trigger"
+        }
+      },
+      "required": [
+        "category",
+        "owasp",
+        "expected"
+      ],
+      "title": "Attack",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "Match": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "match": {
+          "minLength": 1,
+          "title": "Match",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "match"
+      ],
+      "title": "Match",
+      "type": "object"
+    },
+    "Quarantine": {
+      "additionalProperties": false,
+      "properties": {
+        "deadline": {
+          "format": "date",
+          "title": "Deadline",
+          "type": "string"
+        },
+        "issue": {
+          "minLength": 1,
+          "title": "Issue",
+          "type": "string"
+        },
+        "owner": {
+          "minLength": 1,
+          "title": "Owner",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issue",
+        "owner",
+        "deadline"
+      ],
+      "title": "Quarantine",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "const": "user",
+          "default": "user",
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Turn",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assertions": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Assertions",
+      "type": "array"
+    },
+    "assistant": {
+      "const": "portfolio",
+      "default": "portfolio",
+      "title": "Assistant",
+      "type": "string"
+    },
+    "attack": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Attack"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "corpus_snapshot_id": {
+      "minLength": 1,
+      "title": "Corpus Snapshot Id",
+      "type": "string"
+    },
+    "created": {
+      "format": "date",
+      "title": "Created",
+      "type": "string"
+    },
+    "expected_behavior": {
+      "enum": [
+        "answer",
+        "abstain",
+        "refuse",
+        "clarify"
+      ],
+      "title": "Expected Behavior",
+      "type": "string"
+    },
+    "forbidden_claims": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Match"
+      },
+      "title": "Forbidden Claims",
+      "type": "array"
+    },
+    "gold_evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Gold Evidence Ids",
+      "type": "array"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "judge_rubric_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Judge Rubric Id"
+    },
+    "last_verified": {
+      "format": "date",
+      "title": "Last Verified",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en",
+        "es"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "memory_fixture": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Fixture"
+    },
+    "provenance": {
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "quarantine": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Quarantine"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "required_facts": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Match"
+      },
+      "title": "Required Facts",
+      "type": "array"
+    },
+    "retired_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retired Reason"
+    },
+    "reviewer": {
+      "minLength": 1,
+      "title": "Reviewer",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "default": "active",
+      "enum": [
+        "active",
+        "quarantined",
+        "retired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "strata": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Strata",
+      "type": "array"
+    },
+    "tools": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tools"
+    },
+    "turns": {
+      "items": {
+        "$ref": "#/$defs/Turn"
+      },
+      "minItems": 1,
+      "title": "Turns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "locale",
+    "strata",
+    "turns",
+    "expected_behavior",
+    "assertions",
+    "provenance",
+    "reviewer",
+    "created",
+    "last_verified",
+    "corpus_snapshot_id"
+  ],
+  "title": "Item",
+  "type": "object"
+}

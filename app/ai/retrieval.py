@@ -25,7 +25,7 @@ from app.domain.web_policy import TOPICS
 
 class PublicRetrieval:
     def __init__(self, index: KnowledgeIndex, strategy: str = 'hybrid'):
-        if strategy not in ('hybrid', 'vector', 'graph'):
+        if strategy not in ('hybrid', 'vector', 'lexical', 'graph'):
             raise ValueError('unsupported retrieval strategy')
         self.index = index
         self.strategy = strategy
@@ -168,6 +168,8 @@ class PublicRetrieval:
                 ]
         if self.strategy == 'vector':
             ranked = vector
+        elif self.strategy == 'lexical':
+            ranked = lexical
         elif self.strategy == 'graph':
             ranked = graph
         elif relationship and graph:

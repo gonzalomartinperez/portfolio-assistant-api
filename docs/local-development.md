@@ -10,9 +10,13 @@ uv sync --frozen
 source scripts/fixture-env.sh
 docker compose -f infra/compose/local.yaml up --build -d --wait
 uv run python -m app.migrate
-uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
+uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
+
+`evals/corpus` is the frozen public corpus snapshot ([ADR016](adrs/016-frozen-public-corpus-snapshot.md));
+`uv run python -m scripts.refresh_corpus --check` verifies it offline. The earlier
+`--source github --ref <sha>` mode still works for one-off comparisons.
 
 The fixture script uses project `assistant-fixture` and loopback ports
 55433 (PostgreSQL), 57688 (Bolt), 57475 (Neo4j HTTP). Override `ASSISTANT_PROJECT`,
@@ -39,14 +43,14 @@ answer text and deletes its session. It does not print credentials.
 ## Verification
 
 ```sh
-uv run ruff check app tests contracts scripts
-uv run ruff format --check app tests contracts scripts
+uv run ruff check app tests contracts scripts evals
+uv run ruff format --check app tests contracts scripts evals
 uv run mypy
 uv run pytest -q                         # Pure/contract tests; real-service tests skip.
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.
 uv run python -m contracts.export
 git diff --exit-code contracts
-uv run python -m scripts.evaluate_retrieval
+uv run --group eval python -m evals.harness.retrieval
 uv run python -m scripts.benchmark_fixture
 uv run python -m scripts.scan_secrets
 docker build -f infra/docker/app/Dockerfile -t portfolio-assistant-api:fixture .

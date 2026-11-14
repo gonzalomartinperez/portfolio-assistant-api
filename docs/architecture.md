@@ -1,7 +1,7 @@
 # Architecture and responsibilities
 
 The API is a modular monolith. Six packages express dependency direction and
-cohesive capabilities, enforced by `tests/test_architecture.py`:
+cohesive capabilities, enforced by `tests/architecture/test_architecture.py`:
 
 ```text
 presentation ──► application ──► domain
@@ -90,8 +90,10 @@ Expired sessions are rejected immediately; physical deletion follows that schedu
 Spend totals retain amount/time for budget enforcement, with deleted run references
 set to null. See [privacy and threats](threat-model.md) and [operations](deployment.md).
 
-See [ADR 001](adrs/001-dependency-direction.md), [GraphRAG](graph-retrieval.md),
-and [stream contract](api-contract.md) for decisions and behavior details.
+See [ADR 001](adrs/001-dependency-direction.md), [ADR 014](adrs/014-prompt-registry.md), [GraphRAG](graph-retrieval.md),
+and [stream contract](api-contract.md) for decisions and behavior details. The offline
+evaluation harness (`evals/harness`, outside the image) is recorded in
+[ADR011](adrs/011-eval-harness.md); its cassette lane in [ADR013](adrs/013-provider-port-cassettes.md).
 
 ## Bounded conversational context
 
@@ -112,7 +114,7 @@ See [private observability](private-observability.md) for retention and drop sem
 
 ## Enforced architectural contracts
 
-`tests/test_architecture.py` exercises the real stdlib AST checker in
+`tests/architecture/test_architecture.py` exercises the real stdlib AST checker in
 `scripts/check_architecture.py`, including negative examples. Run it alone with
 `uv run python -m scripts.check_architecture`; the existing required Quality job
 runs the same guard through the offline test suite. No extra build or service is needed.

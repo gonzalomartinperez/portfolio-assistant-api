@@ -30,7 +30,7 @@ Load these selectively: a citation-policy fix does not require every ingest deta
    results need source-backed relationships, not only stored entities. Preserve
    abstention/clarification instead of inventing professional claims.
 4. In an isolated fixture environment from [local setup](../../../docs/local-development.md),
-   run `uv run python -m scripts.evaluate_retrieval` and the relevant knowledge/
+   run `uv run --group eval python -m evals.harness.retrieval` and the relevant knowledge/
    integration tests. Capture per-case source evidence and timings; do not loosen
    expectations merely to make all strategies pass. Indexing needs explicit local
    fixture authority and a separate Compose project/database.
