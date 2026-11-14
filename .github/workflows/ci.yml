@@ -269,7 +269,14 @@ jobs:
         COVERAGE_FILE: artifacts/coverage-combined.data
     - name: Require 90 percent coverage on the lines this pull request changes
       if: github.event_name == 'pull_request'
-      run: uv run diff-cover artifacts/coverage.xml --compare-branch="origin/${BASE_REF}" --fail-under=90
+      # A pull request whose app/ changes are provably `ruff format` output of the base (for example
+      # the mechanical formatting PR) has no changed behavior to cover; anything else runs diff-cover.
+      run: |
+        if uv run python -m scripts.format_only_diff --base "origin/${BASE_REF}" app; then
+          echo '::notice title=diff-cover::app/ changes are ruff format output of the base; diff coverage not applicable'
+        else
+          uv run diff-cover artifacts/coverage.xml --compare-branch="origin/${BASE_REF}" --fail-under=90
+        fi
       env:
         BASE_REF: ${{ github.base_ref }}
     - name: Retain the combined coverage report
