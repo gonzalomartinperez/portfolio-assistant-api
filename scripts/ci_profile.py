@@ -18,6 +18,7 @@ NAMES = {
     'static': 'Static checks',
     'database': 'Database tests',
     'container': 'Container verification',
+    'mutation': 'Mutation tests',
     'ci-gate': 'ci-gate',
     'checks': 'Required checks',
 }
@@ -201,6 +202,15 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
         errors.append('secrets: must run unconditionally')
     if jobs.get('classify', {}).get('needs') or jobs.get('classify', {}).get('if'):
         errors.append('classify: must be the unconditional root job')
+    mutation = jobs.get('mutation', {})
+    if (
+        mutation.get('if') != "github.event_name == 'pull_request'"
+        or mutation.get('needs')
+        or mutation.get('timeout-minutes') != 30
+    ):
+        errors.append(
+            'mutation: independent PR-only advisory job with 30-minute budget'
+        )
     gate = jobs.get('ci-gate', {})
     if (
         gate.get('if') not in ('always()', '${{ always() }}')
@@ -208,9 +218,9 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
     ):
         errors.append('ci-gate: must always run without permissions')
     if sorted(as_list(gate.get('needs'))) != sorted(
-        key for key in jobs if key not in ('checks', 'ci-gate')
+        key for key in jobs if key not in ('checks', 'ci-gate', 'mutation')
     ):
-        errors.append('ci-gate: must need every other job except checks')
+        errors.append('ci-gate: must need every required job except checks')
     if 'ci-gate' in as_list(gate.get('needs')):
         errors.append('ci-gate: cannot need itself')
     gate_steps = gate.get('steps', [])

@@ -404,3 +404,42 @@ endpoint. The size ratchet fails when `docker image inspect` reports a size abov
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
 `hadolint ignore=DL3003,DL4006` with its reason.
+
+## Mutation testing (M2-11)
+
+[ADR023](adrs/023-mutation-testing-mutmut.md) records the Python 3.14 spike.
+`ci.yml` runs a PR-only `mutation` job (30 minutes, two workers). It diffs
+against the PR base with `git diff base...HEAD`, intersects changed Python files
+with the explicit `[tool.mutmut]` scope, and narrows the disposable checkout's
+configuration before generation. Deleted, unscoped and test files are excluded;
+no matching source files means a clean skip. Tests use the offline unit lane,
+fixture providers and no integration tests. Tests themselves are never mutated.
+
+`mutation-weekly.yml` runs the full configured scope on Mondays at 04:17 UTC or
+by manual dispatch (90 minutes, two workers). Both jobs retain per-mutant text
+results and mutmut's aggregate JSON for 14 days. Only synthetic mutation outcomes
+are uploaded. GitHub schedules begin operating when the workflow reaches the
+default branch; local verification does not establish a successful hosted run.
+
+The stdlib gate reads `mutmut results --all true`: 3.8.1's `export-cicd-stats`
+JSON lacks file identities, so it cannot calculate package scores. The score is
+confirmed kills divided by all measured outcomes, including timeouts, no-tests,
+skips and errors in the denominator. Unchecked mutants are not measured. Scores
+are grouped by domain, application, AI retrieval and graders. Targets are 75%,
+85% for graders and budget math; the break floor is 60%.
+`tests/mutation-baseline.json` records measured ratchets and the exact sample;
+null means unmeasured, not zero-quality evidence. The full weekly run supplies
+the remaining measurements; ratchets may only increase.
+
+Run `uv run python -m scripts.mutation_gate --results PATH` after collecting
+results. `--warn` or `MUTATION_MODE=warn` expresses rollout intent; warning mode
+is also the default through 2026-11-28 UTC. Starting 2026-11-29 it fails below
+60% or the committed ratchet, even with `--warn`. `--enforce` activates failure
+immediately. Invalid or empty evidence always fails.
+
+Mutation remains outside `ci-gate` and the classifier map: the pinned shared
+action's handling of this unclassified PR-only/skipped advisory job has not been
+verified locally. The local profile guard explicitly permits this one independent
+job while preserving every existing required dependency. This also means mutation
+shortfalls do not block merging through `ci-gate`, including after warning expiry;
+promoting mutation to a required check needs verified shared-gate semantics.

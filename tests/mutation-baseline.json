@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "warn_until": "2026-11-28",
+  "break": 60,
+  "groups": {
+    "domain": {
+      "ratchet": 60.0,
+      "target": 75
+    },
+    "application": {
+      "ratchet": null,
+      "target": 75
+    },
+    "ai": {
+      "ratchet": null,
+      "target": 75
+    },
+    "graders": {
+      "ratchet": null,
+      "target": 85
+    }
+  },
+  "measurement": {
+    "date": "2026-11-14",
+    "python": "3.14.8",
+    "mutmut": "3.8.1",
+    "scope": [
+      "app/domain/budget.py"
+    ],
+    "tests": "tests/unit/test_operations.py -k reservation_covers_bounded_request_and_cutoff",
+    "wall_seconds": 92.37,
+    "killed": 24,
+    "survived": 16,
+    "timeout": 0,
+    "total": 40,
+    "score": 60.0,
+    "note": "Domain ratchet seeded by the budget sample only; other groups await the full weekly run."
+  },
+  "module_targets": {
+    "app/domain/budget.py": 85
+  }
+}
