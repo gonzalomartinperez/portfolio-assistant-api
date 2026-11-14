@@ -3,18 +3,19 @@
 import asyncio
 from uuid import UUID, uuid4
 
+from app.adapters.postgres.db import Connect
 from app.adapters.postgres.ledger import MONTHLY_SPEND_SQL
 from app.domain.errors import BudgetExhaustedError
 from app.domain.web_budget import WebBudget
 
 
 class WebAccounting:
-    def __init__(self, connection, budget: WebBudget):
+    def __init__(self, connection: Connect, budget: WebBudget) -> None:
         self.connection = connection
         self.budget = budget
 
     async def reserve(self) -> UUID:
-        def operation():
+        def operation() -> UUID:
             identifier = uuid4()
             with self.connection() as conn:
                 conn.execute('SELECT pg_advisory_xact_lock(472019)')
@@ -34,7 +35,7 @@ class WebAccounting:
     ) -> None:
         cost = self.budget.cost(input_tokens, output_tokens, calls)
 
-        def operation():
+        def operation() -> None:
             with self.connection() as conn:
                 conn.execute(
                     "UPDATE spend_ledger SET actual_usd=%s,input_tokens=%s,output_tokens=%s WHERE id=%s AND kind='web_search' AND actual_usd IS NULL",

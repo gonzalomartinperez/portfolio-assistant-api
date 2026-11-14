@@ -14,7 +14,7 @@ uv run python -m scorecard check --current artifacts/scorecard.json --ratchets s
 uv run python -m scorecard tighten --current artifacts/scorecard.json --ratchets scorecard/ratchets
 ```
 
-Inputs in `artifacts/` (each optional): `ruff.json` (`ruff check --output-format json`), `mypy.txt`,
+Inputs in `artifacts/` (each optional): `ruff.json` (`ruff check --output-format json`), `mypy.txt`, `mypy-strict-app.txt` (`mypy --strict app`, the M3-5 typing ratchet),
 `unit.xml` and `integration.xml` (junit), `coverage.xml`, `mutation.json` (`{"score": 0.0}` placeholder),
 `image-sizes.json` (`{"api_bytes": 0, "worker_bytes": 0}`), `golden.json` (`{"passed": 0, "total": 0}`).
 Judged axes come from the latest `docs/evidence/scores/<date>.md`, else `not yet scored`.

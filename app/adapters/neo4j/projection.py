@@ -1,11 +1,20 @@
 """Reviewed graph projection. Labels/relationship types are fixed, values parameterized."""
 
 import hashlib
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from app.domain.graph import facts
 
 
-def project(graph, version, records, documents, *, explicit_facts=None):
+def project(
+    graph: Any,
+    version: str,
+    records: Sequence[Mapping[str, Any]],
+    documents: Mapping[str, str],
+    *,
+    explicit_facts: Mapping[str, Sequence[Any]] | None = None,
+) -> int:
     graph.run(
         'CREATE CONSTRAINT document_identity IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE'
     ).consume()
@@ -13,7 +22,7 @@ def project(graph, version, records, documents, *, explicit_facts=None):
         'CREATE CONSTRAINT entity_identity IF NOT EXISTS FOR (e:Entity) REQUIRE e.id IS UNIQUE'
     ).consume()
 
-    def write(tx):
+    def write(tx: Any) -> int:
         tx.run(
             'MATCH (n:Document {version:$version}) DETACH DELETE n', version=version
         ).consume()
@@ -88,7 +97,7 @@ def project(graph, version, records, documents, *, explicit_facts=None):
             raise RuntimeError('graph projection incomplete')
         return count
 
-    count = graph.execute_write(write)
+    count: int = graph.execute_write(write)
     graph.run(
         'CREATE INDEX entity_version_normalized IF NOT EXISTS FOR (e:Entity) ON (e.version,e.normalized)'
     ).consume()

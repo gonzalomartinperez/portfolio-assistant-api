@@ -5,8 +5,10 @@ import json
 from collections.abc import AsyncGenerator, Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
+from typing import Final, cast
 
-from openai import APIError
+from openai import APIError, AsyncOpenAI
+from openai.types.responses import ResponseInputParam
 
 from app.adapters.providers.voice import developer_prompt
 from app.application.contracts import GenerationFailedError, Usage
@@ -22,7 +24,7 @@ from app.domain.errors import ProviderUnavailableError
 from app.domain.fixture import fixture_message
 from app.domain.privacy import minimize_visitor_text
 
-REASONING_EFFORT = 'medium'
+REASONING_EFFORT: Final = 'medium'
 
 
 @dataclass(frozen=True)
@@ -98,7 +100,7 @@ class FixtureProvider:
 class ResponsesProvider:
     def __init__(
         self,
-        client,
+        client: AsyncOpenAI,
         model: str,
         rejects_language: Callable[[str], bool] | None = None,
         web_search: WebSearch | None = None,
@@ -136,7 +138,7 @@ class ResponsesProvider:
         try:
             events = await self.client.responses.create(
                 model=self.model,
-                input=messages,
+                input=cast(ResponseInputParam, messages),
                 max_output_tokens=MAX_OUTPUT_TOKENS,
                 reasoning={'effort': REASONING_EFFORT},
                 store=False,

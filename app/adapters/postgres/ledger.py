@@ -4,7 +4,9 @@ import logging
 from decimal import ROUND_CEILING, Decimal
 from uuid import UUID, uuid4
 
+from app.adapters.postgres.db import Connect
 from app.application.contracts import Usage
+from app.domain.budget import Budget
 from app.domain.errors import BudgetExhaustedError
 
 MONTHLY_SPEND_SQL = (
@@ -13,7 +15,9 @@ MONTHLY_SPEND_SQL = (
 )
 
 
-def reserve(run_id: str, amount: Decimal, *, connection, cutoff: Decimal) -> None:
+def reserve(
+    run_id: str, amount: Decimal, *, connection: Connect, cutoff: Decimal
+) -> None:
     if amount <= 0 or not amount.is_finite():
         raise ValueError('reservation must be finite and positive')
     with connection() as conn:
@@ -32,7 +36,7 @@ def settle(
     input_tokens: int,
     output_tokens: int,
     *,
-    connection,
+    connection: Connect,
     input_price: Decimal,
     output_price: Decimal,
     prompt_version: str | None = None,
@@ -62,7 +66,7 @@ def settle(
 
 
 class PostgresAccounting:
-    def __init__(self, connection, budget):
+    def __init__(self, connection: Connect, budget: Budget) -> None:
         self.connection = connection
         self.budget = budget
 
@@ -91,7 +95,7 @@ class PostgresAccounting:
 class EmbeddingAccounting:
     """Independent ledger entries also cover indexing without a conversation run."""
 
-    def __init__(self, connection, monthly: Decimal, price: Decimal):
+    def __init__(self, connection: Connect, monthly: Decimal, price: Decimal) -> None:
         if not price.is_finite() or price <= 0:
             raise ValueError('embedding price must be positive')
         self.connection = connection

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Any
 
 from neo4j import READ_ACCESS, Query
 from neo4j.exceptions import Neo4jError, ServiceUnavailable, SessionExpired
@@ -10,23 +11,26 @@ from app.adapters.neo4j.read_queries import (
     RELATED_RELATIONSHIPS_QUERY,
     probe_reads,
 )
+from app.adapters.postgres.db import Connect
 from app.adapters.providers.embedding import FixtureEmbeddings, vector
 from app.application.embeddings import Embeddings
 from app.application.knowledge import Chunk, Corpus
+from app.application.language import Locale
 from app.domain.errors import RejectedError
+from app.domain.knowledge import Suggestion
 from app.domain.portfolio_paths import corpus_version, profile_paths
 
 
 class KnowledgeIndex:
     def __init__(
         self,
-        connect,
-        graph,
+        connect: Connect,
+        graph: Any,
         embeddings: Embeddings | None = None,
         *,
         database: str = 'neo4j',
         freshness: int | None = None,
-    ):
+    ) -> None:
         self.connect = connect
         self.graph = graph
         self.embeddings = embeddings or FixtureEmbeddings()
@@ -34,7 +38,7 @@ class KnowledgeIndex:
         self.freshness = freshness
 
     async def candidates(self, question: str) -> Corpus | None:
-        def read():
+        def read() -> tuple[Any, Any, frozenset[str], tuple[str, ...]] | None:
             with self.connect() as conn:
                 version = conn.execute(
                     "SELECT id,source_commit,embedding_provider,embedding_model FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1"
@@ -92,7 +96,7 @@ class KnowledgeIndex:
             else 'embedding'
         )
 
-        def neighbors():
+        def neighbors() -> tuple[str, ...]:
             with self.connect() as conn:
                 return tuple(
                     r['id']
@@ -116,7 +120,7 @@ class KnowledgeIndex:
     async def relationships(
         self, version: str, terms: set[str], locale: str = 'en', expand: bool = False
     ) -> tuple[str, ...]:
-        def read():
+        def read() -> tuple[str, ...]:
             try:
                 with self.graph.session(
                     database=self.database,
@@ -173,7 +177,9 @@ class KnowledgeIndex:
         ) as graph:
             probe_reads(graph, version, document['id'])
 
-    def starter_prompts(self, locale):
+    def starter_prompts(
+        self, locale: Locale
+    ) -> tuple[str, str, tuple[Suggestion, ...]]:
         from app.domain.knowledge import suggestions
 
         with self.connect() as conn:

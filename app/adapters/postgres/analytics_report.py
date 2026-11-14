@@ -3,8 +3,9 @@
 from collections import Counter
 from datetime import UTC
 
+from app.adapters.postgres.db import Connect
 from app.domain.analytics_country import country_label
-from app.domain.analytics_interactions import REGIONS
+from app.domain.analytics_interactions import REGIONS, SHELL_REGIONS
 from app.domain.analytics_periods import calendar_window
 from app.domain.analytics_report import (
     ActivityTotals,
@@ -19,7 +20,7 @@ from app.domain.analytics_report import (
 )
 
 
-def read_report(connection, query: AnalyticsQuery) -> ProductReport:
+def read_report(connection: Connect, query: AnalyticsQuery) -> ProductReport:
     with connection() as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         conn.execute("SET LOCAL statement_timeout='2000ms'")
@@ -111,9 +112,7 @@ def read_report(connection, query: AnalyticsQuery) -> ProductReport:
                 regions.get((region, 'public_click'), 0),
                 regions.get((region, 'section_exposure'), 0),
             )
-            for region in sorted(
-                REGIONS[query.section] | {'site-header', 'site-footer'}
-            )
+            for region in sorted(REGIONS[query.section] | SHELL_REGIONS)
         ),
         cells=tuple(
             HeatmapCell(row['cell_x'], row['cell_y'], row['count'])

@@ -1,17 +1,18 @@
 """Transactional deduplication, global quotas and server-UTC aggregates."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from psycopg import sql
 
 from app.adapters.postgres.analytics_report import read_report
+from app.adapters.postgres.db import Connect
 from app.domain.analytics import ProductEvent
 from app.domain.analytics_country import country_label
 from app.domain.analytics_interactions import PublicInteraction
 from app.domain.analytics_report import AnalyticsQuery, ProductReport
 
 
-def prune_product_counts(conn) -> None:
+def prune_product_counts(conn: Any) -> None:
     conn.execute(
         "DELETE FROM product_event_counts WHERE day < (now() AT TIME ZONE 'UTC')::date-6"
     )
@@ -24,7 +25,7 @@ def prune_product_counts(conn) -> None:
 
 
 class PostgresProductAnalytics:
-    def __init__(self, connection):
+    def __init__(self, connection: Connect) -> None:
         self.connection = connection
 
     def record(
@@ -97,7 +98,7 @@ class PostgresProductAnalytics:
             )
         return 'accepted'
 
-    def snapshot(self):
+    def snapshot(self) -> dict[str, Any]:
         with self.connection() as conn:
             conn.execute("SET LOCAL statement_timeout='2000ms'")
             rows = conn.execute(

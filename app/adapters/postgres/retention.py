@@ -1,9 +1,12 @@
 """Prune expired anonymous data and its LangGraph checkpoints."""
 
+from collections.abc import Callable
+
 from app.adapters.postgres.analytics import prune_product_counts
+from app.adapters.postgres.db import Connect
 
 
-def prune(*, connection, cleanup) -> dict[str, int]:
+def prune(*, connection: Connect, cleanup: Callable[[], object]) -> dict[str, int]:
     with connection() as conn:
         run_ids = [
             str(row['id'])
