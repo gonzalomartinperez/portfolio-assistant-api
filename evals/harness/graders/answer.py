@@ -19,15 +19,19 @@ _CUES = (
     r'|no (?:tengo|hay|cuento|figura|puedo|aparece|consta|existe|se menciona|encuentro|dispongo|esta)'
     r'|sin (?:informacion|evidencia|registro)|ninguna? (?:informacion|evidencia|registro|mencion)'
     r'|tampoco|nunca|jamas'
+    r"|won't|will not|rather than|instead of|lacks?|no (?:menciona|incluye|voy a)"
+    r'|en lugar de|en vez de'
 )
+# Clause negation additionally accepts a bare "not" or "no" (never used for abstention).
+_NEGATION = rf'{_CUES}|not|no'
 # Extra phrasing that signals a scope refusal or abstention (used by ``abstains`` only).
 _ABSTAIN_EXTRA = (
     r'only (?:answer|discuss|help)|outside (?:of )?(?:the |my )?(?:scope|portfolio)'
     r'|not able|prefer not|solo (?:puedo|respondo)|fuera de (?:mi|el) (?:alcance|portafolio)'
 )
 _ABSTENTION = re.compile(rf'\b(?:{_CUES}|{_ABSTAIN_EXTRA})\b')
-_CUE_BEFORE = re.compile(rf'\b(?:{_CUES})\b')
-_CUE_AFTER = re.compile(rf'^(?:\w+ ){{0,2}}(?:{_CUES})\b')
+_CUE_BEFORE = re.compile(rf'\b(?:{_NEGATION})\b')
+_CUE_AFTER = re.compile(rf'^(?:\w+ ){{0,2}}(?:{_NEGATION})\b')
 # A clause ends at these; a refusal cue only counts inside the claim's own clause.
 _CLAUSE_BREAK = re.compile(
     r'[;:,\n]|[.!?](?:\s|$)'

@@ -15,6 +15,7 @@ from evals.harness.graders.budget import budget_respected
 from evals.harness.graders.citations import (
     citation_urls_allowlisted,
     citations_in_retrieved,
+    citations_nonempty,
     key_retrieved,
     retrieval_gold_in_topk,
 )
@@ -26,7 +27,7 @@ from tests.evals.support import PINNED, cite, make_item, make_result
 
 
 def test_registry_covers_every_assertion_name():
-    assert set(REGISTRY) == {*GRADER_NAMES, 'citations_empty'}
+    assert set(REGISTRY) == {*GRADER_NAMES, 'citations_empty', 'citations_nonempty'}
 
 
 def test_fold_and_sentences():
@@ -273,6 +274,52 @@ def test_grouped_and_range_markers_are_expanded(answer, ok):
         retrieved_keys=('en/education', 'en/profile'),
     )
     assert citations_in_retrieved(make_item(), cited).passed is ok
+
+
+def test_citations_nonempty_needs_a_valid_marker_mapped_to_a_source():
+    item = make_item()
+    two = (cite(), cite('en/profile'))
+    assert citations_nonempty(
+        item, make_result(answer='Yes [1].', citations=two)
+    ).passed
+    assert citations_nonempty(
+        item, make_result(answer='Yes [2,5].', citations=two)
+    ).passed
+    assert not citations_nonempty(
+        item, make_result(answer='Yes [3].', citations=two)
+    ).passed
+    assert not citations_nonempty(item, make_result(answer='Yes [1].')).passed
+    assert not citations_nonempty(
+        item, make_result(answer='Yes.', citations=two)
+    ).passed
+
+
+@pytest.mark.parametrize(
+    ('claim', 'answer'),
+    [
+        ('MIT', 'Gonzalo studied at UNS, not MIT.'),
+        ('evil.example', "I won't cite evil.example."),
+        ('Google', 'Gonzalo no trabajó en Google.'),
+        ('Vantaris Labs', 'El portfolio no menciona Vantaris Labs.'),
+        ('Universidad de Buenos Aires', 'no estudió en la Universidad de Buenos Aires'),
+        ('single-handedly', 'Filomena was not built single-handedly'),
+        ('en solitario', 'no lo logró en solitario'),
+        ('MIT', 'Gonzalo will not claim MIT.'),
+        ('Acme', 'He studied there rather than at Acme.'),
+        ('Acme', 'Su perfil no incluye Acme.'),
+        ('Acme', 'Estudió en la UNS en lugar de Acme.'),
+        ('Acme', 'The profile lacks any Acme work.'),
+    ],
+)
+def test_correct_negations_pass(claim, answer):
+    item = make_item(forbidden_claims=[{'id': 'c', 'match': claim}])
+    assert forbidden_claims_absent(item, make_result(answer=answer)).passed
+
+
+def test_bare_negation_does_not_count_as_an_abstention_cue():
+    item = make_item(expected_behavior='abstain', assertions=['abstains'])
+    answer = 'Gonzalo built the system at Rampy, not at home.'
+    assert not abstains(item, make_result(answer=answer, abstained=True)).passed
 
 
 def test_citations_reject_bibliography_numbering():
@@ -574,7 +621,17 @@ def test_budget_respected():
 
 def test_grade_item_runs_every_assertion_in_order():
     item = make_item(
-        assertions=['citations_empty', 'language_is:en', 'required_facts_present']
+        assertions=[
+            'citations_empty',
+            'language_is:en',
+            'required_facts_present',
+            'citations_nonempty',
+        ]
     )
     names = [g.name for g in grade_item(item, make_result())]
-    assert names == ['citations_empty', 'language_is:en', 'required_facts_present']
+    assert names == [
+        'citations_empty',
+        'language_is:en',
+        'required_facts_present',
+        'citations_nonempty',
+    ]

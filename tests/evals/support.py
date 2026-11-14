@@ -19,7 +19,7 @@ def make_item(**overrides: Any) -> Item:
         'strata': ['answerable_core', 'education'],
         'turns': [{'role': 'user', 'text': 'Where did Gonzalo study?'}],
         'expected_behavior': 'answer',
-        'assertions': ['required_facts_present'],
+        'assertions': ['required_facts_present', 'citations_nonempty'],
         'provenance': 'distilled:legacy-2026-10:education-3',
         'reviewer': 'owner',
         'created': '2026-11-20',

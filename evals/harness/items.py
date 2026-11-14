@@ -33,7 +33,7 @@ GRADER_NAMES = (
     'retrieval_gold_in_topk',
     'budget_respected',
 )
-ASSERTION_NAMES = (*GRADER_NAMES, 'citations_empty')
+ASSERTION_NAMES = (*GRADER_NAMES, 'citations_empty', 'citations_nonempty')
 _LANGUAGE_ASSERTION = re.compile(r'language_is:(en|es)')
 _EVIDENCE_KEY = re.compile(EVIDENCE_KEY_PATTERN)
 
@@ -119,6 +119,11 @@ class Item(Strict):
     def _consistent_content(self) -> Self:
         if self.expected_behavior == 'abstain' and 'abstains' not in self.assertions:
             raise ValueError('abstain items must assert abstains')
+        if (
+            self.expected_behavior == 'answer'
+            and 'citations_nonempty' not in self.assertions
+        ):
+            raise ValueError('answer items must assert citations_nonempty')
         for name in self.assertions:
             if name.startswith('language_is:') and name[-2:] != self.locale:
                 raise ValueError(f'{name} contradicts locale {self.locale}')

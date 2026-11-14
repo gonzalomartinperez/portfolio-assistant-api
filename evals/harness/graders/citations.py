@@ -28,14 +28,29 @@ def key_retrieved(key: str, retrieved: tuple[str, ...]) -> bool:
     return _base(key) in {_base(r) for r in retrieved}
 
 
+def _markers(answer: str) -> set[int]:
+    markers: set[int] = set()
+    for found in _MARKDOWN.finditer(answer):
+        if found[1]:
+            markers |= expand_marker(found[1])
+    return markers
+
+
+def citations_nonempty(
+    item: Item, result: RunResult, ctx: GradingContext | None = None
+) -> GradeResult:
+    """At least one citation marker in the answer maps to a cited source."""
+    valid = {n for n in _markers(result.answer) if 1 <= n <= len(result.citations)}
+    return GradeResult(
+        'citations_nonempty', bool(valid), f'valid markers: {len(valid)}'
+    )
+
+
 def citations_in_retrieved(
     item: Item, result: RunResult, ctx: GradingContext | None = None
 ) -> GradeResult:
     """Markers map to cited sources, cited sources were retrieved, no bibliography lines."""
-    markers: set[int] = set()
-    for found in _MARKDOWN.finditer(result.answer):
-        if found[1]:
-            markers |= expand_marker(found[1])
+    markers = _markers(result.answer)
     stray = sorted(n for n in markers if n < 1 or n > len(result.citations))
     if stray:
         return GradeResult(
