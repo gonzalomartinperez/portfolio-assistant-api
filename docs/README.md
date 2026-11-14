@@ -47,6 +47,7 @@ Background and reasoning behind the design.
 
 - [Architecture and responsibilities](explanation/architecture.md)
 - [Assistant voice](explanation/assistant-voice.md)
+- [Assistant gallery, light and dark](explanation/gallery.md)
 - [Portfolio-first tools and optional web context](explanation/bounded-web-context.md)
 - [Engineering coordination · 2026-10-17](explanation/engineering-coordination.md)
 - [Voluntary context and evidence-based improvement](explanation/feedback-and-improvement.md)

@@ -50,7 +50,7 @@ def license_findings(root: Path) -> list[str]:
             findings.append('The lock root must match project identity/version.')
         readme = (root / 'README.md').read_text()
         if (
-            not re.search(r'^## Software license$', readme, re.MULTILINE)
+            not re.search(r'^## (?:Software license|License)$', readme, re.MULTILINE)
             or '](LICENSE)' not in readme
             or '](THIRD_PARTY_NOTICES.md)' not in readme
         ):

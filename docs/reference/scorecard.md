@@ -22,6 +22,18 @@ Judged axes come from the latest `docs/evidence/scores/<date>.md`, else `not yet
 A missing input is recorded as `null` with status `missing`, and its criterion is `unmet`, never `pass`.
 Criteria without a collector yet (most of D1, D4, D5, D7, D8) are listed as `unmet`.
 
+## README results table
+
+The results table in `README.md` is generated from a committed, dated snapshot
+(`docs/evidence/scorecard-<date>.json`, the output of `scorecard collect`) by `scripts/readme_results.py`.
+A metric the snapshot did not measure renders as "not measured in this snapshot"; no number is typed by hand.
+To refresh it, collect new artifacts, write the snapshot, then update the README:
+
+```bash
+uv run python -m scorecard collect --artifacts <dir> --out docs/evidence/scorecard-<date>.json
+uv run python -m scripts.readme_results --write   # --check exits 1 on drift (tests/tooling/test_readme_results.py)
+```
+
 ## Ratchets
 
 `scorecard/ratchets/*.json` declare, per metric, a `direction` (`lower` or `higher` is better), a `value`
