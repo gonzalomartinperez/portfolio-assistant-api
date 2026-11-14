@@ -4,6 +4,7 @@ import json
 import time
 from pathlib import Path
 
+from app.domain.portfolio_paths import canonical_key
 from tests.support import retrieve
 
 
@@ -14,14 +15,14 @@ def main():
         for case in cases:
             start = time.perf_counter()
             rows, _ = retrieve(case['question'], case['locale'], strategy=strategy)
-            paths = {r['path'] for r in rows}
+            keys = {canonical_key(r['path']) for r in rows}
             content = '\n'.join(r['content'] for r in rows)
             passed = (
                 (
-                    all(p in paths for p in case['paths'])
+                    set(case['qrels']) <= keys
                     and all(n in content for n in case['contains'])
                 )
-                if case['paths']
+                if case['qrels']
                 else not rows
             )
             results.append(
@@ -32,7 +33,8 @@ def main():
                     'passed': passed,
                     'elapsed_ms': round((time.perf_counter() - start) * 1000, 1),
                     'sources': len(rows),
-                    'paths': sorted(paths),
+                    'evidence_keys': sorted(keys),
+                    'paths': sorted({r['path'] for r in rows}),
                 }
             )
     print(
