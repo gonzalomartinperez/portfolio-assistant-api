@@ -1,0 +1,30 @@
+{
+  "skill": "review-change",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "review-change-1",
+      "prompt": "Review PR 42 before I merge it",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "review-change-2",
+      "prompt": "Can you check this diff for bugs?",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "review-change-3",
+      "prompt": "Give me a second look at the staged changes",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

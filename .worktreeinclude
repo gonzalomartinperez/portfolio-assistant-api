@@ -1,0 +1,2 @@
+# Non-secret local files copied into new worktrees. There are none today.
+# Never list .env, .env.* or any file holding a key, token or password.

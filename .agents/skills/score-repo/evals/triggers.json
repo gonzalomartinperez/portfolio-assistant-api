@@ -1,0 +1,76 @@
+{
+  "skill": "score-repo",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "What is the repo score now?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Run the scorecard and compare with baselines",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Prepare the evidence pack for the milestone",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Did any quality ratchet regress?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Score this repository for the M2 safe point",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Give me the three-lens quality status",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Fix the coverage regression",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Raise the coverage threshold",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Review the scorecard code",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write the milestone summary email",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

@@ -87,6 +87,39 @@ def test_catalog_rejects_invalid_or_unsafe_resources(catalog, mutation):
     assert 'x' * 40 not in str(errors)
 
 
+def test_shared_harness_skill_with_portable_metadata_is_accepted(catalog):
+    shared = catalog / '.agents/skills/write-adr'
+    shared.mkdir()
+    (shared / 'SKILL.md').write_text(
+        '---\nname: write-adr\ndescription: "Writes a decision record."\n'
+        'metadata:\n  owner: someone\n  last-reviewed: "2026-11-14"\n'
+        '  version: "1.0.0"\n---\n\nBody.\n'
+    )
+    (catalog / '.claude/skills/write-adr').symlink_to('../../.agents/skills/write-adr')
+    assert validate(catalog) == []
+
+
+@pytest.mark.parametrize(
+    'frontmatter',
+    [
+        'name: unlisted-skill\ndescription: "Not a shared or api skill."\n',
+        'name: write-adr\ndescription: "x"\nmetadata: text\n',
+        'name: write-adr\ndescription: "x"\nmetadata:\n  owner: someone\n',
+        (
+            'name: write-adr\ndescription: "x"\nmetadata:\n  owner: a\n'
+            '  last-reviewed: b\n  version: c\n  extra: d\n'
+        ),
+    ],
+)
+def test_unknown_names_and_malformed_metadata_are_rejected(catalog, frontmatter):
+    name = 'write-adr' if 'write-adr' in frontmatter else 'unlisted-skill'
+    folder = catalog / '.agents/skills' / name
+    folder.mkdir()
+    (folder / 'SKILL.md').write_text(f'---\n{frontmatter}---\n\nBody.\n')
+    (catalog / '.claude/skills' / name).symlink_to(f'../../.agents/skills/{name}')
+    assert validate(catalog)
+
+
 @pytest.mark.parametrize('setting', ['false', '"true"', 'null', '[]'])
 def test_codex_policy_cannot_disable_automatic_selection(catalog, setting):
     client = catalog / '.agents/skills/api-example/agents/openai.yaml'

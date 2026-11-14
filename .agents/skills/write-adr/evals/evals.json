@@ -1,0 +1,30 @@
+{
+  "skill": "write-adr",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "write-adr-1",
+      "prompt": "Record this decision as an ADR",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "write-adr-2",
+      "prompt": "Write an ADR for moving to Vitest",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "write-adr-3",
+      "prompt": "We decided to keep Coolify, document it",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

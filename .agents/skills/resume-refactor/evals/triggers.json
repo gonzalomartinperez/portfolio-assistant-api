@@ -1,0 +1,76 @@
+{
+  "skill": "resume-refactor",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Where were we on the refactor?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Continue the master refactor",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Resume from the last checkpoint",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Start of session: pick up the next milestone item",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "What is the next task after checkpoint M1?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Continue where the previous session stopped",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Start milestone M5 now",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Summarize what we did yesterday in chat",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Create the M2 roadmap",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Tag checkpoint/M1",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

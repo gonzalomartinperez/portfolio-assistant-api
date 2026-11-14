@@ -1,0 +1,76 @@
+{
+  "skill": "implement-task",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Implement M1-07 from the roadmap",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Do the next task in the roadmap",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Ship roadmap item M2-03 with tests",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Take this ready item through to a merged PR",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Build the feature in task M1-12 and open the PR",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Pick up the next unchecked M1 task and finish it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Review the PR for M1-07",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Merge the weekly Dependabot PR",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write an ADR for task M1-07",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Score the repo after M1-07",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

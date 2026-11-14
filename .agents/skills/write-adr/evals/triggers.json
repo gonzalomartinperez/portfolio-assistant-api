@@ -1,0 +1,76 @@
+{
+  "skill": "write-adr",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Record this decision as an ADR",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Write an ADR for moving to Vitest",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "We decided to keep Coolify, document it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Create a decision record superseding ADR 0004",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Write up why we chose release-please on develop",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add an ADR for the new dependency",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a CHANGELOG entry",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write meeting notes for today",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Review the existing ADRs for typos",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Implement the decision from ADR 0003",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

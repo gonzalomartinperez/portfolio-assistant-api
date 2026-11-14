@@ -1,0 +1,30 @@
+{
+  "skill": "update-dependencies",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "update-dependencies-1",
+      "prompt": "The weekly Dependabot PR is red, fix it",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "update-dependencies-2",
+      "prompt": "Handle this week's dependency update",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "update-dependencies-3",
+      "prompt": "Dependabot PR has the needs-fix label",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

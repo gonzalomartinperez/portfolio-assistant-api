@@ -1,0 +1,76 @@
+{
+  "skill": "review-change",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Review PR 42 before I merge it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Can you check this diff for bugs?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Give me a second look at the staged changes",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Review the Codex diff in the worktree",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Look for security issues in this change",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Is this commit safe to merge?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Fix the bug the reviewer found",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Implement the reviewer's suggestion",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write the release notes",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Record the review decision as an ADR",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

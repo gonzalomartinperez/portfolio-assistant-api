@@ -45,6 +45,15 @@ ordinary orientation starts with README.md, not the whole catalog. See
 [skill maintenance and evidence](docs/agent-skills.md). Validate changes with
 `uv run python -m scripts.validate_skills` and the existing verification commands.
 
+## Agent harness
+
+Guard hooks live in `.claude/hooks/` (`guard-bash.py`, `guard-files.py`, byte-matched copies of
+engineering-standards v1.0.0) and are wired, with permission rules, in `.claude/settings.json`; hard
+rules belong in hooks, not prose. Read-only subagents are in `.claude/agents/` (test-runner, reviewer,
+architecture-reviewer, eval-runner). Codex settings are in `.codex/config.toml` (on-request approval,
+workspace-write sandbox, network off). `.worktreeinclude` lists non-secret files only; never `.env*`.
+Never read `evals/full/holdout.sealed.jsonl`; agents run no live or paid evaluation.
+
 ## Deployment ownership
 
 Private vps-ops owns production composition, shared resources and Coolify execution.

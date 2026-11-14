@@ -1,0 +1,76 @@
+{
+  "skill": "update-dependencies",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "The weekly Dependabot PR is red, fix it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Handle this week's dependency update",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Dependabot PR has the needs-fix label",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Upgrade breakages from the weekly deps PR",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Read the changelogs for the grouped Dependabot bumps",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make CI green on the dependency PR",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Bump lodash now for a security fix",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Merge the Dependabot PR",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Review the Dependabot config",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Explain what Dependabot is",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Explain what a closure is in JavaScript",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "What's the weather in Buenos Aires?",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}
