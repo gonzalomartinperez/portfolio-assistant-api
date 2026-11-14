@@ -43,7 +43,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: gonzalomartinperez/engineering-standards/.github/workflows/classify.yml@0fc59d1cb0881636fd7d841f9a05470ab11d8d40 # main (pre-v1.0.0)
+    uses: gonzalomartinperez/engineering-standards/.github/workflows/classify.yml@1f33be46bcb95f42f550f74608bc679cae5575ad # v1.0.0
   workflows:
     name: Workflow validation
     needs: classify
@@ -430,7 +430,7 @@ jobs:
     timeout-minutes: 2
     permissions: {}
     steps:
-    - uses: gonzalomartinperez/engineering-standards/actions/ci-gate@0fc59d1cb0881636fd7d841f9a05470ab11d8d40 # main (pre-v1.0.0)
+    - uses: gonzalomartinperez/engineering-standards/actions/ci-gate@1f33be46bcb95f42f550f74608bc679cae5575ad # v1.0.0
       with:
         needs: ${{ toJSON(needs) }}
         expected: ${{ needs.classify.outputs.jobs }}

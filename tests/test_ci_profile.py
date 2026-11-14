@@ -192,7 +192,8 @@ def test_checks_alias_needs_only_ci_gate():
 def test_shared_building_blocks_must_pin_the_same_sha():
     value = workflow()
     step = value['jobs']['ci-gate']['steps'][0]
-    step['uses'] = step['uses'].replace('0fc59d1c', '1fc59d1c')
+    pinned = step['uses'].split('@', 1)[1].split()[0]
+    step['uses'] = step['uses'].replace(pinned, 'f' * 40)
     assert profile_errors(value, profile_map())
     value = workflow()
     value['jobs']['classify']['uses'] = (
