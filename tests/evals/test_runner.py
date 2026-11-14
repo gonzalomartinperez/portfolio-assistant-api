@@ -7,6 +7,7 @@ the offline tests drive ``run_item`` against a fake of the documented endpoints.
 import asyncio
 import json
 import os
+import time
 from uuid import uuid4
 
 import httpx
@@ -138,6 +139,7 @@ def fake_app(
         if request.url.path == '/api/v1/conversations':
             return httpx.Response(201, json={'id': str(uuid4())})
         recorder.evidence.append(EVIDENCE)
+        recorder.first_text_at.append(time.perf_counter())
         recorder.usage.append(Usage(10, 2))
         answer = answers[state['turn']]
         state['turn'] += 1
@@ -197,6 +199,28 @@ def test_session_is_deleted_when_a_turn_fails():
     with pytest.raises(httpx.HTTPStatusError):
         asyncio.run(go())
     assert calls[-1] == ('DELETE', '/api/v1/session')
+
+
+def test_first_delta_is_taken_from_the_provider_not_the_buffered_body():
+    class Slow:
+        async def stream(self, question, evidence, locale, history=(), context=None):
+            await asyncio.sleep(0.05)
+            yield 'a'
+            await asyncio.sleep(0.2)
+            yield 'b'
+
+    recorder = RecordingProvider(Slow())
+    stamps = []
+
+    async def go():
+        started = time.perf_counter()
+        async for _ in recorder.stream('q', 'ev', 'en'):
+            stamps.append(time.perf_counter() - started)
+        return recorder.first_text_at[0] - started
+
+    first = asyncio.run(go())
+    assert 0.04 < first < 0.15  # well before the end of the stream
+    assert stamps[-1] > first + 0.15
 
 
 def test_recording_provider_passes_text_and_usage_through():

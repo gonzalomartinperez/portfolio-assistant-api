@@ -1,9 +1,12 @@
 """Run scripted items through the real session, conversation and SSE endpoints.
 
-The provider is injected: any object satisfying ``app.application.contracts.Provider``.
-Today that is the fixture provider (``provider=None`` keeps the app default) or a test
-double; the cassette replayer of M2-7 plugs into the same ``Provider`` port. The wire
-exposes no abstention flag, so ``abstained`` means a completed run with no citations.
+The provider is injected and required: any object satisfying
+``app.application.contracts.Provider`` (the fixture provider or a test double today; the
+cassette replayer of M2-7 plugs into the same port). The wire exposes no abstention
+flag, so ``abstained`` means a completed run with no citations and the ``abstains``
+grader adds a text cue check. ``first_delta_ms`` is measured inside ``RecordingProvider``
+at the first yielded text, because the ASGI transport buffers the response body; it is
+therefore relative to the turn start but excludes transport delivery.
 """
 
 import json
@@ -38,6 +41,7 @@ class RecordingProvider:
         self.inner = inner
         self.evidence: list[str] = []
         self.usage: list[Usage] = []
+        self.first_text_at: list[float | None] = []  # parallel to ``evidence``
 
     async def stream(
         self,
@@ -48,12 +52,16 @@ class RecordingProvider:
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[str | Usage]:
         self.evidence.append(evidence)
+        self.first_text_at.append(None)
+        call = len(self.first_text_at) - 1
         async with aclosing(
             self.inner.stream(question, evidence, locale, history, context)
         ) as stream:
             async for item in stream:
                 if isinstance(item, Usage):
                     self.usage.append(item)
+                elif self.first_text_at[call] is None:
+                    self.first_text_at[call] = time.perf_counter()
                 yield item
 
 
@@ -138,7 +146,6 @@ async def run_item(
             mark = (len(recorder.evidence), len(recorder.usage))
             started = time.perf_counter()
             body = ''
-            first = None
             async with client.stream(
                 'POST',
                 path,
@@ -147,9 +154,9 @@ async def run_item(
             ) as stream:
                 stream.raise_for_status()
                 async for chunk in stream.aiter_text():
-                    if first is None and 'event: message.delta' in chunk:
-                        first = round((time.perf_counter() - started) * 1000, 2)
                     body += chunk
+            stamps = [t for t in recorder.first_text_at[mark[0] :] if t is not None]
+            first = round((stamps[0] - started) * 1000, 2) if stamps else None
             result = collect(
                 parse_sse(body),
                 question=turn.text,
@@ -173,19 +180,23 @@ async def run_items(
         [tuple[str, str]], list[EvaluationContainer]
     ] = inspect_containers,
 ) -> list[ItemOutcome]:
-    """Grade items against the in-process app; refuses unless the isolation guard passes."""
+    """Grade items against the in-process app; refuses unless the isolation guard passes.
+
+    Retired items are skipped; quarantined items run and are reported separately.
+    """
     require_isolated(config, inspect=inspect)
     # Synthetic loopback visitors: trust the forwarded address so per-subject limits apply.
     config = config.model_copy(update={'trusted_proxy_ips': '127.0.0.1'})
     recorder = RecordingProvider(provider)
     app = create_app(config, provider_override=recorder)
     outcomes = []
+    runnable = [item for item in items if item.status != 'retired']
     async with app.router.lifespan_context(app):
         transport = httpx.ASGITransport(app=app, client=('127.0.0.1', 50000))
         async with httpx.AsyncClient(
             transport=transport, base_url='http://eval.local', timeout=130
         ) as client:
-            for index, item in enumerate(items):
+            for index, item in enumerate(runnable):
                 result = await run_item(
                     item,
                     client,
@@ -199,6 +210,7 @@ async def run_items(
                         item.locale,
                         tuple(item.strata),
                         grade_item(item, result, ctx),
+                        item.status,
                     )
                 )
     return outcomes

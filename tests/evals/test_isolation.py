@@ -18,14 +18,12 @@ from evals.harness.isolation import (
         'postgresql://u@127.0.0.1:5433/db',
         'postgresql://u@[::1]:5432/db',
         'postgresql://u@LOCALHOST/db',
-        'postgresql:///db?host=/var/run/postgresql',
         'host=localhost dbname=db',
         'host=127.0.0.1,::1 dbname=db',
-        'host=/tmp dbname=db',
     ],
 )
-def test_postgres_accepts_loopback_and_unix_sockets(dsn):
-    check_postgres_dsn(dsn)
+def test_postgres_accepts_explicit_loopback_hosts(dsn):
+    check_postgres_dsn(dsn, {})
 
 
 @pytest.mark.parametrize(
@@ -38,6 +36,8 @@ def test_postgres_accepts_loopback_and_unix_sockets(dsn):
         'host=localhost,db.example.com dbname=db',
         'postgresql://u@localhost/db?hostaddr=203.0.113.9',
         'postgresql:///db',
+        'postgresql:///db?host=/var/run/postgresql',
+        'host=/tmp dbname=db',
         'dbname=db',
         'postgresql://u@/db',
         'not a dsn ==',
@@ -46,7 +46,7 @@ def test_postgres_accepts_loopback_and_unix_sockets(dsn):
 )
 def test_postgres_rejects_remote_missing_or_unparseable_hosts(dsn):
     with pytest.raises(IsolationError):
-        check_postgres_dsn(dsn)
+        check_postgres_dsn(dsn, {})
 
 
 @pytest.mark.parametrize(
@@ -111,3 +111,22 @@ def test_require_isolated_wraps_owned_container_failures(monkeypatch):
 
     with pytest.raises(IsolationError, match='cannot verify'):
         require_isolated(config, inspect=inspect)
+
+
+@pytest.mark.parametrize(
+    'environ',
+    [
+        {'PGHOSTADDR': '203.0.113.9'},
+        {'PGHOST': 'db.example.com'},
+        {'PGHOSTADDR': '127.0.0.1,203.0.113.9'},
+    ],
+)
+def test_remote_libpq_environment_is_rejected_even_with_a_local_dsn(environ):
+    with pytest.raises(IsolationError, match='PGHOST'):
+        check_postgres_dsn('postgresql://u@localhost/db', environ)
+
+
+def test_loopback_libpq_environment_is_accepted():
+    check_postgres_dsn(
+        'postgresql://u@localhost/db', {'PGHOST': 'localhost', 'PGHOSTADDR': '::1'}
+    )
