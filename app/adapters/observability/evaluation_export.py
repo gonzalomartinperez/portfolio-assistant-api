@@ -2,11 +2,12 @@
 
 from dataclasses import asdict
 from datetime import UTC, datetime
+from typing import Any
 from uuid import uuid4
 
 from langsmith import Client
 from langsmith.utils import LangSmithError
-from requests import Session
+from requests import Response, Session
 from requests.exceptions import RequestException
 from urllib3.util.retry import Retry
 
@@ -17,7 +18,9 @@ PROJECT = 'portfolio-synthetic-evaluations'
 
 
 class EvaluationSession(Session):
-    def request(self, method, url, **kwargs):
+    def request(  # type: ignore[override]  # requests declares many keyword parameters; kwargs are forwarded unchanged
+        self, method: str, url: str | bytes, **kwargs: Any
+    ) -> Response:
         if method != 'POST' or url != ENDPOINT + '/runs':
             raise ValueError('unexpected evaluation export destination')
         kwargs['allow_redirects'] = False

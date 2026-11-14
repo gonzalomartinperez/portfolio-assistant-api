@@ -2,18 +2,19 @@ import asyncio
 import json
 from uuid import UUID, uuid4
 
+from app.adapters.postgres.db import Connect
 from app.application.conversation_context import Turn
 
 
 class PostgresRuns:
-    def __init__(self, connect):
+    def __init__(self, connect: Connect) -> None:
         self.connect = connect
 
     async def start(self, run_id: UUID) -> bool:
         return await asyncio.to_thread(self._transition, run_id, 'running')
 
     async def history(self, run_id: UUID, conversation_id: UUID) -> tuple[Turn, ...]:
-        def read():
+        def read() -> tuple[Turn, ...]:
             with self.connect() as conn:
                 rows = conn.execute(
                     'SELECT m.role,left(m.content,2000) AS content FROM messages m '
@@ -32,7 +33,7 @@ class PostgresRuns:
         return await asyncio.to_thread(read)
 
     async def running(self, run_id: UUID) -> bool:
-        def read():
+        def read() -> bool:
             with self.connect() as conn:
                 row = conn.execute(
                     'SELECT state FROM runs WHERE id=%s', (run_id,)
@@ -41,7 +42,7 @@ class PostgresRuns:
 
         return await asyncio.to_thread(read)
 
-    def _transition(self, run_id, target, code=None):
+    def _transition(self, run_id: UUID, target: str, code: str | None = None) -> bool:
         with self.connect() as conn:
             if target == 'running':
                 return bool(
@@ -64,7 +65,7 @@ class PostgresRuns:
         answer: str,
         citations: list[dict[str, object]],
     ) -> UUID | None:
-        def save():
+        def save() -> UUID | None:
             with self.connect() as conn:
                 state = conn.execute(
                     'SELECT state FROM runs WHERE id=%s FOR UPDATE', (run_id,)

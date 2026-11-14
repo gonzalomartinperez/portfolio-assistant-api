@@ -1,0 +1,106 @@
+{
+  "skill": "api-change-stream",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "The SSE stream drops the last delta when the client cancels; fix it",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a new event type to the public SSE contract without breaking the frontend",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Investigate why the first token arrives late in the streaming endpoint",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make provider streaming stop and release resources when the request is cancelled",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Change the LangGraph run lifecycle so a failed run emits exactly one terminal event",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Does adding a field to message.completed break the frontend contract?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a per-session conversation limit",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add a database migration for checkpoint retention",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Refresh the corpus snapshot from the portfolio repository",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Make the answer prompt more concise",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Run the golden evaluation and read the report",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a haiku about CI",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Heartbeat comments on the SSE stream are buffered by the proxy; look into it",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Check that cancellation during streaming leaves the run in a consistent state",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Trace the run state machine from provider start to message.completed",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Preserve incremental delivery when I swap the provider adapter",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Export the OpenAPI contract and add an example for a new optional field",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Which retrieval strategy is best for multi-hop questions?",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this diff before I commit",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Explain how HTTP caching works",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

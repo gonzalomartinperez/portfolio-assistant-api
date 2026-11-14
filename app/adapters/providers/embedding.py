@@ -2,8 +2,10 @@ import asyncio
 import hashlib
 import math
 import re
+from typing import Protocol
+from uuid import UUID
 
-from openai import APIError
+from openai import APIError, AsyncOpenAI, OpenAI
 
 from app.domain.errors import ProviderUnavailableError
 
@@ -29,12 +31,23 @@ class FixtureEmbeddings:
         return self.encode(text, 'query')
 
 
+class EmbeddingLedger(Protocol):
+    def reserve_embedding(self, maximum_tokens: int, purpose: str) -> UUID: ...
+
+    def settle_embedding(self, identifier: UUID, tokens: int) -> None: ...
+
+
 class OpenAIEmbeddings:
     provider = 'openai'
     model = 'text-embedding-3-small'
     dimensions = 1536
 
-    def __init__(self, client, accounting, async_client=None):
+    def __init__(
+        self,
+        client: OpenAI,
+        accounting: EmbeddingLedger,
+        async_client: AsyncOpenAI | None = None,
+    ) -> None:
         self.client = client
         self.accounting = accounting
         self.async_client = async_client

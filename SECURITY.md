@@ -1,15 +1,30 @@
-# Security
+# Security policy
 
-Report vulnerabilities privately through
-[GitHub private vulnerability reporting](https://github.com/gonzalomartinperez/portfolio-assistant-api/security/advisories/new).
-The feature was enabled and verified through the GitHub API on 2026-09-27.
-Do not put credentials, personal data or exploit details in public issues.
+## Supported versions
 
-The project is a fixture-backed engineering release candidate, not a deployed
-production service. Security fixes target `develop`; there is no published
-support SLA or production uptime commitment. Include the affected commit,
-reproduction, impact and a minimal redacted example in a report.
+Only the latest release on the default branch receives security fixes. Older tags are not patched.
 
-See the [threat model](docs/explanation/threat-model.md) for implemented controls and residual
-risks. Prompt injection is not solved. Fixture tests do not establish real-model
-safety. Real credentials and paid calls require explicit owner authorization.
+## Reporting a vulnerability
+
+Please do not open a public issue for a vulnerability.
+
+1. Open the repository's **Security** tab and choose **Report a vulnerability** (GitHub private vulnerability reporting).
+2. Include the affected version or commit, the impact, and the steps to reproduce.
+3. Do not include real personal data or live credentials in the report.
+
+## What to expect
+
+| Step | Target |
+|---|---|
+| Acknowledgement | within 5 days |
+| Triage and severity (CVSS) | within 10 days |
+| Fix or mitigation for KEV, actively exploited or critical issues | 7 days or less |
+| Fix for high issues | 30 days |
+| Public advisory and credit (if wanted) | after the fix is released |
+
+Secrets that reach the repository are rotated first and removed from history only after rotation.
+
+## Scope
+
+In scope: the code in this repository, its build and release workflows, and its published artifacts.
+Out of scope: third-party services the project integrates with, social engineering, and denial of service by volume.

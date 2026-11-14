@@ -4,6 +4,7 @@ import logging
 import os
 import secrets
 from contextvars import ContextVar
+from typing import Any
 
 import requests
 from opentelemetry.context import Context
@@ -34,7 +35,7 @@ class OperationalIDs(IdGenerator):
 
 
 class SafeTelemetryLog(logging.Formatter):
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         return (
             '{"operation":"telemetry_export","status":"diagnostic","level":"'
             + record.levelname.lower()
@@ -43,7 +44,9 @@ class SafeTelemetryLog(logging.Formatter):
 
 
 class PrivateSession(requests.Session):
-    def request(self, method, url, **kwargs):
+    def request(  # type: ignore[override]  # requests declares many keyword parameters; kwargs are forwarded unchanged
+        self, method: str, url: str | bytes, **kwargs: Any
+    ) -> requests.Response:
         kwargs['allow_redirects'] = False
         return super().request(method, url, **kwargs)
 

@@ -1,0 +1,34 @@
+{
+  "skill": "api-change-use-case",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "api-change-use-case-1",
+      "prompt": "Add a limit of 20 conversations per anonymous session",
+      "assertions": [
+        "keeps the rule in app/application and the policy in app/domain, with no outward imports",
+        "makes the limit check atomic instead of read-then-write",
+        "adds a test at the use-case layer first",
+        "does not read a real API key or call a paid provider"
+      ]
+    },
+    {
+      "id": "api-change-use-case-2",
+      "prompt": "Review how conversation ownership is enforced when a visitor renames a conversation. Do not edit.",
+      "assertions": [
+        "stays read-only: no edits, commits or migrations",
+        "cites file and line for each ownership check it inspects",
+        "reports unverified items as unverified"
+      ]
+    },
+    {
+      "id": "api-change-use-case-3",
+      "prompt": "Fix a race that lets two requests exceed the daily cost limit",
+      "assertions": [
+        "identifies the check-then-reserve window as the cause before changing code",
+        "proposes an atomic reservation and a concurrency test",
+        "hands schema changes to api-change-storage instead of editing migrations here"
+      ]
+    }
+  ]
+}

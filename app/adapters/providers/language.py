@@ -3,13 +3,13 @@
 import re
 from functools import lru_cache
 
-from lingua import Language, LanguageDetectorBuilder
+from lingua import Language, LanguageDetector, LanguageDetectorBuilder
 
 from app.application.language import Locale
 
 
 @lru_cache(maxsize=1)
-def output_detector():
+def output_detector() -> LanguageDetector:
     return LanguageDetectorBuilder.from_languages(
         Language.ENGLISH,
         Language.SPANISH,

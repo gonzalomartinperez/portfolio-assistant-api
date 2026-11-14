@@ -17,6 +17,9 @@ def write_artifacts(directory: Path, failures: int = 0) -> None:
     (directory / 'mypy.txt').write_text(
         'Found 3 errors in 2 files (checked 5 source files)\n'
     )
+    (directory / 'mypy-strict-app.txt').write_text(
+        'Found 7 errors in 3 files (checked 9 source files)\n'
+    )
     (directory / 'unit.xml').write_text(JUNIT.format(t=10, f=failures, s=1))
     (directory / 'integration.xml').write_text(JUNIT.format(t=5, f=0, s=0))
     (directory / 'coverage.xml').write_text(
@@ -30,6 +33,7 @@ def test_collectors_read_synthetic_artifacts(tmp_path):
     m = collect(tmp_path, tmp_path)['metrics']
     assert m['static.ruff_findings']['value'] == 2
     assert m['static.mypy_errors']['value'] == 3
+    assert m['static.mypy_strict_app_errors']['value'] == 7
     assert m['tests.unit.total']['value'] == 10
     assert m['tests.unit.skipped']['value'] == 1
     assert m['tests.integration_share']['value'] == pytest.approx(5 / 15)

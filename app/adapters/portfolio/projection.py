@@ -2,10 +2,11 @@
 
 import re
 from datetime import date
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.domain.graph import Fact
 from app.domain.portfolio_paths import PROFILE_PATH_PATTERN
 
 
@@ -40,7 +41,7 @@ class PublicFact(BaseModel):
     metric: PublicMetric | None = None
 
     @model_validator(mode='after')
-    def valid_span(self):
+    def valid_span(self) -> Self:
         if len(self.model_dump_json().encode('utf-8')) > 7000:
             raise ValueError('public fact exceeds embedding input bound')
         if self.end_line < self.start_line:
@@ -62,7 +63,7 @@ class PersonalProfile(BaseModel):
     age_as_of: date | None = None
 
     @model_validator(mode='after')
-    def age_is_dated(self):
+    def age_is_dated(self) -> Self:
         if (self.age is None) != (self.age_as_of is None):
             raise ValueError('age requires its reference date')
         return self
@@ -75,16 +76,16 @@ class PublicProjection(BaseModel):
     personal: PersonalProfile | None = None
 
     @model_validator(mode='after')
-    def unique_facts(self):
+    def unique_facts(self) -> Self:
         if len({fact.id for fact in self.facts}) != len(self.facts):
             raise ValueError('duplicate public fact identity')
         return self
 
 
-def graph_facts(projection: PublicProjection, documents: dict[str, str]):
-    from app.domain.graph import Fact
-
-    result = {}
+def graph_facts(
+    projection: PublicProjection, documents: dict[str, str]
+) -> dict[str, list[Fact]]:
+    result: dict[str, list[Fact]] = {}
     for fact in projection.facts:
         source = documents.get(fact.source_path)
         if source is None or fact.end_line > len(source.splitlines()):

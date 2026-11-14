@@ -9,26 +9,48 @@ hooks and permission rules are in `.claude/hooks/` and `.claude/settings.json`, 
 
 ## Catalog
 
-| Skill | Recurring task |
-| --- | --- |
-| `api-change-use-case` | Application policy, conversations, ownership and atomic limits |
-| `api-change-stream` | Provider/LangGraph lifecycle, incremental SSE and frontend contract |
-| `api-maintain-knowledge` | Approved public ingest, provenance, GraphRAG and retrieval evaluation |
-| `api-change-storage` | Migrations, transactions, accounting, deletion and recovery |
-| `api-verify-release` | Scoped verification/security review, CI, containers and release preparation |
-| `implement-task` | One roadmap item through worktree, tests first, checks, PR into `develop` and review chain |
-| `review-change` | Independent read-only review of a diff with reproduced findings |
-| `verify-release` | Generic release checklist: promotion CI, release notes, evidence |
-| `update-dependencies` | The weekly Dependabot PR: fix breakages on its branch, owner merges |
-| `write-adr` | MADR 4 decision record in `docs/decisions/` |
-| `resume-refactor` | Resume the master refactor from git and `docs/master-plan/` |
-| `score-repo` | Scorecard evidence against ratchet baselines (offline) |
+Fifteen skills: seven core, three API and five repository-specific
+([master plan](../master-plan/skills.md) section 2).
 
-The last seven come from engineering-standards v1.0.0 (`harness/skills/`), tuned to this
-repository. `verify-release` overlaps `api-verify-release`; both stay for now and merging
-them is a later M3 task. The shared skills carry `metadata` (owner, last-reviewed,
-version) and an `evals/` folder (`triggers.json`, `evals.json`); they omit `allowed-tools`
-because this catalog rejects permission fields, so each states its tools in prose.
+| Skill | Group | Recurring task |
+| --- | --- | --- |
+| `implement-task` | core | One roadmap item through worktree, tests first, selected checks, PR into `develop` and review chain |
+| `review-change` | core | Independent read-only review of a diff with reproduced findings; security review delegates to `owasp-security-review` |
+| `verify-release` | core | Release profile, images and manifest, tags, changelog and post-deploy evidence |
+| `update-dependencies` | core | The weekly Dependabot PR: fix breakages on its branch, owner merges |
+| `write-adr` | core | MADR 4 decision record in `docs/decisions/` |
+| `resume-refactor` | core | Resume the master refactor from git and `docs/master-plan/` |
+| `score-repo` | core | Scorecard evidence against ratchet baselines (offline) |
+| `evaluate-assistant` | API | Offline retrieval and fixture evaluations, reports by stratum, schema-valid eval items; never the sealed holdout |
+| `change-prompt` | API | Edit a prompt under `app/prompts`, regenerate `prompts.lock`, list needed re-records (owner-only) |
+| `refresh-contract` | API | Additive contract change with `contracts.export`, examples and consumer steps; breaking changes need an ADR |
+| `api-change-use-case` | repo | Application policy, conversations, ownership and atomic limits |
+| `api-change-stream` | repo | Provider/LangGraph lifecycle, cancellation and incremental SSE |
+| `api-change-storage` | repo | Migrations, transactions, accounting, deletion and recovery |
+| `api-maintain-knowledge` | repo | Approved public ingest, provenance, GraphRAG and retrieval logic |
+| `api-refresh-corpus` | repo | Refresh the frozen public corpus snapshot and report removed gold keys |
+
+The core skills come from engineering-standards v1.0.0 (`harness/skills/`), tuned to this
+repository. Evaluation content left `api-maintain-knowledge` for `evaluate-assistant`.
+
+`api-verify-release` was retired in master plan task M3-6. Where its content went:
+
+| Content | Now in |
+| --- | --- |
+| Release profile, CI run inspection, image scan policy, immutable manifest, tags, post-deploy ownership | `verify-release` |
+| Binding rules: no Infisical, Redis, secret SDK or deployment controller; no old merge flags or native auto-merge; PGDATA UID 70 volume rule; `--authorize-export` authority; local-and-CI-only Compose; ensurepip check | `verify-release`, section "Task-specific references" |
+| Pointers to runtime baseline, private observability, synthetic export, live-evaluation readiness, ADR008, analytics direct edge | `verify-release`, same section |
+| Choosing and reading checks by risk (policy, HTTP/SSE, persistence, CI and container, provider transport, contract, evals) | `implement-task` |
+| Focused security review, secret scan, threat model | `review-change` (delegates to `owasp-security-review` and `gha-security-review`, with a manual fallback) |
+| Weekly dependency PR, owner merges | `update-dependencies` (already existed; unchanged), plus the binding rule above |
+
+Not carried over, because they are one-off dated procedures that live in their own records: README gallery capture
+and diagram rules ([readme-gallery](../evidence/archive/2026-10/readme-gallery.md), [diagrams](../explanation/architecture.md)), database access-path
+measurement ([database-queries](../evidence/archive/2026-10/database-queries-2026-10-17.md)) and the provider transport evidence
+([provider-transport](../evidence/archive/2026-10/provider-transport-2026-10-17.md)). Load those documents directly for such tasks.
+
+Every skill carries `metadata` (owner, last-reviewed, version) and an `evals/` folder (`triggers.json`,
+`evals.json`); none has `allowed-tools` because this catalog rejects permission fields, so each states its tools in prose.
 
 Routine onboarding reads README and AGENTS; it does not load this whole catalog.
 Coding standards remain in CONTRIBUTING. Conditional operational detail lives in
@@ -52,7 +74,7 @@ The frontend and portfolio belong to other owners; career-ops is not a public so
 Edit only the canonical folder. Keep YAML frontmatter to portable `name` and
 `description` strings, matching the folder name, plus the optional `metadata` mapping
 (exactly `owner`, `last-reviewed`, `version`, as strings) used by the shared skills.
-Use an `api-` action-oriented name (the seven shared skill names are the only exception)
+Use an `api-` action-oriented name (the seven core and three API catalog skill names are the only exception)
 and a description distinguishing neighboring tasks. Do not add client-specific
 interpolation, permission fields or copied universal programming advice. Link
 resources with paths relative to SKILL.md, staying inside the checkout; run listed
@@ -80,11 +102,32 @@ After editing descriptions, review the should/should-not-route cases in
 a keyword classifier pretending to prove model selection. Record actual outcomes
 and limitations in `docs/evidence/archive/2026-10/agent-skills.json`.
 
+## Activation evals
+
+Each skill ships `evals/triggers.json` (about 20 queries: positives, near-miss negatives that name the
+sibling skill that should win, and a fixed 60/40 train/validation split, `runs_per_query` 3) and
+`evals/evals.json` (at least three output evals with assertions). Measure activation locally, never in CI:
+
+```sh
+uv run python -m scripts.skill_activation_eval --dry-run --skills write-adr
+uv run python -m scripts.skill_activation_eval --out artifacts/activation.json --jobs 4
+uv run python -m scripts.skill_activation_eval --skills <name> --out artifacts/activation.json
+```
+
+The tool lists every skill's `name: description` and one query in a clean `claude -p --model haiku` call
+(subscription only: every `ANTHROPIC_*` variable is removed from the child environment; no tools, empty directory) and records which skill the router would load. Failed router calls are excluded from the fraction, recorded as `errors` in the JSON, and make the run exit 1. A positive
+passes at a trigger fraction of 0.5 or more, a negative below 0.5; precision, recall and accuracy are reported on
+the validation split (train for information). Re-running a skill (same `--split`) into an existing `--out` file keeps its
+`first` numbers and replaces `final`. The gate is that a skill's final validation accuracy does not fall more than
+10 points below its first. Results are routing evidence for a small model, not proof of behavior; the latest are in
+[docs/evidence](../evidence/skills-activation-2026-11-14.md).
+
 ## Inventory and compatibility
 
 Initial inventory: only AGENTS existed. Retain/improve that canonical contract;
 add the Claude entry and five focused workflows. There were no existing skills,
-callers or resources to consolidate/retire. No old skill was deleted.
+callers or resources to consolidate/retire. No old skill was deleted at that time;
+`api-verify-release` was retired in master plan task M3-6 after its content landed elsewhere.
 
 Test environment: Linux/WSL, Git symlinks, Codex CLI **0.157.1**, Claude Code
 **2.1.283**. These are locally observed versions, not a promise about every release.
@@ -99,9 +142,9 @@ For a separately authorized live check in a disposable clone:
 
 1. Run the catalog validator and record `codex --version` / `claude --version`.
 2. In Codex, open `/skills` and check each `api-` name occurs once; invoke
-   `$api-verify-release Review only; identify the checks for a pure policy change`.
+   `$implement-task Review only; identify the checks for a pure policy change`.
 3. In Claude Code, inspect the `/` skill menu and `/memory` (AGENTS import), then
-   invoke `/api-verify-release` with the same read-only request.
+   invoke `/implement-task` with the same read-only request.
 4. Run the positive, negative, missing-prerequisite and scope-expansion scenarios.
    Record selection, commands, output and tracked/untracked changes before/after;
    a read-only scenario must produce no edits, commits, GitHub or deployment actions.

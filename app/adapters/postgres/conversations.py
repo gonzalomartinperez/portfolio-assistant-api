@@ -1,25 +1,32 @@
 """One transaction per operation; ownership predicates stay with the mutation."""
 
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import fields
-from uuid import uuid4
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
+from uuid import UUID, uuid4
 
 from psycopg.errors import UniqueViolation
 
+from app.adapters.postgres.db import Connect
 from app.domain.conversations import Conversation, Message, Run, Session
 from app.domain.errors import RejectedError
 
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
 
-def record(model, row):
+
+def record[T: DataclassInstance](model: type[T], row: Mapping[str, Any]) -> T:
     return model(**{field.name: row[field.name] for field in fields(model)})
 
 
 class PostgresConversations:
-    def __init__(self, connect):
+    def __init__(self, connect: Connect) -> None:
         self.connect = connect
 
     @contextmanager
-    def owned(self, session_id, conversation_id):
+    def owned(self, session_id: UUID, conversation_id: UUID) -> Iterator[Any]:
         with self.connect() as conn:
             row = conn.execute(
                 'SELECT id FROM conversations WHERE id=%s AND session_id=%s FOR UPDATE',
@@ -29,7 +36,7 @@ class PostgresConversations:
                 raise RejectedError('not_found', 404)
             yield conn
 
-    def session(self, secret_digest):
+    def session(self, secret_digest: str) -> Session | None:
         with self.connect() as conn:
             row = conn.execute(
                 'SELECT id,csrf_token,expires_at FROM sessions WHERE secret_digest=%s AND expires_at>now()',
@@ -37,14 +44,16 @@ class PostgresConversations:
             ).fetchone()
         return record(Session, row) if row else None
 
-    def create_session(self, session_id, secret_digest, csrf, expires):
+    def create_session(
+        self, session_id: UUID, secret_digest: str, csrf: str, expires: datetime
+    ) -> None:
         with self.connect() as conn:
             conn.execute(
                 'INSERT INTO sessions(id,secret_digest,csrf_token,expires_at) VALUES (%s,%s,%s,%s)',
                 (session_id, secret_digest, csrf, expires),
             )
 
-    def delete_session(self, session_id):
+    def delete_session(self, session_id: UUID) -> None:
         with self.connect() as conn:
             conn.execute(
                 'INSERT INTO checkpoint_cleanup(thread_id) SELECT r.id::text FROM runs r JOIN conversations c ON c.id=r.conversation_id WHERE c.session_id=%s ON CONFLICT DO NOTHING',
@@ -52,7 +61,7 @@ class PostgresConversations:
             )
             conn.execute('DELETE FROM sessions WHERE id=%s', (session_id,))
 
-    def rate_limit(self, subject_hash, operation, limit):
+    def rate_limit(self, subject_hash: str, operation: str, limit: int) -> None:
         with self.connect() as conn:
             conn.execute('SELECT pg_advisory_xact_lock(472018)')
             count = conn.execute(
@@ -66,7 +75,7 @@ class PostgresConversations:
                 (uuid4(), subject_hash, operation),
             )
 
-    def create(self, session_id, title):
+    def create(self, session_id: UUID, title: str) -> Conversation:
         with self.connect() as conn:
             # Serialize per-session allocation so the storage bound survives concurrent requests.
             conn.execute(
@@ -84,7 +93,9 @@ class PostgresConversations:
             ).fetchone()
         return record(Conversation, row)
 
-    def list_conversations(self, session_id, limit, cursor):
+    def list_conversations(
+        self, session_id: UUID, limit: int, cursor: datetime | None
+    ) -> list[Conversation]:
         with self.connect() as conn:
             rows = conn.execute(
                 'SELECT * FROM conversations WHERE session_id=%s AND (%s::timestamptz IS NULL OR updated_at<%s) ORDER BY updated_at DESC LIMIT %s',
@@ -92,7 +103,9 @@ class PostgresConversations:
             ).fetchall()
         return [record(Conversation, row) for row in rows]
 
-    def rename(self, session_id, conversation_id, title):
+    def rename(
+        self, session_id: UUID, conversation_id: UUID, title: str
+    ) -> Conversation:
         with self.owned(session_id, conversation_id) as conn:
             row = conn.execute(
                 'UPDATE conversations SET title=%s,updated_at=now() WHERE id=%s RETURNING *',
@@ -100,7 +113,7 @@ class PostgresConversations:
             ).fetchone()
         return record(Conversation, row)
 
-    def delete(self, session_id, conversation_id):
+    def delete(self, session_id: UUID, conversation_id: UUID) -> None:
         with self.owned(session_id, conversation_id) as conn:
             conn.execute(
                 'INSERT INTO checkpoint_cleanup(thread_id) SELECT id::text FROM runs WHERE conversation_id=%s ON CONFLICT DO NOTHING',
@@ -108,7 +121,13 @@ class PostgresConversations:
             )
             conn.execute('DELETE FROM conversations WHERE id=%s', (conversation_id,))
 
-    def messages(self, session_id, conversation_id, limit, cursor):
+    def messages(
+        self,
+        session_id: UUID,
+        conversation_id: UUID,
+        limit: int,
+        cursor: datetime | None,
+    ) -> list[Message]:
         with self.owned(session_id, conversation_id) as conn:
             rows = conn.execute(
                 'SELECT * FROM messages WHERE conversation_id=%s AND (%s::timestamptz IS NULL OR created_at<%s) ORDER BY created_at DESC LIMIT %s',
@@ -116,7 +135,14 @@ class PostgresConversations:
             ).fetchall()
         return [record(Message, row) for row in rows]
 
-    def prepare_run(self, session_id, conversation_id, content, payload_hash, key):
+    def prepare_run(
+        self,
+        session_id: UUID,
+        conversation_id: UUID,
+        content: str,
+        payload_hash: str,
+        key: str,
+    ) -> UUID:
         with self.owned(session_id, conversation_id) as conn:
             conn.execute(
                 "UPDATE runs SET state='interrupted',error_code='run_interrupted',updated_at=now() WHERE state IN ('pending','running') AND lease_until<now()"
@@ -162,7 +188,7 @@ class PostgresConversations:
                 raise RejectedError('run_in_progress', 409) from None
         return run_id
 
-    def run(self, session_id, run_id, cancel=False):
+    def run(self, session_id: UUID, run_id: UUID, cancel: bool = False) -> Run:
         with self.connect() as conn:
             conn.execute(
                 "UPDATE runs SET state='interrupted',error_code='run_interrupted',updated_at=now() WHERE state IN ('pending','running') AND lease_until<now()"
@@ -180,7 +206,7 @@ class PostgresConversations:
             raise RejectedError('not_found', 404)
         return record(Run, row)
 
-    def feedback(self, session_id, message_id, rating):
+    def feedback(self, session_id: UUID, message_id: UUID, rating: str) -> None:
         with self.connect() as conn:
             found = conn.execute(
                 "SELECT m.id FROM messages m JOIN conversations c ON c.id=m.conversation_id WHERE m.id=%s AND c.session_id=%s AND m.role='assistant'",
