@@ -70,7 +70,9 @@
         ".gitleaksignore",
         ".env.example",
         "LICENSE",
-        "THIRD_PARTY_NOTICES.md"
+        "THIRD_PARTY_NOTICES.md",
+        "docker-bake.hcl",
+        ".hadolint.yaml"
       ],
       "adds": [
         "static",
