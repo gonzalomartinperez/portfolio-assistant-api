@@ -52,6 +52,11 @@ ROOT_PATTERNS = (
 SECRET_PATTERN = re.compile(
     r'(?i)(api[_-]?key\s*[=:]|password\s*[=:]|secret\s*[=:]|BEGIN [A-Z ]+PRIVATE KEY)'
 )
+ALLOWED_REMOTES = (
+    'https://github.com/gonzalomartinperez/portfolio',
+    'https://github.com/gonzalomartinperez/portfolio.git',
+    'git@github.com:gonzalomartinperez/portfolio.git',
+)
 MAX_FILES = 80
 MAX_BYTES = 60_000
 CHUNKER_VERSION = 'sections35-v6'
@@ -112,6 +117,46 @@ def manifest_at_commit(repo: Path, commit: str):
     if len(allowed) > MAX_FILES:
         raise ValueError('file limit exceeded')
     return allowed
+
+
+def snapshot_source(root: Path):
+    """Read the frozen corpus directory (ADR016) as the same (commit, files) a Git ref gives.
+
+    Blob ids are Git object ids of the bytes, so they equal the portfolio repository's own
+    and citations keep pointing at the real source commit recorded in the manifest.
+    """
+    manifest = json.loads((root / 'manifest.json').read_text())
+    commit = manifest['commit']
+    if not re.fullmatch(r'[0-9a-f]{40}', commit):
+        raise ValueError('invalid commit')
+    if manifest['repository'] != 'gonzalomartinperez/portfolio':
+        raise ValueError('only the public portfolio repository is allowed')
+    blobs = {}
+    files = []
+    profiles = set()
+    for item in sorted(manifest['files'], key=lambda entry: entry['path']):
+        path = item['path']
+        if not any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS):
+            raise ValueError(f'unapproved snapshot path: {path}')
+        target = root / path
+        if target.stat().st_size > (
+            500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES
+        ):
+            raise ValueError('source size limit exceeded')
+        data = target.read_bytes()
+        if hashlib.sha256(data).hexdigest() != item['sha256']:
+            raise ValueError(f'snapshot file does not match its manifest: {path}')
+        profile = profile_parts(path)
+        if profile is not None:
+            if profile in profiles:
+                raise ValueError('ambiguous public profile source layouts')
+            profiles.add(profile)
+        blob_sha = hashlib.sha1(b'blob %d\0' % len(data) + data).hexdigest()
+        blobs[blob_sha] = data
+        files.append((path, blob_sha))
+    if len(files) > MAX_FILES:
+        raise ValueError('file limit exceeded')
+    return commit, files, blobs.__getitem__, lambda blob_sha: len(blobs[blob_sha])
 
 
 def citation_url(commit: str, path: str, start: int, end: int):
@@ -232,6 +277,7 @@ def sync(
     connection,
     watched: bool = False,
     stop: Event | None = None,
+    snapshot: bool = False,
 ):
     # The lock spans both projections; only activation changes the authoritative pointer.
     with connection() as lock:
@@ -245,6 +291,7 @@ def sync(
                 connection=connection,
                 watched=watched,
                 stop=stop,
+                snapshot=snapshot,
             )
         finally:
             lock.execute('SELECT pg_advisory_unlock(472022)')
@@ -258,25 +305,32 @@ def _sync(
     connection,
     watched: bool = False,
     stop: Event | None = None,
+    snapshot: bool = False,
 ):
     repo = repo.resolve(strict=True)
-    remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
-    if remote not in (
-        'https://github.com/gonzalomartinperez/portfolio',
-        'https://github.com/gonzalomartinperez/portfolio.git',
-        'git@github.com:gonzalomartinperez/portfolio.git',
-    ):
-        raise ValueError('only the public portfolio repository is allowed')
-    commit = (
-        git(repo, 'rev-parse', '--verify', '--end-of-options', ref + '^{commit}')
-        .decode()
-        .strip()
-    )
-    if not re.fullmatch(r'[0-9a-f]{40}', commit):
-        raise ValueError('invalid commit')
+    if snapshot:
+        commit, files, read_blob, blob_size = snapshot_source(repo)
+    else:
+        remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
+        if remote not in ALLOWED_REMOTES:
+            raise ValueError('only the public portfolio repository is allowed')
+        commit = (
+            git(repo, 'rev-parse', '--verify', '--end-of-options', ref + '^{commit}')
+            .decode()
+            .strip()
+        )
+        if not re.fullmatch(r'[0-9a-f]{40}', commit):
+            raise ValueError('invalid commit')
+        files = manifest_at_commit(repo, commit)
+
+        def read_blob(blob_sha: str) -> bytes:
+            return git(repo, 'cat-file', 'blob', blob_sha)
+
+        def blob_size(blob_sha: str) -> int:
+            return int(git(repo, 'cat-file', '-s', blob_sha))
+
     config = configuration
     version, namespace = corpus_identity(commit, config.embeddings_provider)
-    files = manifest_at_commit(repo, commit)
     with connection() as conn:
         existing = conn.execute(
             'SELECT status FROM knowledge_versions WHERE id=%s', (version,)
@@ -317,10 +371,11 @@ def _sync(
     for path, blob_sha in files:
         if stop is not None and stop.is_set():
             raise RuntimeError('sync_cancelled')
-        size = int(git(repo, 'cat-file', '-s', blob_sha))
-        if size > (500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES):
+        if blob_size(blob_sha) > (
+            500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES
+        ):
             raise ValueError('source size limit exceeded')
-        data = git(repo, 'cat-file', 'blob', blob_sha)
+        data = read_blob(blob_sha)
         content = data.decode('utf-8')
         if SECRET_PATTERN.search(content):
             raise ValueError(f'possible secret in {path}')
