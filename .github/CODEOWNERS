@@ -19,3 +19,10 @@
 # Contracts and deploy surface (where present)
 /contracts/               @gonzalomartinperez
 /infra/                   @gonzalomartinperez
+
+# Assistant quality data, prompts and decisions (docs/master-plan/docs-and-community.md section 2)
+/evals/golden/                      @gonzalomartinperez
+/evals/full/holdout.sealed.jsonl    @gonzalomartinperez
+/prompts/                           @gonzalomartinperez
+/docs/adrs/                         @gonzalomartinperez
+/docs/decisions/                    @gonzalomartinperez
