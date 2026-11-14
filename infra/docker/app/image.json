@@ -1,9 +1,12 @@
 {
-  "api_max_bytes": 600000000,
-  "worker_max_bytes": 720000000,
+  "api_max_bytes": 576000000,
+  "worker_max_bytes": 677000000,
   "measured": {
-    "api_bytes": null,
-    "worker_bytes": null,
-    "note": "Ratchet at the first measured CI value (ADR 017); lower the maxima after the first run."
+    "date": "2026-11-14",
+    "run": "https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/43564659391",
+    "revision": "a6071b32a5200f013e7d5713109fda70d6016923",
+    "api_bytes": 564638440,
+    "worker_bytes": 663049794,
+    "note": "Ratchet = measured + about 2% for patch-level base and dependency bumps; only lower it (ADR017). The 500 MB api budget needs the lingua replacement decision (docs/evidence/image-size-spike-2026-11-14.md)."
   }
 }
