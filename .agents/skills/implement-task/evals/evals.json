@@ -1,0 +1,30 @@
+{
+  "skill": "implement-task",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "implement-task-1",
+      "prompt": "Implement M1-07 from the roadmap",
+      "assertions": [
+        "follows the procedure steps in order",
+        "cites the evidence for each claim"
+      ]
+    },
+    {
+      "id": "implement-task-2",
+      "prompt": "Do the next task in the roadmap",
+      "assertions": [
+        "uses the repository's commands from AGENTS.md",
+        "ends with the output template"
+      ]
+    },
+    {
+      "id": "implement-task-3",
+      "prompt": "Ship roadmap item M2-03 with tests",
+      "assertions": [
+        "does not invent commands, facts or results",
+        "reports blockers instead of guessing"
+      ]
+    }
+  ]
+}

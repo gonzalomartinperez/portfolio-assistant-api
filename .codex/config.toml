@@ -1,0 +1,26 @@
+# .codex/config.toml template from engineering-standards (ecosystem 15.6).
+# Validate against the installed Codex version before committing (`codex --version`; keys change
+# between releases). No secrets and no MCP servers that need tokens.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = false
+
+[features]
+hooks = true
+
+# Hooks: the ecosystem standard wants the same guard hooks as Claude Code. The hook schema differs
+# between Codex releases and could not be validated when this template was written (v1.0.0), so it
+# is left commented out: an unknown key can stop Codex from starting. Both scripts accept Codex events
+# (argv-list shell commands and apply_patch payloads), read JSON on stdin and exit 2 to block.
+# Enable after checking the installed version's documentation, for example:
+#
+# [[hooks.PreToolUse]]
+# matcher = "Bash"
+# hooks = [{ type = "command", command = "python3 -I .claude/hooks/guard-bash.py" }]
+#
+# [[hooks.PreToolUse]]
+# matcher = "apply_patch"
+# hooks = [{ type = "command", command = "python3 -I .claude/hooks/guard-files.py" }]

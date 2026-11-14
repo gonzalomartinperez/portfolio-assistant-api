@@ -4,7 +4,8 @@
 it with `@AGENTS.md`; no client is assumed to read the other's entry point.
 Skill instructions live only in `.agents/skills/<name>/SKILL.md`. Claude Code discovers
 relative directory symlinks under `.claude/skills/`. There are no independently
-editable instruction copies, hooks, tool-permission grants or global installations.
+editable instruction copies, tool-permission grants or global installations. Safety
+hooks and permission rules are in `.claude/hooks/` and `.claude/settings.json`, not in skills.
 
 ## Catalog
 
@@ -15,6 +16,19 @@ editable instruction copies, hooks, tool-permission grants or global installatio
 | `api-maintain-knowledge` | Approved public ingest, provenance, GraphRAG and retrieval evaluation |
 | `api-change-storage` | Migrations, transactions, accounting, deletion and recovery |
 | `api-verify-release` | Scoped verification/security review, CI, containers and release preparation |
+| `implement-task` | One roadmap item through worktree, tests first, checks, PR into `develop` and review chain |
+| `review-change` | Independent read-only review of a diff with reproduced findings |
+| `verify-release` | Generic release checklist: promotion CI, release notes, evidence |
+| `update-dependencies` | The weekly Dependabot PR: fix breakages on its branch, owner merges |
+| `write-adr` | MADR 4 decision record in `docs/adrs/` |
+| `resume-refactor` | Resume the master refactor from git and `docs/master-plan/` |
+| `score-repo` | Scorecard evidence against ratchet baselines (offline) |
+
+The last seven come from engineering-standards v1.0.0 (`harness/skills/`), tuned to this
+repository. `verify-release` overlaps `api-verify-release`; both stay for now and merging
+them is a later M3 task. The shared skills carry `metadata` (owner, last-reviewed,
+version) and an `evals/` folder (`triggers.json`, `evals.json`); they omit `allowed-tools`
+because this catalog rejects permission fields, so each states its tools in prose.
 
 Routine onboarding reads README and AGENTS; it does not load this whole catalog.
 Coding standards remain in CONTRIBUTING. Conditional operational detail lives in
@@ -36,7 +50,9 @@ The frontend and portfolio belong to other owners; career-ops is not a public so
 ## Maintenance and validation
 
 Edit only the canonical folder. Keep YAML frontmatter to portable `name` and
-`description` strings, matching the folder name. Use an `api-` action-oriented name
+`description` strings, matching the folder name, plus the optional `metadata` mapping
+(exactly `owner`, `last-reviewed`, `version`, as strings) used by the shared skills.
+Use an `api-` action-oriented name (the seven shared skill names are the only exception)
 and a description distinguishing neighboring tasks. Do not add client-specific
 interpolation, permission fields or copied universal programming advice. Link
 resources with paths relative to SKILL.md, staying inside the checkout; run listed
