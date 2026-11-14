@@ -869,7 +869,7 @@ wheels = [
 [[package]]
 name = "portfolio-assistant-api"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "langchain-core" },
