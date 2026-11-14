@@ -48,7 +48,6 @@ def test_ecosystems_and_semver_cooldowns():
     entries = CONFIG['updates']
     assert sorted(e['package-ecosystem'] for e in entries) == [
         'docker',
-        'docker-compose',
         'github-actions',
         'uv',
     ]
@@ -83,14 +82,18 @@ def test_every_dockerfile_and_compose_directory_is_covered():
 
     dockerfiles = found('Dockerfile') | found('Dockerfile.*')
     dockerfiles = {d for d in dockerfiles if d != '/infra'}
-    compose = {
-        d
-        for pattern in ('compose*.y*ml', 'docker-compose*.y*ml', 'local.yaml')
-        for d in found(pattern)
-        if d.startswith('/infra/compose')
-    }
     assert dockerfiles and dockerfiles <= by_eco['docker']
-    assert compose and compose <= by_eco['docker-compose']
+    # Dependabot's docker-compose fetcher only reads files matching this pattern; none
+    # exists today, so the ecosystem is absent (ADR019). Adding one requires an entry.
+    parseable = re.compile(
+        r'(docker-)?compose(-[\w]+)?(?>\.[\w-]+)?\.ya?ml', re.IGNORECASE
+    )
+    compose_files = [
+        path
+        for path in ROOT.rglob('*.y*ml')
+        if parseable.fullmatch(path.name) and not {'.git', '.venv'} & set(path.parts)
+    ]
+    assert not compose_files or 'docker-compose' in by_eco
 
 
 def test_guard_workflow_pins_shared_workflow_by_sha_with_no_default_permissions():
@@ -100,3 +103,16 @@ def test_guard_workflow_pins_shared_workflow_by_sha_with_no_default_permissions(
         r'gonzalomartinperez/engineering-standards/\.github/workflows/deps-weekly-guard\.yml@[0-9a-f]{40}',
         uses,
     )
+
+
+def test_guard_runs_only_for_dependabot_prs_or_schedule_with_minimal_permissions():
+    job = GUARD['jobs']['guard']
+    assert job['if'] == (
+        "github.event_name != 'pull_request' || github.actor == 'dependabot[bot]'"
+    )
+    assert job['permissions'] == {
+        'contents': 'read',
+        'pull-requests': 'write',
+        'issues': 'write',
+        'checks': 'read',
+    }

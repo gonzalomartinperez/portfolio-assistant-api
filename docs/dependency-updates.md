@@ -8,16 +8,17 @@ the owner. No automation approves, arms or merges it.
 
 1. Monday 09:00 America/Argentina/Buenos_Aires Dependabot opens one grouped PR
    (`chore(deps): ...`, label `dependencies`) against `develop`, covering `uv`,
-   `github-actions`, `docker` (app and PostgreSQL images) and `docker-compose`
-   (the Neo4j image). Configuration: `.github/dependabot.yml`; the schedule,
+   `github-actions` and `docker` (app and PostgreSQL images). The Neo4j image pin
+   (`infra/compose/local.yaml`, `ci.yml`, `deploy/neo4j-image.json`) is updated
+   manually with its digest: Dependabot cannot parse `local.yaml`. Configuration: `.github/dependabot.yml`; the schedule,
    target branch, PR limit and commit prefix live on the group, not on entries.
 2. Cooldowns hold back fresh releases: 7 days by default, and for `uv` 14 days for
    majors and 3 days for patches. Python minor and major image changes are ignored
    and need an explicit project decision.
 3. `deps-weekly-guard` (shared `engineering-standards` workflow, pinned by SHA)
    runs Monday 10:30 ART and on Dependabot PR events. It keeps at most one open
-   Dependabot PR (the newest; an older one is closed with a pointer), asks for a
-   rebase when the PR is behind `develop`, and when CI is red labels the PR
+   Dependabot PR (the newest; an older one is closed with a pointer), records a PR
+   that is behind `develop` in the tracking issue (it does not comment, OD-75), and when CI is red labels the PR
    `needs-fix` and updates one tracking issue.
 4. The owner reviews the PR and merges it manually after the required `checks`
    pass. Promotion to `main` stays a separate, explicit decision.
@@ -30,7 +31,7 @@ next run (or the guard's supersede flow) open a fresh complete one.
 
 Dependabot alerts stay on; Dependabot security-update PRs are off (repository
 setting, see [repo settings](reference/repo-settings.md)), because they would
-target `main` and bypass the weekly PR. A daily vulnerability job records findings
+target `main` and bypass the weekly PR. The daily vulnerability job (`vuln-daily.yml`, added with M1-7) records findings
 silently in one tracking issue; only the Monday summary notifies (OD-75). Alert
 emails use GitHub's weekly digest.
 

@@ -40,9 +40,6 @@ updates:
       # Python minor/major changes need an explicit project decision.
       - dependency-name: python
         update-types: [version-update:semver-major, version-update:semver-minor]
-  - package-ecosystem: docker-compose
-    directories: ["/infra/compose"]
-    multi-ecosystem-group: weekly
-    patterns: ["*"]
-    cooldown:
-      default-days: 7
+  # No docker-compose entry: Dependabot only parses files named *compose*.y*ml and the
+  # local fixture is infra/compose/local.yaml. The Neo4j pin there, in ci.yml and in
+  # deploy/neo4j-image.json is updated manually with its digest (ADR019).

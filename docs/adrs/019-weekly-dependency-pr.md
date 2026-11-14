@@ -22,8 +22,7 @@ noise. Auto-merge conflicts with that rule, and the ecosystem standard forbids t
    `1f33be46bcb95f42f550f74608bc679cae5575ad` (v1.0.0): one
    `multi-ecosystem-groups` entry `weekly` carrying schedule, `target-branch`,
    `open-pull-requests-limit: 1`, `commit-message` and labels; each `updates` entry
-   (`uv`, `github-actions`, `docker` for app and PostgreSQL, `docker-compose` for
-   the Neo4j image in `infra/compose/local.yaml`) joins it with `patterns: ["*"]`.
+   (`uv`, `github-actions`, `docker` for app and PostgreSQL) joins it with `patterns: ["*"]`.
    Semver cooldowns (7/14/3) apply only to `uv`; other ecosystems use
    `default-days: 7`. The `uv` entry keeps `allow: dependency-type: all` because
    the template does not set it, so Dependabot's default (direct dependencies)
@@ -33,8 +32,8 @@ noise. Auto-merge conflicts with that rule, and the ecosystem standard forbids t
 3. **Safety net.** `.github/workflows/deps-weekly-guard.yml`, copied from the shared
    template and pinned to the same SHA, calls the shared reusable workflow. On
    Monday 10:30 ART and on Dependabot PR events it keeps only the newest open
-   Dependabot PR (closing an older one with a pointer), requests a rebase when
-   behind `develop`, and flags a red PR (`needs-fix` plus a tracking issue). It
+   Dependabot PR (closing an older one with a pointer), records a PR that is behind `develop` in its tracking
+   issue without commenting (`request-rebase` stays off, OD-75), and flags a red PR (`needs-fix` plus a tracking issue). It
    never merges.
 4. **Security updates.** Dependabot security-update PRs are off and alerts are on
    (owner toggles, already recorded in `docs/reference/repo-settings.md`) because
@@ -49,7 +48,7 @@ noise. Auto-merge conflicts with that rule, and the ecosystem standard forbids t
 Source: `docs/decisions/0002-dependabot-weekly-group-sandbox-proof.md` in
 `engineering-standards` at `1f33be46bcb95f42f550f74608bc679cae5575ad`.
 
-- Proven: `uv`, `github-actions`, `docker` and `docker-compose` are accepted in a
+- Proven: `uv`, `github-actions` and `docker` are accepted in a
   multi-ecosystem group and land in one PR (unverified behavior 3).
 - Proven: cooldown applies inside groups for `uv` with 7/14/3 and default days
   elsewhere (behavior 4).
@@ -73,6 +72,11 @@ Until the in-place refresh is observed, a stale open weekly PR that should pick 
 newer versions is closed by the owner and the next run opens a complete one.
 
 ## Consequences
+
+- No `docker-compose` entry: Dependabot only parses files named `*compose*.y*ml`
+  and the local fixture is `infra/compose/local.yaml`. The Neo4j digest (compose
+  fixture, `ci.yml` service, `deploy/neo4j-image.json`) is bumped manually; renaming
+  the fixture is a possible later change.
 
 - No privileged workflow or custom merge logic remains; the owner is the only
   merge authority for dependency updates.
