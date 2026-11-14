@@ -345,6 +345,32 @@ jobs:
         cache-from: type=gha,scope=api-linux-amd64
         cache-to: type=gha,mode=max,scope=api-linux-amd64
         labels: org.opencontainers.image.revision=${{ github.sha }}
+    - name: Image size spike (M1-5, evidence only)
+      run: |
+        docker image inspect portfolio-assistant-api:ci --format 'image_bytes={{.Size}}'
+        docker history --no-trunc --format '{{.Size}}\t{{.CreatedBy}}' portfolio-assistant-api:ci | cut -c1-160
+        docker run --rm --entrypoint python portfolio-assistant-api:ci -c "
+        import os, pathlib
+        root = pathlib.Path('/app/.venv/lib/python3.14/site-packages')
+        sizes = {}
+        for entry in root.iterdir():
+            total = sum(f.stat().st_size for f in entry.rglob('*') if f.is_file()) if entry.is_dir() else entry.stat().st_size
+            sizes[entry.name] = total
+        print('site_packages_bytes', sum(sizes.values()))
+        for name, size in sorted(sizes.items(), key=lambda kv: -kv[1])[:25]:
+            print(f'{size:>12} {name}')
+        lingua = root / 'lingua'
+        if lingua.is_dir():
+            models = [f for f in lingua.rglob('*') if f.is_file()]
+            print('lingua_files', len(models))
+            by_dir = {}
+            for f in models:
+                by_dir.setdefault(f.relative_to(lingua).parts[0], 0)
+                by_dir[f.relative_to(lingua).parts[0]] += f.stat().st_size
+            for name, size in sorted(by_dir.items(), key=lambda kv: -kv[1])[:10]:
+                print(f'lingua {size:>12} {name}')
+        "
+        docker run --rm --entrypoint sh portfolio-assistant-api:ci -c 'du -sk /usr /usr/lib /usr/lib/git-core /usr/share /usr/local /app/.venv 2>/dev/null'
     - name: Verify pinned image scanner
       run: |
         mkdir -p /tmp/image-scanner artifacts
