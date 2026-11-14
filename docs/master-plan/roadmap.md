@@ -22,9 +22,9 @@ Effort S (2 h, sum of rows). Acceptance: this plan is on `develop`; v1 history s
 
 | # | Item | Acceptance | Effort | Status |
 |---|---|---|---|---|
-| M0-1 | Docs-only PR from `docs/master-plan-v2` replaces `docs/master-plan/` (v1 removed, v2 added) | PR merged with green gate; README contains "Changes from v1" | S, 1 h | todo |
-| M0-2 | `progress.md` committed, tag `checkpoint/M0` | tag visible; progress table nine rows | S, 0.5 h | todo |
-| M0-3 | Owner is informed of the delegated resolutions (PAA-D2, D4, D5, D9, D12, D15) and of the three owner inputs | README section 7 lists them | S, 0.5 h | todo |
+| M0-1 | Docs-only PR from `docs/master-plan-v2` replaces `docs/master-plan/` (v1 removed, v2 added) | PR merged with green gate; README contains "Changes from v1" | S, 1 h | done (PR #140, `6766d6a`) |
+| M0-2 | `progress.md` committed, tag `checkpoint/M0` | tag visible; progress table nine rows | S, 0.5 h | done (tag `checkpoint/M0`) |
+| M0-3 | Owner is informed of the delegated resolutions (PAA-D2, D4, D5, D9, D12, D15) and of the three owner inputs | README section 7 lists them | S, 0.5 h | done (PR #140) |
 
 ## M1: foundation (Phase A)
 
