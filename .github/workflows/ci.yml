@@ -16,9 +16,6 @@ name: CI
       frontend_image:
         type: string
         default: ''
-      frontend_commit:
-        type: string
-        default: ''
   push:
     branches:
     - develop

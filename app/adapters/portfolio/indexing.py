@@ -52,6 +52,11 @@ ROOT_PATTERNS = (
 SECRET_PATTERN = re.compile(
     r'(?i)(api[_-]?key\s*[=:]|password\s*[=:]|secret\s*[=:]|BEGIN [A-Z ]+PRIVATE KEY)'
 )
+ALLOWED_REMOTES = (
+    'https://github.com/gonzalomartinperez/portfolio',
+    'https://github.com/gonzalomartinperez/portfolio.git',
+    'git@github.com:gonzalomartinperez/portfolio.git',
+)
 MAX_FILES = 80
 MAX_BYTES = 60_000
 CHUNKER_VERSION = 'sections35-v6'
@@ -133,7 +138,12 @@ def snapshot_source(root: Path):
         path = item['path']
         if not any(pattern.fullmatch(path) for pattern in ROOT_PATTERNS):
             raise ValueError(f'unapproved snapshot path: {path}')
-        data = (root / path).read_bytes()
+        target = root / path
+        if target.stat().st_size > (
+            500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES
+        ):
+            raise ValueError('source size limit exceeded')
+        data = target.read_bytes()
         if hashlib.sha256(data).hexdigest() != item['sha256']:
             raise ValueError(f'snapshot file does not match its manifest: {path}')
         profile = profile_parts(path)
@@ -146,7 +156,7 @@ def snapshot_source(root: Path):
         files.append((path, blob_sha))
     if len(files) > MAX_FILES:
         raise ValueError('file limit exceeded')
-    return commit, files, blobs.__getitem__
+    return commit, files, blobs.__getitem__, lambda blob_sha: len(blobs[blob_sha])
 
 
 def citation_url(commit: str, path: str, start: int, end: int):
@@ -299,14 +309,10 @@ def _sync(
 ):
     repo = repo.resolve(strict=True)
     if snapshot:
-        commit, files, read_blob = snapshot_source(repo)
+        commit, files, read_blob, blob_size = snapshot_source(repo)
     else:
         remote = git(repo, 'remote', 'get-url', 'origin').decode().strip()
-        if remote not in (
-            'https://github.com/gonzalomartinperez/portfolio',
-            'https://github.com/gonzalomartinperez/portfolio.git',
-            'git@github.com:gonzalomartinperez/portfolio.git',
-        ):
+        if remote not in ALLOWED_REMOTES:
             raise ValueError('only the public portfolio repository is allowed')
         commit = (
             git(repo, 'rev-parse', '--verify', '--end-of-options', ref + '^{commit}')
@@ -319,6 +325,9 @@ def _sync(
 
         def read_blob(blob_sha: str) -> bytes:
             return git(repo, 'cat-file', 'blob', blob_sha)
+
+        def blob_size(blob_sha: str) -> int:
+            return int(git(repo, 'cat-file', '-s', blob_sha))
 
     config = configuration
     version, namespace = corpus_identity(commit, config.embeddings_provider)
@@ -362,11 +371,11 @@ def _sync(
     for path, blob_sha in files:
         if stop is not None and stop.is_set():
             raise RuntimeError('sync_cancelled')
-        data = read_blob(blob_sha)
-        if len(data) > (
+        if blob_size(blob_sha) > (
             500000 if path == 'public/assistant-knowledge.json' else MAX_BYTES
         ):
             raise ValueError('source size limit exceeded')
+        data = read_blob(blob_sha)
         content = data.decode('utf-8')
         if SECRET_PATTERN.search(content):
             raise ValueError(f'possible secret in {path}')

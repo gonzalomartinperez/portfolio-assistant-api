@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
-from app.adapters.portfolio.indexing import ROOT_PATTERNS, git
+from app.adapters.portfolio.indexing import ALLOWED_REMOTES, ROOT_PATTERNS, git
 from app.domain.portfolio_paths import canonical_key
 
 CORPUS = Path('evals/corpus')
@@ -59,6 +61,9 @@ def verify(root: Path) -> list[str]:
 
 
 def refresh(source: Path, ref: str, root: Path) -> None:
+    remote = git(source, 'remote', 'get-url', 'origin').decode().strip()
+    if remote not in ALLOWED_REMOTES:
+        raise SystemExit('only the public portfolio repository is allowed')
     commit = git(source, 'rev-parse', '--verify', '--end-of-options', ref + '^{commit}')
     commit = commit.decode().strip()
     if not re.fullmatch(r'[0-9a-f]{40}', commit):
@@ -82,11 +87,10 @@ def refresh(source: Path, ref: str, root: Path) -> None:
         if (root / MANIFEST).exists()
         else set()
     )
-    for path in root.rglob('*') if root.exists() else []:
-        if path.is_file():
-            path.unlink()
+    root.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix='.corpus-', dir=root.parent))
     for item in files:
-        target = root / item['path']
+        target = staging / item['path']
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(git(source, 'show', f'{commit}:{item["path"]}'))
     manifest = {
@@ -96,7 +100,13 @@ def refresh(source: Path, ref: str, root: Path) -> None:
         'corpus_snapshot_id': snapshot_id(files),
         'files': files,
     }
-    (root / MANIFEST).write_text(json.dumps(manifest, indent=2) + '\n')
+    (staging / MANIFEST).write_text(json.dumps(manifest, indent=2) + '\n')
+    staging.chmod(0o755)
+    backup = staging.with_name(staging.name + '.old')
+    if root.exists():
+        root.rename(backup)
+    staging.rename(root)
+    shutil.rmtree(backup, ignore_errors=True)
     after = {item['key'] for item in files}
     print(f'{manifest["corpus_snapshot_id"]} from {commit}')
     print('added keys:', ', '.join(sorted(after - before)) or '-')

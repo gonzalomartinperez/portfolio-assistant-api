@@ -3,11 +3,13 @@
 import hashlib
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
 
-from app.adapters.portfolio.indexing import manifest_at_commit, snapshot_source
+from app.adapters.portfolio.indexing import chunks, manifest_at_commit, snapshot_source
+from app.bootstrap import indexing as indexing_cli
 from scripts import refresh_corpus
 
 ROOT = Path('evals/corpus')
@@ -57,7 +59,7 @@ def test_canonical_keys_cover_both_locales_and_all_topics():
 
 
 def test_snapshot_source_matches_git_object_ids():
-    commit, files, read = snapshot_source(ROOT)
+    commit, files, read, _size = snapshot_source(ROOT)
     assert commit == PINNED
     assert [path for path, _ in files] == sorted(
         item['path'] for item in manifest()['files']
@@ -83,3 +85,49 @@ def test_snapshot_source_rejects_a_modified_file(tmp_path):
 
 def test_manifest_at_commit_is_still_importable_for_git_mode():
     assert callable(manifest_at_commit)
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(['git', '-C', str(repo), *args], text=True).strip()
+
+
+def test_git_mode_and_snapshot_mode_agree_on_files_and_chunk_identity(tmp_path):
+    repo = tmp_path / 'repo'
+    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns('manifest.json'))
+    _git(repo, 'init', '-q')
+    _git(repo, 'config', 'user.name', 'Synthetic fixture')
+    _git(repo, 'config', 'user.email', 'fixture@example.test')
+    _git(repo, 'config', 'commit.gpgsign', 'false')
+    _git(repo, 'add', '-A')
+    _git(repo, 'commit', '-qm', 'synthetic')
+    commit = _git(repo, 'rev-parse', 'HEAD')
+    from_git = manifest_at_commit(repo, commit)
+    snap_commit, from_snapshot, _, _ = snapshot_source(ROOT)
+    assert from_git == from_snapshot
+    # Chunk ids and citation URLs derive from (commit, path, content), so reading the
+    # same blobs through Git or through the snapshot must give identical records.
+    _, _, read, _ = snapshot_source(ROOT)
+    for path, blob_sha in from_snapshot:
+        git_content = _git(repo, 'cat-file', 'blob', blob_sha)
+        snapshot_content = read(blob_sha).decode()
+        assert (
+            git_content == snapshot_content.strip('\n')
+            or git_content == snapshot_content
+        )
+        left = [
+            (c['id'], c['url']) for c in chunks(path, snapshot_content, snap_commit)
+        ]
+        right = [
+            (c['id'], c['url'])
+            for c in chunks(path, (repo / path).read_text(), snap_commit)
+        ]
+        assert left == right
+        assert left
+
+
+def test_cli_snapshot_source_requires_repo(monkeypatch, capsys):
+    monkeypatch.setattr('sys.argv', ['knowledge_sync', '--source', 'snapshot'])
+    with pytest.raises(SystemExit) as raised:
+        indexing_cli.main()
+    assert raised.value.code == 2
+    assert '--repo' in capsys.readouterr().err

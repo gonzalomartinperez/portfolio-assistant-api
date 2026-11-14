@@ -326,8 +326,9 @@ critical finding remain mandatory **external release-selection gates** for vps-o
 No publication/deployment controller is activated here. The rejected candidate run and
 known baseline findings remain recorded; no source tag waives them.
 
-The optional `workflow_call` inputs retain their historical `frontend_commit` /
-`frontend_image` names for caller compatibility. The selected source is now canonical
+The optional `workflow_call` input `frontend_image` keeps its historical name for caller
+compatibility; the former `frontend_commit` input moved to `cross-repo.yml` as a
+`workflow_dispatch` input. The selected source is now canonical
 `portfolio-backoffice`, and pairing (now in `cross-repo.yml`, as its `frontend_commit` dispatch input) compares the actual private operations, product
 and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
 chat consumer and cannot establish native portfolio compatibility. Current native
@@ -341,7 +342,9 @@ authentication against a fresh restricted project engine, independent recovery,
 restart and fresh-cluster restore, with only its synthetic aggregate receipt retained)
 and the optional `frontend_commit` private-contract byte comparison run in
 `.github/workflows/cross-repo.yml`, nightly at 06:00 UTC and on `workflow_dispatch`,
-outside the pull request path. It is not part of `ci-gate`.
+outside the pull request path. It is not part of `ci-gate`. GitHub runs schedules only
+from the default branch (`main`), so the nightly run starts after the M7 promotion to
+`main`; `workflow_dispatch` works earlier.
 
 
 ## Paired profile source and artifact privacy
