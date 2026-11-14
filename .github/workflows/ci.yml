@@ -211,8 +211,10 @@ jobs:
       env:
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
-    - name: Measure retrieval quality (report only, no gate until the baseline lands)
-      run: uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json
+    - name: Measure retrieval quality and block a significant Recall@5 drop
+      run: |
+        uv run --frozen --group eval python -m evals.harness.retrieval \
+          --out artifacts/retrieval-report.json --compare
       env:
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
