@@ -1,5 +1,5 @@
 # One entry point for local verification. `just check` runs the same commands as the
-# CI static job (`.github/workflows/ci.yml`); tests/test_agents_commands.py
+# CI static job (`.github/workflows/ci.yml`); tests/harness/test_agents_commands.py
 # keeps the two in step. Recipes never read `.env*` files and never call paid providers.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -26,6 +26,10 @@ check:
 test:
     uv run pytest -q -m 'not integration'
 
+# Run one test lane by name: just test-lane unit
+test-lane lane:
+    uv run pytest -q tests/{{lane}}
+
 # Integration lane; needs the isolated PostgreSQL and Neo4j fixtures (docs/local-development.md).
 test-integration:
     TEST_INTEGRATION=1 uv run pytest -q -m integration
@@ -38,3 +42,12 @@ demo url="http://localhost:8000" locale="en":
 eval-golden:
     @echo "eval-golden: the golden set and cassette replayer land in master plan M2-7" >&2
     @exit 2
+
+# Local scorecard: collect artifacts and check ratchets (docs/scorecard.md). Slow: runs the offline suite.
+score:
+    mkdir -p artifacts
+    uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]
+    uv run mypy > artifacts/mypy.txt 2>&1 || [ $? -eq 1 ]
+    uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+    uv run python -m scorecard collect --artifacts artifacts --out artifacts/scorecard.json
+    uv run python -m scorecard check --current artifacts/scorecard.json --ratchets scorecard/ratchets
