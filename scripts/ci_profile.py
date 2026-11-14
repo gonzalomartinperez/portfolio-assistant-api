@@ -7,22 +7,27 @@ from pathlib import Path
 import yaml
 
 WORKFLOW_PATH = Path('.github/workflows/ci.yml')
+SCORECARD_PATH = Path('.github/workflows/scorecard.yml')
+VULN_DAILY_PATH = Path('.github/workflows/vuln-daily.yml')
 PROFILE_PATH = Path('.github/ci-profile.json')
 NAMES = {
     'classify': 'classify',
     'workflows': 'Workflow validation',
     'secrets': 'Secret scan',
+    'security': 'Security checks',
     'static': 'Static checks',
     'database': 'Database tests',
     'container': 'Container verification',
     'ci-gate': 'ci-gate',
     'checks': 'Required checks',
 }
-# Jobs whose execution classify decides; secrets always runs.
-GATED = ('workflows', 'static', 'database', 'container')
+# Jobs whose execution classify decides; secrets always runs. `security` is gated but
+# belongs to the base profile, so classify always selects it.
+GATED = ('workflows', 'security', 'static', 'database', 'container')
 # Extra prerequisites that a gated job keeps besides classify.
 EXTRA_NEEDS = {
     'workflows': [],
+    'security': [],
     'static': [],
     'database': ['static'],
     'container': ['static'],
@@ -73,8 +78,9 @@ def profile_map_errors(jobs: dict, profile_map: dict) -> list[str]:
     for name in ('deps-weekly', 'release', 'hotfix'):
         if 'all-profiles' not in as_list(profiles.get(name, {}).get('adds')):
             errors.append(f'profile map: {name} must run every profile')
-    if 'secrets' not in as_list(profile_map['base']):
-        errors.append('profile map: secrets must always run')
+    for name in ('secrets', 'security'):
+        if name not in as_list(profile_map['base']):
+            errors.append(f'profile map: {name} must always run')
     return errors
 
 
@@ -239,10 +245,41 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
     return errors
 
 
+def standalone_errors(name: str, workflow: dict) -> list[str]:
+    """Scheduled security workflows: pinned, token-less by default, never privileged triggers."""
+    errors = []
+    events = workflow.get('on', workflow.get(True, {}))
+    if workflow.get('name') != name:
+        errors.append(f'{name}: workflow name')
+    if workflow.get('permissions') != {}:
+        errors.append(f'{name}: top-level permissions must be empty')
+    if 'pull_request_target' in events or 'pull_request' in events:
+        errors.append(f'{name}: no pull request triggers')
+    if 'schedule' not in events or 'workflow_dispatch' not in events:
+        errors.append(f'{name}: schedule and manual dispatch required')
+    for key, job in workflow.get('jobs', {}).items():
+        if 'uses' in job and not PINNED.fullmatch(job['uses']):
+            errors.append(f'{name}.{key}: unpinned reusable workflow')
+        if 'uses' not in job and job.get('runs-on') != 'ubuntu-24.04':
+            errors.append(f'{name}.{key}: isolated hosted runner')
+        if not isinstance(job.get('permissions'), dict):
+            errors.append(f'{name}.{key}: explicit job permissions')
+        for step in job.get('steps', []):
+            if 'uses' in step and not PINNED.fullmatch(step['uses']):
+                errors.append(f'{name}.{key}: unpinned action')
+            if step.get('continue-on-error'):
+                errors.append(f'{name}.{key}: step failure hidden')
+    return errors
+
+
 def main():
     errors = profile_errors(
         yaml.safe_load(WORKFLOW_PATH.read_text()),
         json.loads(PROFILE_PATH.read_text()),
+    )
+    errors += standalone_errors('scorecard', yaml.safe_load(SCORECARD_PATH.read_text()))
+    errors += standalone_errors(
+        'vuln-daily', yaml.safe_load(VULN_DAILY_PATH.read_text())
     )
     if errors:
         raise SystemExit('\n'.join(errors))

@@ -44,6 +44,18 @@ jobs:
       contents: read
       pull-requests: read
     uses: gonzalomartinperez/engineering-standards/.github/workflows/classify.yml@1f33be46bcb95f42f550f74608bc679cae5575ad # v1.0.0
+  security:
+    name: Security checks
+    needs: classify
+    if: contains(fromJSON(needs.classify.outputs.jobs), 'security')
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: gonzalomartinperez/engineering-standards/.github/workflows/security.yml@1f33be46bcb95f42f550f74608bc679cae5575ad # v1.0.0
+    with:
+      dependency-review: true
+      # Shared default list plus LGPL-3.0-only for psycopg (docs/adrs/009-psycopg-lgpl-exception.md).
+      allow-licenses: MIT, MIT-0, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSD-3-Clause-Clear, ISC, 0BSD, BlueOak-1.0.0, CC0-1.0, CC-BY-4.0, Unlicense, Python-2.0, PSF-2.0, Zlib, MPL-2.0, LGPL-3.0-only
   workflows:
     name: Workflow validation
     needs: classify
@@ -207,6 +219,7 @@ jobs:
       run: uv run python -m scripts.validate_compose
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       with:
+        cache-binary: false
         version: v0.38.0
         driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
     - name: Build and load the isolated PostgreSQL fixture
@@ -298,11 +311,7 @@ jobs:
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         version: 0.13.1
-        save-cache: false
-        enable-cache: true
-        cache-dependency-glob: |
-          uv.lock
-          .python-version
+        enable-cache: false
     - name: Install locked dependencies
       run: uv sync --frozen
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -325,6 +334,7 @@ jobs:
       run: uv run python -m scripts.validate_compose
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
       with:
+        cache-binary: false
         version: v0.38.0
         driver-opts: image=moby/buildkit@sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
     - name: Build and load the isolated PostgreSQL fixture
@@ -423,6 +433,7 @@ jobs:
     - classify
     - workflows
     - secrets
+    - security
     - static
     - database
     - container

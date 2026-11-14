@@ -21,6 +21,7 @@ GitHub-managed and are recorded by Actions.
 | classify / classify | Shared engineering-standards classifier: maps changed files, branch and labels to CI profiles and emits the job list | None |
 | workflows / Workflow validation | Pinned actionlint and trusted-event syntax; no dependency install or secret token | classify |
 | secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None (always runs) |
+| security / Security checks | Shared engineering-standards `security.yml`: zizmor, actionlint, gitleaks, dependency review with licence allow-list | classify |
 | static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | classify |
 | database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | classify, static |
 | container / Container verification | Own isolated databases/corpus, explicit recipe build, full scans, non-root streaming/SIGTERM/proxy and tested image identity | classify, static |
@@ -35,14 +36,14 @@ independently of prior PR merge-ref checks.
 ### CI profiles
 
 `.github/ci-profile.json` maps changed paths to profiles; `classify` unions the jobs the matched
-profiles add to the base (`secrets`, always).
+profiles add to the base (`secrets` and `security`, always).
 
 | Profile | Matches | Runs |
 | --- | --- | --- |
-| docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, static (offline tests validate docs and skills); no database or container job |
-| harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, static |
-| workflow | `.github/**` | secrets, workflows, static, database, container |
-| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, static, database, container |
+| docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, security, static (offline tests validate docs and skills); no database or container job |
+| harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, security, static |
+| workflow | `.github/**` | secrets, security, workflows, static, database, container |
+| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container |
 | deps-weekly | branch `dependabot/**` or label `deps-weekly` | every job |
 | release | develop -> main promotion | every job |
 
@@ -101,6 +102,27 @@ ephemeral CI databases. No active workflow grants registry write permission. The
 publisher and public image-archive uploads were retired for privacy. Local release
 manifest validation remains; an authorized private publication path and registry
 visibility decision are separate release gates. A merge cannot publish or deploy.
+
+## Security checks
+
+| Check | Where it runs | Notes |
+| --- | --- | --- |
+| Secret scan (`scripts.scan_secrets`) | `secrets` job, every run | Redacted full-history and worktree patterns; never prints values |
+| gitleaks | `security` job (shared `security.yml`) | PR commits on pull requests, pushed commits on push, skipped on merge groups |
+| zizmor | `security` job | Workflow audit at the shared default severity (`medium` and above fails); `unpinned-uses` enforces SHA pins |
+| actionlint | `security` job and the `workflows` job | Pinned `actionlint-py==1.7.12.25` |
+| Dependency review | `security` job, pull requests only | Fails on high severity and on licences outside the allow-list: the shared default list plus `LGPL-3.0-only` for psycopg (ADR 009) |
+| CodeQL | GitHub default setup (`actions`, `python`) | Not a workflow in this repository; the owner toggles it, see reference/repo-settings.md |
+| OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Weekly (Monday), on pushes to `main` and on manual dispatch; publishes results and uploads SARIF |
+| vuln-daily | `.github/workflows/vuln-daily.yml` | Daily shared job; silent tracking issue, with the weekly summary posted on Monday (OD-75); no images listed here (`images: ""`) |
+
+The `security` job is part of the base profile, so `classify` always selects it and `ci-gate` requires it.
+Every third-party action and reusable workflow is pinned to a full commit SHA. zizmor `unpinned-uses` and
+`tests/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
+`vuln-daily.yml`; the latter two also require an empty top-level `permissions` block and no
+`pull_request_target` or `pull_request` trigger. `docker/setup-buildx-action` steps set
+`cache-binary: false`, and the container job does not use the `setup-uv` cache, to satisfy zizmor `cache-poisoning`.
+Baseline numbers: docs/evidence/security-baseline-2026-11-14.md.
 
 ## Deployment belongs to vps-ops
 

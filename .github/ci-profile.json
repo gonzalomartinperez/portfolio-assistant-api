@@ -1,6 +1,7 @@
 {
   "base": [
-    "secrets"
+    "secrets",
+    "security"
   ],
   "required": "ci-gate",
   "profiles": {
