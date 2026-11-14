@@ -98,6 +98,6 @@ Retired/staging versions are currently retained for recovery. vps-ops must measu
 disk growth and define a reviewed pruning policy before long-running production;
 never delete a version pinned by a live request or required for recovery.
 
-Useful checks: `uv run pytest -q tests/test_grounded_assistant.py`, followed by
+Useful checks: `uv run pytest -q tests/unit/test_grounded_assistant.py`, followed by
 `TEST_INTEGRATION=1 uv run pytest -q -m integration` in the isolated fixture stack.
 Evidence must distinguish source/activation correctness from live answer quality.

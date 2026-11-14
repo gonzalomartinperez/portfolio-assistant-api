@@ -69,6 +69,7 @@
         "uv.lock",
         ".python-version",
         ".dockerignore",
+        ".gitattributes",
         ".gitignore",
         ".gitleaksignore",
         ".env.example",

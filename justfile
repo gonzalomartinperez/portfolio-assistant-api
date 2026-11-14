@@ -1,5 +1,5 @@
 # One entry point for local verification. `just check` runs the same commands as the
-# CI static job (`.github/workflows/ci.yml`); tests/test_agents_commands.py
+# CI static job (`.github/workflows/ci.yml`); tests/harness/test_agents_commands.py
 # keeps the two in step. Recipes never read `.env*` files and never call paid providers.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -16,8 +16,8 @@ sync:
 check:
     uv run python -m scripts.validate_skills
     uv run python -m scripts.check_license
-    uv run ruff check app tests contracts scripts
-    uv run ruff format --check app tests contracts scripts
+    uv run ruff check app tests contracts scripts evals
+    uv run ruff format --check app tests contracts scripts evals
     uv run mypy
     uv run python -m scripts.build_assistant_bank --check
     uv run python -m contracts.export && git diff --exit-code contracts
@@ -25,6 +25,10 @@ check:
 # Offline unit, contract and architecture tests (the CI static job's test step).
 test:
     uv run pytest -q -m 'not integration'
+
+# Run one test lane by name: just test-lane unit
+test-lane lane:
+    uv run pytest -q tests/{{lane}}
 
 # Integration lane; needs the isolated PostgreSQL and Neo4j fixtures (docs/local-development.md).
 test-integration:

@@ -155,8 +155,10 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
             errors.append('required events cannot be filtered')
     if workflow.get('permissions') != {'contents': 'read'}:
         errors.append('default token permissions')
-    if workflow.get('concurrency', {}).get('cancel-in-progress') is not True:
-        errors.append('stale candidate concurrency')
+    if workflow.get('concurrency', {}).get('cancel-in-progress') != (
+        "${{ github.event_name == 'pull_request' }}"
+    ):
+        errors.append('cancel superseded pull request runs only')
     jobs = workflow.get('jobs', {})
     if set(jobs) != set(NAMES):
         errors.append('exact job inventory')
