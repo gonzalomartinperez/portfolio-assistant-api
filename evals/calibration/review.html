@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge calibration review</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f6f6f4; color: #1b1b1b; }
+  header, main { max-width: 56rem; margin: 0 auto; padding: 0.75rem 1rem; }
+  header { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; border-bottom: 1px solid #ccc; }
+  .badge { background: #e3e3df; border-radius: 4px; padding: 0 0.5rem; font-size: 0.85rem; }
+  .q, .a { border-left: 4px solid; padding: 0.5rem 0.75rem; background: #fff; white-space: pre-wrap; margin: 0.5rem 0; }
+  .q { border-color: #2f6fb5; font-weight: 600; }
+  .a { border-color: #777; font-size: 1.05rem; }
+  .agent { border-color: #b57f2f; background: #fff8ec; padding: 0.5rem 0.75rem; margin: 0.5rem 0; }
+  button { font: inherit; padding: 0.5rem 1.2rem; border: 2px solid #333; background: #fff; cursor: pointer; border-radius: 4px; }
+  button:focus-visible, textarea:focus-visible { outline: 3px solid #1b6ef3; outline-offset: 2px; }
+  #pass { background: #1f7a3a; color: #fff; border-color: #1f7a3a; }
+  #fail { background: #b3261e; color: #fff; border-color: #b3261e; }
+  button.on { box-shadow: 0 0 0 3px #000; }
+  textarea { width: 100%; box-sizing: border-box; font: inherit; min-height: 4rem; }
+  pre { white-space: pre-wrap; background: #fff; padding: 0.5rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; align-items: center; }
+</style>
+</head>
+<body>
+<header>
+  <label>Items JSONL <input type="file" id="file" accept=".jsonl,.json,.txt"></label>
+  <label>Labeller <input id="labeller" value="owner" size="14"></label>
+  <span id="progress" class="badge" aria-live="polite">No items loaded</span>
+  <span id="mode" class="badge"></span>
+</header>
+<main>
+  <p id="meta"></p>
+  <div class="q" id="question"></div>
+  <details open><summary>Answer</summary><div class="a" id="answer"></div></details>
+  <div class="agent" id="agentlabel" hidden></div>
+  <details><summary>Rubric</summary><pre id="rubric"></pre></details>
+  <div class="row">
+    <button id="pass" type="button">Pass (1)</button>
+    <button id="fail" type="button">Fail (2)</button>
+    <button id="skip" type="button">Skip (D)</button>
+    <button id="undo" type="button">Undo (U)</button>
+  </div>
+  <label for="rationale">Rationale (short)</label>
+  <textarea id="rationale" maxlength="500"></textarea>
+  <div class="row">
+    <button id="prev" type="button">Previous</button>
+    <button id="next" type="button">Next</button>
+    <button id="save" type="button">Save and next (Ctrl+Enter)</button>
+    <button id="export" type="button">Export JSONL (Ctrl+S)</button>
+  </div>
+  <p>Keys: 1 pass, 2 fail, D skip, U undo, arrows navigate. Everything stays in this browser tab.</p>
+</main>
+<script>
+"use strict";
+const RUBRICS = {
+  helpful_complete: "helpful_complete: PASS if the answer responds to the actual question first and gives enough concrete detail (or clearly states the corpus cannot support it and offers a next step). FAIL if it drifts, is vague or generic, omits needed detail, or refuses when an answer was supported.",
+  tone_fit: "tone_fit: PASS if the tone is warm and professional, third person, and role-fit claims separate direct evidence, transferable skills and requirements not evidenced. FAIL if cold, salesy, overclaims fit, or presents transferable skills as direct experience."
+};
+const $ = (id) => document.getElementById(id);
+let items = [], idx = 0, spot = false;
+const state = new Map(); // item index -> {label, rationale}
+
+function load(text) {
+  items = text.split(/\r?\n/).filter((l) => l.trim()).map((l) => JSON.parse(l));
+  spot = items.length > 0 && items.every((i) => i.label === "pass" || i.label === "fail");
+  $("mode").textContent = spot ? "Owner spot-check mode" : "Labelling mode";
+  idx = 0; state.clear(); show();
+}
+function cur() { return state.get(idx) || { label: null, rationale: "" }; }
+function show() {
+  if (!items.length) return;
+  const it = items[idx], s = cur();
+  $("meta").textContent = `${it.id} | ${it.criterion} | ${it.locale} | item ${it.item_id}`;
+  $("question").textContent = it.question || "";
+  $("answer").textContent = it.answer || "(no answer text supplied; answer_ref: " + it.answer_ref + ")";
+  $("rubric").textContent = RUBRICS[it.criterion] || "Unknown criterion";
+  $("agentlabel").hidden = !spot;
+  if (spot) $("agentlabel").textContent = `Agent label (${it.labeller || "agent"}): ${it.label}. ${it.rationale || ""}`;
+  $("rationale").value = s.rationale;
+  $("pass").classList.toggle("on", s.label === "pass");
+  $("fail").classList.toggle("on", s.label === "fail");
+  const done = [...state.values()].filter((v) => v.label).length;
+  $("progress").textContent = `${idx + 1} of ${items.length} | labelled ${done}, remaining ${items.length - done}`;
+}
+function set(label) { if (!items.length) return; state.set(idx, { label, rationale: $("rationale").value }); show(); }
+function go(d) { if (!items.length) return; keep(); idx = Math.min(items.length - 1, Math.max(0, idx + d)); show(); }
+function keep() { const s = cur(); s.rationale = $("rationale").value; if (s.label || s.rationale) state.set(idx, s); }
+function record(it, s) {
+  const today = new Date().toISOString().slice(0, 10);
+  const who = $("labeller").value.trim() || "owner";
+  const base = {
+    id: it.id, criterion: it.criterion, item_id: it.item_id, locale: it.locale, question: it.question,
+    answer_ref: it.answer_ref, split: it.split || "train", created: it.created || today
+  };
+  if (spot) {
+    return { ...base, label: it.label, labeller: it.labeller || "agent", labeller_kind: it.labeller_kind || "agent",
+      rationale: it.rationale || "", spot_checked: true, spot_check_label: s.label };
+  }
+  return { ...base, label: s.label, labeller: who, labeller_kind: who === "owner" ? "owner" : "agent",
+    rationale: s.rationale.slice(0, 500), spot_checked: false, spot_check_label: null };
+}
+function exportJsonl() {
+  keep();
+  const out = [];
+  items.forEach((it, i) => { const s = state.get(i); if (s && s.label) out.push(JSON.stringify(record(it, s))); });
+  const url = URL.createObjectURL(new Blob([out.join("\n") + (out.length ? "\n" : "")], { type: "application/jsonl" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = spot ? "spot-check-labels.jsonl" : "labels.jsonl"; a.click();
+  URL.revokeObjectURL(url);
+}
+$("file").addEventListener("change", (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => load(String(r.result)); r.readAsText(f);
+});
+$("pass").onclick = () => set("pass"); $("fail").onclick = () => set("fail");
+$("skip").onclick = () => go(1);
+$("undo").onclick = () => { state.delete(idx); show(); };
+$("prev").onclick = () => go(-1); $("next").onclick = () => go(1);
+$("save").onclick = () => { keep(); go(1); }; $("export").onclick = exportJsonl;
+document.addEventListener("keydown", (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key === "Enter") { e.preventDefault(); keep(); go(1); return; }
+  if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); exportJsonl(); return; }
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || mod) return;
+  const k = e.key.toLowerCase();
+  if (k === "1") set("pass"); else if (k === "2") set("fail");
+  else if (k === "d") go(1); else if (k === "u") { state.delete(idx); show(); }
+  else if (e.key === "ArrowRight") go(1); else if (e.key === "ArrowLeft") go(-1);
+});
+</script>
+</body>
+</html>

@@ -17,8 +17,10 @@ from uuid import uuid4
 import httpx
 import uvicorn
 
+from app.adapters.prompts import default_prompts
 from app.bootstrap.config import Settings
 from app.bootstrap.container import create_app
+from app.domain.prompts import prompt_version
 from scripts.evaluation_isolation import validate_targets
 
 MAX_REPORT_BYTES = 64 * 1024 * 1024
@@ -288,6 +290,7 @@ def main():
             if args.mode == 'openai'
             else None,
             'live_quality_verified': False,
+            'prompt_version': prompt_version(default_prompts().values()),
         },
     )
     with interruption_signals():

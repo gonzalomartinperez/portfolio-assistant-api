@@ -63,6 +63,7 @@
         "evals/**",
         "infra/**",
         "deploy/**",
+        "scorecard/**",
         "artifacts/**",
         "pyproject.toml",
         "uv.lock",

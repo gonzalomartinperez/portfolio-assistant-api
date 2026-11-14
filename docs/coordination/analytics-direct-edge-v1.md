@@ -124,11 +124,11 @@ contain 14 country cases and eight calendar cases. They are synthetic adapter
 inputs, not real edge observations. Run without provider or service access:
 
 ```sh
-uv run pytest -q tests/test_analytics_country.py tests/test_analytics_periods.py tests/test_product_analytics.py
+uv run pytest -q tests/unit/test_analytics_country.py tests/unit/test_analytics_periods.py tests/unit/test_product_analytics.py
 ```
 
 Real restricted PostgreSQL tests in
-[`tests/test_interaction_integration.py`](../../tests/test_interaction_integration.py)
+[`tests/integration/test_interaction_integration.py`](../../tests/integration/test_interaction_integration.py)
 exercise enabled country storage and reports using a synthetic TestClient peer;
 run only against the maintained owned fixture. They do not authenticate Cloudflare.
 The [executed native/API/backoffice receipt](https://github.com/gonzalomartinperez/portfolio-backoffice/blob/eccdfe3980e6db12b486eb3e88df923f6c5a509a/docs/verification/calendar-report-2026-10-18.md#native-ingestion-and-authenticated-rendering-checkpoint)

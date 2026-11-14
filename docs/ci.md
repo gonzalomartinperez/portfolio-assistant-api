@@ -50,7 +50,7 @@ profiles add to the base (`secrets` and `security`, always).
 Fail-closed rules: a changed file outside every profile, an empty or failed diff, or a change to
 the profile map itself runs every job. Push, merge-group and manual runs, and `workflow_call`
 runs (no PR event), run every job. A broken profile map fails `classify`, so the gate goes red.
-`scripts/ci_profile.py` and `tests/test_ci_profile.py` require every tracked file to match a profile.
+`scripts/ci_profile.py` and `tests/harness/test_ci_profile.py` require every tracked file to match a profile.
 
 `ci-gate` is the single required check going forward. It needs every other job, requires every
 selected job to succeed, and tolerates a skip only for unselected jobs. Until the owner switches
@@ -62,6 +62,28 @@ drift. The real-service job exercises ten development cases spanning all topics 
 both locale hints through the HTTP/SSE harness; failed terminals fail the job.
 Full 1000-case fixture runs are recorded locally rather than adding that cost to
 every PR. These checks establish executable coverage, not live-model answer quality.
+
+## Test lanes
+
+Test modules are grouped by purpose. Run individual lanes with these commands:
+
+| Lane | Directory | Command |
+| --- | --- | --- |
+| Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Property | `tests/property/` (marker `property`; Hypothesis profile `ci` by default) | `uv run pytest -q tests/property`; nightly: `HYPOTHESIS_PROFILE=nightly uv run pytest -q tests/property` |
+| Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
+| Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
+| Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
+| Tooling | `tests/tooling/` | `uv run pytest -q tests/tooling` |
+| Harness | `tests/harness/` | `uv run pytest -q tests/harness` |
+| Integration | `tests/integration/` (marker `integration`, also used by a few mixed unit files) | `TEST_INTEGRATION=1 uv run pytest -q -m integration` |
+| Container | `tests/container/` | `uv run pytest -q tests/container` |
+
+`tests/support.py` and `tests/fixtures/` remain shared at the `tests/` root.
+The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
+property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
+(1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
+exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
 
 Tests are explicitly marked `integration`. Static and database jobs run
 disjoint selections, retaining all coverage. Container smoke owns fresh services;
@@ -122,7 +144,7 @@ can be dispatched manually after that promotion to seed the baseline and the tra
 
 The `security` job is part of the base profile, so `classify` always selects it and `ci-gate` requires it.
 Every third-party action and reusable workflow is pinned to a full commit SHA. zizmor `unpinned-uses` and
-`tests/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
+`tests/harness/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
 `vuln-daily.yml`; the latter two also require an empty top-level `permissions` block and no
 `pull_request_target` or `pull_request` trigger. `docker/setup-buildx-action` steps set
 `cache-binary: false`, and the container job does not use the `setup-uv` cache, to satisfy zizmor `cache-poisoning`.
@@ -211,7 +233,7 @@ weekly PR into `develop`; the owner merges it manually. The shared
 `deps-weekly-guard` workflow (`.github/workflows/deps-weekly-guard.yml`, pinned by
 SHA, no `pull_request_target`) keeps it to one open PR and flags a red one. The
 former dependency-policy workflow, its scripts and the CI audit step were
-removed ([ADR019](adrs/019-weekly-dependency-pr.md)). `tests/test_dependabot_config.py`
+removed ([ADR019](adrs/019-weekly-dependency-pr.md)). `tests/harness/test_dependabot_config.py`
 runs in the offline test suite.
 
 ## Python 3.14 application compatibility
@@ -247,7 +269,7 @@ This is an added remediation gate, not a clean-image or production-security clai
 Scanner network failures fail the job. No production secrets or publishing token
 are available to the job. The required aggregate `checks` remains unchanged.
 
-Local policy tests: `uv run pytest -q tests/test_image_security.py`. Full report
+Local policy tests: `uv run pytest -q tests/container/test_image_security.py`. Full report
 and summary are retained with integration diagnostics even on failure. Scan the
 release digest again at release selection: the vulnerability database changes
 independently of source/image revisions.
@@ -389,3 +411,42 @@ endpoint. The size ratchet fails when `docker image inspect` reports a size abov
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
 `hadolint ignore=DL3003,DL4006` with its reason.
+
+## Mutation testing (M2-11)
+
+[ADR023](adrs/023-mutation-testing-mutmut.md) records the Python 3.14 spike.
+`ci.yml` runs a PR-only `mutation` job (30 minutes, two workers). It diffs
+against the PR base with `git diff base...HEAD`, intersects changed Python files
+with the explicit `[tool.mutmut]` scope, and narrows the disposable checkout's
+configuration before generation. Deleted, unscoped and test files are excluded;
+no matching source files means a clean skip. Tests use the offline unit lane,
+fixture providers and no integration tests. Tests themselves are never mutated.
+
+`mutation-weekly.yml` runs the full configured scope on Mondays at 04:17 UTC or
+by manual dispatch (90 minutes, two workers). Both jobs retain per-mutant text
+results and mutmut's aggregate JSON for 14 days. Only synthetic mutation outcomes
+are uploaded. GitHub schedules begin operating when the workflow reaches the
+default branch; local verification does not establish a successful hosted run.
+
+The stdlib gate reads `mutmut results --all true`: 3.8.1's `export-cicd-stats`
+JSON lacks file identities, so it cannot calculate package scores. The score is
+confirmed kills divided by all measured outcomes, including timeouts, no-tests,
+skips and errors in the denominator. Unchecked mutants are not measured. Scores
+are grouped by domain, application, AI retrieval and graders. Targets are 75%,
+85% for graders and budget math; the break floor is 60%.
+`tests/mutation-baseline.json` records measured ratchets and the exact sample;
+null means unmeasured, not zero-quality evidence. The full weekly run supplies
+the remaining measurements; ratchets may only increase.
+
+Run `uv run python -m scripts.mutation_gate --results PATH` after collecting
+results. `--warn` or `MUTATION_MODE=warn` expresses rollout intent; warning mode
+is also the default through 2026-11-28 UTC. Starting 2026-11-29 it fails below
+60% or the committed ratchet, even with `--warn`. `--enforce` activates failure
+immediately. Invalid or empty evidence always fails.
+
+Mutation remains outside `ci-gate` and the classifier map: the pinned shared
+action's handling of this unclassified PR-only/skipped advisory job has not been
+verified locally. The local profile guard explicitly permits this one independent
+job while preserving every existing required dependency. This also means mutation
+shortfalls do not block merging through `ci-gate`, including after warning expiry;
+promoting mutation to a required check needs verified shared-gate semantics.
