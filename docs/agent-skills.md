@@ -2,8 +2,8 @@
 
 `AGENTS.md` remains the canonical operating contract. `CLAUDE.md` explicitly imports
 it with `@AGENTS.md`; no client is assumed to read the other's entry point.
-Skill instructions live only in `.claude/skills/<name>/SKILL.md`. Codex discovers
-relative directory symlinks under `.agents/skills/`. There are no independently
+Skill instructions live only in `.agents/skills/<name>/SKILL.md`. Claude Code discovers
+relative directory symlinks under `.claude/skills/`. There are no independently
 editable instruction copies, hooks, tool-permission grants or global installations.
 
 ## Catalog
@@ -42,10 +42,10 @@ interpolation, permission fields or copied universal programming advice. Link
 resources with paths relative to SKILL.md, staying inside the checkout; run listed
 commands from the repository root. Add scripts only for repeated deterministic work.
 
-For a new skill, create its relative Codex link from the repository root:
+For a new skill, create its relative Claude Code link from the repository root:
 
 ```sh
-ln -s ../../.claude/skills/api-new-task .agents/skills/api-new-task
+ln -s ../../.agents/skills/api-new-task .claude/skills/api-new-task
 uv run python -m scripts.validate_skills
 uv run pytest -q tests/test_skills.py
 ```
