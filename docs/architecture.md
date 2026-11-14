@@ -90,7 +90,7 @@ Expired sessions are rejected immediately; physical deletion follows that schedu
 Spend totals retain amount/time for budget enforcement, with deleted run references
 set to null. See [privacy and threats](threat-model.md) and [operations](deployment.md).
 
-See [ADR 001](adrs/001-dependency-direction.md), [GraphRAG](graph-retrieval.md),
+See [ADR 001](adrs/001-dependency-direction.md), [ADR 014](adrs/014-prompt-registry.md), [GraphRAG](graph-retrieval.md),
 and [stream contract](api-contract.md) for decisions and behavior details.
 
 ## Bounded conversational context
