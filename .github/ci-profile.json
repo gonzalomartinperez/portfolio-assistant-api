@@ -11,7 +11,7 @@
         "docs/**",
         "LICENSE",
         ".github/ISSUE_TEMPLATE/**",
-        ".github/pull_request_template.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/CODEOWNERS"
       ],
       "adds": [
@@ -40,6 +40,7 @@
         ".github/dependabot.yml",
         ".github/*.json",
         ".github/*.yml",
+        "standards.lock",
         "scripts/check_workflows.sh",
         "scripts/ci_identity.py",
         "scripts/ci_profile.py"
