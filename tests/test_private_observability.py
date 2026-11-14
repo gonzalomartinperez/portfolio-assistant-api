@@ -6,6 +6,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from unittest.mock import ANY
 from uuid import uuid4
 
 import pytest
@@ -536,7 +537,7 @@ def test_real_sdk_http_stream_mapping_and_no_generation_retry(available):
                         'Question', 'Approved public evidence', 'en'
                     )
                 ]
-                assert output == ['Hello [1].', Usage(12, 8)]
+                assert output == ['Hello [1].', Usage(12, 8, ANY)]
             else:
                 with pytest.raises(ProviderUnavailableError) as failure:
                     _ = [
