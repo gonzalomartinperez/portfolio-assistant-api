@@ -28,7 +28,8 @@ workflow/retrieval with injected capabilities, never concrete I/O. Adapters
 implement persistence/provider/source ports; presentation handles HTTP/SSE;
 bootstrap composes clients and lifespan. Preserve v1 wire artifacts.
 
-Run `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,
+Run `just check` (the CI static checks) and `just test` (offline tests), or the
+underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts scripts`,
 `uv run ruff format --check app tests contracts scripts`, `uv run mypy`, and
 `uv run pytest -q`. Real integration requires migrations and the pinned approved
 public corpus, then `TEST_INTEGRATION=1 uv run pytest -q`. Export contracts with
@@ -38,8 +39,8 @@ or delete volumes. Document fixture versus live verification separately.
 
 ## Task guidance
 
-Repository skills are discovered through `.claude/skills/` (canonical) and relative
-`.agents/skills/` links (Codex). Load only the skill matching the requested task;
+Repository skills are canonical in `.agents/skills/` (Codex), and Claude Code discovers the relative
+`.claude/skills/` links. Load only the skill matching the requested task;
 ordinary orientation starts with README.md, not the whole catalog. See
 [skill maintenance and evidence](docs/agent-skills.md). Validate changes with
 `uv run python -m scripts.validate_skills` and the existing verification commands.

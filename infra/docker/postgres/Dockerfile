@@ -13,8 +13,10 @@ RUN apk add --no-cache build-base=0.5-r4 clang21=21.1.8-r3 llvm21-dev=21.1.8-r1 
 FROM postgres:18.6-alpine3.24@sha256:123b17998ccaf47e53b502e8c6a1e79afd8f579c6f3eec83c563da026f957395
 COPY --from=vector-build /extension/ /
 # Root startup/ownership repair is unsupported; preserve XML, ICU and the official entrypoint.
+# Runtime packages are pinned to their fixed Alpine security versions until the trixie move (M1-4).
 RUN apk add --no-cache libxml2=2.13.9-r2 brotli-libs=1.2.1-r0 \
     zlib=1.4-r0 musl=1.2.6-r3 musl-utils=1.2.6-r3 libcurl=8.23.0-r0 \
+    krb5-libs=1.22.3-r0 libxslt=1.1.43-r4 \
     && rm /usr/local/bin/gosu \
     && test "$(id -u postgres)" = 70 && test "$(id -g postgres)" = 70 \
     && apk info -v > /usr/share/assistant-postgres-packages.txt
