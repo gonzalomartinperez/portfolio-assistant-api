@@ -142,6 +142,13 @@ def item_context(
     return replace(base, approved_urls=base.approved_urls | frozenset(approved))
 
 
+def visitor_address(index: int) -> str:
+    """A distinct synthetic address in 198.18.0.0/15 (benchmarking range) per index."""
+    if not 0 <= index < 2 * 256 * 250:
+        raise ValueError('visitor index out of the 198.18.0.0/15 range')
+    return f'198.{18 + index // 64000}.{index // 250 % 256}.{index % 250 + 1}'
+
+
 async def run_item(
     item: Item,
     client: httpx.AsyncClient,
@@ -199,10 +206,13 @@ async def run_items(
     inspect: Callable[
         [tuple[str, str]], list[EvaluationContainer]
     ] = inspect_containers,
+    first_visitor: int = 0,
 ) -> list[ItemOutcome]:
     """Grade items against the in-process app; refuses unless the isolation guard passes.
 
     Retired items are skipped; quarantined items run and are reported separately.
+    ``first_visitor`` offsets the synthetic visitor addresses so callers that run items in
+    separate batches against the same stores do not share one per-subject rate limit.
     """
     require_isolated(config, inspect=inspect)
     # Synthetic loopback visitors: trust the forwarded address so per-subject limits apply.
@@ -222,7 +232,7 @@ async def run_items(
                     client,
                     recorder,
                     origin=config.origins[0],
-                    visitor=f'198.18.{index // 250}.{index % 250 + 1}',
+                    visitor=visitor_address(first_visitor + index),
                 )
                 outcomes.append(
                     ItemOutcome(
