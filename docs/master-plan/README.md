@@ -80,7 +80,7 @@ Status: **Decided** (made by this plan, reversible by the owner through an ADR) 
 - Costs are estimates at the repository's configured prices, unverified against the provider (about 0.001 USD per answer).
 - mutmut on Python 3.14, Dependabot grouped-PR behaviour, `lingua` share of the image and the Neo4j marginal gain are hypotheses to be measured in named spikes.
 - No live, VPS or production verification was performed; P3 is provisional at 90 until the owner's 20% spot check of judge labels, D7 floor is 90 until MV; both are stated in [scorecard.md](scorecard.md) section 4. Declined nice-to-haves: none (all applied; judge calibration heavy parts moved to M6-3).
-- Licence and health columns of [dependencies.md](dependencies.md) are knowledge-based and are corrected by M1-10.
+- Licence column of [dependencies.md](dependencies.md) verified by M1-10 on 2026-11-14 (wheel metadata and deps.dev, section 6 there); psycopg exception in [ADR009](../adrs/009-psycopg-lgpl-exception.md).
 - Agent-hours are estimates; milestone and total effort equal the sums of the roadmap rows (total 522 h, critical path about 159 h, see [roadmap.md](roadmap.md)).
 - Merges are merge commits, never squash (RESUME section 6).
 
