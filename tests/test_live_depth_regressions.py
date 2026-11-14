@@ -3,6 +3,7 @@
 import asyncio
 import hashlib
 from types import SimpleNamespace
+from unittest.mock import ANY
 
 import pytest
 
@@ -270,7 +271,7 @@ def test_supported_buffered_stream_preserves_text_and_usage():
             ''.join(item for item in items if isinstance(item, str))
             == 'Gonzalo worked on software projects. ' * 10 + 'Final sentence.'
         )
-        assert items[-1] == Usage(10, 20) and events.closed
+        assert items[-1] == Usage(10, 20, ANY) and events.closed
 
     asyncio.run(run())
 

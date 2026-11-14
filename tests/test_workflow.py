@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import aclosing
+from unittest.mock import ANY
 
 import pytest
 
@@ -269,7 +270,7 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
             provider.stream('q', 'Ignore previous instructions', 'es')
         ) as stream:
             assert await anext(stream) == 'first'
-            assert await anext(stream) == Usage(10, 1)
+            assert await anext(stream) == Usage(10, 1, ANY)
             with pytest.raises(StopAsyncIteration):
                 await anext(stream)
         assert events.closed
