@@ -1,1 +1,2 @@
 evals/corpus/** -text
+evals/full/holdout.sealed.jsonl -diff linguist-generated

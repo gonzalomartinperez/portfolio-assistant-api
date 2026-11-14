@@ -26,7 +26,8 @@ QUOTAS = {
 }
 VOSEO = re.compile(
     r'\b(?:tenés|querés|podés|sos|vos|contame|decime|mirá|fijate|sabés|decís|hablás'
-    r'|pensás|necesitás|buscás|dame|mostrame|explicame|ayudame|contá|decí|vení|tené)\b',
+    r'|pensás|necesitás|buscás|dame|mostrame|explicame|ayudame|contá|decí|vení|tené'
+    r'|hacé|pensá|escribí|ayudá|pasame|respondé)\b',
     re.IGNORECASE,
 )
 # "dame" and "explicame" are valid tuteo imperatives with an accent-free spelling variant

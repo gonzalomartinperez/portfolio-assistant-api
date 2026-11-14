@@ -24,6 +24,9 @@ class ItemOutcome:
         return all(g.passed for g in self.grades)
 
 
+SEALED_MIN_CELL = 5  # sealed reports hide cells smaller than this
+
+
 def wilson_interval(passed: int, total: int, z: float = 1.96) -> list[float]:
     """Wilson score 95% interval for a pass rate; ``[0, 1]`` when there is no data."""
     if total == 0:
@@ -41,14 +44,20 @@ def build_report(
     tier: str,
     run_id: str,
     pins: Mapping[str, str] | None = None,
+    sealed: bool = False,
 ) -> dict[str, object]:
     """Pure aggregation over the gate (active items); ``pins`` are recorded when known.
 
     Retired items are dropped and quarantined items are listed separately, outside
     every count. Each tally carries its pass rate and Wilson 95% interval.
+
+    ``sealed`` (the holdout, assistant-quality.md section 6.2) keeps only aggregates: no item
+    id appears anywhere, failures are counted per stratum and per assertion name.
     """
 
     def tally(rows: Sequence[ItemOutcome]) -> dict[str, object]:
+        if sealed and len(rows) < SEALED_MIN_CELL:
+            return {'suppressed': f'fewer than {SEALED_MIN_CELL} items'}
         passed = sum(r.passed for r in rows)
         return {
             'total': len(rows),
@@ -57,6 +66,8 @@ def build_report(
         }
 
     quarantined = {o.item_id: o.passed for o in outcomes if o.status == 'quarantined'}
+    if tier == 'holdout' and not sealed:
+        raise ValueError('the holdout tier must be reported with sealed=True')
     outcomes = [o for o in outcomes if o.status == 'active']
 
     by_locale: dict[str, list[ItemOutcome]] = defaultdict(list)
@@ -65,11 +76,24 @@ def build_report(
         by_locale[outcome.locale].append(outcome)
         for stratum in outcome.strata:
             by_stratum[stratum].append(outcome)
+    failing_counts = {
+        stratum: sum(not r.passed for r in rows)
+        for stratum, rows in sorted(by_stratum.items())
+        if any(not r.passed for r in rows)
+        and (not sealed or len(rows) >= SEALED_MIN_CELL)
+    }
+    names: dict[str, int] = defaultdict(int)
+    for outcome in outcomes:
+        for grade in outcome.grades:
+            if not grade.passed:
+                names[grade.name] += 1
     return {
         'tier': tier,
         'run_id': run_id,
         'pins': dict(pins or {}),
-        'quarantined': dict(sorted(quarantined.items())),
+        'quarantined': len(quarantined)
+        if sealed
+        else dict(sorted(quarantined.items())),
         'totals': tally(outcomes),
         'by_locale': {k: tally(v) for k, v in sorted(by_locale.items())},
         'by_stratum': {
@@ -82,16 +106,26 @@ def build_report(
             }
             for stratum, rows in sorted(by_stratum.items())
         },
-        'failing_ids_by_stratum': {
-            stratum: sorted(r.item_id for r in rows if not r.passed)
-            for stratum, rows in sorted(by_stratum.items())
-            if any(not r.passed for r in rows)
-        },
-        'failed_assertions': {
-            o.item_id: [g.name for g in o.grades if not g.passed]
-            for o in outcomes
-            if not o.passed
-        },
+        'sealed': sealed,
+        **(
+            {
+                'failing_counts_by_stratum': failing_counts,
+                'failed_assertion_counts': names,
+            }
+            if sealed
+            else {
+                'failing_ids_by_stratum': {
+                    stratum: sorted(r.item_id for r in rows if not r.passed)
+                    for stratum, rows in sorted(by_stratum.items())
+                    if any(not r.passed for r in rows)
+                },
+                'failed_assertions': {
+                    o.item_id: [g.name for g in o.grades if not g.passed]
+                    for o in outcomes
+                    if not o.passed
+                },
+            }
+        ),
     }
 
 

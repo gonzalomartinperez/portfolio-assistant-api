@@ -212,8 +212,9 @@ Motive: one golden set and one full set (owner decision), harness outside the sh
 
 | From | To | Action | Motive |
 |---|---|---|---|
-| `evals/assistant-intents.json` | `evals/archive/legacy-2026-10/assistant-intents.json` | archive | Canonical authored intents (100 families) kept for provenance after distillation |
-| `evals/assistant.json` | `evals/archive/legacy-2026-10/assistant.json` | archive | 1000-case generated bank (670 dev + 330 holdout); source for distillation of golden and full tiers, then frozen |
+| `evals/assistant-intents.json` | `evals/archive/legacy-2026-10/assistant-intents.json` | archive | Canonical authored intents (100 families) kept for provenance after distillation. Copied in M2-4 part 2; the original stays until `scripts/build_assistant_bank.py` and `tests/test_grounded_assistant.py` read the archive (follow-up) |
+| `evals/assistant.json` | `evals/archive/legacy-2026-10/assistant.json` | archive | 1000-case generated bank (670 dev + 330 holdout); source for distillation of golden and full tiers, then frozen. Copied in M2-4 part 2; the original stays until `scripts/evaluate_assistant.py`, `scripts/build_assistant_bank.py --check` and `tests/test_grounded_assistant.py` read the archive (follow-up) |
+| `scripts/evaluate_conversations.py` (`SCENARIOS`, `CONTINUITY_SCENARIOS`) | `evals/archive/legacy-2026-10/scenarios.json` | archive (extract) | 16 scripted legacy scenarios frozen as data for the full tier; the script stays (it is the runner) |
 | `evals/fixture-results.json` | `(deleted)` | delete | Generated result artifact; reports go to artifacts/ and ratchet files |
 | `evals/live-depth-2026-10-10.json` | `docs/evidence/archive/2026-10/evals/live-depth-2026-10-10.json` | archive | Dated live-run result artifact (2026-10); evidence, not a living eval input |
 | `evals/live-depth-final-2026-10-10.json` | `docs/evidence/archive/2026-10/evals/live-depth-final-2026-10-10.json` | archive | Dated live-run result artifact (2026-10); evidence, not a living eval input |
@@ -314,7 +315,7 @@ Motive per row.
 | `.importlinter` (or `[tool.importlinter]`) | Layer contracts | M4 |
 | `scorecard/` (Python package) and `scorecard/ratchets/*.json` | scorecard.json aggregator and ratchet baselines | M2 |
 | `evals/golden/golden.jsonl`, `evals/golden/README.md`, `evals/schema/*.json` | Golden set and item schema | M2 |
-| `evals/full/dev.jsonl`, `evals/full/holdout.sealed.jsonl`, `evals/full/manifest.json` | Full tier | M2 |
+| `evals/full/full.jsonl`, `evals/full/holdout.sealed.jsonl`, `evals/full/manifest.json`, `evals/full/selection.json`, `evals/full/README.md` | Full tier (384 development items + 100 sealed) | M2 |
 | `evals/calibration/*.jsonl` | Judge calibration labels (never part of the gate) | M2 (labels from owner) |
 | `evals/retrieval/{queries,qrels}.jsonl`, `evals/retrieval/embeddings-<corpus>.npz` | Retrieval qrels and frozen embeddings | M2 |
 | `evals/attacks/attacks.jsonl` | 60 deterministic attacks | M2 |

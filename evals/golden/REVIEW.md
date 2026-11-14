@@ -41,3 +41,7 @@ edited ones. All items have `last_verified` 2026-11-14.
 - Tool-use and memory strata have no tool or memory grader; they are graded only by text assertions (open gap).
 - Refusal cues missing correct negations is being fixed in the grader; `citations_nonempty` for answer items is being added to the harness.
 - No-retrieval ablation is pending: it needs a live run under DR-04 (`eval-live`), not run by agents.
+
+## Full tier
+
+The full set (384 development items, 100 sealed) is built by the sibling `evals/harness/distill_full.py` and documented in `evals/full/README.md`. It uses a deterministic self-check instead of this two-agent review.
