@@ -39,10 +39,12 @@ module-root = ""
 
 [dependency-groups]
 dev = [
+    "diff-cover>=11.0.2",
     "httpx>=0.28.1",
     "hypothesis>=6",
     "mypy>=2.4.0",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "pyyaml==6.0.3",
     "ruff>=0.17.1",
 ]
@@ -75,3 +77,12 @@ quote-style = "single"
 # Privileged stdlib-only jobs use the hosted runner's system Python, not application dependencies.
 "scripts/release_manifest.py" = "py312"
 "scripts/validate_release_file.py" = "py312"
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

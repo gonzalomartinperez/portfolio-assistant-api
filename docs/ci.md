@@ -408,3 +408,21 @@ endpoint. The size ratchet fails when `docker image inspect` reports a size abov
 `api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
 the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
 `hadolint ignore=DL3003,DL4006` with its reason.
+
+## Coverage gates
+
+The static job collects branch coverage from the offline suite and the database job from the
+integration suite; a later step combines both and runs `scripts/coverage_gate.py`, which compares
+branch coverage per group (`whole`, `domain`, `application`, `ai`, `adapters`, `presentation`,
+`bootstrap`, `entrypoints`) with `tests/coverage-floors.json`. On pull requests `diff-cover`
+additionally requires 90% coverage of the changed lines.
+
+Floors only ratchet up. After a run that exceeds a floor, raise that value (rounded down to an
+integer) in the same PR; never lower one. Roadmap exit targets for M2 are whole-repo at least 80%,
+adapters at least 70% and entry points at least 75%. The floors were set from the combined
+offline and integration coverage of CI run 43623496149 (2026-11-14: whole 83.54, domain 90.53,
+application 87.69, ai 85.19, adapters 78.65, presentation 90.79, bootstrap 74.11, entry points
+100), rounded down; `ai` and `bootstrap` keep one extra point of headroom because their margin
+was under half a point. Measure locally with
+`uv run pytest -q -m 'not integration' --cov --cov-branch --cov-report=xml:/tmp/cov.xml` and
+`uv run python -m scripts.coverage_gate /tmp/cov.xml --print` (offline only, so adapters read low).
