@@ -1,6 +1,7 @@
 """Canonical recipes preserve root contexts, resources and deployment ownership."""
 
 import hashlib
+import re
 from pathlib import Path
 
 import pytest
@@ -133,3 +134,99 @@ def test_postgres_rejects_unverified_nonportable_or_privileged_recipe(old, new):
     source = (ROOT / 'infra/docker/postgres/Dockerfile').read_text()
     with pytest.raises(ValueError):
         validate_postgres_recipe(source.replace(old, new))
+
+
+APP_DOCKERFILE = ROOT / 'infra/docker/app/Dockerfile'
+
+
+def app_stages() -> dict[str, str]:
+    """Map each stage name to its instructions, in declaration order."""
+    stages: dict[str, str] = {}
+    name = ''
+    for line in APP_DOCKERFILE.read_text().splitlines():
+        match = re.match(r'FROM\s+\S+\s+AS\s+(\S+)', line)
+        if match:
+            name = match.group(1)
+            stages[name] = ''
+        elif name:
+            stages[name] += line + '\n'
+    return stages
+
+
+def test_app_dockerfile_has_ordered_targets_with_api_last():
+    assert list(app_stages()) == ['base', 'build', 'worker', 'api']
+
+
+def test_app_dockerfile_pins_every_base_and_syntax_by_digest():
+    text = APP_DOCKERFILE.read_text()
+    assert re.match(r'# syntax=docker/dockerfile:1@sha256:[0-9a-f]{64}\n', text)
+    stages = app_stages()
+    images = [
+        source
+        for source in re.findall(r'^FROM\s+(\S+)', text, re.MULTILINE)
+        if source not in stages
+    ] + re.findall(r'COPY --from=(\S+:\S+)', text)
+    assert len(images) == 2
+    for image in images:
+        assert re.search(r'@sha256:[0-9a-f]{64}$', image)
+        assert ':latest' not in image
+
+
+def test_app_dockerfile_cache_id_is_owned_by_this_repository():
+    text = APP_DOCKERFILE.read_text()
+    assert 'vps-ops' not in text
+    assert 'id=portfolio-assistant-api-uv-py314,' in text
+    assert '--no-install-project' in text
+    assert '--locked --no-dev' in text
+
+
+def test_git_is_installed_only_in_the_worker_stage():
+    stages = app_stages()
+    for name in ('base', 'build', 'api'):
+        assert not re.search(r'\bgit=', stages[name])
+    assert 'git=' in stages['worker']
+    assert 'CMD ["assistant-knowledge-watch"]' in stages['worker']
+    assert 'CMD ["assistant-api"]' in stages['api']
+
+
+def test_api_stage_runs_unprivileged_with_readyz_and_labels():
+    api = app_stages()['api']
+    assert 'USER 65532:65532' in api
+    assert 'STOPSIGNAL SIGTERM' in api
+    assert 'EXPOSE 8000' in api
+    assert 'http://127.0.0.1:8000/readyz' in api
+    for key in ('title', 'source', 'version', 'revision', 'created', 'licenses'):
+        assert f'org.opencontainers.image.{key}=' in api
+    assert 'org.opencontainers.image.title="portfolio-assistant-api"' in api
+    assert 'USER 65532:65532' in app_stages()['worker']
+    assert 'portfolio-assistant-api-worker' in app_stages()['worker']
+
+
+def test_bake_file_defines_both_targets_for_the_app_recipe():
+    bake = (ROOT / 'docker-bake.hcl').read_text()
+    assert 'targets = ["api", "worker"]' in bake
+    for target in ('api', 'worker'):
+        block = bake.split(f'target "{target}" {{')[1].split('\n}\n')[0]
+        assert 'dockerfile = "infra/docker/app/Dockerfile"' in block
+        assert f'target     = "{target}"' in block
+        assert 'platforms  = ["linux/amd64"]' in block
+    for variable in ('VERSION', 'REVISION', 'SOURCE_DATE_EPOCH'):
+        assert f'variable "{variable}"' in bake
+
+
+def test_structure_tests_match_each_image_target():
+    api = yaml.safe_load(
+        (ROOT / 'infra/docker/app/container-structure-test.yaml').read_text()
+    )
+    worker = yaml.safe_load(
+        (ROOT / 'infra/docker/app/container-structure-test.worker.yaml').read_text()
+    )
+    assert api['schemaVersion'] == worker['schemaVersion'] == '2.0.0'
+    assert api['metadataTest']['cmd'] == ['assistant-api']
+    assert worker['metadataTest']['cmd'] == ['assistant-knowledge-watch']
+    present = {t['path']: t['shouldExist'] for t in api['fileExistenceTests']}
+    assert present['/usr/bin/git'] is False
+    assert present['/usr/local/bin/pip'] is False
+    assert present['/app/.venv/bin/assistant-api'] is True
+    worker_present = {t['path']: t['shouldExist'] for t in worker['fileExistenceTests']}
+    assert worker_present['/usr/bin/git'] is True

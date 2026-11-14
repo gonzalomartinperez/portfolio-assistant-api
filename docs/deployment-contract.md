@@ -44,9 +44,20 @@ Local Compose and both CI database fixtures enforce these settings; vps-ops owns
 their effective production values. Startup configuration and an authenticated
 `SHOW SETTINGS` readback must verify them before deployment selection.
 
-The image uses separate dependency and runtime stages with the frozen production
-lock. `uv`/`uvx`, pip, ensurepip and development dependencies are absent from runtime. Git remains
-necessary for the approved public-corpus CLI/worker. SIGTERM is explicit; before
+The Dockerfile has the stages `base`, `build`, `worker` and `api` (last, so a build
+without `--target` produces the API image) and installs the project editable from the
+frozen production lock. `uv`/`uvx`, pip, ensurepip and development dependencies are
+absent from both images. Image targets:
+
+- `api`: runs the API (`assistant-api`), and is the image for one-shot migrations
+  (`assistant-migrate`) and retention (`assistant-retention`). It has no Git.
+- `worker`: runs the knowledge watcher (`assistant-knowledge-watch`) and the one-shot
+  `assistant-knowledge-sync`, because the approved public-corpus CLI needs Git. It
+  has no HTTP healthcheck.
+
+Build both with `docker buildx bake` (see `docker-bake.hcl`); tags are
+`portfolio-assistant-api:ci` and `portfolio-assistant-api-worker:ci`. See
+[ADR017](adrs/017-canonical-api-image.md). SIGTERM is explicit; before
 closing storage, lifespan interrupts remaining active run IDs and drains tracked interruption
 writes for up to five seconds. A failed/timed-out cleanup relies on the existing persisted lease and
 retention reconciliation, not a successful-answer claim.
@@ -93,17 +104,17 @@ is not one atomic transaction. Retry the same image after resolving failure; nev
 edit an applied migration. Apply reviewed runtime grants from
 `deploy/runtime-grants.sql` after schema/checkpoint creation. Index only an approved
 public immutable revision with `python -m app.knowledge_sync --source github --ref
-<full-SHA>` before initial readiness. Run `python -m app.retention` every minute
+<full-SHA>` before initial readiness; it needs Git, so run it with the `worker` image
+target (the `api` target has no Git). Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
 Console scripts are equivalent to the `python -m` forms and both are supported:
 `assistant-api` (uvicorn on 0.0.0.0:8000, as the image command),
 `assistant-migrate` (`app.migrate`), `assistant-retention` (`app.retention`),
 `assistant-knowledge-sync` (`app.knowledge_sync`) and `assistant-knowledge-watch`
-(`app.knowledge_watch`). They exist wherever the project is installed (a checkout
-after `uv sync`); the current runtime image installs dependencies only
-(`--no-install-project`), so it keeps using `uvicorn` and the `python -m` forms until
-the canonical Dockerfile (master plan M1-4) installs the project.
+(`app.knowledge_watch`). They exist wherever the project is installed: a checkout
+after `uv sync` and both image targets (the image installs the project editable, so
+`app` and `/app/migrations` resolve from `/app`).
 
 `/healthz` and `/readyz` are the canonical health names; `/health/live` and
 `/health/ready` remain until vps-ops confirms the switch (contract phase later,
@@ -209,13 +220,12 @@ Their documented options do not establish that our future VPS is configured or t
 
 ## Continuous worker and Coolify secret delivery
 
-The optional worker runs the same immutable image with command
-`python -m app.knowledge_watch`. It requires GitHub HTTPS egress, PostgreSQL and
+The optional worker runs the `worker` image target (same source revision, adds Git)
+with command `assistant-knowledge-watch` (equal to `python -m app.knowledge_watch`). It requires GitHub HTTPS egress, PostgreSQL and
 Neo4j writes, and authorized OpenAI embeddings when enabled. Its bare source cache
 is temporary under writable `/tmp`; no additional persistent application volume is
-required. The worker exposes no HTTP port. Disable the image's inherited API
-HEALTHCHECK for this process (`docker run --no-healthcheck` locally); vps-ops must
-verify the corresponding Coolify override rather than probing port 8000. Monitor
+required. The worker exposes no HTTP port and its image target defines no
+HEALTHCHECK; vps-ops must not probe port 8000 for it. Monitor
 process liveness and the persisted successful `knowledge_watch.checked_at`
 separately from corpus activation/freshness. A failed candidate can have healthy
 source polling while answers remain temporarily unavailable.
