@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "metrics": {
+    "tests.unit.total": {
+      "direction": "higher",
+      "value": 886,
+      "source": "2026-11-14 uv run pytest --collect-only -q -m 'not integration': 886/934 collected"
+    },
+    "tests.unit.failures": {
+      "direction": "lower",
+      "value": 0,
+      "source": "required: the offline lane must be green"
+    },
+    "tests.integration.total": {
+      "direction": "higher",
+      "value": 48,
+      "source": "2026-11-14 collect-only deselected count (934-886); junit only from ci.yml database job, absent nightly"
+    },
+    "tests.integration_share": {
+      "direction": "higher",
+      "value": 0.0513,
+      "source": "48/934 = 0.05139 truncated; needs unit.xml and integration.xml together, so unmet nightly"
+    }
+  }
+}

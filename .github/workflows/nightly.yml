@@ -1,0 +1,65 @@
+# Nightly scorecard (master plan M2-14). Heavier nightly jobs (mutation, load, ZAP) join here later.
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 03:00 America/Argentina/Buenos_Aires
+  workflow_dispatch:
+  # GitHub runs schedules only from the default branch (main, promoted at M7); until then each
+  # push to develop produces the same scorecard artifact.
+  push:
+    branches: [develop]
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  AI_PROVIDER: fixture
+  ALLOW_PAID_AI: 'false'
+  LANGSMITH_TRACING: 'false'
+
+jobs:
+  scorecard:
+    name: Scorecard and ratchets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: 0.13.1
+          enable-cache: false
+      - name: Install locked dependencies
+        run: uv sync --frozen
+      - name: Lint and type-check into artifact files
+        run: |
+          mkdir -p artifacts
+          uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || true
+          uv run mypy > artifacts/mypy.txt 2>&1 || true
+      - name: Run the offline test suite
+        run: uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+      - name: Collect the scorecard
+        if: always()
+        run: uv run python -m scorecard collect --artifacts artifacts --out artifacts/scorecard.json
+      - name: Retain the scorecard (numbers only)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: scorecard
+          path: artifacts/scorecard.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Fail on ratchet regression
+        run: uv run python -m scorecard check --current artifacts/scorecard.json --ratchets scorecard/ratchets

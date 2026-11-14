@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "metrics": {
+    "image.api_bytes": {
+      "direction": "lower",
+      "pointer": {
+        "file": "infra/docker/app/image.json",
+        "key": "api_max_bytes"
+      },
+      "source": "ratchet owned by infra/docker/app/image.json (ADR017); measured size comes from artifacts/image-sizes.json"
+    },
+    "image.worker_bytes": {
+      "direction": "lower",
+      "pointer": {
+        "file": "infra/docker/app/image.json",
+        "key": "worker_max_bytes"
+      },
+      "source": "same as image.api_bytes"
+    }
+  }
+}

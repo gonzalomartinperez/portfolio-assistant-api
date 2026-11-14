@@ -21,7 +21,7 @@ Tools: Read, Grep, Glob, Bash (read-only). Offline only: never run live or paid 
 
 ## Procedure
 
-1. The `scorecard` package lands in M2; until then collect evidence by hand: `just check`, `just test`, and the latest CI run (`gh run view <id>`). Do not invent a scorecard command.
+1. Run `just score` (or `uv run python -m scorecard collect` then `check`, see `docs/scorecard.md`); the nightly artifact `scorecard` holds the latest `scorecard.json`. For inputs the package does not collect yet, gather evidence by hand: `just check`, `just test`, and the latest CI run (`gh run view <id>`).
 2. Compare each axis with the baseline in `docs/master-plan/scorecard.md`; any loosening of a floor or ratchet is a finding.
 3. Collect evidence links per rubric criterion; a criterion without evidence is unmet.
 
