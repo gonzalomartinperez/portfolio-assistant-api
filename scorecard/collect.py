@@ -121,6 +121,9 @@ def collect(artifacts: Path, root: Path = Path('.')) -> dict:
     m['static.mypy_errors'] = metric(
         mypy_errors(artifacts / 'mypy.txt'), 'artifacts/mypy.txt'
     )
+    m['static.mypy_strict_app_errors'] = metric(
+        mypy_errors(artifacts / 'mypy-strict-app.txt'), 'artifacts/mypy-strict-app.txt'
+    )
     lanes = {}
     for lane in ('unit', 'integration'):
         totals = junit_totals(artifacts / f'{lane}.xml')
