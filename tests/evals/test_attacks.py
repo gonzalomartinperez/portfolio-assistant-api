@@ -143,17 +143,23 @@ def test_full_pack_through_the_real_session_and_sse_path():
     carry poisoned in-memory documents, so those items and the HTTP-validation rails stay
     in the offline lane. Completion-blocked runs end in ``run.failed`` with an empty answer,
     which fails ``language_is`` by construction, so they are not asserted here either.
+    The ``input_minimization`` items expect a cited answer, which the fixture provider of
+    the real path never produces; their rail is asserted in ``test_attack_rails.py``.
     """
+    mismatched = []
     for item in ITEMS:
         attack = item.attack
         assert attack
         if (
             attack.evidence
-            or attack.rail in ('input_length', 'presentation_context')
+            or attack.rail
+            in ('input_length', 'presentation_context', 'input_minimization')
             or attack.expected == 'completion_blocked'
         ):
             continue
         outcome = asyncio.run(
             run_items([item], settings(), AdversarialProvider(item), ctx=GRADING)
         )[0]
-        assert outcome.passed == (attack.expected == 'rail_blocked'), item.id
+        if outcome.passed != (attack.expected == 'rail_blocked'):
+            mismatched.append(item.id)
+    assert not mismatched, mismatched
