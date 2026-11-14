@@ -51,8 +51,8 @@ reason; whole-rule/file blanket suppressions are not an accepted shortcut.
 
 ```sh
 uv sync --frozen
-uv run ruff check app tests contracts scripts
-uv run ruff format --check app tests contracts scripts
+uv run ruff check app tests contracts scripts evals
+uv run ruff format --check app tests contracts scripts evals
 uv run mypy
 uv run pytest -q
 uv run python -m contracts.export
