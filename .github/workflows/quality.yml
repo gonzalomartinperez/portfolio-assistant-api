@@ -149,7 +149,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         repository: gonzalomartinperez/portfolio
-        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+        ref: c01e3ec1ce1a74e58c3a5f074f7b114b331e477e
         path: public-portfolio
         persist-credentials: false
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
@@ -279,7 +279,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         repository: gonzalomartinperez/portfolio
-        ref: 1acbe54906c88398652aebb8eae0c217fd0d8821
+        ref: c01e3ec1ce1a74e58c3a5f074f7b114b331e477e
         path: public-portfolio
         persist-credentials: false
     - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
