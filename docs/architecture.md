@@ -91,7 +91,9 @@ Spend totals retain amount/time for budget enforcement, with deleted run referen
 set to null. See [privacy and threats](threat-model.md) and [operations](deployment.md).
 
 See [ADR 001](adrs/001-dependency-direction.md), [GraphRAG](graph-retrieval.md),
-and [stream contract](api-contract.md) for decisions and behavior details.
+and [stream contract](api-contract.md) for decisions and behavior details. The offline
+evaluation harness (`evals/harness`, outside the image) is recorded in
+[ADR011](adrs/011-eval-harness.md).
 
 ## Bounded conversational context
 

@@ -62,7 +62,7 @@ pythonpath = ["."]
 markers = ["integration: requires isolated PostgreSQL/pgvector and Neo4j"]
 
 [tool.mypy]
-files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "app/adapters/neo4j/read_queries.py"]
+files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "evals/harness", "app/adapters/neo4j/read_queries.py"]
 strict = true
 
 [tool.ruff.format]
