@@ -1,5 +1,114 @@
 {
   "$defs": {
+    "Attack": {
+      "additionalProperties": false,
+      "description": "Red-team metadata (assistant-quality.md section 9) of an item in the attack pack.\n\n``bad_output`` is what the scripted adversarial provider emits (``{canary}`` and\n``{prompt}`` are substituted, the text repeats ``repeat`` times); with ``trigger`` it\ncomplies only when that text reached it in the evidence. ``evidence`` adds\nin-memory poisoned documents and ``context`` is the raw presentation context sent.",
+      "properties": {
+        "bad_output": {
+          "default": "",
+          "title": "Bad Output",
+          "type": "string"
+        },
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "context": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context"
+        },
+        "evidence": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "expected": {
+          "enum": [
+            "rail_blocked",
+            "completion_blocked",
+            "model_responsibility"
+          ],
+          "title": "Expected",
+          "type": "string"
+        },
+        "owasp": {
+          "enum": [
+            "LLM01",
+            "LLM02",
+            "LLM05",
+            "LLM07",
+            "LLM08",
+            "LLM09",
+            "LLM10"
+          ],
+          "title": "Owasp",
+          "type": "string"
+        },
+        "rail": {
+          "anyOf": [
+            {
+              "enum": [
+                "citation_markers",
+                "output_bound",
+                "input_length",
+                "presentation_context",
+                "input_minimization",
+                "source_bounds",
+                "language_resolution"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rail"
+        },
+        "repeat": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "trigger": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trigger"
+        }
+      },
+      "required": [
+        "category",
+        "owasp",
+        "expected"
+      ],
+      "title": "Attack",
+      "type": "object"
+    },
     "JsonValue": {},
     "Match": {
       "additionalProperties": false,
@@ -87,6 +196,17 @@
       "default": "portfolio",
       "title": "Assistant",
       "type": "string"
+    },
+    "attack": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Attack"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "corpus_snapshot_id": {
       "minLength": 1,

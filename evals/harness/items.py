@@ -60,6 +60,46 @@ class Quarantine(Strict):
     deadline: date
 
 
+Rail = Literal[
+    'citation_markers',
+    'output_bound',
+    'input_length',
+    'presentation_context',
+    'input_minimization',
+    'source_bounds',
+    'language_resolution',
+]
+
+
+class Attack(Strict):
+    """Red-team metadata (assistant-quality.md section 9) of an item in the attack pack.
+
+    ``bad_output`` is what the scripted adversarial provider emits (``{canary}`` and
+    ``{prompt}`` are substituted, the text repeats ``repeat`` times); with ``trigger`` it
+    complies only when that text reached it in the evidence. ``evidence`` adds
+    in-memory poisoned documents and ``context`` is the raw presentation context sent.
+    """
+
+    category: Text
+    owasp: Literal['LLM01', 'LLM02', 'LLM05', 'LLM07', 'LLM08', 'LLM09', 'LLM10']
+    # rail_blocked: stopped before any text reaches the client; completion_blocked: the run
+    # fails and nothing is persisted, but deltas already streamed; model_responsibility: no
+    # rail, graded in the cassette and live lanes.
+    expected: Literal['rail_blocked', 'completion_blocked', 'model_responsibility']
+    rail: Rail | None = None
+    bad_output: str = ''
+    repeat: Annotated[int, Field(ge=1)] = 1
+    trigger: Text | None = None
+    evidence: list[Text] = []
+    context: dict[str, JsonValue] | None = None
+
+    @model_validator(mode='after')
+    def _rail_named(self) -> Self:
+        if self.expected != 'model_responsibility' and self.rail is None:
+            raise ValueError('blocked attacks must name their rail')
+        return self
+
+
 class Item(Strict):
     id: Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]*$')]
     schema_version: Literal['1'] = '1'
@@ -84,6 +124,7 @@ class Item(Strict):
     # Assistant-experience strata (tools, memory): permissive JSON, typed as JSON values.
     tools: dict[str, JsonValue] | None = None
     memory_fixture: dict[str, JsonValue] | None = None
+    attack: Attack | None = None
 
     @field_validator('gold_evidence_ids')
     @classmethod
