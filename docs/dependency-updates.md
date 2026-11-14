@@ -1,65 +1,56 @@
-# Manual dependency maintenance
+# Dependency updates: one weekly PR, merged manually
 
-The owner-selected profile is **manual merging for every update**. Dependabot opens
-weekly routine proposals against `develop`; native `rebase-strategy: auto` refreshes
-relevant young PRs and CI reruns for new revisions. Bounded PR limits, routine cooldown
-and small groups reduce churn. About30-day-old, conflicted or human-modified PRs may
-need manual intervention. No custom rebase bot or repeated comment loop exists.
+Rule (owner decisions OD-22 and OD-75, decision PAA-D14, [ADR019](adrs/019-weekly-dependency-pr.md)):
+exactly one dependency PR per week, all ecosystems together, green CI, merged by
+the owner. No automation approves, arms or merges it.
 
-Repository auto-merge is false; legacy activation flags are unset/false. The workflow
-has only contents/read and pull-requests/read permissions, executes trusted base policy
-code and never installs/runs PR code, approves, writes a check or arms/merges a PR.
-The CLI rejects the old true activation flag. Retained controller fixture tests cover
-historical safety cases; they do not activate that controller or prove live auto-merging.
-No production credential, PAT or administrative bypass is used.
+## Flow
 
-## Assessment and verification
+1. Monday 09:00 America/Argentina/Buenos_Aires Dependabot opens one grouped PR
+   (`chore(deps): ...`, label `dependencies`) against `develop`, covering `uv`,
+   `github-actions` and `docker` (app and PostgreSQL images). The Neo4j image pin
+   (`infra/compose/local.yaml`, `ci.yml`, `deploy/neo4j-image.json`) is updated
+   manually with its digest: Dependabot cannot parse `local.yaml`. Configuration: `.github/dependabot.yml`; the schedule,
+   target branch, PR limit and commit prefix live on the group, not on entries.
+2. Cooldowns hold back fresh releases: 7 days by default, and for `uv` 14 days for
+   majors and 3 days for patches. Python minor and major image changes are ignored
+   and need an explicit project decision.
+3. `deps-weekly-guard` (shared `engineering-standards` workflow, pinned by SHA)
+   runs Monday 10:30 ART and on Dependabot PR events. It keeps at most one open
+   Dependabot PR (the newest; an older one is closed with a pointer), records a PR
+   that is behind `develop` in the tracking issue (it does not comment, OD-75), and when CI is red labels the PR
+   `needs-fix` and updates one tracking issue.
+4. The owner reviews the PR and merges it manually after the required `checks`
+   pass. Promotion to `main` stays a separate, explicit decision.
 
-Authenticated author/source/base/commits/files and complete manifests/lock resolution
-are analyzed as untrusted data. Titles and labels never authorize anything. The narrow
-low-risk cohort is described in `scripts/dependabot_policy.py`: a low-risk result
-still requires human review and all current required Quality checks. Majors,
-prereleases, unstable0.x, ambiguous metadata, unknown transitives, runtime/compiler/
-framework, authentication, cryptography, persistence, Actions, OS/images, mixed-risk
-groups, scripts and human-added commits require closer manual investigation.
-`dependencies:manual` is a veto, not approval. No security alert is suppressed or closed
-to force the routine-update policy.
+If a red PR needs a fix, push it to the Dependabot branch. That stops Dependabot
+rebases for that branch, so to pick up newer versions close the PR and let the
+next run (or the guard's supersede flow) open a fresh complete one.
 
-Use `uv run python -m scripts.dependabot_automation --audit-pr <number>` locally,
-or dispatch the trusted workflow with `gh workflow run dependency-policy.yml -f number=<existing-pr>`.
-This returns a head-bound risk report only. A workflow token that cannot inspect
-protection reports permission_blocked without granting itself writer/admin permissions.
-Missing protection visibility is not permission to weaken the actual protected branches.
-Tests cover spoofing, grouping, file/script changes, human commits, wrong base, stale
-heads, failed/missing checks, branch advancement and read-only behavior. Fixture results
-are distinct from an actual GitHub run against an existing PR.
+## Alerts and security updates
 
-Required Quality `checks`, strict up-to-date checks, administrator enforcement and
-normal reviews remain authoritative. The optional assessment job is not a required
-check, so skipping human PRs cannot leave required contexts pending. It does not run
-redundantly after every Quality execution. A failed/pending gate, conflict or blocking
-review must be resolved before a normal merge; never use merge-anyway.
+Dependabot alerts stay on; Dependabot security-update PRs are off (repository
+setting, see [repo settings](reference/repo-settings.md)), because they would
+target `main` and bypass the weekly PR. The daily vulnerability job (`vuln-daily.yml`, added with M1-7) records findings
+silently in one tracking issue; only the Monday summary notifies (OD-75). Alert
+emails use GitHub's weekly digest.
 
-Security proposals use GitHub's default-branch behavior: `target-branch: develop`
-does not redirect all security PRs from `main`. Keep alerts/proposals visible and
-review them promptly through the appropriate protected workflow. Routine cooldown
-never postpones security updates. Dependabot configuration and privileged event code
-are activated from the default branch; a develop-only commit is not live evidence.
+## Urgent fixes (manual path)
 
-Pause routine proposals through a reviewed config PR; leave deferred PRs open with a
-reason. Revoke any existing native request before claiming manual reconciliation.
-Recover a bad merged dependency with a normal revert/fix PR and complete CI. An
-application rollback does not reverse migrations or authorize infrastructure changes.
-Skills and this file grant no standing merge, publication or deployment authority.
+A critical advisory normally rides the weekly PR. For one that cannot wait, open a
+normal task-branch PR into `develop` that bumps only the affected dependency
+(`uv lock --upgrade-package <name>` for uv, or the pin in the Dockerfile,
+compose file or workflow), with full CI, then merge it manually. The next weekly
+PR supersedes or rebases over it. Close the stale weekly PR first if it conflicts.
 
-## Observed controls — 2026-10-17
+## Verification and limits
 
-An authenticated audit found zero open Dependabot PRs and no activation variables.
-API `allow_auto_merge` was true from an older setup and was explicitly disabled and
-re-read as false under the owner's manual decision. Main still requires strict
-`checks` from GitHub Actions app15368 with administrator enforcement; no protection
-was relaxed. Live assessment activation must be verified after default-branch promotion.
+`tests/test_dependabot_config.py` checks the rule offline: one group with the
+schedule, target, limit and prefix; every entry joins it; semver cooldowns only
+on `uv`; every Dockerfile and compose directory is covered; the guard pins the
+shared workflow by full SHA with empty top-level permissions. It cannot prove
+live Dependabot behavior; the Monday schedule can only be observed on a Monday
+(see the ADR for what the shared sandbox proof established).
 
-References: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
-[rebasing limitations](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates),
-[secure workflows](https://docs.github.com/en/actions/reference/security/secure-use).
+The former auto-merge policy workflow and scripts are removed. Repository
+auto-merge stays off; no PAT or administrative bypass is used.

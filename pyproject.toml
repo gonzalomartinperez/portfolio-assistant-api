@@ -70,6 +70,5 @@ quote-style = "single"
 
 [tool.ruff.per-file-target-version]
 # Privileged stdlib-only jobs use the hosted runner's system Python, not application dependencies.
-"scripts/dependabot*.py" = "py312"
 "scripts/release_manifest.py" = "py312"
 "scripts/validate_release_file.py" = "py312"

@@ -59,12 +59,11 @@ sibling handoffs. Native cross-origin requests need explicit credentialed CORS a
 unchanged CSRF, not wider cookie scope. The runtime contract supersedes historical
 iframe guidance. Keep paired browser verification and pending coordination explicit.
 
-For dependency automation, use [the maintenance policy](../../../docs/dependency-updates.md)
-and `uv run pytest -q tests/test_dependabot_policy.py`. Read-only audits use
-`uv run python -m scripts.dependabot_automation --audit-pr <number>`; they never
-enable merging. Check actual protections and activation state, not labels/titles.
-Default-branch activation and repository-setting changes require current authority;
-this skill does not grant it or permit main promotion. Preserve manual opt-outs.
+For dependency updates, use [the maintenance policy](../../../docs/dependency-updates.md)
+and `uv run pytest -q tests/test_dependabot_config.py`. The owner merges the single
+weekly PR manually; the shared guard never merges. Check actual repository settings,
+not labels/titles. Default-branch activation and repository-setting changes require
+current authority; this skill does not grant it or permit main promotion.
 
 The selected secret mechanism is Coolify runtime environment delivery. Do not add
 Infisical, Redis, a secret SDK or a deployment controller without a concrete new

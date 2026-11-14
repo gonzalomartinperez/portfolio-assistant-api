@@ -1,6 +1,8 @@
+# Weekly single dependency PR (docs/adrs/019-weekly-dependency-pr.md).
+# Shape follows engineering-standards templates/dependabot/release.yml.
 version: 2
 multi-ecosystem-groups:
-  weekly-all:
+  weekly:
     schedule:
       interval: weekly
       day: monday
@@ -8,12 +10,13 @@ multi-ecosystem-groups:
       timezone: America/Argentina/Buenos_Aires
     target-branch: develop
     open-pull-requests-limit: 1
-    labels:
-      - dependencies
+    commit-message:
+      prefix: "chore(deps)"
+    labels: ["dependencies"]
 updates:
   - package-ecosystem: uv
     directory: /
-    multi-ecosystem-group: weekly-all
+    multi-ecosystem-group: weekly
     patterns: ["*"]
     allow:
       - dependency-type: all
@@ -23,13 +26,13 @@ updates:
       semver-patch-days: 3
   - package-ecosystem: github-actions
     directory: /
-    multi-ecosystem-group: weekly-all
+    multi-ecosystem-group: weekly
     patterns: ["*"]
     cooldown:
       default-days: 7
   - package-ecosystem: docker
     directories: ["/infra/docker/app", "/infra/docker/postgres"]
-    multi-ecosystem-group: weekly-all
+    multi-ecosystem-group: weekly
     patterns: ["*"]
     cooldown:
       default-days: 7
@@ -37,3 +40,6 @@ updates:
       # Python minor/major changes need an explicit project decision.
       - dependency-name: python
         update-types: [version-update:semver-major, version-update:semver-minor]
+  # No docker-compose entry: Dependabot only parses files named *compose*.y*ml and the
+  # local fixture is infra/compose/local.yaml. The Neo4j pin there, in ci.yml and in
+  # deploy/neo4j-image.json is updated manually with its digest (ADR019).
