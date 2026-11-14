@@ -9,6 +9,7 @@ import yaml
 WORKFLOW_PATH = Path('.github/workflows/ci.yml')
 SCORECARD_PATH = Path('.github/workflows/scorecard.yml')
 VULN_DAILY_PATH = Path('.github/workflows/vuln-daily.yml')
+NIGHTLY_PATH = Path('.github/workflows/nightly.yml')
 PROFILE_PATH = Path('.github/ci-profile.json')
 NAMES = {
     'classify': 'classify',
@@ -154,8 +155,10 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
             errors.append('required events cannot be filtered')
     if workflow.get('permissions') != {'contents': 'read'}:
         errors.append('default token permissions')
-    if workflow.get('concurrency', {}).get('cancel-in-progress') is not True:
-        errors.append('stale candidate concurrency')
+    if workflow.get('concurrency', {}).get('cancel-in-progress') != (
+        "${{ github.event_name == 'pull_request' }}"
+    ):
+        errors.append('cancel superseded pull request runs only')
     jobs = workflow.get('jobs', {})
     if set(jobs) != set(NAMES):
         errors.append('exact job inventory')
@@ -401,6 +404,7 @@ def main():
     errors += standalone_errors(
         'vuln-daily', yaml.safe_load(VULN_DAILY_PATH.read_text())
     )
+    errors += standalone_errors('nightly', yaml.safe_load(NIGHTLY_PATH.read_text()))
     if errors:
         raise SystemExit('\n'.join(errors))
     print('API CI profile: dynamic jobs, ci-gate, trust and dependencies verified.')

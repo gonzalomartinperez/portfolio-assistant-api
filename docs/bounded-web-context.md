@@ -75,7 +75,7 @@ establish actual model quality. Raw answers and signed/secret artifacts stay ign
 
 Verify with the existing frozen install, Ruff, strict mypy, unit/real-service tests,
 contract export/drift, image smoke and isolated authorized evaluation commands.
-Focused regression: `uv run pytest -q tests/test_web_context.py`.
+Focused regression: `uv run pytest -q tests/unit/test_web_context.py`.
 
 Official references checked 2026-10-13:
 [web search](https://developers.openai.com/api/docs/guides/tools-web-search),
