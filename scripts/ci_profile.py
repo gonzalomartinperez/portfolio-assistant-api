@@ -1,32 +1,87 @@
 """Application-local CI profile; no private operations dependency at execution time."""
 
+import json
 import re
 from pathlib import Path
 
 import yaml
 
+WORKFLOW_PATH = Path('.github/workflows/ci.yml')
+PROFILE_PATH = Path('.github/ci-profile.json')
 NAMES = {
+    'classify': 'classify',
     'workflows': 'Workflow validation',
     'secrets': 'Secret scan',
     'static': 'Static checks',
     'database': 'Database tests',
     'container': 'Container verification',
+    'ci-gate': 'ci-gate',
     'checks': 'Required checks',
 }
-NEEDS = {
+# Jobs whose execution classify decides; secrets always runs.
+GATED = ('workflows', 'static', 'database', 'container')
+# Extra prerequisites that a gated job keeps besides classify.
+EXTRA_NEEDS = {
     'workflows': [],
-    'secrets': [],
     'static': [],
     'database': ['static'],
     'container': ['static'],
-    'checks': ['workflows', 'secrets', 'static', 'database', 'container'],
+}
+PINNED = re.compile(r'[a-zA-Z0-9._/-]+@([a-f0-9]{40})')
+PROFILE_KEYS = {'base', 'required', 'profiles'}
+PROFILE_NAMES = {
+    'docs',
+    'harness',
+    'workflow',
+    'code',
+    'deps-weekly',
+    'release',
+    'hotfix',
 }
 
 
-def profile_errors(workflow: dict) -> list[str]:
+def as_list(value) -> list:
+    if value is None:
+        return []
+    return [value] if isinstance(value, str) else list(value)
+
+
+def gate_references(condition, key: str) -> bool:
+    expected = f"contains(fromJSON(needs.classify.outputs.jobs), '{key}')"
+    return isinstance(condition, str) and condition.strip() in (
+        expected,
+        '${{ ' + expected + ' }}',
+    )
+
+
+def profile_map_errors(jobs: dict, profile_map: dict) -> list[str]:
+    errors = []
+    if not isinstance(profile_map, dict) or set(profile_map) != PROFILE_KEYS:
+        return ['profile map keys']
+    if profile_map['required'] != 'ci-gate':
+        errors.append('profile map: required check must be ci-gate')
+    profiles = profile_map['profiles']
+    if not isinstance(profiles, dict) or set(profiles) != PROFILE_NAMES:
+        errors.append('profile map: profile inventory')
+        profiles = profiles if isinstance(profiles, dict) else {}
+    named = as_list(profile_map['base'])
+    for spec in profiles.values():
+        named += as_list(spec.get('adds'))
+    for name in named:
+        if name != 'all-profiles' and name not in jobs:
+            errors.append(f'profile map: unknown job {name}')
+    for name in ('deps-weekly', 'release', 'hotfix'):
+        if 'all-profiles' not in as_list(profiles.get(name, {}).get('adds')):
+            errors.append(f'profile map: {name} must run every profile')
+    if 'secrets' not in as_list(profile_map['base']):
+        errors.append('profile map: secrets must always run')
+    return errors
+
+
+def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
     errors = []
     events = workflow.get('on', workflow.get(True, {}))
-    if workflow.get('name') != 'Quality':
+    if workflow.get('name') != 'CI':
         errors.append('workflow name')
     for event in ('pull_request', 'push'):
         expected = {'branches': ['develop', 'main']}
@@ -37,6 +92,8 @@ def profile_errors(workflow: dict) -> list[str]:
                 'reopened',
                 'edited',
                 'ready_for_review',
+                'labeled',
+                'unlabeled',
             ]
         if events.get(event) != expected:
             errors.append('required events cannot be filtered')
@@ -49,15 +106,17 @@ def profile_errors(workflow: dict) -> list[str]:
         errors.append('exact job inventory')
     for key, name in NAMES.items():
         job = jobs.get(key, {})
-        needs = job.get('needs', [])
-        if isinstance(needs, str):
-            needs = [needs]
-        if job.get('name') != name or needs != NEEDS[key]:
-            errors.append(f'{key}: name/dependency graph')
-        if job.get('continue-on-error') or (key != 'checks' and job.get('if')):
+        reusable = 'uses' in job
+        if job.get('name') != name:
+            errors.append(f'{key}: name')
+        if job.get('continue-on-error'):
             errors.append(f'{key}: required work cannot be skipped')
-        if job.get('runs-on') != 'ubuntu-24.04':
+        if not reusable and job.get('runs-on') != 'ubuntu-24.04':
             errors.append(f'{key}: isolated hosted runner')
+        if not reusable and not isinstance(job.get('timeout-minutes'), int):
+            errors.append(f'{key}: timeout')
+        if reusable and not PINNED.fullmatch(job['uses']):
+            errors.append(f'{key}: unpinned reusable workflow')
         permissions = job.get('permissions', workflow.get('permissions', {}))
         if any(value != 'read' for value in permissions.values()):
             errors.append(f'{key}: elevated permissions')
@@ -70,23 +129,66 @@ def profile_errors(workflow: dict) -> list[str]:
                 errors.append('container: scan steps cannot override bash pipefail')
             if step.get('continue-on-error'):
                 errors.append(f'{key}: step failure hidden')
-            if 'uses' in step and not re.fullmatch(
-                r'[a-zA-Z0-9._/-]+@[a-f0-9]{40}', step['uses']
-            ):
+            if 'uses' in step and not PINNED.fullmatch(step['uses']):
                 errors.append(f'{key}: unpinned action')
-    gate = jobs.get('checks', {})
-    steps = gate.get('steps', [])
-    expected_env = {
-        key.upper() + '_RESULT': '${{ needs.' + key + '.result }}'
-        for key in NEEDS['checks']
-    }
+    if 'pull_request_target' in events:
+        errors.append('pull_request_target is forbidden')
+    for key in GATED:
+        job = jobs.get(key, {})
+        needs = as_list(job.get('needs'))
+        if sorted(needs) != sorted(['classify', *EXTRA_NEEDS[key]]):
+            errors.append(f'{key}: dependency graph')
+        if not gate_references(job.get('if'), key):
+            errors.append(f'{key}: must be gated on its own id in classify jobs')
+    if jobs.get('secrets', {}).get('if') or as_list(
+        jobs.get('secrets', {}).get('needs')
+    ):
+        errors.append('secrets: must run unconditionally')
+    if jobs.get('classify', {}).get('needs') or jobs.get('classify', {}).get('if'):
+        errors.append('classify: must be the unconditional root job')
+    gate = jobs.get('ci-gate', {})
     if (
         gate.get('if') not in ('always()', '${{ always() }}')
         or gate.get('permissions') != {}
     ):
-        errors.append('aggregate must always run without permissions')
-    if len(steps) != 1 or steps[0].get('env') != expected_env:
-        errors.append('aggregate must inspect every expected job')
+        errors.append('ci-gate: must always run without permissions')
+    if sorted(as_list(gate.get('needs'))) != sorted(
+        key for key in jobs if key not in ('checks', 'ci-gate')
+    ):
+        errors.append('ci-gate: must need every other job except checks')
+    if 'ci-gate' in as_list(gate.get('needs')):
+        errors.append('ci-gate: cannot need itself')
+    gate_steps = gate.get('steps', [])
+    gate_uses = gate_steps[0].get('uses', '') if len(gate_steps) == 1 else ''
+    if not gate_uses.startswith(
+        'gonzalomartinperez/engineering-standards/actions/ci-gate@'
+    ) or gate_steps[0].get('with') != {
+        'needs': '${{ toJSON(needs) }}',
+        'expected': '${{ needs.classify.outputs.jobs }}',
+    }:
+        errors.append('ci-gate: single shared action step with needs and expected')
+    classify_pin = PINNED.fullmatch(jobs.get('classify', {}).get('uses', ''))
+    gate_pin = PINNED.fullmatch(gate_uses)
+    if not classify_pin or not gate_pin or classify_pin[1] != gate_pin[1]:
+        errors.append('classify and ci-gate must pin the same shared SHA')
+    checks = jobs.get('checks', {})
+    check_steps = checks.get('steps', [])
+    if (
+        checks.get('if') not in ('always()', '${{ always() }}')
+        or checks.get('permissions') != {}
+        or as_list(checks.get('needs')) != ['ci-gate']
+    ):
+        errors.append(
+            'checks: transitional alias must always run and need only ci-gate'
+        )
+    if (
+        len(check_steps) != 1
+        or check_steps[0].get('env')
+        != {'CI_GATE_RESULT': '${{ needs.ci-gate.result }}'}
+        or '${{' in check_steps[0].get('run', '')
+        or 'CI_GATE_RESULT' not in check_steps[0].get('run', '')
+    ):
+        errors.append('checks: must inspect only the ci-gate result through env')
     required = {
         'workflows': 'scripts/check_workflows.sh',
         'secrets': 'scripts.scan_secrets',
@@ -133,16 +235,18 @@ def profile_errors(workflow: dict) -> list[str]:
         )
     if workflow.get('defaults', {}).get('run', {}).get('shell') != 'bash':
         errors.append('runtime gates require the explicit bash pipefail shell')
+    errors += profile_map_errors(jobs, profile_map)
     return errors
 
 
 def main():
     errors = profile_errors(
-        yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+        yaml.safe_load(WORKFLOW_PATH.read_text()),
+        json.loads(PROFILE_PATH.read_text()),
     )
     if errors:
         raise SystemExit('\n'.join(errors))
-    print('Paired API CI profile: exact jobs, trust and dependencies verified.')
+    print('API CI profile: dynamic jobs, ci-gate, trust and dependencies verified.')
 
 
 if __name__ == '__main__':

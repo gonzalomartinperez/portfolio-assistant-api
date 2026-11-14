@@ -7,9 +7,10 @@
 
 ## Active workflows
 
-`Quality` runs on every PR into `develop` or `main`, manual dispatch, and trusted reusable
-calls. There are **no path filters**: documentation/contract-only PRs still finish
-the required gate. New commits cancel stale runs for the same PR/ref. Hosted jobs
+`CI` (`.github/workflows/ci.yml`, formerly `Quality`) runs on every PR into `develop` or `main`,
+pushes to those branches, merge groups, manual dispatch, and trusted reusable calls. There are **no
+workflow-level path filters**: a `classify` job selects which jobs run (see CI profiles below), and the
+`ci-gate` aggregate still finishes every run. New commits cancel stale runs for the same PR/ref. Hosted jobs
 use the explicit Ubuntu24.04 LTS label, matching the paired backoffice profile;
 the moving ubuntu-latest alias is rejected so an announced runner-major migration
 cannot silently change the validated environment. Runner patch images remain
@@ -17,17 +18,43 @@ GitHub-managed and are recorded by Actions.
 
 | Job ID / human name | Purpose | Needs |
 | --- | --- | --- |
-| workflows / Workflow validation | Pinned actionlint and trusted-event syntax; no dependency install or secret token | None |
-| secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None |
-| static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | None |
-| database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | static |
-| container / Container verification | Own isolated databases/corpus, explicit recipe build, full scans, non-root streaming/SIGTERM/proxy and tested image identity | static |
-| checks / Required checks | Always-evaluated fail-closed aggregate over every five prerequisites | All five |
+| classify / classify | Shared engineering-standards classifier: maps changed files, branch and labels to CI profiles and emits the job list | None |
+| workflows / Workflow validation | Pinned actionlint and trusted-event syntax; no dependency install or secret token | classify |
+| secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None (always runs) |
+| static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | classify |
+| database / Database tests | Real PostgreSQL/Neo4j migrations/indexing/integration, bilingual fixture evaluation and scoped two-app IAM/recovery | classify, static |
+| container / Container verification | Own isolated databases/corpus, explicit recipe build, full scans, non-root streaming/SIGTERM/proxy and tested image identity | classify, static |
+| ci-gate / ci-gate | Always-evaluated fail-closed aggregate: every job classify selected must succeed; unselected jobs may be skipped | Every other job |
+| checks / Required checks | Transitional alias that passes only when `ci-gate` succeeds | ci-gate |
 
-The exact paired profile is enforced by scripts/ci_profile.py and its negative
-fixtures. PRs and pushes to develop/main, merge-group, manual and reusable events
-retain verification; no path filter can omit a required job. Main/develop post-merge
-runs prove their actual merge commits, independently of prior PR merge-ref checks.
+The workflow invariants are enforced by scripts/ci_profile.py and its negative
+fixtures. Pushes to develop/main, merge-group, manual and reusable events always run
+every job. Main/develop post-merge runs prove their actual merge commits,
+independently of prior PR merge-ref checks.
+
+### CI profiles
+
+`.github/ci-profile.json` maps changed paths to profiles; `classify` unions the jobs the matched
+profiles add to the base (`secrets`, always).
+
+| Profile | Matches | Runs |
+| --- | --- | --- |
+| docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, static (offline tests validate docs and skills); no database or container job |
+| harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, static |
+| workflow | `.github/**` | secrets, workflows, static, database, container |
+| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, static, database, container |
+| deps-weekly | branch `dependabot/**` or label `deps-weekly` | every job |
+| release | develop -> main promotion | every job |
+
+Fail-closed rules: a changed file outside every profile, an empty or failed diff, or a change to
+the profile map itself runs every job. Push, merge-group and manual runs, and `workflow_call`
+runs (no PR event), run every job. A broken profile map fails `classify`, so the gate goes red.
+`scripts/ci_profile.py` and `tests/test_ci_profile.py` require every tracked file to match a profile.
+
+`ci-gate` is the single required check going forward. It needs every other job, requires every
+selected job to succeed, and tolerates a skip only for unselected jobs. Until the owner switches
+branch protection from `Required checks` to `ci-gate`, the transitional `checks` job mirrors the
+`ci-gate` result; remove it after the switch (see reference/repo-settings.md).
 
 Static checks compile the authored bilingual question bank and reject generated
 drift. The real-service job exercises ten development cases spanning all topics and
@@ -143,9 +170,9 @@ Repository security settings were verified on 2026-09-27: Dependabot vulnerabili
 alerts and automatic **creation** of security-fix PRs are enabled. Automatic merging
 is not enabled by this configuration. Initial alert queries returned no open alerts;
 that is not a guarantee that future scans will find none. Security fixes targeting
-the default branch also run the full Quality gate.
+the default branch also run the full CI gate.
 
-Both `develop` and `main` now require the aggregate `checks` with strict base
+Both `develop` and `main` now require the aggregate `checks` (transitional; `ci-gate` is the target) with strict base
 freshness. Main previously had PR protection but no required status check; this
 gap was closed without changing its review count, administrator enforcement,
 conversation-resolution or force-push/deletion restrictions. Merges cannot rely
@@ -165,7 +192,7 @@ in the existing test suite, without duplicating builds or integration tests.
 `dependency-policy.yml` is a separate trusted-metadata controller. Its single job
 checks out the trusted workflow SHA, installs no PR dependencies, uses no PR cache
 or artifact, and can only manage a required policy check and native auto-merge.
-It does not run the test suite. Completion of Quality triggers revalidation of the
+It does not run the test suite. Completion of CI triggers revalidation of the
 actual PR/current head, not unconditional merging. Per-head concurrency serializes
 competing decisions; new heads need a new required policy result. No path filter
 can omit the policy on an ordinary PR after activation. Manual/unverifiable updates
@@ -204,7 +231,7 @@ release and verified with a reviewed archive SHA-256 before execution. It produc
 a complete OS/language report without ignore files or severity filtering. The
 maintained `scripts.image_security` gate validates schema, OS inventory and the
 actual Docker image ID; malformed, missing or stale reports fail closed. All
-CRITICAL findings and HIGH findings with an available fixed version fail Quality.
+CRITICAL findings and HIGH findings with an available fixed version fail CI.
 Unfixed HIGH findings remain counted and visible in the retained full artifact;
 they require assessment before production and are not approved by a green gate.
 This is an added remediation gate, not a clean-image or production-security claim.
@@ -278,7 +305,7 @@ Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation
 
 ## Vendor database release assessment
 
-An explicit manual Quality dispatch with `verify_vendor_image=true` additionally scans the exact pinned Neo4j OS
+An explicit manual CI dispatch with `verify_vendor_image=true` additionally scans the exact pinned Neo4j OS
 and Java inventory without adding a second build or server lifecycle. Normal PR
 coverage is unchanged; it does not claim this expensive Java release assessment ran.
 See [receipt and unresolved release gates](verification/neo4j-vendor-refresh-2026-10-17.md).
