@@ -97,6 +97,14 @@ model and server-to-server authentication boundary. Run the focused observabilit
 tests plus real-store tests when modifying SQL. Review actual OTLP receiver payloads,
 not only mock exporter calls; never add automatic SDK input/output capture.
 
+## Prompts
+
+Assistant prompts are Markdown files in `app/prompts/` with front matter, locked by
+`app/prompts/prompts.lock` ([ADR014](docs/adrs/014-prompt-registry.md)). After a deliberate
+prompt edit, bump its `version` for semantic changes (not enforced; the sha256 prefix in
+`prompt_version` changes on any edit), run `uv run python -m scripts.update_prompts_lock --write` and
+review the lock diff; `--check` (and `tests/unit/test_prompt_registry.py`) fails on drift.
+
 ## Architectural review
 
 Use Microsoft's dependency-inversion guidance and Google/Microsoft review practices as

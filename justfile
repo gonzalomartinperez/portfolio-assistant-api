@@ -34,7 +34,7 @@ test-integration:
 demo url="http://localhost:8000" locale="en":
     uv run python -m scripts.demo --url {{url}} --locale {{locale}}
 
-# Golden eval lane (cassette replay). The golden set and replayer land in master plan M2-7.
+# Golden eval lane: every active golden item replays from committed cassettes (record mode none).
+# Needs the isolated PostgreSQL and Neo4j fixtures. Exit code 3 means "re-record required".
 eval-golden:
-    @echo "eval-golden: the golden set and cassette replayer land in master plan M2-7" >&2
-    @exit 2
+    REQUIRE_GOLDEN_CASSETTES=1 uv run python -m evals.harness.golden
