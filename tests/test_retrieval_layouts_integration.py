@@ -69,7 +69,9 @@ def _outcomes(index: KnowledgeIndex, cases: list[dict]) -> dict[str, tuple]:
             )
         else:
             passed = not sources
-        outcomes[case['id']] = (passed, tuple(sorted(keys)))
+        # Chunk ids hash the physical path, so equal-score ties may surface a different
+        # secondary file per layout; compare the graded outcome and the relevant keys.
+        outcomes[case['id']] = (passed, tuple(sorted(keys & set(case['qrels']))))
     return outcomes
 
 

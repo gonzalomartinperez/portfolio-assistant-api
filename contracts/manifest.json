@@ -2,7 +2,7 @@
   "artifacts": {
     "feedback.schema.json": "efe765fd1aec41abf608b0d4f2963dbf83a7cbaa8b8f281aa8cf320cb4943de0",
     "knowledge.schema.json": "7d5cd7ed2ea1e2ace8f8b2d744d2ae8528d3d4e64ac8291b1079b8ab01800c89",
-    "openapi.json": "e76de806786629a092ba7ae98d99d9d83a94a934faa478ca8eee5819e630985c",
+    "openapi.json": "0833a7921093d816610d0ff38ac7e9faab61b4350dc07fc111fd20ed0325c769",
     "operations.schema.json": "6fbf28e2900dfbd6afe59f8fadcb56de2c223efcbcfc8bfccf43c2116e20d834",
     "product-analytics-v2.schema.json": "856afd5790079fbf14b1d61731bbb27ee72ff838871672144c7b21b73a290f2c",
     "product-analytics.schema.json": "6faf401fdcb6754b355dd94e1e9ce002314d67d5b46647f5b379e98cf07c3ca7",

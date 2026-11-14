@@ -18,9 +18,11 @@ from app.presentation.models import (
     ConversationView,
     ErrorBody,
     FeedbackCreate,
+    HealthView,
     Locale,
     MessagePage,
     Page,
+    ReadinessView,
     RunView,
     SendMessage,
     SessionView,
@@ -95,6 +97,29 @@ def ready(request: Request):
         return {'status': 'ok'}
     except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
         fail('dependency_unavailable', 503)
+
+
+def revision(request: Request) -> str:
+    return getattr(request.app.state, 'revision', 'unknown')
+
+
+@router.get('/healthz', response_model=HealthView, operation_id='healthz')
+def healthz(request: Request):
+    return {'status': 'ok', 'version': revision(request)}
+
+
+@router.get(
+    '/readyz',
+    response_model=ReadinessView,
+    responses={503: {'model': ErrorBody}},
+    operation_id='readyz',
+)
+def readyz(request: Request):
+    try:
+        schema = request.app.state.ready()
+    except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
+        fail('dependency_unavailable', 503)
+    return {'status': 'ok', 'version': revision(request), 'schema_version': schema}
 
 
 @router.post(
