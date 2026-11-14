@@ -1,0 +1,33 @@
+{
+  "skill": "refresh-contract",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "refresh-contract-1",
+      "prompt": "Add an optional field to the session response",
+      "assertions": [
+        "changes the model, runs uv run python -m contracts.export and inspects the git diff of contracts/",
+        "treats the change as additive and updates examples",
+        "notes oasdiff and the consumer cross job are not available yet instead of running them"
+      ]
+    },
+    {
+      "id": "refresh-contract-2",
+      "prompt": "Remove a field from the message response",
+      "assertions": [
+        "classifies it as a breaking change",
+        "requires an ADR (write-adr) before any edit and does not regenerate the contract",
+        "does not edit sibling frontend repositories"
+      ]
+    },
+    {
+      "id": "refresh-contract-3",
+      "prompt": "just check fails on contract drift",
+      "assertions": [
+        "runs uv run python -m contracts.export and git diff --exit-code contracts to reproduce",
+        "commits generated artifacts only together with the source change that caused them",
+        "reports what changed per artifact and its hash in contracts/manifest.json"
+      ]
+    }
+  ]
+}

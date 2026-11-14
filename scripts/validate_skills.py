@@ -12,10 +12,14 @@ import yaml
 from scripts.scan_secrets import matches
 
 NAME = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*')
-# Shared harness skills from engineering-standards keep their catalog names; every
-# repository-specific skill uses the `api-` prefix.
+# Shared harness skills from engineering-standards and the API catalog skills of the
+# master plan keep their catalog names; every other repository-specific skill uses the
+# `api-` prefix.
 SHARED_NAMES = frozenset(
     {
+        'evaluate-assistant',
+        'change-prompt',
+        'refresh-contract',
         'implement-task',
         'review-change',
         'verify-release',

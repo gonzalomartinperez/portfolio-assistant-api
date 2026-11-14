@@ -1,0 +1,33 @@
+{
+  "skill": "api-change-storage",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "api-change-storage-1",
+      "prompt": "Review this migration but do not modify files or the database",
+      "assertions": [
+        "stays read-only: no file writes, no migration applied",
+        "checks history order, checksums, locks and rollback or forward-only behavior",
+        "reports risks with file and line"
+      ]
+    },
+    {
+      "id": "api-change-storage-2",
+      "prompt": "Add a nullable column to the conversations table",
+      "assertions": [
+        "writes a new numbered migration instead of editing an applied one",
+        "uses an isolated fixture database, never a shared one",
+        "adds a test and states fixture versus real-service evidence separately"
+      ]
+    },
+    {
+      "id": "api-change-storage-3",
+      "prompt": "Make usage reservations release on failure",
+      "assertions": [
+        "names the transaction boundary that owns the reservation",
+        "adds a concurrency or failure-path test",
+        "does not delete volumes or touch shared services"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,10 @@
 ---
 name: api-change-storage
-description: "Implement or review PostgreSQL migrations, transaction ownership, usage reservations, checkpoint retention/deletion, or database recovery. Use for persistence guarantees and schema changes, not general retrieval relevance or deployment execution."
+description: "Implements or reviews PostgreSQL migrations, transaction ownership, usage reservations, checkpoint retention and deletion, and database recovery. Use when a task changes the schema or a persistence guarantee. Not for application limit rules (use api-change-use-case), retrieval relevance (use api-maintain-knowledge) or deployment execution."
+metadata:
+  owner: gonzalomartinperez
+  last-reviewed: "2026-11-14"
+  version: "1.0.0"
 ---
 
 # Change persistence and recovery guarantees

@@ -1,0 +1,106 @@
+{
+  "skill": "api-change-storage",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Write a migration that adds a column to the conversations table",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Make usage reservations release when a run fails, in one transaction",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Fix checkpoint retention so expired checkpoints are deleted",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Review this SQL migration for lock risks and rollback",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Plan the database recovery steps after a failed restore",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Who owns the transaction when a message and its usage row are written?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add a limit on how many conversations a session can create",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Stream the answer incrementally to the browser",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Improve retrieval recall for Spanish questions",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Handle the weekly Dependabot PR",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Record an ADR for choosing PostgreSQL",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a poem about databases",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Add forward-only grants for the worker role in a new migration",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Delete a visitor's conversations and checkpoints completely when they ask",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Make usage accounting idempotent when a run is retried",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Check the migration history checksums before I add the next migration",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Refresh the frozen corpus snapshot",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this PR for security issues",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Change the cancel behavior of the SSE endpoint",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Convert 5 km to miles",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

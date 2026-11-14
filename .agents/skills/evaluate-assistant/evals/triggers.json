@@ -1,0 +1,106 @@
+{
+  "skill": "evaluate-assistant",
+  "runs_per_query": 3,
+  "queries": [
+    {
+      "query": "Run the retrieval evaluation and tell me which strata fail",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Evaluate the assistant on the fixture bank and summarize the report by locale",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "This answer cited the wrong source; turn it into a golden eval item",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Read the latest eval report and tell me where Spanish is weaker than English",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Add an eval item for the question 'what has Gonzalo built with LangGraph?'",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "How is the assistant doing on abstention cases right now?",
+      "should_trigger": true,
+      "split": "train"
+    },
+    {
+      "query": "Run the unit tests",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a new retrieval rule for relationship questions",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Change the system prompt wording and update the lock",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Refresh the corpus snapshot from the portfolio repository",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Score the repo against the committed ratchets",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Write a haiku about evaluation",
+      "should_trigger": false,
+      "split": "train"
+    },
+    {
+      "query": "Compare retrieval hit rate between vector, graph and hybrid strategies",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Check that a new eval item has canonical gold evidence keys and native Spanish",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Run the offline eval lane and report counts per stratum",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Did my change lower the golden pass rate?",
+      "should_trigger": true,
+      "split": "validation"
+    },
+    {
+      "query": "Add a migration for the eval results table",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Review this PR for missing tests",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Fix the SSE cancellation bug",
+      "should_trigger": false,
+      "split": "validation"
+    },
+    {
+      "query": "Translate this paragraph to Spanish",
+      "should_trigger": false,
+      "split": "validation"
+    }
+  ]
+}

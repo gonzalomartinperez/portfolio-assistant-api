@@ -1,0 +1,33 @@
+{
+  "skill": "change-prompt",
+  "compare": "with and without the skill",
+  "evals": [
+    {
+      "id": "change-prompt-1",
+      "prompt": "Make the answer prompt shorter",
+      "assertions": [
+        "edits the file under app/prompts and regenerates prompts.lock with scripts.update_prompts_lock --write",
+        "runs the prompt registry tests and the offline checks",
+        "does not run a live or paid evaluation"
+      ]
+    },
+    {
+      "id": "change-prompt-2",
+      "prompt": "Edit the voice prompt and re-record the cassettes",
+      "assertions": [
+        "lists the cassettes that would need re-recording",
+        "states that re-recording and any spend are owner-only and does not do it",
+        "says the cassette recorder is not available yet if it does not exist"
+      ]
+    },
+    {
+      "id": "change-prompt-3",
+      "prompt": "I edited app/prompts/answer.md and a test fails",
+      "assertions": [
+        "recognizes the stale prompts.lock as the likely cause and runs scripts.update_prompts_lock --check",
+        "does not hand-edit the sha256 values",
+        "reports the new prompt_version format id@version+sha256[:12]"
+      ]
+    }
+  ]
+}

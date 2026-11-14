@@ -1,6 +1,10 @@
 ---
 name: api-change-stream
-description: "Change or investigate incremental provider streaming, LangGraph run lifecycle, cancellation, or the public HTTP/SSE contract. Use for stream and frontend-contract work, not corpus ranking or unrelated API business rules."
+description: "Changes or investigates incremental provider streaming, the LangGraph run lifecycle, cancellation and SSE behavior. Use when a task touches how a run streams, cancels or terminates. Not for adding or changing contract fields and artifacts (use refresh-contract), corpus ranking (use api-maintain-knowledge) or application business rules (use api-change-use-case)."
+metadata:
+  owner: gonzalomartinperez
+  last-reviewed: "2026-11-14"
+  version: "1.0.0"
 ---
 
 # Change streaming without losing the wire contract
