@@ -39,8 +39,8 @@ or delete volumes. Document fixture versus live verification separately.
 
 ## Task guidance
 
-Repository skills are discovered through `.claude/skills/` (canonical) and relative
-`.agents/skills/` links (Codex). Load only the skill matching the requested task;
+Repository skills are canonical in `.agents/skills/` (Codex), and Claude Code discovers the relative
+`.claude/skills/` links. Load only the skill matching the requested task;
 ordinary orientation starts with README.md, not the whole catalog. See
 [skill maintenance and evidence](docs/agent-skills.md). Validate changes with
 `uv run python -m scripts.validate_skills` and the existing verification commands.
