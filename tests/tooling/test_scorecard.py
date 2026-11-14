@@ -214,3 +214,98 @@ def test_committed_ratchets_are_valid_and_declare_directions():
             assert entry['direction'] in ('lower', 'higher'), name
             assert entry.get('source'), name
             assert 'pointer' in entry or 'value' in entry, name
+
+
+def required_ratchets(directory: Path) -> None:
+    directory.mkdir()
+    (directory / 'r.json').write_text(
+        json.dumps(
+            {
+                'metrics': {
+                    'static.ruff_findings': {
+                        'direction': 'lower',
+                        'value': 0,
+                        'required': True,
+                    },
+                    'static.mypy_errors': {
+                        'direction': 'lower',
+                        'value': 0,
+                        'required': True,
+                    },
+                }
+            }
+        )
+    )
+
+
+def test_crashed_tools_fail_the_gate_when_metrics_are_required(tmp_path):
+    required_ratchets(tmp_path / 'r')
+    artifacts = tmp_path / 'artifacts'
+    artifacts.mkdir()
+    (artifacts / 'ruff.json').write_text('error: ruff panicked\n')
+    (artifacts / 'mypy.txt').write_text(
+        'Traceback (most recent call last):\n  File "x"\n'
+    )
+    assert run_check(tmp_path, artifacts) == 1
+
+
+def test_clean_required_metrics_pass(tmp_path):
+    required_ratchets(tmp_path / 'r')
+    artifacts = tmp_path / 'artifacts'
+    artifacts.mkdir()
+    (artifacts / 'ruff.json').write_text('[]')
+    (artifacts / 'mypy.txt').write_text('Success: no issues found in 3 source files\n')
+    assert run_check(tmp_path, artifacts) == 0
+
+
+def run_check(tmp_path, artifacts):
+    current = tmp_path / 'c.json'
+    main(
+        [
+            'collect',
+            '--artifacts',
+            str(artifacts),
+            '--out',
+            str(current),
+            '--root',
+            str(tmp_path),
+        ]
+    )
+    return main(
+        [
+            'check',
+            '--current',
+            str(current),
+            '--ratchets',
+            str(tmp_path / 'r'),
+            '--root',
+            str(tmp_path),
+        ]
+    )
+
+
+def test_malformed_junit_attributes_are_missing(tmp_path):
+    (tmp_path / 'unit.xml').write_text('<testsuite tests="many" failures="0"/>')
+    m = collect(tmp_path, tmp_path)['metrics']
+    assert m['tests.unit.total']['value'] is None
+
+
+def test_invalid_direction_is_rejected_at_load(tmp_path):
+    (tmp_path / 'r').mkdir()
+    (tmp_path / 'r/bad.json').write_text(
+        json.dumps({'metrics': {'x': {'direction': 'up', 'value': 1}}})
+    )
+    current = tmp_path / 'c.json'
+    current.write_text('{"metrics": {}}')
+    with pytest.raises(ValueError, match='direction'):
+        main(
+            [
+                'check',
+                '--current',
+                str(current),
+                '--ratchets',
+                str(tmp_path / 'r'),
+                '--root',
+                str(tmp_path),
+            ]
+        )

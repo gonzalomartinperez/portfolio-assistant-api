@@ -46,8 +46,8 @@ jobs:
       - name: Lint and type-check into artifact files
         run: |
           mkdir -p artifacts
-          uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || true
-          uv run mypy > artifacts/mypy.txt 2>&1 || true
+          uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]  # 0 clean, 1 findings; other codes fail
+          uv run mypy > artifacts/mypy.txt 2>&1 || [ $? -eq 1 ]  # 0 clean, 1 errors; other codes fail
       - name: Run the offline test suite
         run: uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
       - name: Collect the scorecard

@@ -4,12 +4,14 @@
     "static.ruff_findings": {
       "direction": "lower",
       "value": 0,
-      "source": "2026-11-14 uv run ruff check app tests contracts scripts --output-format json: 0 findings"
+      "source": "2026-11-14 uv run ruff check app tests contracts scripts --output-format json: 0 findings",
+      "required": true
     },
     "static.mypy_errors": {
       "direction": "lower",
       "value": 0,
-      "source": "2026-11-14 uv run mypy (pyproject files scope, 39 source files): Success, 0 errors"
+      "source": "2026-11-14 uv run mypy (pyproject files scope, 39 source files): Success, 0 errors",
+      "required": true
     }
   }
 }

@@ -7,7 +7,15 @@ DIRECTIONS = ('lower', 'higher')
 
 
 def load_ratchets(directory: Path) -> dict[Path, dict]:
-    return {p: json.loads(p.read_text()) for p in sorted(directory.glob('*.json'))}
+    loaded = {p: json.loads(p.read_text()) for p in sorted(directory.glob('*.json'))}
+    for path, ratchets in loaded.items():
+        for key, entry in ratchets['metrics'].items():
+            if entry.get('direction') not in DIRECTIONS:
+                raise ValueError(
+                    f'{path}: metric {key!r} direction must be "lower" or "higher", '
+                    f'got {entry.get("direction")!r}'
+                )
+    return loaded
 
 
 def limit(entry: dict, root: Path) -> float | None:
@@ -29,7 +37,9 @@ def check(current: dict, directory: Path, root: Path) -> list[dict]:
         for key, entry in ratchets['metrics'].items():
             bound = limit(entry, root)
             value = current.get('metrics', {}).get(key, {}).get('value')
-            if bound is None:
+            if value is None and entry.get('required'):
+                status = 'regressed'  # a required metric must always be produced
+            elif bound is None:
                 status = 'unseeded'
             elif value is None:
                 status = 'unmet'

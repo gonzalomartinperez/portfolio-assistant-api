@@ -29,10 +29,15 @@ Criteria without a collector yet (most of D1, D4, D5, D7, D8) are listed as `unm
 (`image.json` points at `infra/docker/app/image.json`, which stays the owner of the size ratchet).
 `check` exits 1 when a metric is worse than its ratchet and prints a table; `unmet` and `unseeded` rows do
 not fail unless `--strict` is given. `tighten` rewrites a ratchet only when the measured value is better
-(or seeds a `null`), never the other way. Loosening a ratchet needs an ADR and the owner.
+(or seeds a `null`), never the other way. A metric marked `"required": true` (ruff, mypy, unit test totals: what the nightly always produces) fails
+`check` when missing, so a crashed tool cannot pass the gate; the nightly and `just score` accept only exit
+code 0 or 1 from ruff and mypy. `tests.unit.total` is an exact floor: consolidating or deleting tests
+needs a deliberate ratchet edit in the same PR. Loosening a ratchet needs an ADR and the owner.
 
 ## Nightly
 
 `.github/workflows/nightly.yml` (cron `0 6 * * *`, 03:00 ART, plus manual dispatch) runs ruff, mypy and the
 offline suite, collects, uploads `scorecard.json` as the `scorecard` artifact (30 days; numbers only, in line
 with the artifact privacy boundary in [ci.md](ci.md)) and fails the job on a regression.
+
+Follow-up: add `scorecard` to the global ruff paths and mypy files (justfile, `ci.yml`, AGENTS.md, README, CONTRIBUTING) in one consistent change.

@@ -78,12 +78,15 @@ def junit_totals(path: Path) -> dict[str, int] | None:
         return None
     suites = [root] if root.tag == 'testsuite' else list(root)
     totals = {'total': 0, 'failures': 0, 'skipped': 0}
-    for suite in suites:
-        totals['total'] += int(suite.get('tests', 0))
-        totals['failures'] += int(suite.get('failures', 0)) + int(
-            suite.get('errors', 0)
-        )
-        totals['skipped'] += int(suite.get('skipped', 0))
+    try:
+        for suite in suites:
+            totals['total'] += int(suite.get('tests', 0))
+            totals['failures'] += int(suite.get('failures', 0)) + int(
+                suite.get('errors', 0)
+            )
+            totals['skipped'] += int(suite.get('skipped', 0))
+    except ValueError, TypeError:
+        return None
     return totals
 
 

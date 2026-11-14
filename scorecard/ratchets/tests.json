@@ -4,12 +4,14 @@
     "tests.unit.total": {
       "direction": "higher",
       "value": 886,
-      "source": "2026-11-14 uv run pytest --collect-only -q -m 'not integration': 886/934 collected"
+      "source": "2026-11-14 uv run pytest --collect-only -q -m 'not integration': 886/934 collected",
+      "required": true
     },
     "tests.unit.failures": {
       "direction": "lower",
       "value": 0,
-      "source": "required: the offline lane must be green"
+      "source": "required: the offline lane must be green",
+      "required": true
     },
     "tests.integration.total": {
       "direction": "higher",
