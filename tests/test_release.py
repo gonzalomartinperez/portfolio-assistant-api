@@ -41,7 +41,7 @@ def test_optional_backoffice_pairing_checks_current_private_contracts():
 
     import yaml
 
-    workflow = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    workflow = yaml.safe_load(Path('.github/workflows/ci.yml').read_text())
     steps = workflow['jobs']['container']['steps']
     checkout = next(
         step

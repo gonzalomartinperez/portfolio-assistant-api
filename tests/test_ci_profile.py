@@ -1,6 +1,8 @@
-"""CI graph and real shell aggregate fail closed across negative outcomes."""
+"""Dynamic CI profiles, the fail-closed gate and the profile map stay consistent."""
 
+import json
 import os
+import re
 import subprocess
 from copy import deepcopy
 from pathlib import Path
@@ -8,90 +10,254 @@ from pathlib import Path
 import pytest
 import yaml
 
-from scripts.ci_profile import NEEDS, profile_errors
+from scripts.ci_profile import GATED, NAMES, profile_errors
 
 
 def workflow():
-    return yaml.safe_load(Path('.github/workflows/quality.yml').read_text())
+    return yaml.safe_load(Path('.github/workflows/ci.yml').read_text())
 
 
-def test_actual_paired_profile_has_no_filtered_or_missing_required_work():
-    assert profile_errors(workflow()) == []
+def profile_map():
+    return json.loads(Path('.github/ci-profile.json').read_text())
 
 
-@pytest.mark.parametrize('key', NEEDS)
-def test_every_job_identity_and_dependency_is_required(key):
-    value = workflow()
-    del value['jobs'][key]
-    assert profile_errors(value)
-    value = workflow()
-    value['jobs'][key]['name'] = 'successful placeholder'
-    assert profile_errors(value)
-    value = workflow()
-    value['jobs'][key]['needs'] = ['unknown']
-    assert profile_errors(value)
+def glob_to_regex(pattern):
+    """Same semantics as the shared classifier: `**/` any dirs, `**` anything, `*` one segment."""
+    out, i = '', 0
+    while i < len(pattern):
+        if pattern.startswith('**/', i):
+            out += '(?:.*/)?'
+            i += 3
+        elif pattern.startswith('**', i):
+            out += '.*'
+            i += 2
+        elif pattern[i] == '*':
+            out += '[^/]*'
+            i += 1
+        elif pattern[i] == '?':
+            out += '[^/]'
+            i += 1
+        else:
+            out += re.escape(pattern[i])
+            i += 1
+    return re.compile(out + r'\Z')
+
+
+def matching_profiles(path, profiles=None):
+    profiles = profiles or profile_map()['profiles']
+    return [
+        name
+        for name, spec in profiles.items()
+        if any(glob_to_regex(pattern).match(path) for pattern in spec.get('paths', []))
+    ]
+
+
+def tracked_files():
+    output = subprocess.run(
+        ['git', 'ls-files', '-z'], capture_output=True, check=True, text=True
+    ).stdout
+    return [path for path in output.split('\0') if path and Path(path).exists()]
+
+
+def test_actual_profile_has_no_filtered_or_missing_required_work():
+    assert profile_errors(workflow(), profile_map()) == []
+
+
+def test_profile_map_is_valid_json_with_the_expected_keys():
+    value = profile_map()
+    assert set(value) == {'base', 'required', 'profiles'}
+    assert value['base'] == ['secrets']
+    assert value['required'] == 'ci-gate'
+    assert set(value['profiles']) == {
+        'docs',
+        'harness',
+        'workflow',
+        'code',
+        'deps-weekly',
+        'release',
+        'hotfix',
+    }
+    for name in ('docs', 'harness', 'workflow', 'code'):
+        spec = value['profiles'][name]
+        assert spec['paths'] and spec['adds']
+        assert spec['budgetP50Minutes'] < spec['budgetP95Minutes']
+    assert value['profiles']['docs']['adds'] == ['static']
+    assert value['profiles']['deps-weekly']['adds'] == ['all-profiles']
+    assert value['profiles']['release']['adds'] == ['all-profiles']
+    assert 'dependabot/**' in value['profiles']['deps-weekly']['trigger']
+    assert 'main' in value['profiles']['release']['trigger']
+
+
+def test_every_tracked_file_matches_at_least_one_profile():
+    unmatched = [path for path in tracked_files() if not matching_profiles(path)]
+    assert unmatched == []
+
+
+def test_unknown_paths_match_no_profile_so_classify_fails_closed():
+    assert matching_profiles('unknown/new-file.bin') == []
+    assert matching_profiles('new-top-level.bin') == []
 
 
 @pytest.mark.parametrize(
-    'mode', ['paths', 'permissions', 'action', 'if', 'continue', 'gate', 'runner']
+    'path',
+    [
+        'app/main.py',
+        'tests/test_x.py',
+        'scripts/tool.py',
+        'migrations/001.sql',
+        'contracts/schema.json',
+    ],
+)
+def test_docs_profile_never_matches_code_unless_markdown(path):
+    assert 'docs' not in matching_profiles(path)
+    assert 'code' in matching_profiles(path)
+    assert 'docs' in matching_profiles(path.rsplit('.', 1)[0] + '.md')
+
+
+@pytest.mark.parametrize(
+    'directory', ['app', 'tests', 'scripts', 'migrations', 'contracts']
+)
+def test_docs_profile_only_matches_markdown_under_code_directories(directory):
+    docs = profile_map()['profiles']['docs']['paths']
+    for path in tracked_files():
+        if path.startswith(directory + '/') and not path.endswith('.md'):
+            assert not any(glob_to_regex(pattern).match(path) for pattern in docs), path
+
+
+def test_profiles_run_the_documented_jobs():
+    profiles = profile_map()['profiles']
+    assert profiles['docs']['adds'] == ['static']
+    assert profiles['harness']['adds'] == ['static']
+    assert set(profiles['code']['adds']) == {'static', 'database', 'container'}
+    assert set(profiles['workflow']['adds']) == set(GATED)
+
+
+@pytest.mark.parametrize('key', NAMES)
+def test_every_job_identity_is_required(key):
+    value = workflow()
+    del value['jobs'][key]
+    assert profile_errors(value, profile_map())
+    value = workflow()
+    value['jobs'][key]['name'] = 'successful placeholder'
+    assert profile_errors(value, profile_map())
+
+
+@pytest.mark.parametrize('key', GATED)
+def test_gated_jobs_require_classify_and_their_own_id(key):
+    value = workflow()
+    value['jobs'][key]['needs'] = [
+        name for name in value['jobs'][key]['needs'] if name != 'classify'
+    ]
+    assert profile_errors(value, profile_map())
+    value = workflow()
+    del value['jobs'][key]['if']
+    assert profile_errors(value, profile_map())
+    value = workflow()
+    other = next(name for name in GATED if name != key)
+    value['jobs'][key]['if'] = (
+        f"contains(fromJSON(needs.classify.outputs.jobs), '{other}')"
+    )
+    assert profile_errors(value, profile_map())
+
+
+def test_secrets_cannot_be_gated():
+    value = workflow()
+    value['jobs']['secrets']['if'] = (
+        "contains(fromJSON(needs.classify.outputs.jobs), 'secrets')"
+    )
+    assert profile_errors(value, profile_map())
+
+
+def test_ci_gate_must_always_run():
+    value = workflow()
+    del value['jobs']['ci-gate']['if']
+    assert profile_errors(value, profile_map())
+
+
+@pytest.mark.parametrize(
+    'dropped', [k for k in NAMES if k not in ('ci-gate', 'checks')]
+)
+def test_ci_gate_must_need_every_other_job(dropped):
+    value = workflow()
+    value['jobs']['ci-gate']['needs'].remove(dropped)
+    assert profile_errors(value, profile_map())
+
+
+def test_checks_alias_needs_only_ci_gate():
+    value = workflow()
+    value['jobs']['checks']['needs'] = ['ci-gate', 'static']
+    assert profile_errors(value, profile_map())
+
+
+def test_shared_building_blocks_must_pin_the_same_sha():
+    value = workflow()
+    step = value['jobs']['ci-gate']['steps'][0]
+    step['uses'] = step['uses'].replace('0fc59d1c', '1fc59d1c')
+    assert profile_errors(value, profile_map())
+    value = workflow()
+    value['jobs']['classify']['uses'] = (
+        'gonzalomartinperez/engineering-standards/.github/workflows/classify.yml@main'
+    )
+    assert profile_errors(value, profile_map())
+
+
+def test_profile_map_cannot_name_missing_jobs_or_weaken_the_gate():
+    value = profile_map()
+    value['profiles']['code']['adds'].append('missing-job')
+    assert profile_errors(workflow(), value)
+    value = profile_map()
+    value['required'] = 'checks'
+    assert profile_errors(workflow(), value)
+    value = profile_map()
+    value['profiles']['release']['adds'] = ['static']
+    assert profile_errors(workflow(), value)
+
+
+@pytest.mark.parametrize(
+    'mode',
+    ['paths', 'permissions', 'action', 'continue', 'runner', 'target', 'timeout'],
 )
 def test_policy_cannot_hide_or_privilege_pr_work(mode):
     value = workflow()
+    events = value.get('on', value.get(True))
     if mode == 'paths':
-        value.get('on', value.get(True))['pull_request']['paths'] = ['app/**']
+        events['pull_request']['paths'] = ['app/**']
     elif mode == 'permissions':
         value['jobs']['container']['permissions'] = {'packages': 'write'}
     elif mode == 'action':
         value['jobs']['static']['steps'][0]['uses'] = 'actions/checkout@main'
-    elif mode == 'if':
-        value['jobs']['database']['if'] = 'false'
     elif mode == 'runner':
         value['jobs']['database']['runs-on'] = 'ubuntu-latest'
     elif mode == 'continue':
         value['jobs']['container']['steps'][0]['continue-on-error'] = True
+    elif mode == 'target':
+        events['pull_request_target'] = {'branches': ['main']}
     else:
-        value['jobs']['checks']['steps'][0]['env'].pop('DATABASE_RESULT')
-    assert profile_errors(value)
+        del value['jobs']['static']['timeout-minutes']
+    assert profile_errors(value, profile_map())
 
 
-def test_actual_aggregate_shell_requires_each_expected_result():
+def test_checkouts_never_persist_credentials():
+    for key, job in workflow()['jobs'].items():
+        for step in job.get('steps', []):
+            if step.get('uses', '').startswith('actions/checkout@'):
+                assert step['with']['persist-credentials'] is False, key
+
+
+def test_actual_transitional_alias_requires_ci_gate_success():
     gate = workflow()['jobs']['checks']['steps'][0]
-    green = {name: 'success' for name in gate['env']}
-    assert (
-        subprocess.run(
-            ['bash', '-e', '-c', gate['run']],
-            env={**os.environ, **green},
-            capture_output=True,
-            check=False,
+    assert gate['env'] == {'CI_GATE_RESULT': '${{ needs.ci-gate.result }}'}
+    base = {k: v for k, v in os.environ.items() if k != 'CI_GATE_RESULT'}
+
+    def run(outcome):
+        env = base if outcome is None else {**base, 'CI_GATE_RESULT': outcome}
+        return subprocess.run(
+            ['bash', '-e', '-c', gate['run']], env=env, capture_output=True, check=False
         ).returncode
-        == 0
-    )
-    for key in green:
-        for outcome in ('failure', 'cancelled', 'skipped', 'pending', ''):
-            failed = {**green, key: outcome}
-            assert (
-                subprocess.run(
-                    ['bash', '-e', '-c', gate['run']],
-                    env={**os.environ, **failed},
-                    capture_output=True,
-                    check=False,
-                ).returncode
-                != 0
-            )
-        missing = deepcopy(green)
-        del missing[key]
-        clean_env = {
-            name: value for name, value in os.environ.items() if name not in green
-        }
-        assert (
-            subprocess.run(
-                ['bash', '-e', '-c', gate['run']],
-                env={**clean_env, **missing},
-                capture_output=True,
-                check=False,
-            ).returncode
-            != 0
-        )
+
+    assert run('success') == 0
+    for outcome in ('failure', 'cancelled', 'skipped', 'pending', '', None):
+        assert run(outcome) != 0
 
 
 def test_identity_rejects_other_candidate_and_records_no_environment_values(
@@ -138,7 +304,7 @@ def test_dirty_or_unverifiable_build_inputs_fail_closed(result, tmp_path, monkey
 def test_target_branch_edits_require_fresh_candidate_verification():
     value = workflow()
     value.get('on', value.get(True))['pull_request']['types'].remove('edited')
-    assert profile_errors(value)
+    assert profile_errors(value, profile_map())
 
 
 @pytest.mark.parametrize(
@@ -187,7 +353,7 @@ def test_postgres_inventory_cannot_hide_unfixed_critical_findings(mutation):
         value['jobs']['container']['defaults'] = {'run': {'shell': 'sh'}}
     else:
         value['defaults']['run']['shell'] = 'sh'
-    assert profile_errors(value)
+    assert profile_errors(value, profile_map())
 
 
 POSTGRES_CACHE_EXPORT = (
@@ -345,3 +511,27 @@ def test_postgres_cache_rejects_exporters_under_other_step_names(mutation):
         app['with']['cache-to'] = POSTGRES_CACHE_EXPORT
     with pytest.raises(AssertionError):
         assert_postgres_cache_policy(value)
+
+
+def test_image_and_workflow_inputs_trigger_their_verifying_jobs():
+    profiles = json.loads(Path('.github/ci-profile.json').read_text())['profiles']
+
+    def selected(path):
+        return {
+            name
+            for name, spec in profiles.items()
+            if any(glob_to_regex(p).match(path) for p in spec.get('paths', []))
+        }
+
+    def jobs(path):
+        return {job for name in selected(path) for job in profiles[name]['adds']}
+
+    for copied_into_image in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
+        assert 'container' in jobs(copied_into_image)
+    for workflow_script in (
+        'scripts/check_workflows.sh',
+        'scripts/ci_identity.py',
+        'scripts/ci_profile.py',
+    ):
+        assert 'workflows' in jobs(workflow_script)
+    assert profiles['hotfix']['adds'] == ['all-profiles']

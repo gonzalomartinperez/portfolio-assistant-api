@@ -15,9 +15,9 @@ def test_neo4j_usage_reporting_is_explicitly_disabled(scope):
     if scope == 'local':
         config = yaml.safe_load(Path('infra/compose/local.yaml').read_text())
     else:
-        config = yaml.safe_load(Path('.github/workflows/quality.yml').read_text())[
-            'jobs'
-        ][scope]
+        config = yaml.safe_load(Path('.github/workflows/ci.yml').read_text())['jobs'][
+            scope
+        ]
     environment = config['services']['neo4j'].get('environment') or config['services'][
         'neo4j'
     ].get('env', {})

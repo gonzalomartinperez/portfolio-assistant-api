@@ -1,7 +1,7 @@
-name: Quality
+name: CI
 'on':
   pull_request:
-    types: [opened, synchronize, reopened, edited, ready_for_review]
+    types: [opened, synchronize, reopened, edited, ready_for_review, labeled, unlabeled]
     branches:
     - develop
     - main
@@ -38,8 +38,16 @@ env:
   LANGSMITH_TRACING: 'false'
   DOCKER_BUILD_RECORD_UPLOAD: 'false'
 jobs:
+  classify:
+    name: classify
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: gonzalomartinperez/engineering-standards/.github/workflows/classify.yml@0fc59d1cb0881636fd7d841f9a05470ab11d8d40 # main (pre-v1.0.0)
   workflows:
     name: Workflow validation
+    needs: classify
+    if: contains(fromJSON(needs.classify.outputs.jobs), 'workflows')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -76,6 +84,8 @@ jobs:
         python3 -m scripts.scan_secrets > artifacts/secret-scan.json
   static:
     name: Static checks
+    needs: classify
+    if: contains(fromJSON(needs.classify.outputs.jobs), 'static')
     permissions:
       contents: read
       pull-requests: read
@@ -125,6 +135,7 @@ jobs:
       run: uv run python -m scripts.dependabot_automation --audit-pr "$PR_NUMBER" > artifacts/dependency-policy-audit.json
   database:
     name: Database tests
+    if: contains(fromJSON(needs.classify.outputs.jobs), 'database')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -252,9 +263,11 @@ jobs:
         retention-days: 7
         if-no-files-found: ignore
     needs:
+    - classify
     - static
   container:
     name: Container verification
+    if: contains(fromJSON(needs.classify.outputs.jobs), 'container')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -401,7 +414,28 @@ jobs:
         docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
         docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
     needs:
+    - classify
     - static
+  ci-gate:
+    name: ci-gate
+    if: always()
+    needs:
+    - classify
+    - workflows
+    - secrets
+    - static
+    - database
+    - container
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+    - uses: gonzalomartinperez/engineering-standards/actions/ci-gate@0fc59d1cb0881636fd7d841f9a05470ab11d8d40 # main (pre-v1.0.0)
+      with:
+        needs: ${{ toJSON(needs) }}
+        expected: ${{ needs.classify.outputs.jobs }}
+  # Transitional: branch protection still requires "Required checks". Remove this job after the
+  # owner switches the required check to `ci-gate` (docs/reference/repo-settings.md).
   checks:
     name: Required checks
     runs-on: ubuntu-24.04
@@ -409,22 +443,9 @@ jobs:
     permissions: {}
     if: always()
     needs:
-    - workflows
-    - secrets
-    - static
-    - database
-    - container
+    - ci-gate
     steps:
-    - name: Require every expected job to succeed
-      run: |
-        test "${WORKFLOWS_RESULT}" = success
-        test "${SECRETS_RESULT}" = success
-        test "${STATIC_RESULT}" = success
-        test "${DATABASE_RESULT}" = success
-        test "${CONTAINER_RESULT}" = success
+    - name: Require the ci-gate job to succeed
+      run: test "${CI_GATE_RESULT}" = success
       env:
-        WORKFLOWS_RESULT: ${{ needs.workflows.result }}
-        SECRETS_RESULT: ${{ needs.secrets.result }}
-        STATIC_RESULT: ${{ needs.static.result }}
-        DATABASE_RESULT: ${{ needs.database.result }}
-        CONTAINER_RESULT: ${{ needs.container.result }}
+        CI_GATE_RESULT: ${{ needs.ci-gate.result }}
