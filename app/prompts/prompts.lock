@@ -1,0 +1,29 @@
+{
+  "prompts": {
+    "answer.md": {
+      "id": "answer",
+      "version": "1",
+      "sha256": "b4f38ad5eabbf4155b1a3c4515678ded23d54bd844a5babb92101ed45b23e23c"
+    },
+    "voice-recruiter.md": {
+      "id": "voice-recruiter",
+      "version": "1",
+      "sha256": "1a3c5e0178e03b267adfb58c8c5e484497e8ba9ece4fb2ba3aac4681cc6aec1e"
+    },
+    "voice.en.md": {
+      "id": "voice-en",
+      "version": "1",
+      "sha256": "01433c8463d82591acae5f40fcca2ff2cab90acc3a01e8040cf36eec174fc3c3"
+    },
+    "voice.es.md": {
+      "id": "voice-es",
+      "version": "1",
+      "sha256": "56445800615ddb38d8d6f4871cb3fbe6e396c73f3160fb9640c4cd3ad3404fa1"
+    },
+    "web-context.md": {
+      "id": "web-context",
+      "version": "1",
+      "sha256": "004821e1dc7be2ae109c8a4a696afed7f89a1a54b9048b2a45a835ed2637afa8"
+    }
+  }
+}

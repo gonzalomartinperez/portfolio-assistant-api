@@ -8,7 +8,7 @@ description: "Change or investigate incremental provider streaming, LangGraph ru
 Read [AGENTS.md](../../../AGENTS.md) unless already loaded. Obtain the failing or
 requested event sequence, locale and run outcome. An investigation stays read-only
 unless the user also requests a fix. Load [API/SSE behavior](../../../docs/api-contract.md)
-and inspect [stream tests](../../../tests/test_workflow.py) before designing changes.
+and inspect [stream tests](../../../tests/unit/test_workflow.py) before designing changes.
 
 Trace [run policy](../../../app/application/runs.py) → [injected workflow](../../../app/ai/workflow.py)
 → [provider translation](../../../app/adapters/providers/answer.py) →

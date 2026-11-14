@@ -12,7 +12,7 @@ Artifacts generated offline by `python -m contracts.export`:
 - [Portfolio profile](../contracts/site-experience-portfolio-v1.schema.json): only the
   two existing region-aware interactions, exact routes, locales, layout and regions.
 - [Contract models](../contracts/site_experience.py) and
-  [behavioral tests](../tests/test_site_experience_contract.py).
+  [behavioral tests](../tests/contract/test_site_experience_contract.py).
 
 Actual checks and limitations are recorded in the
 [dated verification receipt](verification/site-experience-contract-2026-10-18.md).
