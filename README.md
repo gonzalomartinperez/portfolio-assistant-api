@@ -180,11 +180,14 @@ export POSTGRES_PORT=55463 NEO4J_PORT=57713 NEO4J_HTTP_PORT=57513
 source scripts/fixture-env.sh
 docker compose -f infra/compose/local.yaml up --build -d --wait
 uv run python -m app.migrate
-uv run python -m app.knowledge_sync --source github --ref 1acbe54906c88398652aebb8eae0c217fd0d8821
+uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
-The source command downloads one pinned, approved public portfolio revision. Fixture
+The source command indexes the frozen, approved public portfolio snapshot in
+`evals/corpus` (no network; see [ADR016](docs/adrs/016-frozen-public-corpus-snapshot.md)).
+Refresh it only by an explicit PR with `uv run python -m scripts.refresh_corpus --source <portfolio checkout> --ref <commit>`;
+`--check` verifies the committed files against `manifest.json`. Fixture
 mode makes **no paid model or embedding calls**. In a second terminal:
 
 ```sh
