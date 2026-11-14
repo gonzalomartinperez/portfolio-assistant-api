@@ -27,7 +27,7 @@ paid calls or deployment; the current task's scope and authority still decide (A
 3. Write or extend the failing test at the right layer first (`app/domain` pure unit tests, application use cases, adapters, HTTP/SSE contract), then implement. Keep one concern and about 400 changed lines.
 4. Run `just check` and `just test` (offline: `uv run pytest -q -m 'not integration'`). Integration needs `TEST_INTEGRATION=1` and isolated Compose projects, ports and databases (`docs/local-development.md`). Fix until green. Fixture mode stays the default; no real API key is read or used.
 5. Run the review chain: reviewer agent, Codex second opinion (or the documented fallback), architecture-reviewer for structural changes. Reproduce every finding before acting.
-6. Open the PR into `develop` with `.github/pull_request_template.md`. Merge only with current owner authorization, green checks and the required reviews: `gh pr checks <n> --watch`, then `gh pr merge <n> --merge --delete-branch`. Promotion to `main` needs separate explicit approval.
+6. Open the PR into `develop` with `.github/PULL_REQUEST_TEMPLATE.md`. Merge only with current owner authorization, green checks and the required reviews: `gh pr checks <n> --watch`, then `gh pr merge <n> --merge --delete-branch`. Promotion to `main` needs separate explicit approval.
 7. Remove the worktree and tick the item in `docs/master-plan/progress.md` when asked to.
 
 ## Feedback loop

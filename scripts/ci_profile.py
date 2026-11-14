@@ -20,12 +20,13 @@ NAMES = {
     'database': 'Database tests',
     'container': 'Container verification',
     'mutation': 'Mutation tests',
+    'contract': 'Contract checks',
     'ci-gate': 'ci-gate',
     'checks': 'Required checks',
 }
 # Jobs whose execution classify decides; secrets always runs. `security` is gated but
 # belongs to the base profile, so classify always selects it.
-GATED = ('workflows', 'security', 'static', 'database', 'container')
+GATED = ('workflows', 'security', 'static', 'database', 'container', 'contract')
 # Extra prerequisites that a gated job keeps besides classify.
 EXTRA_NEEDS = {
     'workflows': [],
@@ -33,6 +34,7 @@ EXTRA_NEEDS = {
     'static': [],
     'database': ['static'],
     'container': ['static'],
+    'contract': [],
 }
 PINNED = re.compile(r'[a-zA-Z0-9._/-]+@([a-f0-9]{40})')
 IMAGE_SIZE_PATH = 'infra/docker/app/image.json'
@@ -263,6 +265,7 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
         'static': "pytest -q -m 'not integration'",
         'database': 'pytest -q -m integration',
         'container': 'scripts.container_smoke',
+        'contract': 'scripts.contract_diff',
     }
     for key, command in required.items():
         if not any(
