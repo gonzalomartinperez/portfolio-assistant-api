@@ -23,6 +23,9 @@ OpenAI's Python SDK and Uvicorn. PostgreSQL/pgvector and Neo4j Community contain
 images are pinned separately in `compose.yaml`. Consult each project's packaged
 license and image notices when redistributing a build; transitive dependencies
 also retain their own notices. This is attribution, not a substitute license list.
+psycopg, psycopg-binary and psycopg-pool are LGPL-3.0-only; they are installed
+unmodified as separate libraries and remain replaceable (see
+[ADR009](docs/adrs/009-psycopg-lgpl-exception.md)).
 
 Retrieval fixtures use only approved public text from
 [gonzalomartinperez/portfolio](https://github.com/gonzalomartinperez/portfolio),

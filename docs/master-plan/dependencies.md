@@ -1,6 +1,6 @@
 # Dependencies
 
-Policy (ecosystem section 7, [10](research/10-standards-dependencies.md) "Dependency policy template"): a new runtime dependency needs an ADR with need versus platform, health (Scorecard and deps.dev), licence allow-list (MIT, Apache-2.0, BSD, ISC, 0BSD, BlueOak), cost, maintainer count and exit cost. Dev, test and CI tools are not distributed in the image and use a lighter check (licence recorded, pinned, in a dependency group). **Licence and health columns reflect the planner's knowledge and the research notes at 2026-11-09; they are not freshly verified.** The first task of M1 runs `uv run python -m scripts.check_license` and `deps.dev` lookups for every row and corrects the table.
+Policy (ecosystem section 7, [10](research/10-standards-dependencies.md) "Dependency policy template"): a new runtime dependency needs an ADR with need versus platform, health (Scorecard and deps.dev), licence allow-list (MIT, Apache-2.0, BSD, ISC, 0BSD, BlueOak), cost, maintainer count and exit cost. Dev, test and CI tools are not distributed in the image and use a lighter check (licence recorded, pinned, in a dependency group). **Licence column verified on 2026-11-14 (M1-10)** from the installed wheel metadata (`License-Expression`, classifiers) of the locked versions and from deps.dev; section 6 holds the evidence. `scripts/check_license.py` checks only this repository's own MIT licence, so it is not a third-party licence audit.
 
 Weekly single-PR rule applies to all of them (one grouped PR). Exact pins are kept only where a pin has a reason.
 
@@ -14,11 +14,11 @@ Weekly single-PR rule applies to all of them (one grouped PR). Exact pins are ke
 | `langgraph >=1.2.16,<2`, `langgraph-checkpoint-postgres >=3.1.2,<4`, `langchain-core >=1.6.12,<2` | Run workflow with durable checkpoints | Hand-written state machine | Checkpoint tables in PostgreSQL, cancellation semantics tested | MIT | Active, frequent releases | Keep; checkpoint retention covered by integration tests |
 | `langsmith ==0.14.9` | Pulled by `langchain-core`; exact pin to control the transitive version | Remove explicit pin | Tracing is refused by the settings validator; the SDK stays dormant | MIT | Active | Keep for now; try dropping the explicit pin in M4 if `uv tree` shows it is only transitive and tests prove tracing stays off |
 | `openai >=3.33.0` | Responses API and embeddings, opt-in | Anthropic SDK, litellm | One provider, no fallback by design | Apache-2.0 | Active | Keep |
-| `neo4j >=6.4.1,<7` | Graph projection and read queries | `gqlalchemy`, Postgres graph | Needs a Neo4j container; vendor findings open (2026-10) | Apache-2.0 | Active | Keep pending PAA-D12 spike |
-| `psycopg[binary,pool] >=3.3.6` | PostgreSQL and pgvector access | asyncpg | Required by the LangGraph Postgres checkpointer; binary wheels | **LGPL-3.0** | Active | Keep; licence outside the allow-list, so ADR exception at M1 (dynamic use as a library, unmodified, MIT application; alternative asyncpg cannot replace the checkpointer dependency) |
+| `neo4j >=6.4.1,<7` | Graph projection and read queries | `gqlalchemy`, Postgres graph | Needs a Neo4j container; vendor findings open (2026-10) | Apache-2.0 AND Python-2.0 | Active | Keep pending PAA-D12 spike |
+| `psycopg[binary,pool] >=3.3.6` | PostgreSQL and pgvector access | asyncpg | Required by the LangGraph Postgres checkpointer; binary wheels | **LGPL-3.0-only** (also `psycopg-binary`, `psycopg-pool`) | Active; Scorecard 4.1 | Keep; licence exception recorded in [ADR009](../adrs/009-psycopg-lgpl-exception.md) (unmodified library, MIT application; asyncpg cannot replace the checkpointer dependency) |
 | `lingua-language-detector ==2.2.0` | Language detection (EN, ES, unsupported) | `fasttext-langdetect`, `langdetect`, heuristic | Large wheel with models; suspected main share of the 992 MB image **[hypothesis]** | Apache-2.0 | Active | Keep; measure image share in M1; restrict languages or replace only if golden language items stay 100% |
 | `opentelemetry-sdk >=1,<2`, `opentelemetry-exporter-otlp-proto-http >=1,<2` | Opt-in private tracing and metrics | none | Off by default (`otel_sdk_disabled`) | Apache-2.0 | Active | Keep; centralize `gen_ai.*` attributes in one module |
-| `prometheus-client >=0.22,<1` | Private `/metrics` | OTel metrics only | Overlaps with OTel; small | Apache-2.0 | Active | Keep; revisit in M4 whether OTel metrics make it redundant |
+| `prometheus-client >=0.22,<1` | Private `/metrics` | OTel metrics only | Overlaps with OTel; small | Apache-2.0 AND BSD-2-Clause | Active | Keep; revisit in M4 whether OTel metrics make it redundant |
 
 ## 2. Current dev dependencies
 
@@ -73,3 +73,24 @@ Weekly single-PR rule applies to all of them (one grouped PR). Exact pins are ke
 | Shared `assistant-kit` runtime package with the sibling API | Premature; revisit when three modules are byte-identical across repos (PAA-D20). Scaffolding parity comes from `engineering-standards` templates |
 | k6 | No native SSE; Locust chosen |
 | cspell (Node) | Adds Node to a Python repo; an in-repo regex lint covers the Spanish rule |
+
+## 6. Verification evidence (2026-11-14, M1-10)
+
+Locked versions on `develop` at `45c6923`; licence from wheel metadata, cross-checked with deps.dev (`api.deps.dev/v3`); OpenSSF Scorecard is the deps.dev project score (blank when deps.dev has none).
+
+| Package | Locked | Licence (metadata) | deps.dev licence | Scorecard |
+|---|---|---|---|---|
+| fastapi | 0.162.0 | MIT | MIT | |
+| uvicorn | 0.54.0 | BSD-3-Clause | BSD-3-Clause | |
+| pydantic / pydantic-settings | 2.14.2 / 2.16.2 | MIT | MIT | 6.8 / |
+| langgraph / langgraph-checkpoint-postgres | 1.2.19 / 3.2.0 | MIT | MIT | |
+| langchain-core | 1.7.4 | MIT | MIT | 5.9 |
+| langsmith | 0.14.9 | MIT | MIT | 8.7 |
+| openai | 3.42.1 | Apache-2.0 | Apache-2.0 | 7.8 |
+| neo4j | 6.4.1 | Apache-2.0 AND Python-2.0 | same | 7.0 |
+| psycopg / psycopg-binary / psycopg-pool | 3.3.6 / 3.3.6 / 3.3.3 | LGPL-3.0-only | LGPL-3.0-only | 4.1 |
+| lingua-language-detector | 2.2.0 | Apache-2.0 (classifier) | non-standard (metadata has no SPDX field) | 2.8 |
+| opentelemetry-sdk / exporter-otlp-proto-http | 1.45.2 | Apache-2.0 | Apache-2.0 | 8.2 |
+| prometheus-client | 0.26.0 | Apache-2.0 AND BSD-2-Clause | same | 6.6 |
+
+Transitive packages outside the allow-list (scan of every installed distribution): `typing_extensions` PSF-2.0; `certifi`, `pathspec` MPL-2.0; `orjson` MPL-2.0 AND (Apache-2.0 OR MIT). All are used unmodified; MPL-2.0 is file-level copyleft and applies only to modified files, so no exception is needed (ADR009 consequences). Dev tools (not in the image): httpx BSD-3-Clause, mypy MIT, pytest MIT, pyyaml MIT, ruff MIT. Low Scorecard values (lingua 2.8, psycopg 4.1) are recorded for the M4 dependency review, not as blockers.
