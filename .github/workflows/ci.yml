@@ -169,7 +169,7 @@ jobs:
           uv.lock
           .python-version
     - name: Install locked dependencies
-      run: uv sync --frozen
+      run: uv sync --frozen --group eval
     - name: Validate private networks and container limits
       run: uv run python -m scripts.validate_compose
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
@@ -211,12 +211,25 @@ jobs:
       env:
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
+    - name: Measure retrieval quality (report only, no gate until the baseline lands)
+      run: uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json
+      env:
+        EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
+        EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}
     - name: Stop only the owned PostgreSQL fixture
       if: always()
       run: |
         mkdir -p artifacts
         docker compose -f infra/compose/local.yaml -p assistant-ci logs --no-color postgres > artifacts/postgres-fixture.log
         docker compose -f infra/compose/local.yaml -p assistant-ci stop postgres
+    - name: Retain retrieval quality report
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: retrieval-report
+        path: artifacts/retrieval-report*.json
+        retention-days: 7
+        if-no-files-found: ignore
     needs:
     - classify
     - static

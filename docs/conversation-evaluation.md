@@ -43,7 +43,7 @@ After the README's isolated fixture database/migration/index setup:
 
 ```sh
 uv run python -m scripts.evaluate_conversations --output artifacts/conversations.json
-uv run python -m scripts.evaluate_retrieval
+uv run --group eval python -m evals.harness.retrieval
 TEST_INTEGRATION=1 uv run pytest -q
 ```
 
