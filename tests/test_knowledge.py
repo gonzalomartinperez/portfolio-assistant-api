@@ -28,14 +28,17 @@ def test_hybrid_retrieval_evaluation_and_relationship_provenance():
 
     from app.bootstrap.config import settings
     from app.bootstrap.maintenance import connect
+    from app.domain.portfolio_paths import canonical_key
     from tests.support import retrieve
 
     for case in json.loads(Path('evals/retrieval.json').read_text()):
         rows, _ = retrieve(case['question'], case['locale'])
-        if not case['paths']:
+        if not case['qrels']:
             assert not rows, case['id']
             continue
-        assert set(case['paths']) <= {r['path'] for r in rows}, case['id']
+        assert set(case['qrels']) <= {canonical_key(r['path']) for r in rows}, case[
+            'id'
+        ]
         for needle in case['contains']:
             assert needle in '\n'.join(r['content'] for r in rows), case['id']
     with connect() as conn:
