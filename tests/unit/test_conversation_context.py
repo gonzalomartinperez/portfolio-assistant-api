@@ -11,7 +11,7 @@ from app.application.conversation_context import (
     bounded_history,
     retrieval_question,
 )
-from tests.test_workflow import SOURCE
+from tests.unit.test_workflow import SOURCE
 
 
 @pytest.mark.parametrize(

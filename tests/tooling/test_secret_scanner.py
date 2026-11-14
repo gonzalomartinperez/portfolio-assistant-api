@@ -2,9 +2,10 @@
 
 import subprocess
 import sys
-from pathlib import Path
 
-SCANNER = Path(__file__).resolve().parents[1] / 'scripts/scan_secrets.py'
+from tests.support import ROOT
+
+SCANNER = ROOT / 'scripts/scan_secrets.py'
 
 
 def test_scanner_checks_ignored_tracked_deleted_and_unmerged_history(tmp_path):

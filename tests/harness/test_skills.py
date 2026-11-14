@@ -1,10 +1,9 @@
 """Catalog checks must catch broken discovery and unsafe/ambiguous resources."""
 
-from pathlib import Path
-
 import pytest
 
 from scripts.validate_skills import validate
+from tests.support import ROOT
 
 
 @pytest.fixture
@@ -23,7 +22,7 @@ def catalog(tmp_path):
 
 
 def test_real_catalog_is_portable():
-    assert validate(Path(__file__).resolve().parents[1]) == []
+    assert validate(ROOT) == []
 
 
 def test_relative_discovery_works_after_checkout_relocation(catalog, tmp_path_factory):

@@ -2,11 +2,11 @@
 
 import hashlib
 import importlib
-from pathlib import Path
 
 import pytest
 
 from scripts.check_architecture import dependency_errors
+from tests.support import ROOT as REPO_ROOT
 
 EXPECTED_MIGRATIONS = {
     '001_initial.sql': '1fb6eec4978ab719abe3cfd7154620bbe574fa09e48462687609749462814f62',
@@ -52,7 +52,7 @@ def test_adapters_consume_owned_ports_without_bootstrap_or_legacy_backedges(modu
 
 
 def test_obsolete_infrastructure_namespace_is_absent():
-    root = Path(__file__).parents[1] / 'app'
+    root = REPO_ROOT / 'app'
     assert not (root / 'infrastructure').exists()
 
 

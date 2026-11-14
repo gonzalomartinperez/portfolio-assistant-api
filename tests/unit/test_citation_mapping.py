@@ -8,7 +8,7 @@ import pytest
 
 from app.application.contracts import WorkflowEvent
 from app.application.runs import RunService, citations, normalize_citation_markers
-from tests.test_workflow import SOURCE, Store
+from tests.unit.test_workflow import SOURCE, Store
 
 
 @pytest.mark.parametrize(

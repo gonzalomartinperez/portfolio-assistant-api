@@ -66,7 +66,7 @@ def test_provider_applies_voice_without_weakening_grounding_or_generation_policy
 def test_conversational_abstention_has_no_fabricated_citation():
     from app.application.runs import citations
     from app.domain.fixture import fixture_message, insufficient_message
-    from tests.test_workflow import SOURCE
+    from tests.unit.test_workflow import SOURCE
 
     for locale in ('en', 'es'):
         answer = fixture_message('Unknown fact', '', locale)

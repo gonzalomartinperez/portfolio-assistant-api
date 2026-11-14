@@ -15,7 +15,7 @@ from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import AnswerCommand
 from app.application.presentation_context import PortfolioPath, PresentationContext
 from app.presentation.models import SendMessage
-from tests.test_workflow import SOURCE
+from tests.unit.test_workflow import SOURCE
 
 CONTEXT = {
     'theme': 'dark',

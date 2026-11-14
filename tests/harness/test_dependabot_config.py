@@ -1,11 +1,11 @@
 """Weekly single-PR rule: static checks of the Dependabot config and the guard workflow."""
 
 import re
-from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
+from tests.support import ROOT
+
 CONFIG = yaml.safe_load((ROOT / '.github/dependabot.yml').read_text())
 GUARD = yaml.safe_load((ROOT / '.github/workflows/deps-weekly-guard.yml').read_text())
 GROUP_ONLY_KEYS = (
