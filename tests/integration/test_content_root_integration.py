@@ -20,8 +20,8 @@ from app.bootstrap.maintenance import connect
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(
-        os.getenv('TEST_INTEGRATION') != '1',
-        reason='requires isolated PostgreSQL and Neo4j fixtures',
+        os.getenv("TEST_INTEGRATION") != "1",
+        reason="requires isolated PostgreSQL and Neo4j fixtures",
     ),
 ]
 
@@ -30,66 +30,58 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
     tmp_path, monkeypatch
 ):
     def git(*args):
-        return subprocess.check_output(
-            ['git', '-C', str(tmp_path), *args], text=True
-        ).strip()
+        return subprocess.check_output(["git", "-C", str(tmp_path), *args], text=True).strip()
 
-    git('init', '-q')
-    git('config', 'user.name', 'Synthetic public fixture')
-    git('config', 'user.email', 'fixture@example.test')
-    git('config', 'commit.gpgsign', 'false')
-    git(
-        'remote', 'add', 'origin', 'https://github.com/gonzalomartinperez/portfolio.git'
-    )
+    git("init", "-q")
+    git("config", "user.name", "Synthetic public fixture")
+    git("config", "user.email", "fixture@example.test")
+    git("config", "commit.gpgsign", "false")
+    git("remote", "add", "origin", "https://github.com/gonzalomartinperez/portfolio.git")
     marker = uuid4().hex
     contents = {
-        'profile': 'name: "RootFixturePerson", summary: "Public synthetic profile"',
-        'projects': 'slug: "root-fixture-project",\nname: "RootFixtureProject",\nstack: technologyNames(["Python"]),\nsummary: "Public synthetic project"',
-        'experience': 'slug: "root-fixture-company",\ncompany: "RootFixtureCompany",\nstack: technologyNames(["Python"]),\ncontributions: ["Public synthetic contribution"],',
-        'education': 'qualification: "Fixture Degree", institution: "Fixture University"',
+        "profile": 'name: "RootFixturePerson", summary: "Public synthetic profile"',
+        "projects": 'slug: "root-fixture-project",\nname: "RootFixtureProject",\nstack: technologyNames(["Python"]),\nsummary: "Public synthetic project"',
+        "experience": 'slug: "root-fixture-company",\ncompany: "RootFixtureCompany",\nstack: technologyNames(["Python"]),\ncontributions: ["Public synthetic contribution"],',
+        "education": 'qualification: "Fixture Degree", institution: "Fixture University"',
     }
-    for locale in ('en', 'es'):
-        directory = tmp_path / 'src/content' / locale
+    for locale in ("en", "es"):
+        directory = tmp_path / "src/content" / locale
         directory.mkdir(parents=True)
         for topic, content in contents.items():
-            (directory / f'{topic}.ts').write_text(content + '\n// ' + marker)
-    (tmp_path / 'README.md').write_text('# Synthetic public repository\n' + marker)
-    git('add', '.')
-    git('commit', '-qm', 'legacy public layout')
-    revisions = [git('rev-parse', 'HEAD')]
-    git('mv', 'src/content', 'content')
-    git('commit', '-qm', 'public root content layout')
-    revisions.append(git('rev-parse', 'HEAD'))
-    profile = tmp_path / 'content/en/profile.ts'
-    profile.write_text(
-        profile.read_text() + '\nsummary: "Updated public synthetic profile"'
-    )
-    git('add', '.')
-    git('commit', '-qm', 'new public profile revision')
-    revisions.append(git('rev-parse', 'HEAD'))
+            (directory / f"{topic}.ts").write_text(content + "\n// " + marker)
+    (tmp_path / "README.md").write_text("# Synthetic public repository\n" + marker)
+    git("add", ".")
+    git("commit", "-qm", "legacy public layout")
+    revisions = [git("rev-parse", "HEAD")]
+    git("mv", "src/content", "content")
+    git("commit", "-qm", "public root content layout")
+    revisions.append(git("rev-parse", "HEAD"))
+    profile = tmp_path / "content/en/profile.ts"
+    profile.write_text(profile.read_text() + '\nsummary: "Updated public synthetic profile"')
+    git("add", ".")
+    git("commit", "-qm", "new public profile revision")
+    revisions.append(git("rev-parse", "HEAD"))
     config = Settings(_env_file=None).model_copy(
         update={
-            'embeddings_provider': 'fixture',
-            'openai_api_key': None,
-            'allow_paid_ai': False,
+            "embeddings_provider": "fixture",
+            "openai_api_key": None,
+            "allow_paid_ai": False,
         }
     )
 
     def forbidden_provider(**kwargs):
-        raise AssertionError('fixture indexing must never construct an OpenAI client')
+        raise AssertionError("fixture indexing must never construct an OpenAI client")
 
-    monkeypatch.setattr(indexing, 'create_sync_client', forbidden_provider)
-    versions = [
-        indexing.corpus_identity(revision, 'fixture')[0] for revision in revisions
-    ]
-    legacy = revisions[0] + '-v7'
+    monkeypatch.setattr(indexing, "create_sync_client", forbidden_provider)
+    versions = [indexing.corpus_identity(revision, "fixture")[0] for revision in revisions]
+    legacy = revisions[0] + "-v7"
     all_versions = [legacy, *versions]
     with connect() as conn:
         original = conn.execute(
             "SELECT id FROM knowledge_versions WHERE status='active'"
-        ).fetchone()['id']
+        ).fetchone()["id"]
         previous_watch = conn.execute(
-            'SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton'
+            "SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton"
         ).fetchone()
     results = []
     prepared = []
@@ -99,16 +91,14 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
         with connect() as conn:
             active = conn.execute(
                 "SELECT id FROM knowledge_versions WHERE status='active'"
-            ).fetchone()['id']
+            ).fetchone()["id"]
         preparation(driver, configuration, version, document_id)
         prepared.append((version, active))
 
-    monkeypatch.setattr(indexing, 'prepare_graph', prepare)
+    monkeypatch.setattr(indexing, "prepare_graph", prepare)
 
     def publish(repo: Path, revision: str, **kwargs):
-        result = indexing.sync(
-            repo, revision, configuration=config, connection=connect, **kwargs
-        )
+        result = indexing.sync(repo, revision, configuration=config, connection=connect, **kwargs)
         results.append(result)
         return result
 
@@ -120,9 +110,7 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
     )
     try:
         with connect() as conn:
-            conn.execute(
-                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
-            )
+            conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
             conn.execute(
                 "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'active',%s)",
                 (legacy, revisions[0]),
@@ -139,18 +127,18 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
 
             def report(status):
                 statuses.append(status)
-                if status == 'activated':
+                if status == "activated":
                     activated.append(status)
                     if len(activated) == len(revisions):
                         stop.set()
 
             await asyncio.wait_for(watch(Source(), publisher, stop, 0.01, report), 60)
-            assert statuses == ['activated'] * 3
+            assert statuses == ["activated"] * 3
 
         asyncio.run(run_worker())
-        assert [result['knowledge_version'] for result in results] == versions
-        assert results[1]['files'] == 9 and results[1]['reused_files'] == 1
-        assert results[2]['reused_files'] == 8
+        assert [result["knowledge_version"] for result in results] == versions
+        assert results[1]["files"] == 9 and results[1]["reused_files"] == 1
+        assert results[2]["reused_files"] == 8
         assert (
             indexing.sync(
                 tmp_path,
@@ -158,7 +146,7 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
                 configuration=config,
                 connection=connect,
                 watched=True,
-            )['changed']
+            )["changed"]
             is False
         )
         assert prepared == [
@@ -167,68 +155,58 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
             (versions[2], versions[1]),
             (versions[2], versions[2]),
         ]
-        index = KnowledgeIndex(
-            connect, driver, database=config.neo4j_database, freshness=90
-        )
+        index = KnowledgeIndex(connect, driver, database=config.neo4j_database, freshness=90)
         index.verify_ready(versions[-1])
-        for locale in ('en', 'es'):
+        for locale in ("en", "es"):
             current, commit, prompts = index.starter_prompts(locale)
-            assert (
-                current == versions[-1]
-                and commit == revisions[-1]
-                and len(prompts) == 4
-            )
+            assert current == versions[-1] and commit == revisions[-1] and len(prompts) == 4
             evidence = asyncio.run(
-                PublicRetrieval(index, 'graph').search(
-                    'Compare RootFixtureProject and RootFixtureCompany', locale
+                PublicRetrieval(index, "graph").search(
+                    "Compare RootFixtureProject and RootFixtureCompany", locale
                 )
             )
             assert evidence and all(
-                source.path.startswith(f'content/{locale}/') for source in evidence
+                source.path.startswith(f"content/{locale}/") for source in evidence
             )
-            assert any(source.path.endswith('/projects.ts') for source in evidence)
-            assert any(source.path.endswith('/experience.ts') for source in evidence)
-            assert all(
-                f'/{revisions[-1]}/{source.path}#L' in source.url for source in evidence
-            )
+            assert any(source.path.endswith("/projects.ts") for source in evidence)
+            assert any(source.path.endswith("/experience.ts") for source in evidence)
+            assert all(f"/{revisions[-1]}/{source.path}#L" in source.url for source in evidence)
         with connect() as conn:
             rows = conn.execute(
-                'SELECT id,status FROM knowledge_versions WHERE id=ANY(%s)',
+                "SELECT id,status FROM knowledge_versions WHERE id=ANY(%s)",
                 (all_versions,),
             ).fetchall()
-            assert {row['id']: row['status'] for row in rows} == {
-                legacy: 'retired',
-                versions[0]: 'retired',
-                versions[1]: 'retired',
-                versions[2]: 'active',
+            assert {row["id"]: row["status"] for row in rows} == {
+                legacy: "retired",
+                versions[0]: "retired",
+                versions[1]: "retired",
+                versions[2]: "active",
             }
         with driver.session(database=config.neo4j_database) as graph:
             for version, revision in zip(versions, revisions, strict=True):
                 edges = list(
                     graph.run(
-                        'MATCH (:Entity)-[r:RELATES {version:$version}]->(:Entity) RETURN r.document AS document,r.url AS url,r.start_line AS start,r.end_line AS end',
+                        "MATCH (:Entity)-[r:RELATES {version:$version}]->(:Entity) RETURN r.document AS document,r.url AS url,r.start_line AS start,r.end_line AS end",
                         version=version,
                     )
                 )
                 assert edges and all(
-                    f'/blob/{revision}/' in edge['url'] and edge['start'] <= edge['end']
+                    f"/blob/{revision}/" in edge["url"] and edge["start"] <= edge["end"]
                     for edge in edges
                 )
-        profile.write_text(
-            profile.read_text() + '\nsummary: "Failed preparation fixture"'
-        )
-        git('add', '.')
-        git('commit', '-qm', 'candidate preparation failure')
-        failed_revision = git('rev-parse', 'HEAD')
-        failed_version = indexing.corpus_identity(failed_revision, 'fixture')[0]
+        profile.write_text(profile.read_text() + '\nsummary: "Failed preparation fixture"')
+        git("add", ".")
+        git("commit", "-qm", "candidate preparation failure")
+        failed_revision = git("rev-parse", "HEAD")
+        failed_version = indexing.corpus_identity(failed_revision, "fixture")[0]
         all_versions.append(failed_version)
 
         def fail_preparation(*args):
-            raise RuntimeError('synthetic preparation failure')
+            raise RuntimeError("synthetic preparation failure")
 
         with monkeypatch.context() as failure:
-            failure.setattr(indexing, 'prepare_graph', fail_preparation)
-            with pytest.raises(RuntimeError, match='synthetic preparation failure'):
+            failure.setattr(indexing, "prepare_graph", fail_preparation)
+            with pytest.raises(RuntimeError, match="synthetic preparation failure"):
                 indexing.sync(
                     tmp_path,
                     failed_revision,
@@ -237,62 +215,60 @@ def test_worker_follows_layout_and_content_changes_without_losing_graph_provenan
                 )
         with connect() as conn:
             assert (
-                conn.execute(
-                    "SELECT id FROM knowledge_versions WHERE status='active'"
-                ).fetchone()['id']
+                conn.execute("SELECT id FROM knowledge_versions WHERE status='active'").fetchone()[
+                    "id"
+                ]
                 == versions[-1]
             )
             assert (
                 conn.execute(
-                    'SELECT status FROM knowledge_versions WHERE id=%s',
+                    "SELECT status FROM knowledge_versions WHERE id=%s",
                     (failed_version,),
-                ).fetchone()['status']
-                == 'staging'
+                ).fetchone()["status"]
+                == "staging"
             )
         with driver.session(database=config.neo4j_database) as graph:
             assert (
                 graph.run(
-                    'MATCH (d:Document {version:$version}) RETURN count(d) AS n',
+                    "MATCH (d:Document {version:$version}) RETURN count(d) AS n",
                     version=versions[-1],
-                ).single()['n']
+                ).single()["n"]
                 > 0
             )
     finally:
         try:
             with connect() as conn:
-                conn.execute(
-                    "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
-                )
+                conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
                 conn.execute(
                     "UPDATE knowledge_versions SET status='active' WHERE id=%s",
                     (original,),
                 )
                 conn.execute(
-                    'DELETE FROM chunks WHERE knowledge_version=ANY(%s)',
+                    "DELETE FROM chunks WHERE knowledge_version=ANY(%s)",
                     (all_versions,),
                 )
                 conn.execute(
-                    'DELETE FROM source_files WHERE knowledge_version=ANY(%s)',
+                    "DELETE FROM source_files WHERE knowledge_version=ANY(%s)",
                     (all_versions,),
                 )
                 conn.execute(
-                    'DELETE FROM knowledge_versions WHERE id=ANY(%s)',
+                    "DELETE FROM knowledge_versions WHERE id=ANY(%s)",
                     (all_versions,),
                 )
-                conn.execute('DELETE FROM knowledge_watch')
+                conn.execute("DELETE FROM knowledge_watch")
                 if previous_watch:
                     conn.execute(
-                        'INSERT INTO knowledge_watch(singleton,observed_commit,checked_at) VALUES (true,%s,%s)',
+                        "INSERT INTO knowledge_watch(singleton,observed_commit,checked_at) VALUES (true,%s,%s)",
                         (
-                            previous_watch['observed_commit'],
-                            previous_watch['checked_at'],
+                            previous_watch["observed_commit"],
+                            previous_watch["checked_at"],
                         ),
                     )
         finally:
             try:
                 with driver.session(database=config.neo4j_database) as graph:
                     graph.run(
-                        'MATCH (n) WHERE n.version IN $versions DETACH DELETE n',
+                        "MATCH (n) WHERE n.version IN $versions DETACH DELETE n",
                         versions=all_versions,
                     ).consume()
             finally:

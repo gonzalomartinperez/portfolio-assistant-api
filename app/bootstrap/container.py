@@ -56,8 +56,8 @@ def create_app(
     config = config or settings()
     configure()
     default_prompts()  # Fail fast on a stale lock or missing prompt file.
-    if provider_override is not None and config.ai_provider != 'fixture':
-        raise ValueError('provider overrides require fixture mode')
+    if provider_override is not None and config.ai_provider != "fixture":
+        raise ValueError("provider overrides require fixture mode")
 
     @asynccontextmanager
     async def lifespan(app):
@@ -69,10 +69,10 @@ def create_app(
             max_size=4,
             timeout=5,
             kwargs={
-                'autocommit': True,
-                'prepare_threshold': 0,
-                'row_factory': dict_row,
-                'connect_timeout': 5,
+                "autocommit": True,
+                "prepare_threshold": 0,
+                "row_factory": dict_row,
+                "connect_timeout": 5,
             },
         )
         graph = GraphDatabase.driver(
@@ -95,7 +95,7 @@ def create_app(
             connection = translated(database.connection)
             provider = provider_override or FixtureProvider()
             accounting = None
-            if config.ai_provider == 'openai':
+            if config.ai_provider == "openai":
                 # Paid authorization was validated by Settings. Never retry a possibly billed run.
                 client = await create_async_client(api_key=config.openai_api_key)
                 provider = ResponsesProvider(
@@ -134,7 +134,7 @@ def create_app(
                     ),
                 )
             embeddings = FixtureEmbeddings()
-            if config.embeddings_provider == 'openai':
+            if config.embeddings_provider == "openai":
                 embedding_client = create_sync_client(api_key=config.openai_api_key)
                 embeddings = OpenAIEmbeddings(
                     embedding_client,
@@ -199,7 +199,7 @@ def create_app(
             runs = RunService(
                 PostgresRuns(connection),
                 workflow,
-                fixture=config.ai_provider == 'fixture',
+                fixture=config.ai_provider == "fixture",
                 timeout_seconds=config.run_timeout_seconds,
                 observer=observer,
             )
@@ -209,36 +209,34 @@ def create_app(
                 check_schema(connection)
                 with database.connection() as conn:
                     latest = conn.execute(
-                        'SELECT max(version) AS version FROM schema_migrations'
+                        "SELECT max(version) AS version FROM schema_migrations"
                     ).fetchone()
                     active = conn.execute(
                         "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
                         (embeddings.provider, embeddings.model),
                     ).fetchone()
-                    if not active or active['id'] != corpus_version(
-                        active['source_commit'], embeddings.provider
+                    if not active or active["id"] != corpus_version(
+                        active["source_commit"], embeddings.provider
                     ):
-                        raise RuntimeError('corpus_unavailable')
-                index.verify_ready(active['id'])
+                        raise RuntimeError("corpus_unavailable")
+                index.verify_ready(active["id"])
                 with database.connection() as conn:
                     current = conn.execute(
                         "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
                         (embeddings.provider, embeddings.model),
                     ).fetchone()
                     if current != active:
-                        raise RuntimeError('corpus_changed')
-                version = latest['version'] if latest else None
+                        raise RuntimeError("corpus_changed")
+                version = latest["version"] if latest else None
                 return version[:3] if version else None
 
             app.state.ready = ready
 
             def cleanup():
                 try:
-                    drain_cleanup(
-                        connection=connection, database_url=config.database_url, limit=1
-                    )
+                    drain_cleanup(connection=connection, database_url=config.database_url, limit=1)
                 except Exception:  # noqa: BLE001 - Deletion is committed; durable cleanup records must survive any adapter failure.
-                    logging.getLogger('portfolio_assistant').warning(
+                    logging.getLogger("portfolio_assistant").warning(
                         '{"operation":"checkpoint_cleanup","status":"retry_pending"}'
                     )
 
@@ -255,12 +253,8 @@ def create_app(
 
             # LIFO preserves drain-before-close order, including partial startup.
             async with AsyncExitStack() as cleanup:
-                cleanup.push_async_callback(
-                    close_resource, asyncio.to_thread, database.close
-                )
-                cleanup.push_async_callback(
-                    close_resource, asyncio.to_thread, graph.close
-                )
+                cleanup.push_async_callback(close_resource, asyncio.to_thread, database.close)
+                cleanup.push_async_callback(close_resource, asyncio.to_thread, graph.close)
                 cleanup.push_async_callback(close_resource, checkpoints.close)
                 if embedding_client:
                     cleanup.push_async_callback(
@@ -275,34 +269,34 @@ def create_app(
             if len(failures) == 1:
                 raise failures[0]
             if failures:
-                raise BaseExceptionGroup('API resource cleanup failed', failures)
+                raise BaseExceptionGroup("API resource cleanup failed", failures)
 
     app = FastAPI(
-        title='Portfolio Assistant API',
-        version='1.0.0',
+        title="Portfolio Assistant API",
+        version="1.0.0",
         lifespan=lifespan,
         telemetry={
-            'tracing': False,
-            'metrics': False,
-            'logs': False,
-            'auto_configure': False,
+            "tracing": False,
+            "metrics": False,
+            "logs": False,
+            "auto_configure": False,
         },
     )
     app.state.config = config
-    app.state.revision = config.ops_api_commit or 'unknown'
+    app.state.revision = config.ops_api_commit or "unknown"
     app.add_middleware(BodyLimit)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config.origins,
         allow_credentials=True,
-        allow_methods=['GET', 'POST', 'PATCH', 'DELETE'],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=[
-            'Content-Type',
-            'X-CSRF-Token',
-            'X-Session-Bootstrap',
-            'Idempotency-Key',
+            "Content-Type",
+            "X-CSRF-Token",
+            "X-Session-Bootstrap",
+            "Idempotency-Key",
         ],
-        expose_headers=['X-Run-ID', 'X-Request-ID'],
+        expose_headers=["X-Run-ID", "X-Request-ID"],
     )
     install(app, config.origins)
     app.include_router(router)

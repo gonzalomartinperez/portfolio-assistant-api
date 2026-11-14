@@ -23,21 +23,21 @@ from evals.harness.result import GradeResult, RunResult
 from evals.harness.runner import RecordingProvider, collect, item_context
 from tests.unit.test_workflow import Store
 
-ATTACKS = Path(__file__).resolve().parents[2] / 'evals' / 'attacks'
+ATTACKS = Path(__file__).resolve().parents[2] / "evals" / "attacks"
 
 
 def load_attacks() -> list[Item]:
-    return load_items(ATTACKS / 'attacks.jsonl')
+    return load_items(ATTACKS / "attacks.jsonl")
 
 
 def source(item: Item, topic: str, text: str, number: int) -> Evidence:
-    path = f'src/content/{item.locale}/{topic}.ts'
+    path = f"src/content/{item.locale}/{topic}.ts"
     return Evidence(
         str(number),
         topic,
-        'https://github.com/gonzalomartinperez/portfolio/blob/' + 'a' * 40 + '/' + path,
-        'code',
-        'a' * 40,
+        "https://github.com/gonzalomartinperez/portfolio/blob/" + "a" * 40 + "/" + path,
+        "code",
+        "a" * 40,
         path,
         1,
         5,
@@ -57,7 +57,7 @@ class Lane:
     failure: str | None = None
 
     questions: list[str] = field(default_factory=list)
-    streamed: str = ''
+    streamed: str = ""
 
     def _failures(self, item: Item, result: RunResult) -> list[GradeResult]:
         ctx = item_context(item, result, GRADING)
@@ -65,7 +65,7 @@ class Lane:
 
     def final_failures(self, item: Item) -> list[GradeResult]:
         """Failed graders over the completed message (empty if the run did not complete)."""
-        if self.result is None or self.result.terminal != 'run.completed':
+        if self.result is None or self.result.terminal != "run.completed":
             return []
         return self._failures(item, self.result)
 
@@ -84,27 +84,22 @@ class Lane:
         return [*self.stream_failures(item), *self.final_failures(item)]
 
 
-async def run_attack(
-    item: Item, *, hint: str | None = None, detector: bool = True
-) -> Lane:
+async def run_attack(item: Item, *, hint: str | None = None, detector: bool = True) -> Lane:
     attack = item.attack
     assert attack is not None
     payload: dict[str, object] = {
-        'content': item.turns[-1].text,
-        'locale': item.locale,
+        "content": item.turns[-1].text,
+        "locale": item.locale,
     }
     if attack.context is not None:
-        payload['context'] = attack.context
+        payload["context"] = attack.context
     try:
         message = SendMessage.model_validate(payload)
     except ValidationError:
-        return Lane(blocked='request_validation')
+        return Lane(blocked="request_validation")
     sources = (
-        source(item, 'education', 'Universidad Nacional del Sur', 1),
-        *(
-            source(item, 'projects', text, number)
-            for number, text in enumerate(attack.evidence, 2)
-        ),
+        source(item, "education", "Universidad Nacional del Sur", 1),
+        *(source(item, "projects", text, number) for number, text in enumerate(attack.evidence, 2)),
     )
     lane = Lane()
 
@@ -121,15 +116,13 @@ async def run_attack(
     store = Store()
     service = RunService(store, workflow, fixture=False)
     events = [
-        (event.name, {'type': event.name, 'payload': event.payload})
-        async for event in service.execute(
-            uuid4(), uuid4(), message.content, hint or item.locale
-        )
+        (event.name, {"type": event.name, "payload": event.payload})
+        async for event in service.execute(uuid4(), uuid4(), message.content, hint or item.locale)
     ]
     lane.locales = provider.locales
     lane.questions = provider.questions
-    lane.streamed = ''.join(
-        str(data['payload']['text']) for name, data in events if name == 'message.delta'
+    lane.streamed = "".join(
+        str(data["payload"]["text"]) for name, data in events if name == "message.delta"
     )
     lane.evidence = recorder.evidence
     lane.failure = store.failure

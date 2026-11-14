@@ -33,24 +33,24 @@ from tests.support import ROOT
 
 pytestmark = pytest.mark.contract
 
-ORIGIN = 'http://localhost:3000'
-MALFORMED_BODY = {'detail': 'There was an error parsing the body'}
-EXAMPLES = int(os.environ.get('SCHEMATHESIS_EXAMPLES', '50'))
+ORIGIN = "http://localhost:3000"
+MALFORMED_BODY = {"detail": "There was an error parsing the body"}
+EXAMPLES = int(os.environ.get("SCHEMATHESIS_EXAMPLES", "50"))
 
 
 class RejectingConversations:
     """Every cookie is unknown: authentication fails closed before any store access."""
 
     def authenticate(self, raw):
-        raise RejectedError('session_required', 401)
+        raise RejectedError("session_required", 401)
 
     def bootstrap(self, subject):
-        raise RejectedError('rate_limited', 429)
+        raise RejectedError("rate_limited", 429)
 
 
 class MemoryAnalytics:
-    def record(self, value, country='unknown'):
-        return 'accepted'
+    def record(self, value, country="unknown"):
+        return "accepted"
 
 
 def build_app():
@@ -65,17 +65,15 @@ def build_app():
     app.router.lifespan_context = no_lifespan
     app.state.conversations = RejectingConversations()
     app.state.product_analytics = MemoryAnalytics()
-    app.state.ready = lambda: 'fixture'
+    app.state.ready = lambda: "fixture"
     app.state.cleanup = lambda: None
     app.state.knowledge = SimpleNamespace(
-        starter_prompts=lambda locale: ('fixture-corpus', 'a' * 40, [])
+        starter_prompts=lambda locale: ("fixture-corpus", "a" * 40, [])
     )
     return app
 
 
-schema = schemathesis.openapi.from_dict(
-    json.loads((ROOT / 'contracts/openapi.json').read_text())
-)
+schema = schemathesis.openapi.from_dict(json.loads((ROOT / "contracts/openapi.json").read_text()))
 schema.app = build_app()
 
 
@@ -89,9 +87,9 @@ schema.app = build_app()
 def test_operations_conform_to_the_committed_contract(case):
     """No 5xx, schema-conformant responses, and negative inputs rejected."""
     excluded = [allow_header_conformance]
-    if case.operation.path == '/api/v1/analytics/events':
+    if case.operation.path == "/api/v1/analytics/events":
         excluded.append(positive_data_acceptance)
-    response = case.call(headers={'Origin': ORIGIN})
+    response = case.call(headers={"Origin": ORIGIN})
     if response.status_code == 400 and response.json() == MALFORMED_BODY:
         return
     case.validate_response(response, excluded_checks=excluded)

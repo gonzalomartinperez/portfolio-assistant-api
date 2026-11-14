@@ -18,13 +18,13 @@ class WebAccounting:
         def operation() -> UUID:
             identifier = uuid4()
             with self.connection() as conn:
-                conn.execute('SELECT pg_advisory_xact_lock(472019)')
-                spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()['amount']
+                conn.execute("SELECT pg_advisory_xact_lock(472019)")
+                spent = conn.execute(MONTHLY_SPEND_SQL).fetchone()["amount"]
                 if spent + self.budget.maximum > self.budget.cutoff:
                     raise BudgetExhaustedError()
                 conn.execute(
-                    'INSERT INTO spend_ledger(id,kind,reserved_usd) VALUES (%s,%s,%s)',
-                    (identifier, 'web_search', self.budget.maximum),
+                    "INSERT INTO spend_ledger(id,kind,reserved_usd) VALUES (%s,%s,%s)",
+                    (identifier, "web_search", self.budget.maximum),
                 )
             return identifier
 

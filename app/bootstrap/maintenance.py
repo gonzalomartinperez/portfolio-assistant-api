@@ -49,9 +49,7 @@ def delete_checkpoint(thread_id: str, database_url: str | None = None) -> None:
     checkpoints.delete_checkpoint(thread_id, database_url or settings().database_url)
 
 
-def drain_cleanup(
-    *, connection=connect, database_url: str | None = None, limit: int = 100
-) -> int:
+def drain_cleanup(*, connection=connect, database_url: str | None = None, limit: int = 100) -> int:
     return checkpoints.drain_cleanup(
         connection=connection,
         database_url=database_url or settings().database_url,

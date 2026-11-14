@@ -12,28 +12,26 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REGRESSION_FACTOR = 1.2
-BASELINE_PATH = Path('evals/baselines/budgets.json')
+BASELINE_PATH = Path("evals/baselines/budgets.json")
 
 
 def p95(values: Sequence[float]) -> float:
     """Nearest-rank 95th percentile."""
     if not values:
-        raise ValueError('no samples')
+        raise ValueError("no samples")
     ordered = sorted(values)
     return ordered[math.ceil(0.95 * len(ordered)) - 1]
 
 
 def load_budgets(path: Path = BASELINE_PATH) -> dict[str, dict[str, float]]:
-    raw = json.loads(path.read_text(encoding='utf-8'))
-    limits = raw['limits']
-    measured = raw.get('measured', {})
-    if not limits or any(
-        not isinstance(v, int | float) or v <= 0 for v in limits.values()
-    ):
-        raise ValueError('budget limits must be positive numbers')
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    limits = raw["limits"]
+    measured = raw.get("measured", {})
+    if not limits or any(not isinstance(v, int | float) or v <= 0 for v in limits.values()):
+        raise ValueError("budget limits must be positive numbers")
     if not set(measured) <= set(limits):
-        raise ValueError('measured baseline names an undeclared metric')
-    return {'limits': dict(limits), 'measured': dict(measured)}
+        raise ValueError("measured baseline names an undeclared metric")
+    return {"limits": dict(limits), "measured": dict(measured)}
 
 
 def check_budgets(
@@ -45,17 +43,15 @@ def check_budgets(
     that are observed but not declared are ignored.
     """
     problems = []
-    limits, measured = budgets['limits'], budgets.get('measured', {})
+    limits, measured = budgets["limits"], budgets.get("measured", {})
     for name, limit in limits.items():
         if name not in observed:
-            problems.append(f'{name}: not observed')
+            problems.append(f"{name}: not observed")
             continue
         value = observed[name]
         if value > limit:
-            problems.append(f'{name}: {value} exceeds the declared limit {limit}')
+            problems.append(f"{name}: {value} exceeds the declared limit {limit}")
         baseline = measured.get(name)
         if baseline is not None and value > baseline * REGRESSION_FACTOR:
-            problems.append(
-                f'{name}: {value} regressed more than 20% from the baseline {baseline}'
-            )
+            problems.append(f"{name}: {value} regressed more than 20% from the baseline {baseline}")
     return problems

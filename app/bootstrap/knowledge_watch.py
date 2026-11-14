@@ -36,13 +36,13 @@ async def run() -> None:
     try:
         with (
             connection() as lock,
-            tempfile.TemporaryDirectory(prefix='portfolio-watch-') as directory,
+            tempfile.TemporaryDirectory(prefix="portfolio-watch-") as directory,
         ):
             lock.autocommit = True
-            if not lock.execute(
-                'SELECT pg_try_advisory_lock(472023) AS acquired'
-            ).fetchone()['acquired']:
-                raise RuntimeError('knowledge watcher is already running')
+            if not lock.execute("SELECT pg_try_advisory_lock(472023) AS acquired").fetchone()[
+                "acquired"
+            ]:
+                raise RuntimeError("knowledge watcher is already running")
             repo = Path(directory)
             await watch(
                 PublishedPortfolio(repo),

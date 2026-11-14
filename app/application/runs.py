@@ -74,34 +74,27 @@ class RunStore(Protocol):
         ...
 
 
-_MARKDOWN_REFERENCE = re.compile(
-    r'```[\s\S]*?```|`[^`\n]*`|(?<![\w])\[([0-9]+)\](?!\()'
-)
+_MARKDOWN_REFERENCE = re.compile(r"```[\s\S]*?```|`[^`\n]*`|(?<![\w])\[([0-9]+)\](?!\()")
 
 
 def referenced_sources(answer: str, count: int) -> tuple[int, ...]:
     used = {int(match[1]) for match in _MARKDOWN_REFERENCE.finditer(answer) if match[1]}
     if any(number < 1 or number > count for number in used):
-        raise ValueError('invalid source reference')
+        raise ValueError("invalid source reference")
     return tuple(sorted(used))
 
 
 def normalize_citation_markers(answer: str, count: int) -> str:
     """Map prose markers to the compact citation list; leave code and links intact."""
-    mapping = {
-        source: index
-        for index, source in enumerate(referenced_sources(answer, count), 1)
-    }
+    mapping = {source: index for index, source in enumerate(referenced_sources(answer, count), 1)}
     return _MARKDOWN_REFERENCE.sub(
-        lambda match: f'[{mapping[int(match[1])]}]' if match[1] else match[0], answer
+        lambda match: f"[{mapping[int(match[1])]}]" if match[1] else match[0], answer
     )
 
 
-def citations(
-    sources: tuple[Evidence, ...], answer: str, fixture: bool
-) -> list[dict[str, object]]:
+def citations(sources: tuple[Evidence, ...], answer: str, fixture: bool) -> list[dict[str, object]]:
     if fixture:
-        if answer in (insufficient_message('en'), insufficient_message('es')):
+        if answer in (insufficient_message("en"), insufficient_message("es")):
             sources = ()
         else:
             # Fixture quotes identify actual excerpt support, not every retrieved candidate.
@@ -112,14 +105,12 @@ def citations(
             )
     else:
         used = referenced_sources(answer, len(sources))
-        sources = tuple(
-            source for index, source in enumerate(sources, 1) if index in used
-        )
+        sources = tuple(source for index, source in enumerate(sources, 1) if index in used)
     result: list[dict[str, object]] = []
     for source in sources:
         record = asdict(source)
-        record['label'] = record.pop('title')
-        record.pop('content')
+        record["label"] = record.pop("title")
+        record.pop("content")
         result.append(record)
     return result
 
@@ -152,7 +143,7 @@ class RunService:
         if self._cleanup_tasks:
             _, pending = await asyncio.wait(tuple(self._cleanup_tasks), timeout=5)
             if pending:
-                logging.getLogger('portfolio_assistant').warning(
+                logging.getLogger("portfolio_assistant").warning(
                     '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
                 )
 
@@ -166,7 +157,7 @@ class RunService:
             try:
                 await self.store.interrupt(run_id)
             except DependencyUnavailableError:
-                logging.getLogger('portfolio_assistant').warning(
+                logging.getLogger("portfolio_assistant").warning(
                     '{"operation":"run_cleanup","status":"lease_recovery_pending"}'
                 )
 
@@ -186,7 +177,7 @@ class RunService:
         started_at = datetime.now(UTC)
         started = perf_counter()
         first_token = None
-        outcome: Outcome = 'cancelled'
+        outcome: Outcome = "cancelled"
         error_code = None
         claimed = False
         stages: list[Stage] = []
@@ -204,26 +195,26 @@ class RunService:
                     finally:
                         measurements.reset(token)
                         stage_origin.reset(origin_token)
-                    if event.name == 'run.started':
+                    if event.name == "run.started":
                         claimed = True
-                    elif event.name == 'message.delta' and first_token is None:
+                    elif event.name == "message.delta" and first_token is None:
                         first_token = (perf_counter() - started) * 1000
-                    elif event.name == 'run.completed':
-                        outcome = 'completed'
-                    elif event.name == 'run.failed':
-                        outcome = 'failed'
-                        code = event.payload.get('code')
+                    elif event.name == "run.completed":
+                        outcome = "completed"
+                    elif event.name == "run.failed":
+                        outcome = "failed"
+                        code = event.payload.get("code")
                         error_code = (
                             str(code)
                             if code
                             in {
-                                'provider_unavailable',
-                                'generation_failed',
-                                'budget_exhausted',
-                                'knowledge_updating',
-                                'dependency_unavailable',
+                                "provider_unavailable",
+                                "generation_failed",
+                                "budget_exhausted",
+                                "knowledge_updating",
+                                "dependency_unavailable",
                             }
-                            else 'other'
+                            else "other"
                         )
                     yield event
         finally:
@@ -240,7 +231,7 @@ class RunService:
                 try:
                     self.observer.record(execution)
                 except Exception:  # noqa: BLE001 - Observational failures must not change a paid run or expose adapter errors.
-                    logging.getLogger('portfolio_assistant').warning(
+                    logging.getLogger("portfolio_assistant").warning(
                         '{"operation":"observability","status":"record_dropped"}'
                     )
 
@@ -253,15 +244,15 @@ class RunService:
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[RunEvent]:
         """Yield v1 events; cancel silent providers and never save partial answers."""
-        answer = ''
+        answer = ""
         sources: tuple[Evidence, ...] = ()
         pending: asyncio.Task[WorkflowEvent] | None = None
         self._active_runs.add(run_id)
         try:
             if not await self.store.start(run_id):
-                yield RunEvent('run.cancelled', {})
+                yield RunEvent("run.cancelled", {})
                 return
-            yield RunEvent('run.started', {'state': 'running'})
+            yield RunEvent("run.started", {"state": "running"})
             # An explicit deadline, not asyncio.timeout: the SSE heartbeat advances this
             # generator from a new task per event, and a timeout scope binds to one task.
             loop = asyncio.get_running_loop()
@@ -272,9 +263,7 @@ class RunService:
                         str(run_id),
                         question,
                         locale,
-                        bounded_history(
-                            await self.store.history(run_id, conversation_id)
-                        ),
+                        bounded_history(await self.store.history(run_id, conversation_id)),
                         context,
                     )
                 )
@@ -286,12 +275,12 @@ class RunService:
                         while not pending.done():
                             remaining = deadline - loop.time()
                             if remaining <= 0:
-                                raise TimeoutError('run deadline exceeded')
+                                raise TimeoutError("run deadline exceeded")
                             await asyncio.wait({pending}, timeout=min(0.1, remaining))
                             if not await self.store.running(run_id):
                                 pending.cancel()
                                 await asyncio.gather(pending, return_exceptions=True)
-                                yield RunEvent('run.cancelled', {})
+                                yield RunEvent("run.cancelled", {})
                                 return
                     except BaseException:
                         pending.cancel()
@@ -301,40 +290,38 @@ class RunService:
                         event = pending.result()
                     except StopAsyncIteration:
                         break
-                    if event.kind == 'evidence':
+                    if event.kind == "evidence":
                         sources = event.sources
                         yield RunEvent(
-                            'run.status',
-                            {'phase': 'evidence_found', 'sources': len(sources)},
+                            "run.status",
+                            {"phase": "evidence_found", "sources": len(sources)},
                         )
-                    elif event.kind == 'delta':
-                        yield RunEvent('message.delta', {'text': event.text})
-                    elif event.kind == 'answer':
+                    elif event.kind == "delta":
+                        yield RunEvent("message.delta", {"text": event.text})
+                    elif event.kind == "answer":
                         answer = event.text
-            with phase('finalization'):
+            with phase("finalization"):
                 refs = citations(sources, answer, self.fixture)
                 if not self.fixture:
                     answer = normalize_citation_markers(answer, len(sources))
-                message_id = await self.store.complete(
-                    run_id, conversation_id, answer, refs
-                )
+                message_id = await self.store.complete(run_id, conversation_id, answer, refs)
             if message_id is None:
-                yield RunEvent('run.cancelled', {})
+                yield RunEvent("run.cancelled", {})
                 return
             yield RunEvent(
-                'message.completed',
-                {'message_id': str(message_id), 'content': answer, 'citations': refs},
+                "message.completed",
+                {"message_id": str(message_id), "content": answer, "citations": refs},
             )
-            yield RunEvent('run.completed', {'state': 'completed'})
+            yield RunEvent("run.completed", {"state": "completed"})
         except Exception as error:  # noqa: BLE001 - Public stream fault boundary: preserve a terminal event without exposing internals.
             code = (
-                'budget_exhausted'
+                "budget_exhausted"
                 if isinstance(error, BudgetExhaustedError)
-                else 'provider_unavailable'
+                else "provider_unavailable"
                 if isinstance(error, ProviderUnavailableError)
                 else error.code
                 if isinstance(error, RejectedError)
-                else 'generation_failed'
+                else "generation_failed"
             )
             try:
                 changed = await self.store.fail(run_id, code)
@@ -342,9 +329,7 @@ class RunService:
                 # The persisted lease reconciles this run when storage recovers.
                 changed = True
             yield (
-                RunEvent('run.failed', {'code': code})
-                if changed
-                else RunEvent('run.cancelled', {})
+                RunEvent("run.failed", {"code": code}) if changed else RunEvent("run.cancelled", {})
             )
         finally:
             # The cleanup task survives cancellation from an ASGI task-group scope.

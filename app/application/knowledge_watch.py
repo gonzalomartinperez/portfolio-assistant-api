@@ -45,20 +45,20 @@ async def watch(
                 await publisher.observe(revision)
                 desired = revision
             except DependencyUnavailableError:
-                report('source_unavailable')
+                report("source_unavailable")
             if job is not None and job.done():
                 try:
                     if job.result():
                         published = indexing
-                        report('activated')
+                        report("activated")
                     else:
-                        report('superseded')
+                        report("superseded")
                 except (
                     DependencyUnavailableError,
                     BudgetExhaustedError,
                     ProviderUnavailableError,
                 ):
-                    report('candidate_failed')
+                    report("candidate_failed")
                 job = None
             if job is None and desired is not None and desired != published:
                 indexing = desired
@@ -72,9 +72,9 @@ async def watch(
             # Do not abandon a transaction or close its source repo during shutdown.
             result = (await asyncio.gather(job, return_exceptions=True))[0]
             report(
-                'activated'
+                "activated"
                 if result is True
-                else 'superseded'
+                else "superseded"
                 if result is False
-                else 'candidate_failed'
+                else "candidate_failed"
             )

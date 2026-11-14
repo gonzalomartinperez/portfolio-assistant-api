@@ -22,8 +22,8 @@ def output_detector() -> LanguageDetector:
 
 class LocalLanguageDetector:
     def supported(self, text: str) -> Locale | None:
-        cleaned = re.sub(r'https?://\S+|`[^`]*`', '', text)
-        if len(re.findall(r'[^\W\d_]+', cleaned)) < 3:
+        cleaned = re.sub(r"https?://\S+|`[^`]*`", "", text)
+        if len(re.findall(r"[^\W\d_]+", cleaned)) < 3:
             return None
         confidence = output_detector().compute_language_confidence_values(cleaned)
         if (
@@ -33,15 +33,15 @@ class LocalLanguageDetector:
         ):
             return None
         if confidence[0].language == Language.ENGLISH:
-            return 'en'
+            return "en"
         if confidence[0].language == Language.SPANISH:
-            return 'es'
+            return "es"
         return None
 
     def rejects_output(self, text: str) -> bool:
         """Reject common unsupported prose; ambiguous technical text stays usable."""
-        cleaned = re.sub(r'```[\s\S]*?```|https?://\S+|`[^`]*`', '', text)
-        if len(re.findall(r'[^\W\d_]+', cleaned)) < 8:
+        cleaned = re.sub(r"```[\s\S]*?```|https?://\S+|`[^`]*`", "", text)
+        if len(re.findall(r"[^\W\d_]+", cleaned)) < 8:
             return False
         confidence = output_detector().compute_language_confidence_values(cleaned)
         return bool(

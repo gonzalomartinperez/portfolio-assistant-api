@@ -24,18 +24,17 @@ class Budget:
             self.output_price,
         )
         if any(not value.is_finite() or value <= 0 for value in values):
-            raise ValueError('budget and prices must be finite positive values')
+            raise ValueError("budget and prices must be finite positive values")
         if not self.reservation <= self.cutoff <= self.monthly:
-            raise ValueError('reservation must fit cutoff and monthly budget')
+            raise ValueError("reservation must fit cutoff and monthly budget")
         # UTF-8 bytes conservatively bound input tokens for the bounded prompt.
         maximum = self.cost(MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS)
         if self.reservation < maximum:
-            raise ValueError('reservation must cover the bounded maximum model request')
+            raise ValueError("reservation must cover the bounded maximum model request")
 
     def cost(self, input_tokens: int, output_tokens: int) -> Decimal:
         if input_tokens < 0 or output_tokens < 0:
-            raise ValueError('usage cannot be negative')
+            raise ValueError("usage cannot be negative")
         return (
-            Decimal(input_tokens) * self.input_price
-            + Decimal(output_tokens) * self.output_price
+            Decimal(input_tokens) * self.input_price + Decimal(output_tokens) * self.output_price
         ) / Decimal(1000000)

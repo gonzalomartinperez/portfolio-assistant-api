@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.presentation_context import PortfolioPath, Presentation, Theme
 
-Locale = Literal['en', 'es']
+Locale = Literal["en", "es"]
 
 
 class ErrorBody(BaseModel):
@@ -16,7 +16,7 @@ class ErrorBody(BaseModel):
 
 
 class HealthView(BaseModel):
-    status: Literal['ok']
+    status: Literal["ok"]
     version: str
 
 
@@ -31,7 +31,7 @@ class SessionView(BaseModel):
 
 
 class ConversationCreate(BaseModel):
-    title: str = Field(default='New conversation', max_length=80)
+    title: str = Field(default="New conversation", max_length=80)
 
 
 class ConversationUpdate(BaseModel):
@@ -52,7 +52,7 @@ class Page(BaseModel):
 
 class MessageView(BaseModel):
     id: UUID
-    role: Literal['user', 'assistant']
+    role: Literal["user", "assistant"]
     content: str
     citations: list[Citation] = []
     created_at: datetime
@@ -67,7 +67,7 @@ class Citation(BaseModel):
     id: str
     label: str
     url: str
-    source_type: Literal['page', 'code']
+    source_type: Literal["page", "code"]
     commit_sha: str | None = None
     path: str | None = None
     start_line: int | None = None
@@ -75,7 +75,7 @@ class Citation(BaseModel):
 
 
 class MessageContext(BaseModel):
-    model_config = ConfigDict(extra='forbid', strict=True)
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     theme: Theme
     opened_path: PortfolioPath
@@ -85,16 +85,14 @@ class MessageContext(BaseModel):
 
 class SendMessage(BaseModel):
     content: str = Field(min_length=1, max_length=4000)
-    locale: Locale = 'en'
+    locale: Locale = "en"
     context: MessageContext | None = None
 
 
 class RunView(BaseModel):
     id: UUID
     conversation_id: UUID
-    state: Literal[
-        'pending', 'running', 'completed', 'failed', 'cancelled', 'interrupted'
-    ]
+    state: Literal["pending", "running", "completed", "failed", "cancelled", "interrupted"]
     message_id: UUID | None = None
     error_code: str | None = None
     created_at: datetime
@@ -102,16 +100,16 @@ class RunView(BaseModel):
 
 
 class FeedbackCreate(BaseModel):
-    rating: Literal['up', 'down']
+    rating: Literal["up", "down"]
 
 
 class StarterPrompt(BaseModel):
-    id: str = Field(pattern=r'^[a-z0-9-]{1,80}$')
-    topic: Literal['profile', 'experience', 'projects', 'education', 'achievement']
+    id: str = Field(pattern=r"^[a-z0-9-]{1,80}$")
+    topic: Literal["profile", "experience", "projects", "education", "achievement"]
     question: str = Field(min_length=1, max_length=500)
 
 
 class SuggestionsView(BaseModel):
     corpus_version: str = Field(min_length=1, max_length=100)
-    source_commit: str = Field(pattern=r'^[0-9a-f]{40}$')
+    source_commit: str = Field(pattern=r"^[0-9a-f]{40}$")
     items: list[StarterPrompt] = Field(max_length=6)

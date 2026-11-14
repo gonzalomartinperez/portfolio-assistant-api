@@ -14,15 +14,13 @@ from app.bootstrap.maintenance import connect
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def retrieve(question, locale='en', *, strategy='hybrid'):
+def retrieve(question, locale="en", *, strategy="hybrid"):
     config = settings()
     with GraphDatabase.driver(
         config.neo4j_uri, auth=(config.neo4j_user, config.neo4j_password)
     ) as graph:
         sources = asyncio.run(
-            PublicRetrieval(KnowledgeIndex(connect, graph), strategy).search(
-                question, locale
-            )
+            PublicRetrieval(KnowledgeIndex(connect, graph), strategy).search(question, locale)
         )
-    rows = [{**asdict(s), 'title': s.title} for s in sources]
+    rows = [{**asdict(s), "title": s.title} for s in sources]
     return rows, [sources[0].commit_sha] if sources else []
