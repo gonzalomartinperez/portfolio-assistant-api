@@ -10,6 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 
 from app.bootstrap.config import Settings
 
+LOOPBACK_HOSTS = ('localhost', '127.0.0.1', '::1')
+
 
 class PublishedPort(BaseModel):
     model_config = ConfigDict(strict=True)
@@ -60,8 +62,7 @@ def validate_targets(
 ) -> None:
     endpoints = (urlparse(config.database_url), urlparse(config.neo4j_uri))
     if config.environment != 'development' or any(
-        endpoint.hostname not in ('localhost', '127.0.0.1', '::1')
-        for endpoint in endpoints
+        endpoint.hostname not in LOOPBACK_HOSTS for endpoint in endpoints
     ):
         raise ValueError('evaluation requires local development PostgreSQL and Neo4j')
     project = os.environ.get('COMPOSE_PROJECT_NAME', '')
