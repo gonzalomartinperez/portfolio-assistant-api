@@ -13,18 +13,18 @@ create branches/PRs or commit. Running tests that write fixtures needs an isolat
 target and authority for that invocation. Missing services are a recorded gap,
 not permission to use another project's database.
 
-Choose evidence by risk using [verification commands](../../../docs/local-development.md#verification)
-and the [bounded checklist](../../../docs/release-checklist.md):
+Choose evidence by risk using [verification commands](../../../docs/tutorials/local-development.md#verification)
+and the [bounded checklist](../../../docs/how-to/release.md):
 
 - Pure policy changes: targeted unit and architecture tests, Ruff and strict mypy.
 - HTTP/SSE changes: contract drift, ownership/CSRF, incremental/cancellation and
-  real-service tests; inspect the [frontend handoff](../../../docs/frontend-handoff.md).
+  real-service tests; inspect the [frontend handoff](../../../docs/reference/frontend-handoff.md).
 - Persistence/knowledge changes: real pgvector/Neo4j, concurrency, migration and
   failed-index recovery plus retrieval evaluation.
-- Security review: use the relevant [threat-model](../../../docs/threat-model.md)
+- Security review: use the relevant [threat-model](../../../docs/explanation/threat-model.md)
   boundary and `uv run python -m scripts.scan_secrets`. Output locations/detectors,
   never suspected secret values. Fixture tests do not prove model safety.
-- CI/container changes: inspect [job purposes](../../../docs/ci.md), run
+- CI/container changes: inspect [job purposes](../../../docs/reference/ci.md), run
   `bash scripts/check_workflows.sh`, validate Compose, then image/proxy/shutdown
   smoke against private fixtures. Existing jobs run in parallel; preserve their
   disjoint suites, pinned tools/actions, minimal permissions and required `Required checks` aggregate.
@@ -34,7 +34,7 @@ syntax validation is not an executed pipeline. Never bypass a gate or increase
 budgets to obtain green checks. A user-authorized PR/merge still needs current-head
 CI and existing review rules; this skill grants no standing GitHub authority.
 
-Prepare deployment using [the shared runbook](../../../docs/deployment.md): web/API
+Prepare deployment using [the shared runbook](../../../docs/how-to/deploy-with-vps-ops.md): web/API
 on the future KVM 4 VPS, portfolio on Business, one reverse proxy preserving `/api`,
 private databases and paired immutable images. Preparing/verifying this plan does
 not authorize production execution, DNS, secrets, paid models, publishing or main
@@ -44,14 +44,14 @@ Report findings with file locations, commands actually run and results, fixture 
 live evidence, compatible revisions and unresolved gates. Stop when the scoped
 acceptance criteria are met; do not extend verification into cosmetic refactoring.
 
-For real-provider preparation, load the [dated audit and closure criteria](../../../docs/live-evaluation-readiness.md).
+For real-provider preparation, load the [dated audit and closure criteria](../../../docs/evidence/archive/2026-10/live-evaluation-readiness.md).
 Recheck open findings against the requested revision; especially do not treat the
 historical PostgreSQL-only check as validation of Neo4j isolation. The maintained
 harness now checks both configured destinations against owned Docker identities;
 read the evaluation procedure for prerequisites and remaining quality limitations.
 Keep documented follow-up work distinct from implemented and tested fixes.
 
-Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/deployment-contract.md) for image requirements. The old production controller/templates are retired; test proxy resources are fixtures only. Do not publish images without current authorization and confirmed package visibility.
+Production ownership: private vps-ops manages Coolify and shared resources. Read [the runtime handoff](../../../docs/reference/deployment-contract.md) for image requirements. The old production controller/templates are retired; test proxy resources are fixtures only. Do not publish images without current authorization and confirmed package visibility.
 
 The current user-facing UI is native to the portfolio and remains disabled;
 the separate web repository is the authenticated backoffice. Read only committed
@@ -59,7 +59,7 @@ sibling handoffs. Native cross-origin requests need explicit credentialed CORS a
 unchanged CSRF, not wider cookie scope. The runtime contract supersedes historical
 iframe guidance. Keep paired browser verification and pending coordination explicit.
 
-For dependency updates, use [the maintenance policy](../../../docs/dependency-updates.md)
+For dependency updates, use [the maintenance policy](../../../docs/reference/dependency-updates.md)
 and `uv run pytest -q tests/test_dependabot_config.py`. The owner merges the single
 weekly PR manually; the shared guard never merges. Check actual repository settings,
 not labels/titles. Default-branch activation and repository-setting changes require
@@ -98,7 +98,7 @@ blocks CI. Unfixed HIGH findings remain visible and require production assessmen
 a green remediation gate is not deployment approval. Check base-interpreter pip
 and ensurepip exclusion as well as the application venv in container smoke tests.
 
-Use the [dated baseline](../../../docs/runtime-baseline.md) for exact tool versions.
+Use the [dated baseline](../../../docs/reference/runtime-baseline.md) for exact tool versions.
 The stdlib scanner's real Git-history safety cases run in
 `uv run pytest -q tests/test_secret_scanner.py`; fixtures use synthetic markers only.
 Never print matches or treat a passing known-pattern scan as a complete secret audit.
@@ -108,14 +108,14 @@ notes and required transitive changes before resolving the lock. Run
 `uv run pytest -q tests/test_runtime_compatibility.py tests/test_private_observability.py`
 for real SDK parsing/EOF/timeout/close with synthetic transport, env precedence and safe
 errors. These checks never need a real key. Keep full service/image CI mandatory;
-the [fixed-cohort review](../../../docs/verification/runtime-compatibility-2026-10-17.md)
+the [fixed-cohort review](../../../docs/evidence/archive/2026-10/runtime-compatibility-2026-10-17.md)
 records the distinction between compatibility tests and live model evaluation.
 
 
 Local Compose builds infra/docker/postgres/Dockerfile: use `docker compose -f infra/compose/local.yaml up --build -d --wait`
 with an isolated project. The maintained-base candidate runs UID70 and uses a new
 local volume; never reuse/chown Debian PGDATA or silently modify shared volumes.
-Read [ADR008](../../../docs/adrs/008-supported-postgres-base.md) for the exact candidate
+Read [ADR008](../../../docs/decisions/008-supported-postgres-base.md) for the exact candidate
 and acceptance limits. Verify fresh initialization, both applications' logical
 restores and explicit ICU/Unicode/XML/vector behavior. Cross-distribution migration
 requires separate logical-restore/collation/index proof; a same-image restore is
@@ -125,14 +125,14 @@ an image. The candidate PostgreSQL scan policy rejects all CRITICAL and fixable 
 unfixed HIGH findings and vendor Java updates remain production gates. Do not patch vendor jars
 or equate local counts with complete recovery verification.
 
-For operational/dashboard changes, load [private observability](../../../docs/private-observability.md).
+For operational/dashboard changes, load [private observability](../../../docs/explanation/private-observability.md).
 Verify the isolated OTLP receiver, auth/schema and cancellation regressions with
 `uv run pytest -q tests/test_private_observability.py`, then real persistence when
 services are authorized. Keep provider health, observed execution totals, sampled
 traces and configured cost estimates distinct. Do not deploy monitoring or expose
 internal endpoints based on this skill.
 
-For public README/gallery changes, use [capture provenance](../../../docs/verification/readme-gallery.md).
+For public README/gallery changes, use [capture provenance](../../../docs/evidence/archive/2026-10/readme-gallery.md).
 Publish actual interface captures with supported states and intrinsic proportions, never
 private fixtures/credentials or screenshots presented as production evidence. Verify
 Markdown and HTML image links; keep deployment and provider claims tied to recorded checks.
@@ -140,7 +140,7 @@ Markdown and HTML image links; keep deployment and provider claims tied to recor
 For a database image refresh, compare immutable index/platform bytes, not only tags.
 Manually dispatch the existing Quality workflow with `verify_vendor_image=true` for full Neo4j OS/Java inventory and
 record scanner/DB times; normal PR API/PG scans do not establish Neo4j acceptance.
-Use [the release receipt procedure](../../../docs/verification/neo4j-vendor-refresh-2026-10-17.md).
+Use [the release receipt procedure](../../../docs/evidence/archive/2026-10/neo4j-vendor-refresh-2026-10-17.md).
 The receipt CLI rejects every CRITICAL and fixable HIGH finding, even without a
 published critical fix; unfixed HIGH remains explicit and no receipt approves production.
 Keep unfixed critical applicability visible. A pre-007 image fails schema readiness
@@ -150,12 +150,12 @@ Dependency maintenance is manual by owner decision. Use the read-only audit; nev
 activate old merge flags, grant writer permissions or arm native auto-merge. Preserve
 normal review/required CI and security-update visibility on the default branch.
 
-For README overview diagrams read [the owned diagram source and review rules](../../../docs/diagrams.md).
+For README overview diagrams read [the owned diagram source and review rules](../../../docs/explanation/architecture.md).
 Keep the first-party SVG and Mermaid semantics aligned. Inspect both palettes, card
 text bounds and narrow/full-size rendering; never substitute a deployment claim for
 an architecture view or add scripts/remote resources to the documentation graphic.
 
-For manual LangSmith evaluation work, load [the synthetic export contract](../../../docs/synthetic-evaluation-export.md)
+For manual LangSmith evaluation work, load [the synthetic export contract](../../../docs/reference/synthetic-evaluation-export.md)
 and run `uv run pytest -q tests/test_evaluation_export.py tests/test_architecture.py`.
 The CLI validates offline by default; `--authorize-export` requires separate current
 external-export authority and a synthetic aggregate, never a raw answer report.
@@ -164,7 +164,7 @@ For tag reconciliation follow the [release-reference policy](../../../README.md#
 current explicit authority, trigger review, recoverable tag-object backup and independent
 restore verification are prerequisites. A historical label never transfers its evidence to newer code.
 
-For database access-path work, use [the measured query procedure](../../../docs/verification/database-queries-2026-10-17.md).
+For database access-path work, use [the measured query procedure](../../../docs/evidence/archive/2026-10/database-queries-2026-10-17.md).
 Run `TEST_INTEGRATION=1 uv run pytest -q tests/test_database_queries.py` only on owned
 fixtures. The optional benchmark requires a fresh project and explicit fixture-seed
 flag; it is never a production maintenance command. Retain migration008/checksum
@@ -175,13 +175,13 @@ regressions. Preserve the standard MIT grant and the separate content/dependency
 scope in [third-party notices](../../../THIRD_PARTY_NOTICES.md). This is consistency
 verification, not a dependency-license or legal audit; do not alter historical tags.
 
-For provider HTTP/lifecycle changes, load [transport policy and evidence](../../../docs/verification/provider-transport-2026-10-17.md)
+For provider HTTP/lifecycle changes, load [transport policy and evidence](../../../docs/evidence/archive/2026-10/provider-transport-2026-10-17.md)
 and run `uv run pytest -q tests/test_provider_http.py tests/test_provider_lifecycle.py`.
 Keep SDK-native and compatibility transports distinct; verify redirect rejection,
 explicit TLS/environment policy, constructor ownership and failure/cancellation
 cleanup. Synthetic tests do not establish real TLS negotiation or VPS throughput.
 
-For website country/collector work read [analytics-direct-edge-v1](../../../docs/coordination/analytics-direct-edge-v1.md).
+For website country/collector work read [analytics-direct-edge-v1](../../../docs/reference/contracts/analytics-direct-edge-v1.md).
 Preserve the direct browser→Cloudflare→Coolify proxy→API path and actual socket-peer
 validation. No Business BFF, relay credential or new country enum is required.
 Current country settings are production-capable but default-off; adapter/real-PG

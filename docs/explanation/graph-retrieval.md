@@ -1,0 +1,101 @@
+# Public knowledge and GraphRAG
+
+PostgreSQL owns source manifests, immutable revisions, chunk hashes, exact 64D
+fixture vectors and the active corpus pointer. Neo4j is a rebuildable projection.
+Conversation/checkpoint tables are separate from this approved public corpus;
+chat history never becomes retrieval knowledge or long-term memory.
+
+## Authorization boundary
+
+Neo4j Community does not provide role-based reader authorization: its users have
+implicit administrative privileges, as documented in the
+[official user-management manual](https://neo4j.com/docs/operations-manual/current/authentication-authorization/manage-users/).
+The API's fixed, parameterized read queries constrain application behavior; they do
+not prevent a compromised graph credential from writing data or schema. Treat that
+credential as privileged and keep Neo4j on private project-isolated networks with
+only the approved public, rebuildable projection. Conversations, checkpoints and
+other private/project data must remain outside this graph. PostgreSQL grants are a
+separate enforced boundary and apply only to PostgreSQL. No Enterprise authorization
+capability is claimed or introduced.
+
+## Model and provenance
+
+`Entity` nodes carry a kind: Project, Role (a public employment entry named by
+company), Technology, Contribution, Education, Institution or PublicDocument.
+`Document` nodes identify versioned chunks. `RELATES` edges carry a reviewed
+predicate (`USES`, `CONTRIBUTED`, `AT_INSTITUTION`, `DOCUMENTED_IN`), corpus version,
+supporting chunk ID, line span and public URL. `SUPPORTED_BY` links entities to
+source chunks. Relationships are extracted only from explicit fields in the
+allowlisted TypeScript sources; arbitrary source prose is not turned into facts.
+The extractor is deliberately limited, not a general TypeScript parser.
+
+The graph can traverse Project → Technology ← Role to retrieve evidence from a
+role sharing a documented technology. This does not assert that the employer
+owned the project or that the same contribution occurred in both places.
+Every returned chunk is independently checked against PostgreSQL provenance and
+hashes. Context is at most five chunks / 22,000 characters. Queries are fixed,
+parameterized templates with limits and two-second transaction timeouts.
+
+## Selection and cost
+
+Hybrid uses deterministic lexical anchoring and exact vector search for ordinary
+facts. Relationship cues in English/Spanish enable graph expansion. No routing
+LLM is called. Graph outages fall back to verified lexical/vector evidence and
+emit a redacted operational warning. Readiness still reports graph unavailability
+because the deployment promises relationship retrieval.
+
+The real graph is retained both for relationship behavior and hands-on engineering.
+It costs a second database, rebuild/backup procedures and roughly hundreds of MiB
+of idle memory. These costs are measured locally; VPS sizing remains unverified.
+
+## Indexing and recovery
+
+A PostgreSQL advisory lock serializes indexing across both projections. The
+version includes the full source commit and parser version. Both projections
+finish before activation; graph writes use one transaction. Empty/oversized
+corpora fail closed. Same-version retries are idempotent. A failed staging
+version leaves the old active corpus intact; rerun the same approved commit.
+Old versions remain available for investigation and rollback; deletion is an
+explicit operator action, not a destructive automatic migration.
+
+Source files are literal blobs from the sole approved public repository, never
+executed. The allowlist rejects symlinks and other file modes; blob size is checked
+before reading. Git commands have timeouts, noninteractive credentials, no global
+URL rewrites and no redirects on the fixed HTTPS source. No arbitrary URL input,
+private export, recursive submodule or model-generated query is supported.
+
+## Evaluation
+
+Run `uv run --group eval python -m evals.harness.retrieval` against the documented isolated
+fixture environment. `evals/retrieval.json` covers direct facts, relationships,
+shared-technology paths, ambiguity and no-answer cases in both locales.
+`evals/fixture-results.json` records actual vector/graph/hybrid outcomes and total
+retrieval latency, including the evaluation harness's driver setup. Expected
+evidence is written as layout-neutral qrels (`en/projects`, see
+[ADR012](../decisions/012-layout-neutral-evidence-keys.md)), so the same cases grade the
+`content/` and legacy `src/content/` roots. Pass means
+required evidence keys and evidence text were retrieved, not that a model produced
+a correct answer. Hash embeddings are a transport/development fixture and are
+not a semantic embedding quality claim. Hybrid acceptance is enforced in CI;
+we report weaker individual strategies rather than weakening the test cases.
+
+## Measured strategy comparison · 2026-09-27
+
+| Strategy | Evidence checks passed | Median retrieval ms |
+| --- | ---: | ---: |
+| vector | 5/9 | 40.2 |
+| graph | 8/9 | 48.1 |
+| hybrid | 9/9 | 39.7 |
+
+## Versioned lookup access path
+
+The knowledge writer owns `entity_version_normalized(version, normalized)` and
+waits for indexes before activation. The application keeps parameterized reads,
+source revalidation and a two-second graph-read deadline. See the
+[query-plan measurements and synthetic limits](../evidence/archive/2026-10/database-queries-2026-10-17.md).
+Exact vector search remains the measured small-corpus baseline; no ANN/plugin or
+additional ontology is introduced by this access-path change.
+
+For bounded publication preparation, actual-query readiness and the driver's
+explicit no-retry policy, use the [cold-start verification procedure](../evidence/archive/2026-10/graph-readiness-2026-10-18.md).
+Preparation has its own index budget; it does not widen visitor transactions.

@@ -10,6 +10,6 @@ production service. Security fixes target `develop`; there is no published
 support SLA or production uptime commitment. Include the affected commit,
 reproduction, impact and a minimal redacted example in a report.
 
-See the [threat model](docs/threat-model.md) for implemented controls and residual
+See the [threat model](docs/explanation/threat-model.md) for implemented controls and residual
 risks. Prompt injection is not solved. Fixture tests do not establish real-model
 safety. Real credentials and paid calls require explicit owner authorization.

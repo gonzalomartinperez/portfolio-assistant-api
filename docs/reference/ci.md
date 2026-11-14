@@ -1,0 +1,530 @@
+> Current privacy boundary (2026-10-13): CI no longer uploads image archives or diagnostic
+> artifacts from this public repository. The unsafe legacy candidate publisher was removed, along with its
+> package-write permission. A private accepted publishing path is a separate release gate.
+> Historical artifact instructions below do not authorize reactivation.
+
+# CI and release preparation
+
+## Active workflows
+
+`CI` (`.github/workflows/ci.yml`, formerly `Quality`) runs on every PR into `develop` or `main`,
+pushes to those branches, merge groups, manual dispatch, and trusted reusable calls. There are **no
+workflow-level path filters**: a `classify` job selects which jobs run (see CI profiles below), and the
+`ci-gate` aggregate still finishes every run. New commits cancel stale runs for the same PR/ref. Hosted jobs
+use the explicit Ubuntu24.04 LTS label, matching the paired backoffice profile;
+the moving ubuntu-latest alias is rejected so an announced runner-major migration
+cannot silently change the validated environment. Runner patch images remain
+GitHub-managed and are recorded by Actions.
+
+| Job ID / human name | Purpose | Needs |
+| --- | --- | --- |
+| classify / classify | Shared engineering-standards classifier: maps changed files, branch and labels to CI profiles and emits the job list | None |
+| workflows / Workflow validation | Pinned actionlint and trusted-event syntax; no dependency install or secret token | classify |
+| secrets / Secret scan | Redacted full reachable history/worktree patterns; no public raw logs | None (always runs) |
+| security / Security checks | Shared engineering-standards `security.yml`: zizmor, actionlint, gitleaks, dependency review with licence allow-list | classify |
+| static / Static checks | Frozen install, license/skills, Ruff, strict inner typing, bilingual bank, offline/contract/architecture negatives and deterministic drift | classify |
+| database / Database tests | Real PostgreSQL/Neo4j migrations, snapshot indexing, integration and bilingual fixture evaluation | classify, static |
+| container / Container verification | Own isolated databases/corpus, hadolint on both Dockerfiles, explicit api and worker builds (`VERSION`, `REVISION`, `CREATED` build args), container-structure-test and Dockle on both images, size ratchet (`infra/docker/app/image.json`), full Trivy scans of api, worker and PostgreSQL, non-root streaming/SIGTERM/proxy and tested image identity | classify, static |
+| ci-gate / ci-gate | Always-evaluated fail-closed aggregate: every job classify selected must succeed; unselected jobs may be skipped | Every other job |
+| checks / Required checks | Transitional alias that passes only when `ci-gate` succeeds | ci-gate |
+
+The workflow invariants are enforced by scripts/ci_profile.py and its negative
+fixtures. Pushes to develop/main, merge-group, manual and reusable events always run
+every job. Main/develop post-merge runs prove their actual merge commits,
+independently of prior PR merge-ref checks.
+
+### CI profiles
+
+`.github/ci-profile.json` maps changed paths to profiles; `classify` unions the jobs the matched
+profiles add to the base (`secrets` and `security`, always).
+
+| Profile | Matches | Runs |
+| --- | --- | --- |
+| docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, security, static (offline tests validate docs and skills); no database or container job |
+| harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, security, static |
+| workflow | `.github/**` | secrets, security, workflows, static, database, container, contract |
+| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container, contract |
+| deps-weekly | branch `dependabot/**` or label `deps-weekly` | every job |
+| release | develop -> main promotion | every job |
+
+Fail-closed rules: a changed file outside every profile, an empty or failed diff, or a change to
+the profile map itself runs every job. Push, merge-group and manual runs, and `workflow_call`
+runs (no PR event), run every job. A broken profile map fails `classify`, so the gate goes red.
+`scripts/ci_profile.py` and `tests/harness/test_ci_profile.py` require every tracked file to match a profile.
+
+`ci-gate` is the single required check going forward. It needs every other job, requires every
+selected job to succeed, and tolerates a skip only for unselected jobs. Until the owner switches
+branch protection from `Required checks` to `ci-gate`, the transitional `checks` job mirrors the
+`ci-gate` result; remove it after the switch (see reference/repo-settings.md).
+
+Static checks compile the authored bilingual question bank and reject generated
+drift. The real-service job exercises ten development cases spanning all topics and
+both locale hints through the HTTP/SSE harness; failed terminals fail the job.
+Full 1000-case fixture runs are recorded locally rather than adding that cost to
+every PR. These checks establish executable coverage, not live-model answer quality.
+
+## Test lanes
+
+Test modules are grouped by purpose. Run individual lanes with these commands:
+
+| Lane | Directory | Command |
+| --- | --- | --- |
+| Unit | `tests/unit/` | `uv run pytest -q tests/unit` |
+| Property | `tests/property/` (marker `property`; Hypothesis profile `ci` by default) | `uv run pytest -q tests/property`; nightly: `HYPOTHESIS_PROFILE=nightly uv run pytest -q tests/property` |
+| Architecture | `tests/architecture/` | `uv run pytest -q tests/architecture` |
+| Contract | `tests/contract/` | `uv run pytest -q tests/contract` |
+| Evals | `tests/evals/` | `uv run pytest -q tests/evals` |
+| Tooling | `tests/tooling/` | `uv run pytest -q tests/tooling` |
+| Harness | `tests/harness/` | `uv run pytest -q tests/harness` |
+| Integration | `tests/integration/` (marker `integration`, also used by a few mixed unit files) | `TEST_INTEGRATION=1 uv run pytest -q -m integration` |
+| Container | `tests/container/` | `uv run pytest -q tests/container` |
+| Resilience | `tests/resilience/` | `uv run pytest -q tests/resilience` |
+| Load | `tests/load/` (Locust, not collected by pytest except `test_budgets.py`) | `uv run --group load python -m tests.load.run_load --profile smoke` |
+
+`tests/support.py`, `tests/support_app.py` (the real routers and workflow over in-process fakes) and
+`tests/fixtures/` remain shared at the `tests/` root.
+The offline suite remains `uv run pytest -q -m 'not integration'`, which includes the
+property lane under the `ci` profile (100 examples, derandomized). The `nightly` profile
+(1,000 random examples) is selected with `HYPOTHESIS_PROFILE=nightly`; no nightly workflow
+exists yet, so it is run on demand. A failing example prints a `@reproduce_failure` blob.
+
+### Resilience, security matrix and load
+
+`tests/resilience/` injects PostgreSQL, Neo4j, provider, budget, rate-limit and
+knowledge-updating faults over the HTTP/SSE path and asserts the documented problem
+code and never a 500 (graph failure degrades to lexical and vector retrieval).
+`tests/contract/test_security_matrix.py` enumerates every OpenAPI operation and fails
+until a new route has an access class. Limit: the matrix and resilience tests use an in-memory
+store, so ownership comes from `FakeStore._check` and its `session()` ignores expiry (the real rule is
+SQL `expires_at>now()`); `tests/integration/test_conversation_store_contract.py` runs the ownership and
+expiry cases against `PostgresConversations`. The first two run in the PR offline suite.
+`.github/workflows/load-nightly.yml` runs `tests.load.run_load` (Locust with an httpx
+SSE client against the stubbed app: 30 users, 15-minute soak) nightly and uploads
+`load-report.json`; budgets and the baseline rule live in
+[ADR024](../decisions/024-load-budgets-baseline.md). It is not part of `ci-gate`.
+
+Tests are explicitly marked `integration`. Static and database jobs run
+disjoint selections, retaining all coverage. Container smoke owns fresh services;
+a completed database job cannot leave a fixture on another runner. The container is built once with
+BuildKit and reused for normal/shutdown/proxy checks. uv caches are keyed by the
+lockfile and `.python-version`, with platform-aware setup-uv behavior. uv itself
+is pinned to 0.13.1, matching the production image. Only the static job saves this
+shared dependency cache; runtime jobs restore it and installs the same frozen lock
+without a competing upload. A cache miss still performs the complete install. BuildKit's content-addressed
+cache includes the Dockerfile, frozen lock and source layers; its GHA scope is
+`api-linux-amd64`. Cache entries never replace checks. Only the bounded synthetic project-database receipt from the cross-repository workflow is uploaded for seven days.
+Other test diagnostics remain in Actions logs; no public image archive is uploaded.
+
+Both service jobs build/load the PostgreSQL fixture with the same explicit
+`linux/amd64` recipe and `postgres-linux-amd64` GHA v2 cache scope. BuildKit content
+keys include the recipe, pinned base and copied inputs; changing a source SHA does
+not discard unchanged layers. Each isolated runner still needs its own loaded
+image. Compose uses `--no-build --pull never` to consume that verified image.
+Only the container job exports this cache, and only on pushes to protected
+`develop`/`main`; PRs, merge groups and dispatches restore without writing it.
+A cold/evicted cache still runs the full build. No cache hit skips migrations,
+service tests, scans or shutdown checks. Negative profile fixtures reject a
+second/untrusted writer, wrong platform/scope, skipped load and implicit rebuild.
+
+Both builders pin Buildx v0.38.0 and the BuildKit image digest
+`sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea`.
+These tool pins are separate from action SHA pins. Cache isolation follows
+[GitHub ref restrictions documented by Docker](https://docs.docker.com/build/cache/backends/gha/);
+[setup-buildx](https://github.com/docker/setup-buildx-action) documents the version
+and driver options. No credentials, provider calls or registry publication are
+added. Actual cold/warm Actions observations belong in release evidence; a cache
+configuration alone is not a measured speedup.
+
+Third-party actions are pinned to reviewed upstream commit SHAs. PR jobs have only
+`contents: read`, do not persist checkout credentials, receive no deployment/model
+secrets and never use `pull_request_target`. Fixture credentials belong solely to
+ephemeral CI databases. No active workflow grants registry write permission. The earlier candidate
+publisher and public image-archive uploads were retired for privacy. Local release
+manifest validation remains; an authorized private publication path and registry
+visibility decision are separate release gates. A merge cannot publish or deploy.
+
+## Security checks
+
+| Check | Where it runs | Notes |
+| --- | --- | --- |
+| Secret scan (`scripts.scan_secrets`) | `secrets` job, every run | Redacted full-history and worktree patterns; never prints values |
+| gitleaks | `security` job (shared `security.yml`) | PR commits on pull requests, pushed commits on push, skipped on merge groups |
+| zizmor | `security` job | Workflow audit at the shared default severity (`medium` and above fails); `unpinned-uses` enforces SHA pins |
+| actionlint | `security` job and the `workflows` job | Pinned `actionlint-py==1.7.12.25` |
+| Dependency review | `security` job, pull requests only | Fails on high severity and on licences outside the allow-list: the shared default list plus `LGPL-3.0-only` for psycopg (ADR 009) and `ZPL-2.1` for `zope.event` and `zope.interface`, pulled in by locust and gevent in the `load` dependency group only (not shipped in the image; ADR 024) |
+| CodeQL | GitHub default setup (`actions`, `python`) | Not a workflow in this repository; the owner toggles it, see reference/repo-settings.md |
+| OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Weekly (Monday), on pushes to `main` and on manual dispatch; publishes results and uploads SARIF |
+| vuln-daily | `.github/workflows/vuln-daily.yml` | Daily shared job; silent tracking issue, with the weekly summary posted on Monday (OD-75); no images listed here (`images: ""`) |
+
+GitHub runs `schedule` triggers only from the default branch (`main`), so Scorecard and
+vuln-daily start running once these files reach `main` (M7 promotion); until then they
+can be dispatched manually after that promotion to seed the baseline and the tracking issue.
+
+The `security` job is part of the base profile, so `classify` always selects it and `ci-gate` requires it.
+Every third-party action and reusable workflow is pinned to a full commit SHA. zizmor `unpinned-uses` and
+`tests/harness/test_ci_profile.py` (through `scripts/ci_profile.py`) enforce it for `ci.yml`, `scorecard.yml` and
+`vuln-daily.yml`; the latter two also require an empty top-level `permissions` block and no
+`pull_request_target` or `pull_request` trigger. `docker/setup-buildx-action` steps set
+`cache-binary: false`, and the container job does not use the `setup-uv` cache, to satisfy zizmor `cache-poisoning`.
+Baseline numbers: docs/evidence/security-baseline-2026-11-14.md.
+
+## Deployment belongs to vps-ops
+
+Coolify, coordinated by the private vps-ops repository, is the only selected
+production deployment platform. Application workflows validate/build images and
+prepare authorized immutable publication. Publication is not deployment approval.
+Package visibility must be confirmed independently from repository visibility.
+No publication has been authorized for this phase.
+
+The old deployment template, apply-release script and production Compose/TLS
+configuration were retired after explicit vps-ops ownership acceptance. They remain
+in Git history. Local proxy configuration moved to tests/fixtures/proxy and cannot
+serve as production configuration. vps-ops owns approvals, serialization, routing,
+migration scheduling, verification and rollback; see the
+[Docker ownership handoff](../evidence/archive/2026-10/docker-layout-handoff.md).
+
+## Observed Actions duration
+
+Before splitting jobs, required Quality checks took 60 seconds for PR #7,
+80 seconds for PR #8 and 107 seconds for PR #9 (including added image/shutdown
+smoke). The first parallel run (#10, run 36320177528) passed with static/offline 25 seconds,
+real services/container 109 seconds and aggregate 3 seconds; diagnostic artifacts
+were verified via the Actions API. These runs have different test scope/cache state;
+they are not a controlled claim of a fixed percentage speedup.
+
+## Main promotion gate
+
+Promote through a `develop` → `main` PR after explicit owner authorization. Wait
+for all five prerequisite jobs and the `Required checks` aggregate on that PR’s current head; do not
+reuse a check from an earlier head or bypass reviews. The same workflow runs without
+path filters on both target branches. This promotes the verified fixture candidate;
+production/live-model limitations in the release checklist remain in force.
+
+## Dependency maintenance and job audit
+
+The two independent verification jobs deliberately remain parallel. Splitting lint,
+formatting and typing into separate runners would repeat checkout/install overhead;
+the expensive real-service/image work already overlaps all offline checks. We keep
+one image build and disjoint test selections. No path filters, skipped required
+checks, reduced test coverage or automatic major-version merge is introduced.
+Every operative check has a descriptive step name. The aggregate gate and manual
+publisher input-validation job have no GitHub token permissions; the latter no
+longer checks out source just to validate two strings. Deployment remains disabled.
+
+`scripts/check_workflows.sh` validates active workflows and the disabled deployment
+template in CI using actionlint 1.7.12 with a reviewed archive SHA-256. Updating
+that tool requires reviewing both version and checksum. Third-party action updates
+remain immutable SHA references, checked against the upstream release tag. Checkout
+7.0.1 and Buildx setup 4.4.1 use Node 24 on compatible GitHub-hosted runners; no unsafe
+fork-checkout override or persisted credentials are enabled.
+
+Dependabot opens a single weekly PR (multi-ecosystem group `weekly`: uv,
+GitHub Actions and Docker together, Monday 09:00 America/Argentina/Buenos_Aires,
+target `develop`, open-PR limit 1, 7-day cooldown). Grouping never grants automatic
+merge. Python minor/major image changes are excluded from routine updates because
+changing Python requires an explicit project decision. Security alerts and
+default-branch security PRs must still be reviewed separately from the scheduled
+version updates targeting develop. Before merging any update, review its
+diff/upstream notes, run the full gate on the current head and honor strict base
+freshness. Promotion to main receives its own complete check.
+
+Sources: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference),
+[checkout release](https://github.com/actions/checkout/releases/tag/v7.0.1),
+[Buildx setup release](https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1).
+
+Repository security settings were verified on 2026-09-27: Dependabot vulnerability
+alerts and automatic **creation** of security-fix PRs are enabled. Automatic merging
+is not enabled by this configuration. Initial alert queries returned no open alerts;
+that is not a guarantee that future scans will find none. Security fixes targeting
+the default branch also run the full CI gate.
+
+Both `develop` and `main` now require the aggregate `checks` (transitional; `ci-gate` is the target) with strict base
+freshness. Main previously had PR protection but no required status check; this
+gap was closed without changing its review count, administrator enforcement,
+conversation-resolution or force-push/deletion restrictions. Merges cannot rely
+only on an operator remembering to wait for CI.
+
+## Dependency updates
+
+See [dependency maintenance](dependency-updates.md). Dependabot opens one grouped
+weekly PR into `develop`; the owner merges it manually. The shared
+`deps-weekly-guard` workflow (`.github/workflows/deps-weekly-guard.yml`, pinned by
+SHA, no `pull_request_target`) keeps it to one open PR and flags a red one. The
+former dependency-policy workflow, its scripts and the CI audit step were
+removed ([ADR019](../decisions/019-weekly-dependency-pr.md)). `tests/harness/test_dependabot_config.py`
+runs in the offline test suite.
+
+## Python 3.14 application compatibility
+
+Frozen installs select Python 3.14.8 from `.python-version` with uv 0.13.0; the
+image uses the same pinned Python patch on Debian slim. Privileged dependency/release scripts intentionally
+remain Python 3.12-compatible because those trusted jobs use the hosted runner
+system interpreter without installing PR dependencies. Ruff per-file targets and
+a grammar test enforce this distinction. They do not fall back for application checks.
+
+
+Current container increment: PR #37, source
+`badf49dd931660fe674073abc70d3a8c696a37f5`, passed
+[Quality run 38021519477](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38021519477).
+Static/offline took 31 s; real services/container 179 s; aggregate 3 s. Integration
+included the updated runtime build, tool-exclusion checks and shutdown/proxy smoke.
+These jobs still run in parallel and retain disjoint suites. The cold security-package
+layer differs from the prior build, so these times are not a controlled speedup claim.
+
+
+## Image security policy
+
+The existing integration job scans the image it already built; there is no second
+build or privileged scan of PR code. Trivy 0.75.0 is fetched from its upstream
+release and verified with a reviewed archive SHA-256 before execution. It produces
+a complete OS/language report without ignore files or severity filtering. The
+maintained `scripts.image_security` gate validates schema, OS inventory and the
+actual Docker image ID; malformed, missing or stale reports fail closed. All
+CRITICAL findings and HIGH findings with an available fixed version fail CI.
+Unfixed HIGH findings remain counted and visible in the retained full artifact;
+they require assessment before production and are not approved by a green gate.
+This is an added remediation gate, not a clean-image or production-security claim.
+Scanner network failures fail the job. No production secrets or publishing token
+are available to the job. The required aggregate `checks` remains unchanged.
+
+Local policy tests: `uv run pytest -q tests/container/test_image_security.py`. Full report
+and summary are retained with integration diagnostics even on failure. Scan the
+release digest again at release selection: the vulnerability database changes
+independently of source/image revisions.
+
+
+The integration job now builds infra/docker/postgres/Dockerfile once and uses the tested
+non-root image for its owned Compose fixture. It supplies that exact container ID
+to the existing two-service evaluation guard and stops only its fixture even on
+failure. PostgreSQL logs are captured before artifact upload. The complete database
+scan and matching-image summary are ephemeral; raw inventories are not uploaded.
+The supported-base candidate tightens the PostgreSQL gate to reject every CRITICAL
+and fixable HIGH finding through the same validated CLI as the application image.
+Unfixed HIGH findings still require explicit production assessment. The API's
+all-CRITICAL gate is unchanged. Full Neo4j Java scanning is
+recorded separately for release assessment because its advisory database is ~936 MiB;
+it is not represented as a green per-PR security gate. No extra API build or paid
+provider call was added. Actual current-head Actions remains the merge gate.
+
+
+## Executed overnight verification
+
+Actual current-head Quality runs on 2026-10-10, before protected develop merges:
+
+| Increment | Run | Static/offline | Real services/container | Aggregate |
+| --- | --- | --- | --- | --- |
+| Runtime security, PR #40 | [38024426083](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38024426083) | 27 s | 133 s | 3 s |
+| PostgreSQL image, PR #41 | [38025993266](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38025993266) | 36 s | 219 s | 3 s |
+| Reviewed artifact action, PR #31 | [38026495119](https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/runs/38026495119) | 30 s | 148 s | 3 s |
+
+All jobs passed. These are hosted-runner observations, not controlled performance
+comparisons. PR #41 adds the necessary PostgreSQL build and complete scan; no test
+coverage was removed for speed. Its downloaded diagnostics confirmed 25 integration
+tests with zero failures/errors and full image reports. Local combined verification
+passed 291 tests. PR #31 changed four SHA-pinned upload-artifact references to 7.0.2;
+the successful run exercised the updated action. This major update received manual
+review, not blanket Dependabot auto-merge permission. Native protection remained
+strict and the current head was matched at merge. Main and publication/deployment
+workflows were not activated.
+
+## PostgreSQL 18 current-head verification
+
+PR #46 passed Actions `38289478519`: static/offline 35 seconds, real-service/container
+168 seconds, aggregate gate 2 seconds. The previous run failed because the scanner
+referenced the old local image tag; the selected 18.6 image is now scanned explicitly.
+No scanner gate or required check was relaxed. The observability suite adds an actual
+loopback OTLP receiver to the existing offline job and SQL persistence to the existing
+real-service job; no new production job/controller is introduced.
+
+## Private operations final code gate
+
+PR #47 passed current code head `017df0c3036a3a976cf3b016b783f2932be31d7d` in
+Actions `38293707505`: static/offline 30 seconds, real-services/container 186 seconds,
+aggregate `checks` 4 seconds. Both independent jobs ran in parallel. Earlier heads
+were cancelled by the existing concurrency rule after follow-up fixes; their green
+checks were not used for the merge. No coverage, scanner or protection was weakened.
+See the dated private-observability report for exact local/CI artifact limits.
+
+Dependabot PR #48 replaced conflicted #44 through native maintenance, included
+14 reviewed updates and passed Actions `38295075616` at exact head
+`95c94291453ce6152de21a6b9748c410f367f3c9` (35/239/3 seconds). Framework/provider/driver
+updates received manual review. Protections still require strict up-to-date `checks`
+with administrators enforced; no blocking review or gate was bypassed. No open
+Dependabot PR remained after that merge. New scheduled PRs need fresh evaluation.
+
+## Vendor database release assessment
+
+An explicit manual CI dispatch with `verify_vendor_image=true` additionally scans the exact pinned Neo4j OS
+and Java inventory without adding a second build or server lifecycle. Normal PR
+coverage is unchanged; it does not claim this expensive Java release assessment ran.
+See [receipt and unresolved release gates](../evidence/archive/2026-10/neo4j-vendor-refresh-2026-10-17.md).
+Implicit Docker build-record artifact upload is disabled; build logs/summaries remain.
+
+The default false input runs ordinary complete source/runtime validation; it is not
+an accepted database assessment. Selected-digest OS/Java assessment and every unresolved
+critical finding remain mandatory **external release-selection gates** for vps-ops.
+No publication/deployment controller is activated here. The rejected candidate run and
+known baseline findings remain recorded; no source tag waives them.
+
+The optional `workflow_call` input `frontend_image` keeps its historical name for caller
+compatibility; the former `frontend_commit` input moved to `cross-repo.yml` as a
+`workflow_dispatch` input. The selected source is now canonical
+`portfolio-backoffice`, and pairing (now in `cross-repo.yml`, as its `frontend_commit` dispatch input) compares the actual private operations, product
+and feedback schema bytes. Its archived public chat/SSE snapshot is not a current
+chat consumer and cannot establish native portfolio compatibility. Current native
+browser/API verification belongs to the portfolio. This opt-in source comparison is
+not live OAuth/HTTPS pairing or a release-controller/deployment authorization.
+
+The database and container jobs index the frozen public corpus snapshot in
+`evals/corpus` ([ADR016](../decisions/016-frozen-public-corpus-snapshot.md)) and check out no
+other repository. The pinned backoffice IAM compatibility run (real migrations and
+authentication against a fresh restricted project engine, independent recovery,
+restart and fresh-cluster restore, with only its synthetic aggregate receipt retained)
+and the optional `frontend_commit` private-contract byte comparison run in
+`.github/workflows/cross-repo.yml`, nightly at 06:00 UTC and on `workflow_dispatch`,
+outside the pull request path. It is not part of `ci-gate`. GitHub runs schedules only
+from the default branch (`main`), so the nightly run starts after the M7 promotion to
+`main`; `workflow_dispatch` works earlier.
+
+
+## Paired profile source and artifact privacy
+
+The locally encoded profile follows the owner-coordinated contract revision
+`eb8288349f797d1fd5d51bfc349e70da8eaf3c01`; public CI neither checks out nor depends
+on that private repository. Commands above are this application's adapters to the
+common job identities. No empty/dummy job replaces real verification.
+
+Database/container jobs build only their own required fixtures. The API application
+image is built once in container and reused for scan/stream/shutdown/proxy tests.
+No cross-job image archive is uploaded. A same-SHA/config fixture rebuild is an
+explicit privacy tradeoff; caches accelerate it without becoming provenance.
+ci_identity records actual checkout/base/workflow SHA, run/attempt, platform,
+reviewed input hashes and inspected local image IDs. Dirty/unverifiable build
+inputs fail before identity is reported. IDs are not published registry digests.
+Only redacted synthetic database receipts may be uploaded; no env files, session
+artifacts, prompts/answers, backups or raw telemetry are included.
+
+The required context changes from checks to Required checks. First obtain the
+new actual GitHub Actions context in green, add it alongside the old requirement,
+verify both remain required and then remove only the obsolete context. Preserve
+strict freshness, producing app identity, admin enforcement and all other rules.
+Never disable protection, add a green legacy placeholder or bypass a pending gate.
+Actual protection and post-merge execution evidence must be recorded after this
+transition; YAML/test success alone does not establish remote enforcement.
+
+Official references checked:
+[GitHub required-check semantics](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks),
+[job dependencies](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs)
+and [source/workflow environment identity](https://docs.github.com/en/actions/reference/workflows-and-actions/variables).
+
+## Image checks in the container job
+
+hadolint v2.15.1, container-structure-test v1.22.1 and Dockle v0.4.15 are downloaded as
+pinned release binaries and verified with a recorded SHA-256 before they run (the same
+policy as Trivy and actionlint). Dockle fails on WARN and FATAL; the only accepted
+exceptions are CIS-DI-0005 (content trust is a client pull setting; base images are pinned
+by digest) and DKL-DI-0005 (Dockle misreads the python base layer's `apt-get dist-clean`;
+the structure tests assert no apt lists remain) for both images, and CIS-DI-0006 (HEALTHCHECK) for the worker, which has no HTTP
+endpoint. The size ratchet fails when `docker image inspect` reports a size above
+`api_max_bytes` or `worker_max_bytes` in `infra/docker/app/image.json`; lower those values to
+the measured sizes after a verified run. The PostgreSQL Dockerfile carries one scoped
+`hadolint ignore=DL3003,DL4006` with its reason.
+
+## Mutation testing (M2-11)
+
+[ADR023](../decisions/023-mutation-testing-mutmut.md) records the Python 3.14 spike.
+`ci.yml` runs a PR-only `mutation` job (30 minutes, two workers). It diffs
+against the PR base with `git diff base...HEAD`, intersects changed Python files
+with the explicit `[tool.mutmut]` scope, and narrows the disposable checkout's
+configuration before generation. Deleted, unscoped and test files are excluded;
+no matching source files means a clean skip. Tests use the offline unit lane,
+fixture providers and no integration tests. Tests themselves are never mutated.
+
+`mutation-weekly.yml` runs the full configured scope on Mondays at 04:17 UTC or
+by manual dispatch (90 minutes, two workers). Both jobs retain per-mutant text
+results and mutmut's aggregate JSON for 14 days. Only synthetic mutation outcomes
+are uploaded. GitHub schedules begin operating when the workflow reaches the
+default branch; local verification does not establish a successful hosted run.
+
+The stdlib gate reads `mutmut results --all true`: 3.8.1's `export-cicd-stats`
+JSON lacks file identities, so it cannot calculate package scores. The score is
+confirmed kills divided by all measured outcomes, including timeouts, no-tests,
+skips and errors in the denominator. Unchecked mutants are not measured. Scores
+are grouped by domain, application, AI retrieval and graders. Targets are 75%,
+85% for graders and budget math; the break floor is 60%.
+`tests/mutation-baseline.json` records measured ratchets and the exact sample;
+null means unmeasured, not zero-quality evidence. The full weekly run supplies
+the remaining measurements; ratchets may only increase.
+
+Run `uv run python -m scripts.mutation_gate --results PATH` after collecting
+results. `--warn` or `MUTATION_MODE=warn` expresses rollout intent; warning mode
+is also the default through 2026-11-28 UTC. Starting 2026-11-29 it fails below
+60% or the committed ratchet, even with `--warn`. `--enforce` activates failure
+immediately. Invalid or empty evidence always fails.
+
+Mutation remains outside `ci-gate` and the classifier map: the pinned shared
+action's handling of this unclassified PR-only/skipped advisory job has not been
+verified locally. The local profile guard explicitly permits this one independent
+job while preserving every existing required dependency. This also means mutation
+shortfalls do not block merging through `ci-gate`, including after warning expiry;
+promoting mutation to a required check needs verified shared-gate semantics.
+
+## Coverage gates
+
+The static job collects branch coverage from the offline suite and the database job from the
+integration suite; a later step combines both and runs `scripts/coverage_gate.py`, which compares
+branch coverage per group (`whole`, `domain`, `application`, `ai`, `adapters`, `presentation`,
+`bootstrap`, `entrypoints`) with `tests/coverage-floors.json`. On pull requests `diff-cover`
+additionally requires 90% coverage of the changed lines.
+
+Floors only ratchet up. After a run that exceeds a floor, raise that value (rounded down to an
+integer) in the same PR; never lower one. Roadmap exit targets for M2 are whole-repo at least 80%,
+adapters at least 70% and entry points at least 75%. The floors were set from the combined
+offline and integration coverage of CI run 43623496149 (2026-11-14: whole 83.54, domain 90.53,
+application 87.69, ai 85.19, adapters 78.65, presentation 90.79, bootstrap 74.11, entry points
+100), rounded down; `ai` and `bootstrap` keep one extra point of headroom because their margin
+was under half a point. Measure locally with
+`uv run pytest -q -m 'not integration' --cov --cov-branch --cov-report=xml:/tmp/cov.xml` and
+`uv run python -m scripts.coverage_gate /tmp/cov.xml --print` (offline only, so adapters read low).
+
+## Contract job and breaking-change policy
+
+The `contract` job (selected by the `workflow` and `code` profiles, so every change under
+`contracts/**` or `app/presentation/**`) runs `pytest -m contract` and then
+`python -m scripts.contract_diff --base-sha <PR base>`. oasdiff v1.37.0 (linux_amd64 tarball,
+SHA-256 `eac87307d31d08c36800c58a409c247f1c5db37fbb72e2544402f22a87cbca3c`, from the release
+`checksums.txt`) is downloaded as a pinned binary and verified before use. The job sets
+`REQUIRE_OASDIFF=1`, so the planted-break tests fail instead of skipping; locally they skip with a
+reason when `oasdiff` is absent.
+
+- `oasdiff breaking <base> <head> --fail-on WARN` compares `contracts/openapi.json` with the base
+  revision (`git show <base_sha>:contracts/openapi.json`).
+- `contracts/sse.schema.json` is compared with a stdlib check: a removed event name or removed
+  required field is breaking; additions are allowed (expand, then contract).
+- The `contract-major` PR label accepts a break: findings are still printed, the gate passes, and
+  the cross-repo consumer job below must be green against the new snapshot.
+- Schema examples (`contracts/*.examples.json`) validate against their schemas; SSE frames are
+  checked for grammar, the closed event set, one terminal event and the 15 s heartbeat constant.
+- Schemathesis 4 fuzzes the committed OpenAPI against the in-process app with fakes (no databases):
+  `SCHEMATHESIS_EXAMPLES` defaults to 50 on PRs; a nightly run with 500 is planned (nightly workflow, M2-14). Session routes are
+  exercised through auth and validation negative paths only (the fake rejects every cookie); the SSE
+  200 body is not validated by the tool (contract type `string`) and is covered by the SSE tests.
+  Known gaps skipped by name: positive-data acceptance for `recordProductEvent`, the `Allow`
+  header check (Starlette partial `Allow` on multi-route paths), and framework `400` replies to
+  malformed JSON, which the contract does not document.
+
+### Cross-repo consumer job
+
+Runs nightly in `.github/workflows/cross-repo.yml` (added by a separate PR), not on PRs. It checks
+out this repository at the commit under test, then, for the portfolio site and the backoffice:
+
+1. copy `contracts/` into the consumer checkout as its contract snapshot;
+2. regenerate the typed client (`openapi.json`) and SSE types (`sse.schema.json`) with the
+   consumer's own generator script, for example `pnpm run generate:api`;
+3. type-check and build against the snapshot (`pnpm run typecheck` and `pnpm run build`), plus the
+   consumer's contract tests when present.
+
+A red consumer means the contract change is not yet safe to ship. A PR with the `contract-major`
+label signals an intentional break: it merges only after the consumer pull requests that adopt the
+new snapshot are ready, and it ships with a CHANGELOG entry. Consumer repositories are never edited
+from this repository.

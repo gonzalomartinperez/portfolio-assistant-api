@@ -10,7 +10,7 @@ request is read-only evaluation, retrieval implementation, or authorized indexin
 Inputs: approved public revision, representative questions/locales and expected
 source evidence. Do not assume permission to mutate an index from a review request.
 
-Use [retrieval/evaluation policy](../../../docs/graph-retrieval.md),
+Use [retrieval/evaluation policy](../../../docs/explanation/graph-retrieval.md),
 [cases](../../../evals/retrieval.json), [retrieval orchestration](../../../app/ai/retrieval.py),
 [indexing](../../../app/adapters/portfolio/indexing.py) and
 [bounded graph queries](../../../app/adapters/neo4j/projection.py) for the affected path.
@@ -29,7 +29,7 @@ Load these selectively: a citation-policy fix does not require every ingest deta
    unsupported and bilingual questions. Use parameterized bounded Cypher; graph
    results need source-backed relationships, not only stored entities. Preserve
    abstention/clarification instead of inventing professional claims.
-4. In an isolated fixture environment from [local setup](../../../docs/local-development.md),
+4. In an isolated fixture environment from [local setup](../../../docs/tutorials/local-development.md),
    run `uv run --group eval python -m evals.harness.retrieval` and the relevant knowledge/
    integration tests. Capture per-case source evidence and timings; do not loosen
    expectations merely to make all strategies pass. Indexing needs explicit local
@@ -37,7 +37,7 @@ Load these selectively: a citation-policy fix does not require every ingest deta
 
 Report corpus SHA/version, provenance, strategy outcomes, recovery tests and limits.
 Fixture embeddings are deterministic hashes. OpenAI semantic embeddings are implemented
-but remain paid and separately authorized. Review [synchronization and public projection](../../../docs/knowledge-sync.md)
+but remain paid and separately authorized. Review [synchronization and public projection](../../../docs/how-to/maintain-knowledge.md)
 for the continuous worker, superseded-candidate guard, freshness and schema handoff.
 Use the worker only against an isolated target when authorized; it follows the fixed
 public main branch and must not fetch private career-ops. Current source text remains
@@ -45,7 +45,7 @@ supported until the portfolio owner publishes the optional structured projection
 Never treat fixture results as real-model quality or prompt-injection resistance.
 Stop paid evaluation without explicit authorization; continue offline policy tests.
 
-For broad question coverage, use [the evaluation guide](../../../docs/assistant-evaluation.md)
+For broad question coverage, use [the evaluation guide](../../../docs/reference/evals.md)
 and the canonical `evals/assistant-intents.json`; do not load the full generated
 1000-case artifact for ordinary onboarding. Run
 `uv run python -m scripts.build_assistant_bank --check` after edits. Keep all family
@@ -55,7 +55,7 @@ terminal transport success from reviewed factual quality. Never ingest evaluatio
 questions as public facts or tune prompts using held-out answers.
 
 For an authorized deep live evaluation, follow the dated methodology and limits in
-[the 244-turn evidence](../../../docs/verification/live-depth-2026-10-10.md). Freeze
+[the 244-turn evidence](../../../docs/evidence/archive/2026-10/live-depth-2026-10-10.md). Freeze
 selection and baseline bytes before fixes; label reviewed families as exposed, not
 fresh holdout. Distinguish actual generation from local abstention and recovered
 DB completion from observed HTTP terminals. Validate final/history equality, cited
@@ -64,12 +64,12 @@ Comparison and degree regressions belong in `tests/test_live_depth_regressions.p
 keep qualification and adjacent role spans verified and bounded. Language guards
 need supported technical/short-prose regressions, not only foreign rejection tests.
 
-For tone/localization changes, load [assistant voice](../../../docs/assistant-voice.md)
+For tone/localization changes, load [assistant voice](../../../docs/explanation/assistant-voice.md)
 and its small bilingual evaluation manifest. Prompt composition tests cannot prove
 natural tone. Preserve qualifications and real uncertainty, and test plain-language
 to technical followups without losing the named visitor topic.
 
-For technical internet complements, read [bounded web policy](../../../docs/bounded-web-context.md).
+For technical internet complements, read [bounded web policy](../../../docs/explanation/bounded-web-context.md).
 Keep fixed public queries separate from visitor questions/history, exact approved
 reference authorities, portfolio-only career facts, cache/cancellation bounds and
 shared cost accounting. The model has no general shell/database/navigation tools.
@@ -77,7 +77,7 @@ Use `tests/test_web_context.py`; actual quality requires separately authorized l
 evaluation, never a claim inferred from mocked requests.
 
 For embedding-profile/index identity changes, load
-[the corpus-identity regression](../../../docs/verification/embedding-corpus-identity-2026-10-18.md).
+[the corpus-identity regression](../../../docs/evidence/archive/2026-10/embedding-corpus-identity-2026-10-18.md).
 Chunk identities include the corpus/provider/model/dimension profile; legacy corpus
 rows stay immutable. A new version needs explicitly authorized indexing, even when
 public embedding cache entries can be reused. Test both provider-switch directions
@@ -89,14 +89,14 @@ before deleting each completed session. Read the evaluation guide for interrupti
 markers and hard-kill/storage limits. An interrupted report is evidence to preserve,
 not permission to restart or replay paid generations; there is no automatic resume.
 
-For a portfolio content relocation, load the [source-layout handoff](../../../docs/coordination/portfolio-content-layout.md).
+For a portfolio content relocation, load the [source-layout handoff](../../../docs/reference/contracts/portfolio-content-layout.md).
 Preserve actual committed paths and citation spans in both layouts; do not rewrite
 historical provenance to the new path. Verify worker polling, unchanged-file reuse,
 locale filtering and both-store publication with the real isolated fixture. A new
 source format must invalidate an incomplete same-commit index before query embedding
 I/O. Matching folders or a synthetic move alone do not validate the producer candidate.
 
-For graph cold-start or readiness changes, load [bounded graph readiness](../../../docs/verification/graph-readiness-2026-10-18.md).
+For graph cold-start or readiness changes, load [bounded graph readiness](../../../docs/evidence/archive/2026-10/graph-readiness-2026-10-18.md).
 Keep publication preparation separate from visitor reads and preserve the two-second
 request budget. Verify late-read failure before activation, unchanged-version startup,
 active-pointer races and effective SDK retry policy on the pinned driver. A successful

@@ -17,14 +17,14 @@ to `main` or run production; each needs explicit current approval.
 ## Checklist
 
 - [ ] Promotion PR (`develop` to `main`) ran its CI profile and `ci-gate` is green
-- [ ] Release checklist (`docs/release-checklist.md`) items have evidence
+- [ ] Release checklist (`docs/how-to/release.md`) items have evidence
 - [ ] Contracts exported with no drift; image and manifest evidence recorded
 - [ ] Post-deploy checks recorded by the owner of production (vps-ops), not run here
 
 ## Procedure
 
 1. Confirm the promotion PR's checks: `gh pr checks <n>`; `ci-gate` must be green.
-2. Walk `docs/release-checklist.md`; run `just check` and `just test` and record the results. The release manifest and image checks are in `docs/deployment-contract.md` and `docs/ci.md`.
+2. Walk `docs/how-to/release.md`; run `just check` and `just test` and record the results. The release manifest and image checks are in `docs/reference/deployment-contract.md` and `docs/reference/ci.md`.
 3. Check the tag and release notes agree with the merge SHA once a release exists. This repository has no CHANGELOG yet; note that gap rather than inventing one.
 4. Post-deploy health and build-info comparison are executed by private vps-ops. Record what the owner reports; do not edit vps-ops, install a controller or activate deployment triggers.
 

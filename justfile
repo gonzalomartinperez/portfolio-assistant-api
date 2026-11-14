@@ -30,7 +30,7 @@ test:
 test-lane lane:
     uv run pytest -q tests/{{lane}}
 
-# Integration lane; needs the isolated PostgreSQL and Neo4j fixtures (docs/local-development.md).
+# Integration lane; needs the isolated PostgreSQL and Neo4j fixtures (docs/tutorials/local-development.md).
 test-integration:
     TEST_INTEGRATION=1 uv run pytest -q -m integration
 
@@ -43,7 +43,7 @@ demo url="http://localhost:8000" locale="en":
 eval-golden:
     REQUIRE_GOLDEN_CASSETTES=1 uv run python -m evals.harness.golden
 
-# Local scorecard: collect artifacts and check ratchets (docs/scorecard.md). Slow: runs the offline suite.
+# Local scorecard: collect artifacts and check ratchets (docs/reference/scorecard.md). Slow: runs the offline suite.
 score:
     mkdir -p artifacts
     uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]

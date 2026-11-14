@@ -1,4 +1,4 @@
-# Weekly single dependency PR (docs/adrs/019-weekly-dependency-pr.md).
+# Weekly single dependency PR (docs/decisions/019-weekly-dependency-pr.md).
 # Shape follows engineering-standards templates/dependabot/release.yml.
 version: 2
 multi-ecosystem-groups:

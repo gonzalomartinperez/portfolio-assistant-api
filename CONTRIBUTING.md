@@ -5,8 +5,8 @@ and constructive feedback are welcome through the repository’s available chann
 Development priorities, implementation, reviews and releases remain the maintainer’s
 responsibility. Security reports use the private channel in [SECURITY.md](SECURITY.md).
 
-Start with the [local fixture guide](docs/local-development.md),
-[architecture](docs/architecture.md) and [acceptance checklist](docs/release-checklist.md).
+Start with the [local fixture guide](docs/tutorials/local-development.md),
+[architecture](docs/explanation/architecture.md) and [acceptance checklist](docs/how-to/release.md).
 Use a task branch and PR into `develop`. Preserve the public v1 contract and add
 behavior tests for changed risk. Do not introduce private portfolio material or
 credentials. `AGENTS.md` is the canonical agent guidance.
@@ -75,11 +75,11 @@ Personal content, identity assets and dependencies are separate; see
 
 ## Agent skills
 
-See [repository skills](docs/agent-skills.md) for Codex/Claude discovery, invocation,
+See [repository skills](docs/reference/agent-skills.md) for Codex/Claude discovery, invocation,
 authority boundaries, maintenance and compatibility evidence. Validate catalog
 changes with `uv run python -m scripts.validate_skills`; CI uses the same command.
 
-Dependency maintenance follows [the conservative Dependabot policy](docs/dependency-updates.md).
+Dependency maintenance follows [the conservative Dependabot policy](docs/reference/dependency-updates.md).
 Passing CI alone does not qualify a dependency update. Review scope, transitive
 changes and activation/required-check state before enabling any automated path.
 
@@ -90,7 +90,7 @@ uv version; no global tool installation or lockfile regeneration is required.
 Privileged stdlib-only dependency/release scripts also support runner Python 3.12;
 Ruff per-file targets and a grammar test preserve that security boundary.
 
-Support and upgrade decisions: [supported-version policy](docs/support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
+Support and upgrade decisions: [supported-version policy](docs/reference/support-policy.md). Python3.14.8 remains the verified runtime; PostgreSQL18 uses a separate data volume.
 
 For private operational changes, preserve the scalar-only application observation
 model and server-to-server authentication boundary. Run the focused observability
@@ -100,7 +100,7 @@ not only mock exporter calls; never add automatic SDK input/output capture.
 ## Prompts
 
 Assistant prompts are Markdown files in `app/prompts/` with front matter, locked by
-`app/prompts/prompts.lock` ([ADR014](docs/adrs/014-prompt-registry.md)). After a deliberate
+`app/prompts/prompts.lock` ([ADR014](docs/decisions/014-prompt-registry.md)). After a deliberate
 prompt edit, bump its `version` for semantic changes (not enforced; the sha256 prefix in
 `prompt_version` changes on any edit), run `uv run python -m scripts.update_prompts_lock --write` and
 review the lock diff; `--check` (and `tests/unit/test_prompt_registry.py`) fails on drift.
@@ -108,7 +108,7 @@ review the lock diff; `--check` (and `tests/unit/test_prompt_registry.py`) fails
 ## Architectural review
 
 Use Microsoft's dependency-inversion guidance and Google/Microsoft review practices as
-references, with [explicit repository adaptations](docs/engineering-coordination.md).
+references, with [explicit repository adaptations](docs/explanation/engineering-coordination.md).
 Application/domain rules belong behind owned ports; composition injects concrete adapters.
 Review invariants, cancellation and transaction ownership rather than folder names.
 `uv run python -m scripts.check_architecture` provides fast standalone feedback; normal
