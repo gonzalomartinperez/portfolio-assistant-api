@@ -1,0 +1,53 @@
+# Nightly SSE load and soak against the stubbed-provider app (master plan M2-13, ADR024).
+name: load-nightly
+
+on:
+  schedule:
+    - cron: "30 6 * * *"   # nightly 03:30 ART
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: smoke (20 s) or full (30 users, 15-minute soak)
+        type: choice
+        options: [full, smoke]
+        default: full
+
+permissions:
+  contents: read
+
+env:
+  AI_PROVIDER: fixture
+  ALLOW_PAID_AI: 'false'
+  LANGSMITH_TRACING: 'false'
+
+jobs:
+  load:
+    name: Load and soak
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+        fetch-depth: 1
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        version: 0.13.1
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          .python-version
+    - name: Install locked dependencies including the load group
+      run: uv sync --frozen --group load
+    - name: Run Locust and enforce the budgets
+      env:
+        PROFILE: ${{ inputs.profile || 'full' }}
+      run: uv run --frozen --group load python -m tests.load.run_load --profile "$PROFILE" --report load-report.json
+    - name: Upload the load report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: load-report
+        path: load-report.json
+        if-no-files-found: warn
+        retention-days: 30

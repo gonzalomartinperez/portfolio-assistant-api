@@ -9,6 +9,8 @@ LANES = (
     'harness',
     'integration',
     'container',
+    'resilience',
+    'load',
 )
 
 
