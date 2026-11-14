@@ -9,6 +9,7 @@ import yaml
 WORKFLOW_PATH = Path('.github/workflows/ci.yml')
 SCORECARD_PATH = Path('.github/workflows/scorecard.yml')
 VULN_DAILY_PATH = Path('.github/workflows/vuln-daily.yml')
+NIGHTLY_PATH = Path('.github/workflows/nightly.yml')
 PROFILE_PATH = Path('.github/ci-profile.json')
 NAMES = {
     'classify': 'classify',
@@ -18,6 +19,7 @@ NAMES = {
     'static': 'Static checks',
     'database': 'Database tests',
     'container': 'Container verification',
+    'mutation': 'Mutation tests',
     'ci-gate': 'ci-gate',
     'checks': 'Required checks',
 }
@@ -154,8 +156,10 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
             errors.append('required events cannot be filtered')
     if workflow.get('permissions') != {'contents': 'read'}:
         errors.append('default token permissions')
-    if workflow.get('concurrency', {}).get('cancel-in-progress') is not True:
-        errors.append('stale candidate concurrency')
+    if workflow.get('concurrency', {}).get('cancel-in-progress') != (
+        "${{ github.event_name == 'pull_request' }}"
+    ):
+        errors.append('cancel superseded pull request runs only')
     jobs = workflow.get('jobs', {})
     if set(jobs) != set(NAMES):
         errors.append('exact job inventory')
@@ -201,6 +205,15 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
         errors.append('secrets: must run unconditionally')
     if jobs.get('classify', {}).get('needs') or jobs.get('classify', {}).get('if'):
         errors.append('classify: must be the unconditional root job')
+    mutation = jobs.get('mutation', {})
+    if (
+        mutation.get('if') != "github.event_name == 'pull_request'"
+        or mutation.get('needs')
+        or mutation.get('timeout-minutes') != 30
+    ):
+        errors.append(
+            'mutation: independent PR-only advisory job with 30-minute budget'
+        )
     gate = jobs.get('ci-gate', {})
     if (
         gate.get('if') not in ('always()', '${{ always() }}')
@@ -208,9 +221,9 @@ def profile_errors(workflow: dict, profile_map: dict) -> list[str]:
     ):
         errors.append('ci-gate: must always run without permissions')
     if sorted(as_list(gate.get('needs'))) != sorted(
-        key for key in jobs if key not in ('checks', 'ci-gate')
+        key for key in jobs if key not in ('checks', 'ci-gate', 'mutation')
     ):
-        errors.append('ci-gate: must need every other job except checks')
+        errors.append('ci-gate: must need every required job except checks')
     if 'ci-gate' in as_list(gate.get('needs')):
         errors.append('ci-gate: cannot need itself')
     gate_steps = gate.get('steps', [])
@@ -401,6 +414,7 @@ def main():
     errors += standalone_errors(
         'vuln-daily', yaml.safe_load(VULN_DAILY_PATH.read_text())
     )
+    errors += standalone_errors('nightly', yaml.safe_load(NIGHTLY_PATH.read_text()))
     if errors:
         raise SystemExit('\n'.join(errors))
     print('API CI profile: dynamic jobs, ci-gate, trust and dependencies verified.')
