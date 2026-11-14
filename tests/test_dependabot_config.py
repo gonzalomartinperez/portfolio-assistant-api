@@ -108,7 +108,7 @@ def test_guard_workflow_pins_shared_workflow_by_sha_with_no_default_permissions(
 def test_guard_runs_only_for_dependabot_prs_or_schedule_with_minimal_permissions():
     job = GUARD['jobs']['guard']
     assert job['if'] == (
-        "github.event_name != 'pull_request' || github.actor == 'dependabot[bot]'"
+        "github.event_name != 'pull_request' || github.event.pull_request.user.login == 'dependabot[bot]'"
     )
     assert job['permissions'] == {
         'contents': 'read',
