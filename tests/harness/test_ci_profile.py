@@ -175,7 +175,7 @@ def test_ci_gate_must_always_run():
 
 
 @pytest.mark.parametrize(
-    'dropped', [k for k in NAMES if k not in ('ci-gate', 'checks')]
+    'dropped', [k for k in NAMES if k not in ('ci-gate', 'checks', 'mutation')]
 )
 def test_ci_gate_must_need_every_other_job(dropped):
     value = workflow()
@@ -730,4 +730,42 @@ def test_dockle_exceptions_cannot_be_widened():
             step['run'] = step['run'].replace('--exit-code 1', '--exit-code 1 -ak key')
     assert any(
         'Dockle exceptions' in error for error in profile_errors(value, profile_map())
+    )
+
+
+def test_mutation_is_pr_only_and_outside_required_gate():
+    value = workflow()
+    job = value['jobs']['mutation']
+    assert job['if'] == "github.event_name == 'pull_request'"
+    assert job['timeout-minutes'] == 30
+    assert 'mutation' not in value['jobs']['ci-gate']['needs']
+    for field, replacement in [('if', 'always()'), ('timeout-minutes', 90)]:
+        broken = workflow()
+        broken['jobs']['mutation'][field] = replacement
+        assert profile_errors(broken, profile_map())
+
+
+def test_weekly_mutation_uses_reviewed_actions_and_offline_fixture_mode():
+    weekly = yaml.safe_load(Path('.github/workflows/mutation-weekly.yml').read_text())
+    assert set(weekly['on']) == {'schedule', 'workflow_dispatch'}
+    assert weekly['permissions'] == {'contents': 'read'}
+    assert weekly['env']['AI_PROVIDER'] == 'fixture'
+    assert weekly['env']['ALLOW_PAID_AI'] == 'false'
+    job = weekly['jobs']['mutation']
+    assert job['timeout-minutes'] == 90
+    reviewed = {
+        step['uses']
+        for existing in workflow()['jobs'].values()
+        for step in existing.get('steps', [])
+        if 'uses' in step
+    }
+    for step in job['steps']:
+        if 'uses' in step:
+            assert step['uses'] in reviewed
+        if step.get('uses', '').startswith('actions/checkout@'):
+            assert step['with']['persist-credentials'] is False
+    assert any(
+        step.get('if') == 'always()'
+        and step.get('uses', '').startswith('actions/upload-artifact@')
+        for step in job['steps']
     )

@@ -66,7 +66,7 @@ private export, recursive submodule or model-generated query is supported.
 
 ## Evaluation
 
-Run `uv run python -m scripts.evaluate_retrieval` against the documented isolated
+Run `uv run --group eval python -m evals.harness.retrieval` against the documented isolated
 fixture environment. `evals/retrieval.json` covers direct facts, relationships,
 shared-technology paths, ambiguity and no-answer cases in both locales.
 `evals/fixture-results.json` records actual vector/graph/hybrid outcomes and total

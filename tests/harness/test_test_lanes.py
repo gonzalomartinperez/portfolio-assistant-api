@@ -2,6 +2,7 @@ from tests.support import ROOT
 
 LANES = (
     'unit',
+    'property',
     'architecture',
     'contract',
     'evals',
@@ -9,6 +10,8 @@ LANES = (
     'harness',
     'integration',
     'container',
+    'resilience',
+    'load',
 )
 
 

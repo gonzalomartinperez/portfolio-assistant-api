@@ -83,6 +83,52 @@ def test_snapshot_source_rejects_a_modified_file(tmp_path):
         snapshot_source(copy)
 
 
+def _copy_with_manifest(tmp_path: Path, edit) -> Path:
+    copy = tmp_path / 'corpus'
+    shutil.copytree(ROOT, copy)
+    data = manifest()
+    edit(data, copy)
+    (copy / 'manifest.json').write_text(json.dumps(data))
+    return copy
+
+
+@pytest.mark.parametrize(
+    ('edit', 'message'),
+    [
+        (lambda d, _c: d.update(commit='not-a-commit'), 'invalid commit'),
+        (
+            lambda d, _c: d.update(repository='someone/else'),
+            'only the public portfolio repository',
+        ),
+        (
+            lambda d, _c: d['files'].append(
+                {'path': 'private/notes.md', 'sha256': '0' * 64, 'bytes': 0}
+            ),
+            'unapproved snapshot path',
+        ),
+        (
+            lambda d, _c: d['files'].extend(dict(item) for item in list(d['files'])),
+            'ambiguous public profile source layouts',
+        ),
+    ],
+    ids=['commit', 'repository', 'path', 'duplicate-profile'],
+)
+def test_snapshot_source_rejects_an_untrusted_manifest(tmp_path, edit, message):
+    with pytest.raises(ValueError, match=message):
+        snapshot_source(_copy_with_manifest(tmp_path, edit))
+
+
+def test_snapshot_source_rejects_an_oversized_file(tmp_path):
+    def grow(data, copy):
+        item = next(
+            i for i in data['files'] if i['path'] != 'public/assistant-knowledge.json'
+        )
+        (copy / item['path']).write_bytes(b'x' * 60_001)
+
+    with pytest.raises(ValueError, match='source size limit exceeded'):
+        snapshot_source(_copy_with_manifest(tmp_path, grow))
+
+
 def test_manifest_at_commit_is_still_importable_for_git_mode():
     assert callable(manifest_at_commit)
 
