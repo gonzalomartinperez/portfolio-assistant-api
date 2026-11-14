@@ -1,0 +1,24 @@
+{
+  "agreed": 1179,
+  "agreement_rate": 0.9696,
+  "cohen_kappa": 0.9041,
+  "cohen_kappa_binary": 0.9324,
+  "disagreements": 37,
+  "labels_a": {
+    "0": 989,
+    "1": 58,
+    "2": 169
+  },
+  "labels_b": {
+    "0": 988,
+    "1": 55,
+    "2": 173
+  },
+  "pairs": 1216,
+  "queries": 152,
+  "resolved": {
+    "0": 980,
+    "1": 71,
+    "2": 165
+  }
+}

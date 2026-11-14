@@ -49,6 +49,9 @@ dev = [
     "pyyaml==6.0.3",
     "ruff>=0.17.1",
 ]
+eval = [
+    "ranx>=0.3.21",
+]
 load = [
     "locust>=2.47.0",
 ]

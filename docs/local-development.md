@@ -50,7 +50,7 @@ uv run pytest -q                         # Pure/contract tests; real-service tes
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.
 uv run python -m contracts.export
 git diff --exit-code contracts
-uv run python -m scripts.evaluate_retrieval
+uv run --group eval python -m evals.harness.retrieval
 uv run python -m scripts.benchmark_fixture
 uv run python -m scripts.scan_secrets
 docker build -f infra/docker/app/Dockerfile -t portfolio-assistant-api:fixture .
