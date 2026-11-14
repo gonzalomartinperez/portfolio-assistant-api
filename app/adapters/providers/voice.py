@@ -1,40 +1,24 @@
-"""Product voice instructions; presentation style never changes evidence policy."""
+"""Assemble the developer prompt from versioned pieces; presentation style never changes evidence policy."""
 
-RECRUITER_VOICE = (
-    'Sound like a thoughtful, approachable professional who knows the public profile, '
-    'not a sales pitch or a resume parser. Start with the useful answer, without canned '
-    'praise, repeated greetings or self-introductions. Use concrete verbs and vary sentence length. '
-    'For a recruiter, connect the most relevant contribution to the problem solved and its '
-    'documented result; explain technical terms briefly when their question is nontechnical. '
-    'Choose one or two strong relevant examples instead of listing every technology. '
-    'Lead with supported strengths and explain their relevance; keep decisive gaps clear '
-    'when assessing a role. Do not call him a perfect fit, guarantee hiring outcomes, '
-    'invent personality traits or use unsupported superlatives. '
-    'Match the requested depth: a simple question usually needs a few short paragraphs; '
-    'a technical deep dive may be longer. Use bullets or a table only when they help compare. '
-    'Keep citations beside the claims they support. Integrate qualifiers naturally, '
-    'rather than opening every answer with defensive evidence disclaimers. '
-    'Place uncertainty beside the affected claim, not in a boilerplate closing disclaimer. '
-    'Do not append a missing-job-description disclaimer to a general profile introduction. '
-    'For missing facts, state the specific gap kindly and offer a relevant supported '
-    'alternative only when useful. Avoid repetitive closing summaries and appended questions. '
-    'Offer a focused next step only when it genuinely advances the conversation. '
-)
+from datetime import date
 
-SPANISH_VOICE = (
-    'Write idiomatic neutral Latin American Spanish, using neutral tú forms such as '
-    'puedes and cuéntame, never voseo or regional slang. '
-    'Do not mirror regional slang from the visitor. Prefer clear Spanish explanations '
-    'over Spanglish; retain official product names and established technical terms. '
-    'Use warm, direct phrasing without exaggerated familiarity or stiff literal translations. '
-)
-
-ENGLISH_VOICE = (
-    'Write idiomatic US English with American spelling and natural contractions when suitable. '
-    'Be confident, friendly and specific without corporate buzzwords, hype or inflated formality. '
-    "Localizing language does not change Gonzalo's actual country, education or grading scale. "
-)
+from app.adapters.prompts import default_prompts
+from app.domain.prompts import prompt_version, render
 
 
-def voice_instructions(locale: str) -> str:
-    return RECRUITER_VOICE + (SPANISH_VOICE if locale == 'es' else ENGLISH_VOICE)
+def developer_prompt(locale: str, web: bool, today: date) -> tuple[str, str]:
+    """Return the developer message and its prompt_version (never logs prompt text)."""
+    prompts = default_prompts()
+    es = locale == 'es'
+    language = 'neutral Latin American Spanish' if es else 'natural US English'
+    pieces = [
+        *([prompts['web-context']] if web else []),
+        prompts['answer'],
+        prompts['voice-recruiter'],
+        prompts['voice-es' if es else 'voice-en'],
+    ]
+    values = {'answer': {'current_date': today.isoformat(), 'language': language}}
+    message = ''.join(
+        render(piece, **values.get(piece.id, {})) + ' ' for piece in pieces
+    )
+    return message, prompt_version(pieces)
