@@ -2,11 +2,12 @@
 
 import re
 
+from evals.harness.graders._text import MARKER, expand_marker
 from evals.harness.items import Item
 from evals.harness.result import GradeResult, GradingContext, RunResult
 
 _CONTEXT = GradingContext()
-_MARKDOWN = re.compile(r'```[\s\S]*?```|`[^`\n]*`|(?<![\w])\[([0-9]+)\](?!\()')
+_MARKDOWN = re.compile(rf'```[\s\S]*?```|`[^`\n]*`|(?<![\w])({MARKER})(?!\()')
 _BIBLIOGRAPHY = re.compile(r'^\s*\[\d+\]:?\s*https?://', re.MULTILINE)
 _URL = re.compile(r'https?://[^\s)\]>"\']+')
 _PINNED = re.compile(
@@ -19,15 +20,22 @@ def _base(key: str) -> str:
 
 
 def key_retrieved(key: str, retrieved: tuple[str, ...]) -> bool:
-    """Exact match; a file-level key also matches an entity-level retrieved key."""
-    return key in retrieved or ('#' not in key and key in {_base(r) for r in retrieved})
+    """File-level comparison: ``#entity`` suffixes are ignored on both sides.
+
+    The run observes retrieval at file level, so entity presence is asserted by
+    ``required_facts`` and the cited sources, not by this check.
+    """
+    return _base(key) in {_base(r) for r in retrieved}
 
 
 def citations_in_retrieved(
     item: Item, result: RunResult, ctx: GradingContext | None = None
 ) -> GradeResult:
     """Markers map to cited sources, cited sources were retrieved, no bibliography lines."""
-    markers = {int(m[1]) for m in _MARKDOWN.finditer(result.answer) if m[1]}
+    markers: set[int] = set()
+    for found in _MARKDOWN.finditer(result.answer):
+        if found[1]:
+            markers |= expand_marker(found[1])
     stray = sorted(n for n in markers if n < 1 or n > len(result.citations))
     if stray:
         return GradeResult(

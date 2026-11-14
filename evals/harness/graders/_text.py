@@ -26,3 +26,21 @@ def sentences(text: str) -> list[str]:
     """Split on sentence-final punctuation followed by space, and on line breaks."""
     parts = re.split(r'(?<=[.!?])\s+|\n+', text)
     return [part for part in parts if part.strip()]
+
+
+# Citation markers: [1], [1,2], [1, 3], [1-3] (also en dash).
+MARKER = r'\[\d+(?:\s*[,–-]\s*\d+)*\]'
+
+
+def expand_marker(marker: str) -> set[int]:
+    """Expand ``[1,3]`` or ``[1-3]`` to the numbers they cite; a reversed range yields 0."""
+    numbers: set[int] = set()
+    for part in marker.strip('[]').split(','):
+        bounds = [int(n) for n in re.split(r'[–-]', part)]
+        if len(bounds) == 1:
+            numbers.add(bounds[0])
+        elif bounds[0] <= bounds[1] and bounds[1] - bounds[0] <= 100:
+            numbers.update(range(bounds[0], bounds[1] + 1))
+        else:
+            numbers.add(0)  # invalid range: never a real source number
+    return numbers

@@ -46,13 +46,18 @@ Option 2.
 3. `runner.py` replays scripted turns through session, conversation and stream with an
    in-process ASGI transport and an injected `Provider`; `RecordingProvider` records the
    evidence and usage the wire does not expose. The cassette replayer of M2-7 plugs into
-   the same port. The wire has no abstention flag, so a completed run without citations
-   counts as abstention.
-4. `isolation.py` accepts only loopback or unix-socket PostgreSQL and loopback Neo4j and
-   then delegates to `scripts/evaluation_isolation.validate_targets` (owned containers).
+   the same port. First-delta time is measured inside `RecordingProvider`, because the
+   ASGI transport buffers the body.
+
+   Open item: the wire has no abstention flag. A completed run without citations is
+   only a candidate; the `abstains` grader also requires an EN or ES abstention cue and
+   no forbidden claim. A real flag in the run event would replace the text heuristic.
+4. `isolation.py` accepts only explicit loopback PostgreSQL hosts and loopback Neo4j
+   hosts (unix sockets are rejected, consistent with the owned-container guard; a
+   non-loopback `PGHOST` or `PGHOSTADDR` in the environment is rejected) and then delegates to `scripts/evaluation_isolation.validate_targets` (owned containers).
    The runner refuses to start otherwise.
-5. Reports (`report.py`) hold counts per stratum and locale, failing ids and optional
-   pins, never answer text, and are written with mode 0600.
+5. Reports (`report.py`) hold counts per stratum and locale with Wilson 95% intervals,
+   failing ids, quarantined items (outside the gate) and optional pins, never answer text, and are written with mode 0600.
 6. The package is outside the image: the Dockerfile context whitelists only `app/`,
    `migrations/` and `contracts/`. Ruff and strict mypy cover `evals`.
 
@@ -73,7 +78,7 @@ Option 2.
   assertion names equal the registry, loader errors carry file, line and item id,
   duplicate ids and normalized questions.
 - `tests/evals/test_isolation.py`: remote and missing hosts rejected for PostgreSQL and
-  Neo4j, loopback and unix sockets accepted, remote targets rejected before containers
+  Neo4j, loopback accepted, unix sockets rejected, remote targets rejected before containers
   are inspected.
 - `tests/evals/test_runner.py`, `tests/evals/test_report.py`: SSE collection, grading
   pipeline, refusal on remote targets, report content and mode 0600; the real in-process

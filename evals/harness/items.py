@@ -115,6 +115,22 @@ class Item(Strict):
             )
         return self
 
+    @model_validator(mode='after')
+    def _consistent_content(self) -> Self:
+        if self.expected_behavior == 'abstain' and 'abstains' not in self.assertions:
+            raise ValueError('abstain items must assert abstains')
+        for name in self.assertions:
+            if name.startswith('language_is:') and name[-2:] != self.locale:
+                raise ValueError(f'{name} contradicts locale {self.locale}')
+        for label, ids in (
+            ('required_facts', [f.id for f in self.required_facts]),
+            ('forbidden_claims', [c.id for c in self.forbidden_claims]),
+            ('gold_evidence_ids', self.gold_evidence_ids),
+        ):
+            if len(set(ids)) != len(ids):
+                raise ValueError(f'duplicate ids in {label}')
+        return self
+
 
 def normalized_question(item: Item) -> str:
     """Casefolded, accent-free, punctuation-free text of the scripted turns."""
