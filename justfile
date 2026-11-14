@@ -38,3 +38,12 @@ demo url="http://localhost:8000" locale="en":
 eval-golden:
     @echo "eval-golden: the golden set and cassette replayer land in master plan M2-7" >&2
     @exit 2
+
+# Local scorecard: collect artifacts and check ratchets (docs/scorecard.md). Slow: runs the offline suite.
+score:
+    mkdir -p artifacts
+    uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]
+    uv run mypy > artifacts/mypy.txt 2>&1 || [ $? -eq 1 ]
+    uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
+    uv run python -m scorecard collect --artifacts artifacts --out artifacts/scorecard.json
+    uv run python -m scorecard check --current artifacts/scorecard.json --ratchets scorecard/ratchets

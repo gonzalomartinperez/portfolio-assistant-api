@@ -9,6 +9,7 @@ import yaml
 WORKFLOW_PATH = Path('.github/workflows/ci.yml')
 SCORECARD_PATH = Path('.github/workflows/scorecard.yml')
 VULN_DAILY_PATH = Path('.github/workflows/vuln-daily.yml')
+NIGHTLY_PATH = Path('.github/workflows/nightly.yml')
 PROFILE_PATH = Path('.github/ci-profile.json')
 NAMES = {
     'classify': 'classify',
@@ -401,6 +402,7 @@ def main():
     errors += standalone_errors(
         'vuln-daily', yaml.safe_load(VULN_DAILY_PATH.read_text())
     )
+    errors += standalone_errors('nightly', yaml.safe_load(NIGHTLY_PATH.read_text()))
     if errors:
         raise SystemExit('\n'.join(errors))
     print('API CI profile: dynamic jobs, ci-gate, trust and dependencies verified.')
