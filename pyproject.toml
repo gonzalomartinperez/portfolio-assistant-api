@@ -58,6 +58,9 @@ load = [
     "locust>=2.47.0",
 ]
 
+[tool.ruff]
+line-length = 100
+
 [tool.ruff.lint]
 extend-select = ["I", "N", "UP", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
 
@@ -81,7 +84,7 @@ files = ["app/domain", "app/application", "app/ai", "scripts/database_security_r
 strict = true
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 
 [tool.ruff.per-file-target-version]
 # Privileged stdlib-only jobs use the hosted runner's system Python, not application dependencies.

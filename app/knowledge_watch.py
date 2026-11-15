@@ -4,7 +4,7 @@ import asyncio
 
 from app.bootstrap.knowledge_watch import run
 
-__all__ = ['run']
+__all__ = ["run"]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(run())

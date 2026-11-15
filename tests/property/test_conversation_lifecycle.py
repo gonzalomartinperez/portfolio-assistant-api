@@ -56,7 +56,7 @@ class MemoryStore:
     def owned(self, session_id, conversation_id):
         entry = self.conversations.get(conversation_id)
         if entry is None or entry[0] != session_id:
-            raise RejectedError('not_found', 404)
+            raise RejectedError("not_found", 404)
         return entry[1]
 
     def create(self, session_id, title):
@@ -87,9 +87,7 @@ class MemoryStore:
 
     def prepare_run(self, session_id, conversation_id, content, payload_hash, key):
         self.owned(session_id, conversation_id)
-        self.history[conversation_id].append(
-            Message(uuid4(), 'user', content, [], self.now())
-        )
+        self.history[conversation_id].append(Message(uuid4(), "user", content, [], self.now()))
         return uuid4()
 
 
@@ -97,18 +95,16 @@ class LifecycleMachine(RuleBasedStateMachine):
     def __init__(self) -> None:
         super().__init__()
         self.store = MemoryStore()
-        self.service = Conversations(self.store, 30, 'key')
+        self.service = Conversations(self.store, 30, "key")
         self.sessions: list[tuple[str, Session]] = []
-        self.live: dict[
-            UUID, tuple[int, str]
-        ] = {}  # conversation -> (owner index, title)
+        self.live: dict[UUID, tuple[int, str]] = {}  # conversation -> (owner index, title)
         self.deleted: set[UUID] = set()
         self.sent: dict[UUID, list[str]] = {}
 
     @rule()
     def open_session(self):
         if len(self.sessions) < 3:
-            raw, session = self.service.bootstrap('visitor')
+            raw, session = self.service.bootstrap("visitor")
             self.sessions.append((raw, session))
 
     @precondition(lambda self: self.sessions)
@@ -124,7 +120,7 @@ class LifecycleMachine(RuleBasedStateMachine):
     def send(self, data, content):
         identifier = data.draw(st.sampled_from(list(self.live)))
         owner = self.sessions[self.live[identifier][0]][1]
-        self.service.prepare_run(owner, identifier, content, 'hash', 'k' * 8)
+        self.service.prepare_run(owner, identifier, content, "hash", "k" * 8)
         self.sent[identifier].append(content)
 
     @precondition(lambda self: self.live)
@@ -152,13 +148,13 @@ class LifecycleMachine(RuleBasedStateMachine):
         other = self.sessions[(owner + 1) % len(self.sessions)][1]
         for action in (
             lambda: self.service.messages(other, identifier, 10, None),
-            lambda: self.service.rename(other, identifier, 'x'),
+            lambda: self.service.rename(other, identifier, "x"),
             lambda: self.service.delete(other, identifier),
-            lambda: self.service.prepare_run(other, identifier, 'x', 'h', 'k' * 8),
+            lambda: self.service.prepare_run(other, identifier, "x", "h", "k" * 8),
         ):
             with pytest.raises(RejectedError) as caught:
                 action()
-            assert caught.value.code == 'not_found'
+            assert caught.value.code == "not_found"
 
     @precondition(lambda self: self.sessions)
     @rule(data=st.data())
@@ -179,9 +175,7 @@ class LifecycleMachine(RuleBasedStateMachine):
         for index, (raw, session) in enumerate(self.sessions):
             if self.store.session(digest(raw)) is None:
                 continue
-            listed = {
-                row.id for row in self.service.list_conversations(session, 50, None)
-            }
+            listed = {row.id for row in self.service.list_conversations(session, 50, None)}
             expected = {i for i, (owner, _) in self.live.items() if owner == index}
             assert listed == expected
 

@@ -31,7 +31,7 @@ async def heartbeat(stream, interval: float = 15):
                     while not pending.done():
                         done, _ = await asyncio.wait({pending}, timeout=interval)
                         if not done:
-                            yield ': keep-alive\n\n'
+                            yield ": keep-alive\n\n"
                     try:
                         yield pending.result()
                     except StopAsyncIteration:

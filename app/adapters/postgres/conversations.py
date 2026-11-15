@@ -29,17 +29,17 @@ class PostgresConversations:
     def owned(self, session_id: UUID, conversation_id: UUID) -> Iterator[Any]:
         with self.connect() as conn:
             row = conn.execute(
-                'SELECT id FROM conversations WHERE id=%s AND session_id=%s FOR UPDATE',
+                "SELECT id FROM conversations WHERE id=%s AND session_id=%s FOR UPDATE",
                 (conversation_id, session_id),
             ).fetchone()
             if not row:
-                raise RejectedError('not_found', 404)
+                raise RejectedError("not_found", 404)
             yield conn
 
     def session(self, secret_digest: str) -> Session | None:
         with self.connect() as conn:
             row = conn.execute(
-                'SELECT id,csrf_token,expires_at FROM sessions WHERE secret_digest=%s AND expires_at>now()',
+                "SELECT id,csrf_token,expires_at FROM sessions WHERE secret_digest=%s AND expires_at>now()",
                 (secret_digest,),
             ).fetchone()
         return record(Session, row) if row else None
@@ -49,46 +49,44 @@ class PostgresConversations:
     ) -> None:
         with self.connect() as conn:
             conn.execute(
-                'INSERT INTO sessions(id,secret_digest,csrf_token,expires_at) VALUES (%s,%s,%s,%s)',
+                "INSERT INTO sessions(id,secret_digest,csrf_token,expires_at) VALUES (%s,%s,%s,%s)",
                 (session_id, secret_digest, csrf, expires),
             )
 
     def delete_session(self, session_id: UUID) -> None:
         with self.connect() as conn:
             conn.execute(
-                'INSERT INTO checkpoint_cleanup(thread_id) SELECT r.id::text FROM runs r JOIN conversations c ON c.id=r.conversation_id WHERE c.session_id=%s ON CONFLICT DO NOTHING',
+                "INSERT INTO checkpoint_cleanup(thread_id) SELECT r.id::text FROM runs r JOIN conversations c ON c.id=r.conversation_id WHERE c.session_id=%s ON CONFLICT DO NOTHING",
                 (session_id,),
             )
-            conn.execute('DELETE FROM sessions WHERE id=%s', (session_id,))
+            conn.execute("DELETE FROM sessions WHERE id=%s", (session_id,))
 
     def rate_limit(self, subject_hash: str, operation: str, limit: int) -> None:
         with self.connect() as conn:
-            conn.execute('SELECT pg_advisory_xact_lock(472018)')
+            conn.execute("SELECT pg_advisory_xact_lock(472018)")
             count = conn.execute(
                 "SELECT count(*) AS n FROM rate_events WHERE subject_hash=%s AND operation=%s AND created_at>now()-interval '1 hour'",
                 (subject_hash, operation),
-            ).fetchone()['n']
+            ).fetchone()["n"]
             if count >= limit:
-                raise RejectedError('rate_limited', 429)
+                raise RejectedError("rate_limited", 429)
             conn.execute(
-                'INSERT INTO rate_events(id,subject_hash,operation) VALUES (%s,%s,%s)',
+                "INSERT INTO rate_events(id,subject_hash,operation) VALUES (%s,%s,%s)",
                 (uuid4(), subject_hash, operation),
             )
 
     def create(self, session_id: UUID, title: str) -> Conversation:
         with self.connect() as conn:
             # Serialize per-session allocation so the storage bound survives concurrent requests.
-            conn.execute(
-                'SELECT id FROM sessions WHERE id=%s FOR UPDATE', (session_id,)
-            )
+            conn.execute("SELECT id FROM sessions WHERE id=%s FOR UPDATE", (session_id,))
             count = conn.execute(
-                'SELECT count(*) AS n FROM conversations WHERE session_id=%s',
+                "SELECT count(*) AS n FROM conversations WHERE session_id=%s",
                 (session_id,),
-            ).fetchone()['n']
+            ).fetchone()["n"]
             if count >= 100:
-                raise RejectedError('conversation_limit', 429)
+                raise RejectedError("conversation_limit", 429)
             row = conn.execute(
-                'INSERT INTO conversations(id,session_id,title) VALUES (%s,%s,%s) RETURNING *',
+                "INSERT INTO conversations(id,session_id,title) VALUES (%s,%s,%s) RETURNING *",
                 (uuid4(), session_id, title),
             ).fetchone()
         return record(Conversation, row)
@@ -98,17 +96,15 @@ class PostgresConversations:
     ) -> list[Conversation]:
         with self.connect() as conn:
             rows = conn.execute(
-                'SELECT * FROM conversations WHERE session_id=%s AND (%s::timestamptz IS NULL OR updated_at<%s) ORDER BY updated_at DESC LIMIT %s',
+                "SELECT * FROM conversations WHERE session_id=%s AND (%s::timestamptz IS NULL OR updated_at<%s) ORDER BY updated_at DESC LIMIT %s",
                 (session_id, cursor, cursor, limit),
             ).fetchall()
         return [record(Conversation, row) for row in rows]
 
-    def rename(
-        self, session_id: UUID, conversation_id: UUID, title: str
-    ) -> Conversation:
+    def rename(self, session_id: UUID, conversation_id: UUID, title: str) -> Conversation:
         with self.owned(session_id, conversation_id) as conn:
             row = conn.execute(
-                'UPDATE conversations SET title=%s,updated_at=now() WHERE id=%s RETURNING *',
+                "UPDATE conversations SET title=%s,updated_at=now() WHERE id=%s RETURNING *",
                 (title, conversation_id),
             ).fetchone()
         return record(Conversation, row)
@@ -116,10 +112,10 @@ class PostgresConversations:
     def delete(self, session_id: UUID, conversation_id: UUID) -> None:
         with self.owned(session_id, conversation_id) as conn:
             conn.execute(
-                'INSERT INTO checkpoint_cleanup(thread_id) SELECT id::text FROM runs WHERE conversation_id=%s ON CONFLICT DO NOTHING',
+                "INSERT INTO checkpoint_cleanup(thread_id) SELECT id::text FROM runs WHERE conversation_id=%s ON CONFLICT DO NOTHING",
                 (conversation_id,),
             )
-            conn.execute('DELETE FROM conversations WHERE id=%s', (conversation_id,))
+            conn.execute("DELETE FROM conversations WHERE id=%s", (conversation_id,))
 
     def messages(
         self,
@@ -130,7 +126,7 @@ class PostgresConversations:
     ) -> list[Message]:
         with self.owned(session_id, conversation_id) as conn:
             rows = conn.execute(
-                'SELECT * FROM messages WHERE conversation_id=%s AND (%s::timestamptz IS NULL OR created_at<%s) ORDER BY created_at DESC LIMIT %s',
+                "SELECT * FROM messages WHERE conversation_id=%s AND (%s::timestamptz IS NULL OR created_at<%s) ORDER BY created_at DESC LIMIT %s",
                 (conversation_id, cursor, cursor, limit),
             ).fetchall()
         return [record(Message, row) for row in rows]
@@ -148,28 +144,28 @@ class PostgresConversations:
                 "UPDATE runs SET state='interrupted',error_code='run_interrupted',updated_at=now() WHERE state IN ('pending','running') AND lease_until<now()"
             )
             existing = conn.execute(
-                'SELECT * FROM runs WHERE conversation_id=%s AND idempotency_key=%s',
+                "SELECT * FROM runs WHERE conversation_id=%s AND idempotency_key=%s",
                 (conversation_id, key),
             ).fetchone()
             if existing:
                 raise RejectedError(
-                    'idempotency_conflict'
-                    if existing['payload_hash'] != payload_hash
-                    else 'run_already_exists',
+                    "idempotency_conflict"
+                    if existing["payload_hash"] != payload_hash
+                    else "run_already_exists",
                     409,
                 )
-            conn.execute('SELECT pg_advisory_xact_lock(472020)')
+            conn.execute("SELECT pg_advisory_xact_lock(472020)")
             count = conn.execute(
                 "SELECT count(*) AS n FROM runs WHERE state IN ('pending','running')"
-            ).fetchone()['n']
+            ).fetchone()["n"]
             if count >= 4:
-                raise RejectedError('busy', 429)
+                raise RejectedError("busy", 429)
             history = conn.execute(
-                'SELECT count(*) AS n FROM messages WHERE conversation_id=%s',
+                "SELECT count(*) AS n FROM messages WHERE conversation_id=%s",
                 (conversation_id,),
-            ).fetchone()['n']
+            ).fetchone()["n"]
             if history >= 200:
-                raise RejectedError('history_limit', 429)
+                raise RejectedError("history_limit", 429)
             run_id = uuid4()
             try:
                 conn.execute(
@@ -181,11 +177,11 @@ class PostgresConversations:
                     (uuid4(), conversation_id, content),
                 )
                 conn.execute(
-                    'UPDATE conversations SET updated_at=now() WHERE id=%s',
+                    "UPDATE conversations SET updated_at=now() WHERE id=%s",
                     (conversation_id,),
                 )
             except UniqueViolation:
-                raise RejectedError('run_in_progress', 409) from None
+                raise RejectedError("run_in_progress", 409) from None
         return run_id
 
     def run(self, session_id: UUID, run_id: UUID, cancel: bool = False) -> Run:
@@ -199,11 +195,11 @@ class PostgresConversations:
                     (run_id, session_id),
                 )
             row = conn.execute(
-                'SELECT r.* FROM runs r JOIN conversations c ON c.id=r.conversation_id WHERE r.id=%s AND c.session_id=%s',
+                "SELECT r.* FROM runs r JOIN conversations c ON c.id=r.conversation_id WHERE r.id=%s AND c.session_id=%s",
                 (run_id, session_id),
             ).fetchone()
         if not row:
-            raise RejectedError('not_found', 404)
+            raise RejectedError("not_found", 404)
         return record(Run, row)
 
     def feedback(self, session_id: UUID, message_id: UUID, rating: str) -> None:
@@ -213,8 +209,8 @@ class PostgresConversations:
                 (message_id, session_id),
             ).fetchone()
             if not found:
-                raise RejectedError('not_found', 404)
+                raise RejectedError("not_found", 404)
             conn.execute(
-                'INSERT INTO feedback(message_id,session_id,rating) VALUES (%s,%s,%s) ON CONFLICT(message_id) DO UPDATE SET rating=excluded.rating',
+                "INSERT INTO feedback(message_id,session_id,rating) VALUES (%s,%s,%s) ON CONFLICT(message_id) DO UPDATE SET rating=excluded.rating",
                 (message_id, session_id, rating),
             )

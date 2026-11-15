@@ -19,9 +19,9 @@ def pool(database_url: str) -> ConnectionPool:
         timeout=5,
         max_waiting=16,
         kwargs={
-            'row_factory': dict_row,
-            'connect_timeout': 5,
-            'options': '-c statement_timeout=10000 -c lock_timeout=5000',
+            "row_factory": dict_row,
+            "connect_timeout": 5,
+            "options": "-c statement_timeout=10000 -c lock_timeout=5000",
         },
     )
 
@@ -33,7 +33,7 @@ def connect(database_url: str) -> Iterator[Any]:
         database_url,
         row_factory=dict_row,
         connect_timeout=5,
-        options='-c statement_timeout=10000 -c lock_timeout=5000',
+        options="-c statement_timeout=10000 -c lock_timeout=5000",
     ) as conn:
         yield conn
 
@@ -50,6 +50,6 @@ def translated(connection: Connect) -> Connect:
             with connection() as conn:
                 yield conn
         except psycopg.Error, PoolTimeout, TooManyRequests:
-            raise DependencyUnavailableError('storage_unavailable') from None
+            raise DependencyUnavailableError("storage_unavailable") from None
 
     return operation

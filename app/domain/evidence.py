@@ -19,186 +19,184 @@ class EvidenceRecord(TypedDict):
 
 
 STOP = {
-    'about',
-    'again',
-    'como',
-    'con',
-    'cual',
-    'cuales',
-    'de',
-    'del',
-    'did',
-    'does',
-    'donde',
-    'el',
-    'ella',
-    'en',
-    'es',
-    'esta',
-    'fue',
-    'gonzalo',
-    'his',
-    'how',
-    'is',
-    'la',
-    'las',
-    'los',
-    'me',
-    'que',
-    'quien',
-    'se',
-    'the',
-    'this',
-    'una',
-    'what',
-    'when',
-    'where',
-    'which',
-    'who',
-    'with',
-    'you',
-    'your',
+    "about",
+    "again",
+    "como",
+    "con",
+    "cual",
+    "cuales",
+    "de",
+    "del",
+    "did",
+    "does",
+    "donde",
+    "el",
+    "ella",
+    "en",
+    "es",
+    "esta",
+    "fue",
+    "gonzalo",
+    "his",
+    "how",
+    "is",
+    "la",
+    "las",
+    "los",
+    "me",
+    "que",
+    "quien",
+    "se",
+    "the",
+    "this",
+    "una",
+    "what",
+    "when",
+    "where",
+    "which",
+    "who",
+    "with",
+    "you",
+    "your",
 }
 ALIASES = {
-    'ai': {'agents', 'orchestration', 'retrieval', 'reranking'},
-    'ia': {'agentes', 'orquestacion', 'recuperacion', 'memoria'},
-    'construyo': {'built', 'contributions', 'desarrolle', 'implemente'},
-    'performance': {'metrics', 'qualifier', 'baseline', 'measured', 'estimated'},
-    'improvements': {'metrics', 'qualifier', 'baseline', 'measured', 'estimated'},
-    'decision': {'architecture', 'trade', 'design', 'decision', 'decisiones'},
-    'learn': {'education', 'qualification', 'studies'},
-    'study': {'education', 'university', 'universidad', 'studies', 'estudios'},
-    'studied': {'education', 'university', 'universidad', 'studies', 'estudios'},
-    'estudio': {'education', 'university', 'universidad', 'estudios'},
-    'estudios': {'education', 'university', 'universidad'},
-    'built': {
-        'architecture',
-        'stack',
-        'technology',
-        'engineering',
-        'application',
-        'desarrollo',
+    "ai": {"agents", "orchestration", "retrieval", "reranking"},
+    "ia": {"agentes", "orquestacion", "recuperacion", "memoria"},
+    "construyo": {"built", "contributions", "desarrolle", "implemente"},
+    "performance": {"metrics", "qualifier", "baseline", "measured", "estimated"},
+    "improvements": {"metrics", "qualifier", "baseline", "measured", "estimated"},
+    "decision": {"architecture", "trade", "design", "decision", "decisiones"},
+    "learn": {"education", "qualification", "studies"},
+    "study": {"education", "university", "universidad", "studies", "estudios"},
+    "studied": {"education", "university", "universidad", "studies", "estudios"},
+    "estudio": {"education", "university", "universidad", "estudios"},
+    "estudios": {"education", "university", "universidad"},
+    "built": {
+        "architecture",
+        "stack",
+        "technology",
+        "engineering",
+        "application",
+        "desarrollo",
     },
-    'build': {
-        'architecture',
-        'stack',
-        'technology',
-        'engineering',
-        'application',
-        'desarrollo',
+    "build": {
+        "architecture",
+        "stack",
+        "technology",
+        "engineering",
+        "application",
+        "desarrollo",
     },
-    'technologies': {'stack', 'technology', 'tecnologias'},
-    'tecnologias': {'stack', 'technology', 'technologies'},
-    'work': {'role', 'experience', 'trabajo'},
-    'trabajo': {'role', 'experience', 'work'},
+    "technologies": {"stack", "technology", "tecnologias"},
+    "tecnologias": {"stack", "technology", "technologies"},
+    "work": {"role", "experience", "trabajo"},
+    "trabajo": {"role", "experience", "work"},
 }
 
 
 def requested_affiliation(question: str) -> str | None:
     """Extract an explicit employer/project premise, not a target role after 'for'."""
     match = re.search(
-        r'\b(?i:at|en|(?:work(?:ed|ing|s)?|built|build(?:ing|s)?|'
-        r'develop(?:ed|ing|s)?|implement(?:ed|ing|s)?|deliver(?:ed|ing|s)?|'
-        r'engineer(?:ed|ing|s)?)\s+for)\s+'
-        r'([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})',
+        r"\b(?i:at|en|(?:work(?:ed|ing|s)?|built|build(?:ing|s)?|"
+        r"develop(?:ed|ing|s)?|implement(?:ed|ing|s)?|deliver(?:ed|ing|s)?|"
+        r"engineer(?:ed|ing|s)?)\s+for)\s+"
+        r"([A-Z][\w.-]+(?: [A-Z][\w.-]+){0,3})",
         question,
     )
     if match and match[1].casefold() not in {
-        'english',
-        'spanish',
-        'inglés',
-        'ingles',
-        'español',
+        "english",
+        "spanish",
+        "inglés",
+        "ingles",
+        "español",
     }:
         return match[1]
     return None
 
 
 def tokens(text: str) -> set[str]:
-    normalized = unicodedata.normalize('NFKD', text.lower())
-    normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+    normalized = unicodedata.normalize("NFKD", text.lower())
+    normalized = "".join(char for char in normalized if not unicodedata.combining(char))
     return {
         word
-        for word in re.findall(r'[a-z0-9]+', normalized)
-        if (len(word) > 2 or word in {'ai', 'ia'}) and word not in STOP
+        for word in re.findall(r"[a-z0-9]+", normalized)
+        if (len(word) > 2 or word in {"ai", "ia"}) and word not in STOP
     }
 
 
 def asks_spoken_languages(terms: set[str]) -> bool:
-    if terms & {'programming', 'programacion', 'coding', 'codigo'}:
+    if terms & {"programming", "programacion", "coding", "codigo"}:
         return False
     if not terms & {
-        'spoken',
-        'idiomas',
-        'idioma',
-        'habla',
-        'speak',
-        'speaks',
+        "spoken",
+        "idiomas",
+        "idioma",
+        "habla",
+        "speak",
+        "speaks",
     } and terms & {
-        'build',
-        'built',
-        'stack',
-        'developed',
-        'backend',
-        'frontend',
-        'desarrollar',
-        'desarrollo',
+        "build",
+        "built",
+        "stack",
+        "developed",
+        "backend",
+        "frontend",
+        "desarrollar",
+        "desarrollo",
     }:
         return False
     return bool(
         terms
         & {
-            'languages',
-            'language',
-            'idiomas',
-            'idioma',
-            'spoken',
-            'habla',
-            'speak',
-            'speaks',
+            "languages",
+            "language",
+            "idiomas",
+            "idioma",
+            "spoken",
+            "habla",
+            "speak",
+            "speaks",
         }
         or (
-            terms & {'proficiency', 'fluency', 'nivel'}
-            and terms & {'english', 'spanish', 'ingles', 'espanol'}
+            terms & {"proficiency", "fluency", "nivel"}
+            and terms & {"english", "spanish", "ingles", "espanol"}
         )
     )
 
 
 def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
-    content = tokens(row['content'])
-    path = tokens(row['path'])
-    if row['path'] == 'README.md':
-        path.add('portfolio')
+    content = tokens(row["content"])
+    path = tokens(row["path"])
+    if row["path"] == "README.md":
+        path.add("portfolio")
     expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
     anchors = expanded & (content | path)
     if not anchors:
         return 0
-    score = (
-        3.0 * len(terms & (content | path)) + len(anchors) + 2 * len(expanded & path)
-    )
-    if 'portfolio' in terms and row['path'] == 'README.md':
+    score = 3.0 * len(terms & (content | path)) + len(anchors) + 2 * len(expanded & path)
+    if "portfolio" in terms and row["path"] == "README.md":
         score *= 2
-        if 'Engineering at a glance' in row['content']:
+        if "Engineering at a glance" in row["content"]:
             score *= 5
     if (
-        terms & {'study', 'studied', 'estudio', 'estudios'}
-        and row['path'].endswith('/education.ts')
-        and row['start_line'] == 1
+        terms & {"study", "studied", "estudio", "estudios"}
+        and row["path"].endswith("/education.ts")
+        and row["start_line"] == 1
     ):
         score *= 5
     if (
-        row['path'].endswith('/experience.ts')
-        and 'contributions:' in row['content']
+        row["path"].endswith("/experience.ts")
+        and "contributions:" in row["content"]
         and terms & content
     ):
         score *= 3
-    if row['path'].endswith('/projects.ts') and terms & content:
-        tech = bool(terms & {'technologies', 'technology', 'tecnologias', 'stack'})
-        if (tech and 'stack: technologyNames' in row['content']) or (
-            not tech and 'summary:' in row['content']
+    if row["path"].endswith("/projects.ts") and terms & content:
+        tech = bool(terms & {"technologies", "technology", "tecnologias", "stack"})
+        if (tech and "stack: technologyNames" in row["content"]) or (
+            not tech and "summary:" in row["content"]
         ):
             score *= 3
-    profile = profile_parts(row['path'])
+    profile = profile_parts(row["path"])
     if profile is not None and profile[0] == locale:
         score *= 1.35
     elif profile is not None:
@@ -207,54 +205,50 @@ def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
 
 
 def verified(row: EvidenceRecord, source_commit: str, known_paths: set[str]) -> bool:
-    path = row['path']
-    if (
-        path not in known_paths
-        or row['start_line'] < 1
-        or row['end_line'] < row['start_line']
-    ):
+    path = row["path"]
+    if path not in known_paths or row["start_line"] < 1 or row["end_line"] < row["start_line"]:
         return False
-    expected = f'https://github.com/gonzalomartinperez/portfolio/blob/{source_commit}/{quote(path, safe="/")}#L{row["start_line"]}-L{row["end_line"]}'
+    expected = f"https://github.com/gonzalomartinperez/portfolio/blob/{source_commit}/{quote(path, safe='/')}#L{row['start_line']}-L{row['end_line']}"
     return (
-        row['url'] == expected
-        and hashlib.sha256(row['content'].encode()).hexdigest() == row['content_hash']
+        row["url"] == expected
+        and hashlib.sha256(row["content"].encode()).hexdigest() == row["content_hash"]
     )
 
 
 def blocks_private_query(question: str, terms: set[str]) -> bool:
-    if 'career-ops' in question.lower() or terms & {
-        'salary',
-        'salario',
-        'compensation',
-        'availability',
-        'disponibilidad',
+    if "career-ops" in question.lower() or terms & {
+        "salary",
+        "salario",
+        "compensation",
+        "availability",
+        "disponibilidad",
     }:
         return True
-    if not terms & {'secret', 'secreto', 'secrets', 'secretos'}:
+    if not terms & {"secret", "secreto", "secrets", "secretos"}:
         return False
-    professional = bool(terms & {'management', 'gestion', 'infisical'})
+    professional = bool(terms & {"management", "gestion", "infisical"})
     disclosure = bool(
         terms
         & {
-            'reveal',
-            'revela',
-            'revelar',
-            'print',
-            'imprime',
-            'mostrar',
-            'mostrame',
-            'muestra',
-            'show',
-            'expose',
-            'private',
-            'privados',
-            'password',
-            'contrasena',
-            'clave',
-            'key',
-            'credentials',
-            'credenciales',
-            'export',
+            "reveal",
+            "revela",
+            "revelar",
+            "print",
+            "imprime",
+            "mostrar",
+            "mostrame",
+            "muestra",
+            "show",
+            "expose",
+            "private",
+            "privados",
+            "password",
+            "contrasena",
+            "clave",
+            "key",
+            "credentials",
+            "credenciales",
+            "export",
         }
     )
     return not professional or disclosure
@@ -262,25 +256,22 @@ def blocks_private_query(question: str, terms: set[str]) -> bool:
 
 def comparison_subjects(question: str, contents: tuple[str, ...]) -> tuple[str, ...]:
     """Use only named subjects present verbatim in public evidence, never implied facts."""
-    names = re.findall(r'\b[A-Z][a-zA-Z0-9.-]{2,}\b', question)
+    names = re.findall(r"\b[A-Z][a-zA-Z0-9.-]{2,}\b", question)
     excluded = {
-        'gonzalo',
-        'english',
-        'spanish',
-        'compare',
-        'what',
-        'which',
-        'how',
-        'compara',
+        "gonzalo",
+        "english",
+        "spanish",
+        "compare",
+        "what",
+        "which",
+        "how",
+        "compara",
     }
     return tuple(
         dict.fromkeys(
             name
             for name in names
             if name.lower() not in excluded
-            and any(
-                re.search(r'\b' + re.escape(name) + r'\b', content)
-                for content in contents
-            )
+            and any(re.search(r"\b" + re.escape(name) + r"\b", content) for content in contents)
         )
     )

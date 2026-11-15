@@ -38,7 +38,7 @@ class KnowledgeIndex(Protocol):
         ...
 
     async def relationships(
-        self, version: str, terms: set[str], locale: str = 'en', expand: bool = False
+        self, version: str, terms: set[str], locale: str = "en", expand: bool = False
     ) -> tuple[str, ...]:
         """Return bounded source IDs reached through reviewed versioned graph edges."""
         ...

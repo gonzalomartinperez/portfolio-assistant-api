@@ -2,7 +2,7 @@
 
 from app.bootstrap.indexing import main, sync
 
-__all__ = ['main', 'sync']
+__all__ = ["main", "sync"]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

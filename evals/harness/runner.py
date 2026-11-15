@@ -32,8 +32,8 @@ from evals.harness.report import ItemOutcome
 from evals.harness.result import CitedSource, GradingContext, RunResult
 from scripts.evaluation_isolation import EvaluationContainer, inspect_containers
 
-_CANONICAL_URL = re.compile(r'canonical_url=(\S+?):?(?=\s|$)')
-_SOURCE = re.compile(r'^PUBLIC SOURCE \[\d+\] (\S+) lines \d+-\d+', re.MULTILINE)
+_CANONICAL_URL = re.compile(r"canonical_url=(\S+?):?(?=\s|$)")
+_SOURCE = re.compile(r"^PUBLIC SOURCE \[\d+\] (\S+) lines \d+-\d+", re.MULTILINE)
 
 
 class RecordingProvider:
@@ -70,13 +70,13 @@ class RecordingProvider:
 def parse_sse(text: str) -> list[tuple[str, dict[str, object]]]:
     """Return ``(event name, data)`` pairs, ignoring comments such as keep-alives."""
     events = []
-    for frame in text.split('\n\n'):
-        name = ''
-        data = ''
+    for frame in text.split("\n\n"):
+        name = ""
+        data = ""
         for line in frame.splitlines():
-            if line.startswith('event: '):
+            if line.startswith("event: "):
                 name = line[7:]
-            elif line.startswith('data: '):
+            elif line.startswith("data: "):
                 data = line[6:]
         if name and data:
             events.append((name, json.loads(data)))
@@ -94,19 +94,19 @@ def collect(
 ) -> RunResult:
     """Pure fold of one turn's events and provider observations into a ``RunResult``."""
     names = tuple(name for name, _ in events)
-    message = next((d['payload'] for n, d in events if n == 'message.completed'), None)
+    message = next((d["payload"] for n, d in events if n == "message.completed"), None)
     payload = message if isinstance(message, dict) else {}
     citations = tuple(
-        CitedSource(canonical_key(c.get('path') or c['url']), c['url'])
-        for c in payload.get('citations', [])
+        CitedSource(canonical_key(c.get("path") or c["url"]), c["url"])
+        for c in payload.get("citations", [])
     )
     terminal = next(
-        (n for n in names if n in ('run.completed', 'run.failed', 'run.cancelled')),
+        (n for n in names if n in ("run.completed", "run.failed", "run.cancelled")),
         None,
     )
-    text = '\n'.join(evidence)
+    text = "\n".join(evidence)
     return RunResult(
-        answer=str(payload.get('content', '')),
+        answer=str(payload.get("content", "")),
         events=names,
         citations=citations,
         retrieved_keys=tuple(canonical_key(path) for path in _SOURCE.findall(text))
@@ -114,7 +114,7 @@ def collect(
         else None,
         evidence_text=text if evidence else None,
         question=question,
-        abstained=terminal == 'run.completed' and not citations,
+        abstained=terminal == "run.completed" and not citations,
         input_tokens=sum(u.input_tokens for u in usage) if usage else None,
         output_tokens=sum(u.output_tokens for u in usage) if usage else None,
         llm_calls=len(evidence),
@@ -133,20 +133,18 @@ def item_context(
     and its paths; canonical source URLs the provider was shown are approved exactly.
     """
     base = base or GradingContext()
-    hosts = (item.tools or {}).get('host_allowed')
-    names = (
-        [hosts] if isinstance(hosts, str) else hosts if isinstance(hosts, list) else []
-    )
-    approved = {f'https://{h}' for h in names if isinstance(h, str) and h}
-    approved |= set(_CANONICAL_URL.findall(result.evidence_text or ''))
+    hosts = (item.tools or {}).get("host_allowed")
+    names = [hosts] if isinstance(hosts, str) else hosts if isinstance(hosts, list) else []
+    approved = {f"https://{h}" for h in names if isinstance(h, str) and h}
+    approved |= set(_CANONICAL_URL.findall(result.evidence_text or ""))
     return replace(base, approved_urls=base.approved_urls | frozenset(approved))
 
 
 def visitor_address(index: int) -> str:
     """A distinct synthetic address in 198.18.0.0/15 (benchmarking range) per index."""
     if not 0 <= index < 2 * 256 * 250:
-        raise ValueError('visitor index out of the 198.18.0.0/15 range')
-    return f'198.{18 + index // 64000}.{index // 250 % 256}.{index % 250 + 1}'
+        raise ValueError("visitor index out of the 198.18.0.0/15 range")
+    return f"198.{18 + index // 64000}.{index // 250 % 256}.{index % 250 + 1}"
 
 
 async def run_item(
@@ -158,26 +156,26 @@ async def run_item(
     visitor: str,
 ) -> RunResult:
     """Replay the item's user turns in one conversation; the result is the last turn."""
-    forwarded = {'X-Forwarded-For': visitor, 'Origin': origin}
+    forwarded = {"X-Forwarded-For": visitor, "Origin": origin}
     session = await client.post(
-        '/api/v1/session', headers={**forwarded, 'X-Session-Bootstrap': '1'}, json={}
+        "/api/v1/session", headers={**forwarded, "X-Session-Bootstrap": "1"}, json={}
     )
     session.raise_for_status()
-    headers = {**forwarded, 'X-CSRF-Token': session.json()['csrf_token']}
+    headers = {**forwarded, "X-CSRF-Token": session.json()["csrf_token"]}
     try:
-        created = await client.post('/api/v1/conversations', headers=headers, json={})
+        created = await client.post("/api/v1/conversations", headers=headers, json={})
         created.raise_for_status()
-        path = f'/api/v1/conversations/{created.json()["id"]}/messages/stream'
-        result = RunResult(answer='')
+        path = f"/api/v1/conversations/{created.json()['id']}/messages/stream"
+        result = RunResult(answer="")
         for turn in item.turns:
             mark = (len(recorder.evidence), len(recorder.usage))
             started = time.perf_counter()
-            body = ''
+            body = ""
             async with client.stream(
-                'POST',
+                "POST",
                 path,
-                headers={**headers, 'Idempotency-Key': str(uuid4())},
-                json={'content': turn.text, 'locale': item.locale},
+                headers={**headers, "Idempotency-Key": str(uuid4())},
+                json={"content": turn.text, "locale": item.locale},
             ) as stream:
                 stream.raise_for_status()
                 async for chunk in stream.aiter_text():
@@ -194,7 +192,7 @@ async def run_item(
             )
         return result
     finally:
-        await client.delete('/api/v1/session', headers=headers)
+        await client.delete("/api/v1/session", headers=headers)
 
 
 async def run_items(
@@ -203,9 +201,7 @@ async def run_items(
     provider: Provider,
     *,
     ctx: GradingContext | None = None,
-    inspect: Callable[
-        [tuple[str, str]], list[EvaluationContainer]
-    ] = inspect_containers,
+    inspect: Callable[[tuple[str, str]], list[EvaluationContainer]] = inspect_containers,
     first_visitor: int = 0,
 ) -> list[ItemOutcome]:
     """Grade items against the in-process app; refuses unless the isolation guard passes.
@@ -216,15 +212,15 @@ async def run_items(
     """
     require_isolated(config, inspect=inspect)
     # Synthetic loopback visitors: trust the forwarded address so per-subject limits apply.
-    config = config.model_copy(update={'trusted_proxy_ips': '127.0.0.1'})
+    config = config.model_copy(update={"trusted_proxy_ips": "127.0.0.1"})
     recorder = RecordingProvider(provider)
     app = create_app(config, provider_override=recorder)
     outcomes = []
-    runnable = [item for item in items if item.status != 'retired']
+    runnable = [item for item in items if item.status != "retired"]
     async with app.router.lifespan_context(app):
-        transport = httpx.ASGITransport(app=app, client=('127.0.0.1', 50000))
+        transport = httpx.ASGITransport(app=app, client=("127.0.0.1", 50000))
         async with httpx.AsyncClient(
-            transport=transport, base_url='http://eval.local', timeout=130
+            transport=transport, base_url="http://eval.local", timeout=130
         ) as client:
             for index, item in enumerate(runnable):
                 result = await run_item(

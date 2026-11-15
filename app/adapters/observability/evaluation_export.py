@@ -13,20 +13,20 @@ from urllib3.util.retry import Retry
 
 from app.application.evaluation_export import EvaluationSummary
 
-ENDPOINT = 'https://api.smith.langchain.com'
-PROJECT = 'portfolio-synthetic-evaluations'
+ENDPOINT = "https://api.smith.langchain.com"
+PROJECT = "portfolio-synthetic-evaluations"
 
 
 class EvaluationSession(Session):
     def request(  # type: ignore[override]  # requests declares many keyword parameters; kwargs are forwarded unchanged
         self, method: str, url: str | bytes, **kwargs: Any
     ) -> Response:
-        if method != 'POST' or url != ENDPOINT + '/runs':
-            raise ValueError('unexpected evaluation export destination')
-        kwargs['allow_redirects'] = False
+        if method != "POST" or url != ENDPOINT + "/runs":
+            raise ValueError("unexpected evaluation export destination")
+        kwargs["allow_redirects"] = False
         response = super().request(method, url, **kwargs)
         if 300 <= response.status_code < 400:
-            raise RequestException('evaluation export redirect rejected')
+            raise RequestException("evaluation export redirect rejected")
         return response
 
 
@@ -52,25 +52,25 @@ class LangSmithEvaluationExporter:
                 hide_metadata=lambda metadata: {
                     key: value
                     for key, value in metadata.items()
-                    if key in asdict(summary) or key == 'model'
+                    if key in asdict(summary) or key == "model"
                 },
                 omit_traced_runtime_info=True,
-                tracing_mode='langsmith',
+                tracing_mode="langsmith",
                 tracing_sampling_rate=1.0,
-                workspace_id='',
+                workspace_id="",
             )
             now = datetime.now(UTC)
             client.create_run(
-                name='synthetic-evaluation-summary',
+                name="synthetic-evaluation-summary",
                 inputs={},
                 outputs={},
-                run_type='chain',
+                run_type="chain",
                 project_name=PROJECT,
                 id=uuid4(),
                 start_time=now,
                 end_time=now,
-                extra={'metadata': {**asdict(summary), 'model': 'gpt-6-luna'}},
-                tags=['synthetic', 'aggregate-only'],
+                extra={"metadata": {**asdict(summary), "model": "gpt-6-luna"}},
+                tags=["synthetic", "aggregate-only"],
                 dangerously_allow_filesystem=False,
             )
             return True

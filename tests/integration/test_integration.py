@@ -21,145 +21,127 @@ from tests.support import retrieve
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(
-        os.getenv('TEST_INTEGRATION') != '1',
-        reason='requires real PostgreSQL and Neo4j',
+        os.getenv("TEST_INTEGRATION") != "1",
+        reason="requires real PostgreSQL and Neo4j",
     ),
 ]
 
 
 def headers(origin: str, csrf: str) -> dict:
-    return {'Origin': origin, 'X-CSRF-Token': csrf}
+    return {"Origin": origin, "X-CSRF-Token": csrf}
 
 
 def bootstrap(client: TestClient, origin: str):
     response = client.post(
-        '/api/v1/session',
-        headers={'Origin': origin, 'X-Session-Bootstrap': '1'},
+        "/api/v1/session",
+        headers={"Origin": origin, "X-Session-Bootstrap": "1"},
         json={},
     )
     assert response.status_code == 200
-    return response.json()['csrf_token']
+    return response.json()["csrf_token"]
 
 
 def test_same_origin_embed_contract_needs_no_parent_api_permission(client_factory):
     from app.bootstrap.config import Settings
     from app.bootstrap.container import create_app
 
-    origin = 'https://assistant.gonzalomartinperez.com'
-    parent = 'https://gonzalomartinperez.com'
+    origin = "https://assistant.gonzalomartinperez.com"
+    parent = "https://gonzalomartinperez.com"
     application = create_app(Settings(allowed_origins=origin, secure_cookies=True))
     client = client_factory(application, base_url=origin, client=(str(uuid4()), 50000))
     response = client.post(
-        '/api/v1/session',
-        headers={'Origin': origin, 'X-Session-Bootstrap': '1'},
+        "/api/v1/session",
+        headers={"Origin": origin, "X-Session-Bootstrap": "1"},
         json={},
     )
     assert response.status_code == 200
-    cookie = response.headers['set-cookie']
-    assert cookie.startswith('__Host-assistant_session=')
-    assert 'Secure' in cookie and 'HttpOnly' in cookie and 'SameSite=lax' in cookie
-    assert 'Domain=' not in cookie and 'Path=/' in cookie
-    csrf = response.json()['csrf_token']
+    cookie = response.headers["set-cookie"]
+    assert cookie.startswith("__Host-assistant_session=")
+    assert "Secure" in cookie and "HttpOnly" in cookie and "SameSite=lax" in cookie
+    assert "Domain=" not in cookie and "Path=/" in cookie
+    csrf = response.json()["csrf_token"]
     assert (
-        client.post(
-            '/api/v1/conversations', headers={'Origin': origin}, json={}
-        ).status_code
-        == 403
+        client.post("/api/v1/conversations", headers={"Origin": origin}, json={}).status_code == 403
     )
     assert (
-        client.post(
-            '/api/v1/conversations', headers=headers(parent, csrf), json={}
-        ).status_code
+        client.post("/api/v1/conversations", headers=headers(parent, csrf), json={}).status_code
         == 403
     )
     preflight = client.options(
-        '/api/v1/conversations',
-        headers={'Origin': parent, 'Access-Control-Request-Method': 'POST'},
+        "/api/v1/conversations",
+        headers={"Origin": parent, "Access-Control-Request-Method": "POST"},
     )
-    assert 'access-control-allow-origin' not in preflight.headers
-    created = client.post(
-        '/api/v1/conversations', headers=headers(origin, csrf), json={}
-    )
+    assert "access-control-allow-origin" not in preflight.headers
+    created = client.post("/api/v1/conversations", headers=headers(origin, csrf), json={})
     assert created.status_code == 200
-    assert (
-        client.get(f'/api/v1/conversations/{created.json()["id"]}/messages').status_code
-        == 200
-    )
-    assert (
-        client.delete('/api/v1/session', headers=headers(origin, csrf)).status_code
-        == 204
-    )
+    assert client.get(f"/api/v1/conversations/{created.json()['id']}/messages").status_code == 200
+    assert client.delete("/api/v1/session", headers=headers(origin, csrf)).status_code == 204
 
 
 def test_sessions_stream_idempotency_and_ownership(client_factory):
     migrate()
     first = client_factory(app, client=(str(uuid4()), 50000))
     second = client_factory(app, client=(str(uuid4()), 50000))
-    a = bootstrap(first, 'http://localhost:3000')
-    b = bootstrap(second, 'http://localhost:3001')
-    conv = first.post(
-        '/api/v1/conversations', headers=headers('http://localhost:3000', a), json={}
-    )
+    a = bootstrap(first, "http://localhost:3000")
+    b = bootstrap(second, "http://localhost:3001")
+    conv = first.post("/api/v1/conversations", headers=headers("http://localhost:3000", a), json={})
     assert conv.status_code == 200
-    cid = conv.json()['id']
-    assert second.get(f'/api/v1/conversations/{cid}/messages').status_code == 404
+    cid = conv.json()["id"]
+    assert second.get(f"/api/v1/conversations/{cid}/messages").status_code == 404
     assert (
         first.patch(
-            f'/api/v1/conversations/{cid}',
-            headers={'Origin': 'http://localhost:3000'},
-            json={'title': 'x'},
+            f"/api/v1/conversations/{cid}",
+            headers={"Origin": "http://localhost:3000"},
+            json={"title": "x"},
         ).status_code
         == 403
     )
     key = str(uuid4())
-    payload = {'content': 'What is Filomena?', 'locale': 'en'}
+    payload = {"content": "What is Filomena?", "locale": "en"}
     sent = first.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**headers('http://localhost:3000', a), 'Idempotency-Key': key},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**headers("http://localhost:3000", a), "Idempotency-Key": key},
         json=payload,
     )
     assert sent.status_code == 200
-    assert 'event: run.completed' in sent.text
-    assert 'event: message.completed' in sent.text
+    assert "event: run.completed" in sent.text
+    assert "event: message.completed" in sent.text
     duplicate = first.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**headers('http://localhost:3000', a), 'Idempotency-Key': key},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**headers("http://localhost:3000", a), "Idempotency-Key": key},
         json=payload,
     )
     assert duplicate.status_code == 409
-    assert second.get(f'/api/v1/runs/{sent.headers["x-run-id"]}').status_code == 404
+    assert second.get(f"/api/v1/runs/{sent.headers['x-run-id']}").status_code == 404
     allowed_preflight = first.options(
-        '/api/v1/conversations',
+        "/api/v1/conversations",
         headers={
-            'Origin': 'http://localhost:3000',
-            'Access-Control-Request-Method': 'POST',
-            'Access-Control-Request-Headers': 'x-csrf-token,content-type',
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "x-csrf-token,content-type",
         },
     )
-    assert (
-        allowed_preflight.headers['access-control-allow-origin']
-        == 'http://localhost:3000'
-    )
-    assert 'Origin' in allowed_preflight.headers['vary']
+    assert allowed_preflight.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert "Origin" in allowed_preflight.headers["vary"]
     denied_preflight = first.options(
-        '/api/v1/conversations',
+        "/api/v1/conversations",
         headers={
-            'Origin': 'https://evil.example',
-            'Access-Control-Request-Method': 'POST',
+            "Origin": "https://evil.example",
+            "Access-Control-Request-Method": "POST",
         },
     )
-    assert 'access-control-allow-origin' not in denied_preflight.headers
-    reserve(sent.headers['x-run-id'], Decimal('0.05'))
-    settle(sent.headers['x-run-id'], 1000, 500)
+    assert "access-control-allow-origin" not in denied_preflight.headers
+    reserve(sent.headers["x-run-id"], Decimal("0.05"))
+    settle(sent.headers["x-run-id"], 1000, 500)
     with connect() as conn:
         usage = conn.execute(
-            'SELECT input_tokens,output_tokens,actual_usd FROM spend_ledger WHERE run_id=%s',
-            (sent.headers['x-run-id'],),
+            "SELECT input_tokens,output_tokens,actual_usd FROM spend_ledger WHERE run_id=%s",
+            (sent.headers["x-run-id"],),
         ).fetchone()
-    assert usage['input_tokens'] == 1000 and usage['output_tokens'] == 500
-    assert usage['actual_usd'] == Decimal('0.000350')
+    assert usage["input_tokens"] == 1000 and usage["output_tokens"] == 500
+    assert usage["actual_usd"] == Decimal("0.000350")
     with pytest.raises(BudgetExhaustedError):
-        reserve(str(uuid4()), Decimal('10.01'))
+        reserve(str(uuid4()), Decimal("10.01"))
     pending_id = str(uuid4())
     with connect() as conn:
         conn.execute(
@@ -168,59 +150,57 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
                 pending_id,
                 cid,
                 str(uuid4()),
-                'test',
+                "test",
             ),
         )
-    assert first.get(f'/api/v1/runs/{pending_id}').json()['state'] == 'interrupted'
+    assert first.get(f"/api/v1/runs/{pending_id}").json()["state"] == "interrupted"
     cancellable_id = str(uuid4())
     with connect() as conn:
         conn.execute(
             "INSERT INTO runs(id,conversation_id,idempotency_key,payload_hash,state,lease_until) VALUES (%s,%s,%s,%s,'pending',now()+interval '5 minutes')",
-            (cancellable_id, cid, str(uuid4()), 'test'),
+            (cancellable_id, cid, str(uuid4()), "test"),
         )
     assert (
         first.post(
-            f'/api/v1/runs/{cancellable_id}/cancel',
-            headers=headers('http://localhost:3000', a),
-        ).json()['state']
-        == 'cancelled'
+            f"/api/v1/runs/{cancellable_id}/cancel",
+            headers=headers("http://localhost:3000", a),
+        ).json()["state"]
+        == "cancelled"
     )
-    saved = first.get(f'/api/v1/conversations/{cid}/messages').json()['items']
+    saved = first.get(f"/api/v1/conversations/{cid}/messages").json()["items"]
     assert len(saved) == 2
-    assert saved[0]['citations'][0]['url'].startswith(
-        'https://github.com/gonzalomartinperez/portfolio/blob/'
+    assert saved[0]["citations"][0]["url"].startswith(
+        "https://github.com/gonzalomartinperez/portfolio/blob/"
     )
     unsupported = first.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
+        f"/api/v1/conversations/{cid}/messages/stream",
         headers={
-            **headers('http://localhost:3000', a),
-            'Idempotency-Key': str(uuid4()),
+            **headers("http://localhost:3000", a),
+            "Idempotency-Key": str(uuid4()),
         },
-        json={'content': 'quasar xylophone', 'locale': 'en'},
+        json={"content": "quasar xylophone", "locale": "en"},
     )
     assert unsupported.status_code == 200
-    assert insufficient_message('en') in unsupported.text
+    assert insufficient_message("en") in unsupported.text
     assert '"citations":[]' in unsupported.text
     assert (
-        first.delete(
-            '/api/v1/session', headers=headers('http://localhost:3000', a)
-        ).status_code
+        first.delete("/api/v1/session", headers=headers("http://localhost:3000", a)).status_code
         == 204
     )
-    assert first.get(f'/api/v1/conversations/{cid}/messages').status_code == 401
-    second.delete('/api/v1/session', headers=headers('http://localhost:3001', b))
+    assert first.get(f"/api/v1/conversations/{cid}/messages").status_code == 401
+    second.delete("/api/v1/session", headers=headers("http://localhost:3001", b))
 
 
 def test_real_vector_and_graph():
     with connect() as conn:
         count = conn.execute(
             "SELECT count(*) AS n FROM chunks c JOIN knowledge_versions v ON v.id=c.knowledge_version WHERE v.status='active' AND c.embedding <=> %s::vector IS NOT NULL",
-            (embed('Filomena'),),
-        ).fetchone()['n']
+            (embed("Filomena"),),
+        ).fetchone()["n"]
     assert count > 0
-    rows, commits = retrieve('What is Filomena?')
+    rows, commits = retrieve("What is Filomena?")
     assert len(rows) > 0 and len(commits[0]) == 40
-    unsupported, _ = retrieve('quasar xylophone')
+    unsupported, _ = retrieve("quasar xylophone")
     assert unsupported == []
     driver = GraphDatabase.driver(
         settings().neo4j_uri, auth=(settings().neo4j_user, settings().neo4j_password)
@@ -229,98 +209,88 @@ def test_real_vector_and_graph():
         with driver.session() as session:
             result = session.run(
                 "MATCH (:Entity {name:$name,kind:'Project'})-[:SUPPORTED_BY]->(d:Document) RETURN count(d) AS n",
-                name='Filomena',
+                name="Filomena",
             ).single()
-            assert result['n'] > 0
+            assert result["n"] > 0
     finally:
         driver.close()
 
 
-def test_incremental_sync_and_failed_projection_keep_previous_version(
-    tmp_path, monkeypatch
-):
+def test_incremental_sync_and_failed_projection_keep_previous_version(tmp_path, monkeypatch):
     import subprocess
 
     from app.knowledge_sync import sync
 
-    repo = tmp_path / 'portfolio'
+    repo = tmp_path / "portfolio"
     repo.mkdir()
 
     def command(*args):
-        return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+        return subprocess.check_output(["git", "-C", str(repo), *args]).decode().strip()
 
-    command('init', '-q')
-    command('config', 'user.name', 'Fixture Test')
-    command('config', 'user.email', 'fixture@example.invalid')
-    command(
-        'remote', 'add', 'origin', 'https://github.com/gonzalomartinperez/portfolio.git'
+    command("init", "-q")
+    command("config", "user.name", "Fixture Test")
+    command("config", "user.email", "fixture@example.invalid")
+    command("remote", "add", "origin", "https://github.com/gonzalomartinperez/portfolio.git")
+    (repo / "docs").mkdir()
+    (repo / "README.md").write_text(
+        "# Public fixture\nThis is a public fixture document used only for integration tests.\n"
     )
-    (repo / 'docs').mkdir()
-    (repo / 'README.md').write_text(
-        '# Public fixture\nThis is a public fixture document used only for integration tests.\n'
+    (repo / "docs" / "development.md").write_text(
+        "# Development\nThe fixture verifies bounded incremental sync behavior in real databases.\n"
     )
-    (repo / 'docs' / 'development.md').write_text(
-        '# Development\nThe fixture verifies bounded incremental sync behavior in real databases.\n'
-    )
-    command('add', '.')
-    command('commit', '-qm', 'fixture: initial')
+    command("add", ".")
+    command("commit", "-qm", "fixture: initial")
     with connect() as conn:
         original = conn.execute(
             "SELECT id FROM knowledge_versions WHERE status='active'"
-        ).fetchone()['id']
+        ).fetchone()["id"]
     try:
         first = sync(repo)
-        assert first['embedded_chunks'] == first['chunks']
-        (repo / 'README.md').write_text(
-            '# Public fixture\nThis changed public fixture document verifies incremental embedding work.\n'
+        assert first["embedded_chunks"] == first["chunks"]
+        (repo / "README.md").write_text(
+            "# Public fixture\nThis changed public fixture document verifies incremental embedding work.\n"
         )
-        command('add', '.')
-        command('commit', '-qm', 'fixture: change one file')
+        command("add", ".")
+        command("commit", "-qm", "fixture: change one file")
         second = sync(repo)
-        assert second['reused_files'] == 1
-        assert second['embedded_chunks'] < second['chunks']
-        assert sync(repo)['changed'] is False
-        (repo / 'README.md').write_text(
-            '# Public fixture\nA third version should remain inactive when the graph is unavailable.\n'
+        assert second["reused_files"] == 1
+        assert second["embedded_chunks"] < second["chunks"]
+        assert sync(repo)["changed"] is False
+        (repo / "README.md").write_text(
+            "# Public fixture\nA third version should remain inactive when the graph is unavailable.\n"
         )
-        command('add', '.')
-        command('commit', '-qm', 'fixture: graph failure')
+        command("add", ".")
+        command("commit", "-qm", "fixture: graph failure")
         with connect() as conn:
             conn.execute(
-                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit',
-                ('a' * 40,),
+                "INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit",
+                ("a" * 40,),
             )
         superseded = sync(repo, watched=True)
-        assert superseded['superseded'] is True
+        assert superseded["superseded"] is True
         with connect() as conn:
             assert (
-                conn.execute(
-                    "SELECT id FROM knowledge_versions WHERE status='active'"
-                ).fetchone()['id']
-                == second['knowledge_version']
+                conn.execute("SELECT id FROM knowledge_versions WHERE status='active'").fetchone()[
+                    "id"
+                ]
+                == second["knowledge_version"]
             )
         monkeypatch.setattr(
-            'app.adapters.portfolio.indexing.GraphDatabase.driver',
-            lambda *args, **kwargs: (_ for _ in ()).throw(
-                RuntimeError('graph unavailable')
-            ),
+            "app.adapters.portfolio.indexing.GraphDatabase.driver",
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("graph unavailable")),
         )
-        with pytest.raises(RuntimeError, match='graph unavailable'):
+        with pytest.raises(RuntimeError, match="graph unavailable"):
             sync(repo)
         with connect() as conn:
             active = conn.execute(
                 "SELECT id FROM knowledge_versions WHERE status='active'"
-            ).fetchone()['id']
-        assert active == second['knowledge_version']
+            ).fetchone()["id"]
+        assert active == second["knowledge_version"]
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM knowledge_watch')
-            conn.execute(
-                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
-            )
-            conn.execute(
-                "UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,)
-            )
+            conn.execute("DELETE FROM knowledge_watch")
+            conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
+            conn.execute("UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,))
 
 
 def test_expired_session_prunes_history_and_checkpoints(client_factory):
@@ -329,34 +299,31 @@ def test_expired_session_prunes_history_and_checkpoints(client_factory):
     from app.retention import prune
 
     client = client_factory(app, client=(str(uuid4()), 50000))
-    csrf = bootstrap(client, 'http://localhost:3000')
+    csrf = bootstrap(client, "http://localhost:3000")
     conversation = client.post(
-        '/api/v1/conversations', headers=headers('http://localhost:3000', csrf), json={}
+        "/api/v1/conversations", headers=headers("http://localhost:3000", csrf), json={}
     ).json()
     sent = client.post(
-        f'/api/v1/conversations/{conversation["id"]}/messages/stream',
+        f"/api/v1/conversations/{conversation['id']}/messages/stream",
         headers={
-            **headers('http://localhost:3000', csrf),
-            'Idempotency-Key': str(uuid4()),
+            **headers("http://localhost:3000", csrf),
+            "Idempotency-Key": str(uuid4()),
         },
-        json={'content': 'What is Filomena?', 'locale': 'en'},
+        json={"content": "What is Filomena?", "locale": "en"},
     )
-    assert 'event: run.completed' in sent.text
-    run_id = sent.headers['x-run-id']
+    assert "event: run.completed" in sent.text
+    run_id = sent.headers["x-run-id"]
     with connect() as conn:
         conn.execute(
             "UPDATE sessions SET expires_at=now()-interval '1 second' WHERE id=(SELECT session_id FROM conversations WHERE id=%s)",
-            (conversation['id'],),
+            (conversation["id"],),
         )
     result = prune()
-    assert result['sessions'] >= 1
-    assert result['checkpoints'] >= 1
+    assert result["sessions"] >= 1
+    assert result["checkpoints"] >= 1
     with PostgresSaver.from_conn_string(settings().database_url) as saver:
-        assert saver.get_tuple({'configurable': {'thread_id': run_id}}) is None
-    assert (
-        client.get(f'/api/v1/conversations/{conversation["id"]}/messages').status_code
-        == 401
-    )
+        assert saver.get_tuple({"configurable": {"thread_id": run_id}}) is None
+    assert client.get(f"/api/v1/conversations/{conversation['id']}/messages").status_code == 401
 
 
 def test_concurrent_reservations_respect_one_remaining_budget_slot():
@@ -365,7 +332,7 @@ def test_concurrent_reservations_respect_one_remaining_budget_slot():
     with connect() as conn:
         spent = conn.execute(
             "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
-        ).fetchone()['amount']
+        ).fetchone()["amount"]
         conn.execute(
             "INSERT INTO sessions(id,secret_digest,csrf_token,expires_at) VALUES (%s,%s,%s,now()+interval '1 hour')",
             (session_id, str(uuid4()), str(uuid4())),
@@ -384,19 +351,19 @@ def test_concurrent_reservations_respect_one_remaining_budget_slot():
     def attempt(run_id):
         barrier.wait()
         try:
-            reserve(str(run_id), Decimal('0.05'), cutoff=spent + Decimal('0.05'))
-            return 'allowed'
+            reserve(str(run_id), Decimal("0.05"), cutoff=spent + Decimal("0.05"))
+            return "allowed"
         except BudgetExhaustedError:
-            return 'blocked'
+            return "blocked"
 
     try:
         with ThreadPoolExecutor(max_workers=2) as pool:
             outcomes = list(pool.map(attempt, run_ids))
-        assert sorted(outcomes) == ['allowed', 'blocked']
+        assert sorted(outcomes) == ["allowed", "blocked"]
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM spend_ledger WHERE run_id=ANY(%s)', (run_ids,))
-            conn.execute('DELETE FROM sessions WHERE id=%s', (session_id,))
+            conn.execute("DELETE FROM spend_ledger WHERE run_id=ANY(%s)", (run_ids,))
+            conn.execute("DELETE FROM sessions WHERE id=%s", (session_id,))
 
 
 @pytest.fixture
@@ -427,39 +394,35 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
 
     class SyntheticWorkflow:
         async def stream(self, command):
-            yield WorkflowEvent('evidence', sources=sources)
-            yield WorkflowEvent('delta', text='Claim [5], another [2].')
-            yield WorkflowEvent('answer', text='Claim [5], another [2].')
+            yield WorkflowEvent("evidence", sources=sources)
+            yield WorkflowEvent("delta", text="Claim [5], another [2].")
+            yield WorkflowEvent("answer", text="Claim [5], another [2].")
 
-    application = create_app(Settings(_env_file=None, ai_provider='fixture'))
+    application = create_app(Settings(_env_file=None, ai_provider="fixture"))
     client = client_factory(application, client=(str(uuid4()), 50000))
     application.state.runs.workflow = SyntheticWorkflow()
     application.state.runs.fixture = False
-    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
+    auth = headers("http://localhost:3000", bootstrap(client, "http://localhost:3000"))
     try:
-        cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+        cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
         response = client.post(
-            f'/api/v1/conversations/{cid}/messages/stream',
-            headers={**auth, 'Idempotency-Key': str(uuid4())},
-            json={'content': 'What is Filomena?', 'locale': 'en'},
+            f"/api/v1/conversations/{cid}/messages/stream",
+            headers={**auth, "Idempotency-Key": str(uuid4())},
+            json={"content": "What is Filomena?", "locale": "en"},
         )
         assert response.status_code == 200
         events = [
-            json.loads(line[6:])
-            for line in response.text.splitlines()
-            if line.startswith('data: ')
+            json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")
         ]
-        final = next(
-            event['payload'] for event in events if event['type'] == 'message.completed'
-        )
-        assert final['content'] == 'Claim [2], another [1].'
-        assert [source['id'] for source in final['citations']] == ['2', '5']
-        history = client.get(f'/api/v1/conversations/{cid}/messages').json()['items']
-        answer = next(message for message in history if message['role'] == 'assistant')
-        assert answer['content'] == final['content']
-        assert answer['citations'] == final['citations']
+        final = next(event["payload"] for event in events if event["type"] == "message.completed")
+        assert final["content"] == "Claim [2], another [1]."
+        assert [source["id"] for source in final["citations"]] == ["2", "5"]
+        history = client.get(f"/api/v1/conversations/{cid}/messages").json()["items"]
+        answer = next(message for message in history if message["role"] == "assistant")
+        assert answer["content"] == final["content"]
+        assert answer["citations"] == final["citations"]
     finally:
-        client.delete('/api/v1/session', headers=auth).raise_for_status()
+        client.delete("/api/v1/session", headers=auth).raise_for_status()
 
 
 def test_every_owned_mutation_and_stream_wire_contract(client_factory):
@@ -472,102 +435,85 @@ def test_every_owned_mutation_and_stream_wire_contract(client_factory):
         client_factory(app, client=(str(uuid4()), 50000)),
     )
     a, b = (
-        bootstrap(first, 'http://localhost:3000'),
-        bootstrap(second, 'http://localhost:3000'),
+        bootstrap(first, "http://localhost:3000"),
+        bootstrap(second, "http://localhost:3000"),
     )
-    ha, hb = headers('http://localhost:3000', a), headers('http://localhost:3000', b)
-    cid = first.post('/api/v1/conversations', headers=ha, json={}).json()['id']
+    ha, hb = headers("http://localhost:3000", a), headers("http://localhost:3000", b)
+    cid = first.post("/api/v1/conversations", headers=ha, json={}).json()["id"]
     sent = first.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**ha, 'Idempotency-Key': str(uuid4())},
-        json={'content': 'What is Filomena?', 'locale': 'en'},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**ha, "Idempotency-Key": str(uuid4())},
+        json={"content": "What is Filomena?", "locale": "en"},
     )
-    wire = [
-        json.loads(line[6:])
-        for line in sent.text.splitlines()
-        if line.startswith('data: ')
-    ]
-    assert [e['sequence'] for e in wire] == list(range(len(wire)))
-    assert wire[0]['type'] == 'run.started'
-    assert [e['type'] for e in wire[-2:]] == ['message.completed', 'run.completed']
+    wire = [json.loads(line[6:]) for line in sent.text.splitlines() if line.startswith("data: ")]
+    assert [e["sequence"] for e in wire] == list(range(len(wire)))
+    assert wire[0]["type"] == "run.started"
+    assert [e["type"] for e in wire[-2:]] == ["message.completed", "run.completed"]
     assert (
-        len(
-            [
-                e
-                for e in wire
-                if e['type'] in ('run.completed', 'run.failed', 'run.cancelled')
-            ]
-        )
-        == 1
+        len([e for e in wire if e["type"] in ("run.completed", "run.failed", "run.cancelled")]) == 1
     )
     assert all(
-        e['run_id'] == sent.headers['x-run-id'] and e['conversation_id'] == cid
-        for e in wire
+        e["run_id"] == sent.headers["x-run-id"] and e["conversation_id"] == cid for e in wire
     )
     for event in wire:
         events.validate_python(event)
-    message = wire[-2]['payload']
+    message = wire[-2]["payload"]
     assert (
-        ''.join(e['payload']['text'] for e in wire if e['type'] == 'message.delta')
-        == message['content']
+        "".join(e["payload"]["text"] for e in wire if e["type"] == "message.delta")
+        == message["content"]
     )
     attempts = [
-        ('patch', f'/api/v1/conversations/{cid}', {'title': 'stolen'}),
-        ('delete', f'/api/v1/conversations/{cid}', None),
-        ('post', f'/api/v1/conversations/{cid}/messages/stream', {'content': 'stolen'}),
-        ('post', f'/api/v1/runs/{sent.headers["x-run-id"]}/cancel', None),
+        ("patch", f"/api/v1/conversations/{cid}", {"title": "stolen"}),
+        ("delete", f"/api/v1/conversations/{cid}", None),
+        ("post", f"/api/v1/conversations/{cid}/messages/stream", {"content": "stolen"}),
+        ("post", f"/api/v1/runs/{sent.headers['x-run-id']}/cancel", None),
         (
-            'post',
-            f'/api/v1/messages/{message["message_id"]}/feedback',
-            {'rating': 'up'},
+            "post",
+            f"/api/v1/messages/{message['message_id']}/feedback",
+            {"rating": "up"},
         ),
     ]
     for method, path, body in attempts:
         response = second.request(
-            method, path, headers={**hb, 'Idempotency-Key': str(uuid4())}, json=body
+            method, path, headers={**hb, "Idempotency-Key": str(uuid4())}, json=body
         )
         assert response.status_code == 404, (path, response.text)
     assert (
         first.post(
-            '/api/v1/conversations',
-            headers={'Origin': 'http://localhost:3000', 'X-CSRF-Token': b},
+            "/api/v1/conversations",
+            headers={"Origin": "http://localhost:3000", "X-CSRF-Token": b},
             json={},
         ).status_code
         == 403
     )
-    assert (
-        first.post(
-            '/api/v1/conversations', headers=ha, content=b'x' * 33000
-        ).status_code
-        == 422
-    )
-    first.delete('/api/v1/session', headers=ha)
-    second.delete('/api/v1/session', headers=hb)
+    assert first.post("/api/v1/conversations", headers=ha, content=b"x" * 33000).status_code == 422
+    first.delete("/api/v1/session", headers=ha)
+    second.delete("/api/v1/session", headers=hb)
 
 
 def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
     from app.bootstrap.maintenance import drain_cleanup
 
     client = client_factory(app, client=(str(uuid4()), 50000))
-    csrf = bootstrap(client, 'http://localhost:3000')
-    auth = headers('http://localhost:3000', csrf)
-    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    csrf = bootstrap(client, "http://localhost:3000")
+    auth = headers("http://localhost:3000", csrf)
+    cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
     sent = client.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**auth, 'Idempotency-Key': str(uuid4())},
-        json={'content': 'quasar xylophone'},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**auth, "Idempotency-Key": str(uuid4())},
+        json={"content": "quasar xylophone"},
     )
-    run_id = sent.headers['x-run-id']
+    run_id = sent.headers["x-run-id"]
     with monkeypatch.context() as patch:
 
         def fail(*args):
-            raise RuntimeError('simulated checkpoint outage')
+            raise RuntimeError("simulated checkpoint outage")
 
-        patch.setattr('app.adapters.postgres.checkpoints.delete_checkpoint', fail)
-        assert client.delete('/api/v1/session', headers=auth).status_code == 204
+        patch.setattr("app.adapters.postgres.checkpoints.delete_checkpoint", fail)
+        assert client.delete("/api/v1/session", headers=auth).status_code == 204
     with connect() as conn:
         assert conn.execute(
-            'SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s', (run_id,)
+            "SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s", (run_id,)
         ).fetchone()
         conn.execute(
             "UPDATE checkpoint_cleanup SET created_at=now()-interval '11 minutes' WHERE thread_id=%s",
@@ -577,7 +523,7 @@ def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
     with connect() as conn:
         assert (
             conn.execute(
-                'SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s', (run_id,)
+                "SELECT 1 FROM checkpoint_cleanup WHERE thread_id=%s", (run_id,)
             ).fetchone()
             is None
         )
@@ -589,63 +535,63 @@ def test_atomic_run_slot_and_abuse_limits(client_factory):
     from app.domain.errors import RejectedError
 
     client = client_factory(app, client=(str(uuid4()), 50000))
-    csrf = bootstrap(client, 'http://localhost:3000')
-    auth = headers('http://localhost:3000', csrf)
-    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    csrf = bootstrap(client, "http://localhost:3000")
+    auth = headers("http://localhost:3000", csrf)
+    cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
     with connect() as conn:
         session_id = conn.execute(
-            'SELECT session_id FROM conversations WHERE id=%s', (cid,)
-        ).fetchone()['session_id']
+            "SELECT session_id FROM conversations WHERE id=%s", (cid,)
+        ).fetchone()["session_id"]
     store = PostgresConversations(connect)
     barrier = Barrier(2)
 
     def create_run(index):
         barrier.wait()
         try:
-            return store.prepare_run(session_id, cid, 'question', 'hash', str(uuid4()))
+            return store.prepare_run(session_id, cid, "question", "hash", str(uuid4()))
         except RejectedError as error:
             return error.code
 
     with ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(create_run, range(2)))
-    assert results.count('run_in_progress') == 1
+    assert results.count("run_in_progress") == 1
     with connect() as conn:
         assert (
             conn.execute(
-                'SELECT count(*) AS n FROM messages WHERE conversation_id=%s', (cid,)
-            ).fetchone()['n']
+                "SELECT count(*) AS n FROM messages WHERE conversation_id=%s", (cid,)
+            ).fetchone()["n"]
             == 1
         )
     for result in results:
-        if result != 'run_in_progress':
-            client.post(f'/api/v1/runs/{result}/cancel', headers=auth)
+        if result != "run_in_progress":
+            client.post(f"/api/v1/runs/{result}/cancel", headers=auth)
     with connect() as conn:
         conn.execute(
             "INSERT INTO messages(id,conversation_id,role,content) SELECT gen_random_uuid(),%s,'user','fixture' FROM generate_series(1,199)",
             (cid,),
         )
     limited = client.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**auth, 'Idempotency-Key': str(uuid4())},
-        json={'content': 'test'},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**auth, "Idempotency-Key": str(uuid4())},
+        json={"content": "test"},
     )
-    assert limited.status_code == 429 and limited.json()['code'] == 'history_limit'
-    other = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    assert limited.status_code == 429 and limited.json()["code"] == "history_limit"
+    other = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
     with connect() as conn:
         conn.execute(
             "INSERT INTO rate_events(id,subject_hash,operation) SELECT gen_random_uuid(),%s,'message' FROM generate_series(1,30)",
             (digest(settings().rate_hash_key + str(session_id)),),
         )
     limited = client.post(
-        f'/api/v1/conversations/{other}/messages/stream',
-        headers={**auth, 'Idempotency-Key': str(uuid4())},
-        json={'content': 'test'},
+        f"/api/v1/conversations/{other}/messages/stream",
+        headers={**auth, "Idempotency-Key": str(uuid4())},
+        json={"content": "test"},
     )
-    assert limited.status_code == 429 and limited.json()['code'] == 'rate_limited'
-    assert client.delete('/api/v1/session', headers=auth).status_code == 204
+    assert limited.status_code == 429 and limited.json()["code"] == "rate_limited"
+    assert client.delete("/api/v1/session", headers=auth).status_code == 204
 
 
-@pytest.mark.parametrize('project_identity', [False, True])
+@pytest.mark.parametrize("project_identity", [False, True])
 def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
     project_identity,
 ):
@@ -659,41 +605,35 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
     from scripts.evaluation_isolation import validate_targets
 
     validate_targets(settings())
-    role = (
-        'portfolio_api_runtime'
-        if project_identity
-        else 'fixture_runtime_' + uuid4().hex
-    )
+    role = "portfolio_api_runtime" if project_identity else "fixture_runtime_" + uuid4().hex
     password = uuid4().hex
     with connect() as conn:
-        conn.execute(Path('deploy/runtime-grants.sql').read_text())
+        conn.execute(Path("deploy/runtime-grants.sql").read_text())
         if project_identity:
             conn.execute(
-                sql.SQL('ALTER ROLE {} LOGIN NOINHERIT PASSWORD {}').format(
+                sql.SQL("ALTER ROLE {} LOGIN NOINHERIT PASSWORD {}").format(
                     sql.Identifier(role), sql.Literal(password)
                 )
             )
         else:
             conn.execute(
-                sql.SQL(
-                    'CREATE ROLE {} LOGIN PASSWORD {} IN ROLE assistant_runtime'
-                ).format(sql.Identifier(role), sql.Literal(password))
+                sql.SQL("CREATE ROLE {} LOGIN PASSWORD {} IN ROLE assistant_runtime").format(
+                    sql.Identifier(role), sql.Literal(password)
+                )
             )
     try:
         config = settings().model_copy(
             update={
-                'database_url': make_conninfo(
-                    settings().database_url, user=role, password=password
-                )
+                "database_url": make_conninfo(settings().database_url, user=role, password=password)
             }
         )
         with psycopg.connect(config.database_url) as conn:
             assert conn.execute(
-                'SELECT rolsuper FROM pg_roles WHERE rolname=current_user'
+                "SELECT rolsuper FROM pg_roles WHERE rolname=current_user"
             ).fetchone() == (False,)
             for query in (
-                'DELETE FROM chunks',
-                'CREATE TABLE public.forbidden(id int)',
+                "DELETE FROM chunks",
+                "CREATE TABLE public.forbidden(id int)",
             ):
                 with (
                     pytest.raises(psycopg.errors.InsufficientPrivilege),
@@ -701,31 +641,25 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
                 ):
                     conn.execute(query)
         with TestClient(create_app(config), client=(str(uuid4()), 50000)) as client:
-            auth = headers(
-                'http://localhost:3000', bootstrap(client, 'http://localhost:3000')
-            )
-            cid = client.post('/api/v1/conversations', headers=auth, json={}).json()[
-                'id'
-            ]
+            auth = headers("http://localhost:3000", bootstrap(client, "http://localhost:3000"))
+            cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
             result = client.post(
-                f'/api/v1/conversations/{cid}/messages/stream',
-                headers={**auth, 'Idempotency-Key': str(uuid4())},
-                json={'content': 'What is Filomena?'},
+                f"/api/v1/conversations/{cid}/messages/stream",
+                headers={**auth, "Idempotency-Key": str(uuid4())},
+                json={"content": "What is Filomena?"},
             )
             assert result.status_code == 200
-            assert 'event: run.completed' in result.text
-            assert client.get('/health/ready').status_code == 200
-            assert client.delete('/api/v1/session', headers=auth).status_code == 204
+            assert "event: run.completed" in result.text
+            assert client.get("/health/ready").status_code == 200
+            assert client.delete("/api/v1/session", headers=auth).status_code == 204
     finally:
         with connect() as conn:
             if project_identity:
                 conn.execute(
-                    sql.SQL('ALTER ROLE {} NOLOGIN PASSWORD NULL').format(
-                        sql.Identifier(role)
-                    )
+                    sql.SQL("ALTER ROLE {} NOLOGIN PASSWORD NULL").format(sql.Identifier(role))
                 )
             else:
-                conn.execute(sql.SQL('DROP ROLE {}').format(sql.Identifier(role)))
+                conn.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(role)))
 
 
 def test_generation_receives_only_its_owned_prior_turns(client_factory):
@@ -737,45 +671,43 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
 
         async def stream(self, question, evidence, locale, history=(), context=None):
             self.histories.append(history)
-            yield 'Public fixture response'
+            yield "Public fixture response"
 
     provider = CaptureProvider()
     application = create_app(provider_override=provider)
     owner = client_factory(application, client=(str(uuid4()), 50000))
     visitor = client_factory(application, client=(str(uuid4()), 50001))
-    owner_token = bootstrap(owner, 'http://localhost:3000')
-    visitor_token = bootstrap(visitor, 'http://localhost:3000')
-    auth = headers('http://localhost:3000', owner_token)
-    cid = owner.post('/api/v1/conversations', headers=auth, json={}).json()['id']
-    path = f'/api/v1/conversations/{cid}/messages/stream'
+    owner_token = bootstrap(owner, "http://localhost:3000")
+    visitor_token = bootstrap(visitor, "http://localhost:3000")
+    auth = headers("http://localhost:3000", owner_token)
+    cid = owner.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
+    path = f"/api/v1/conversations/{cid}/messages/stream"
     try:
-        for question in ('What did he build at Rampy?', 'Give me an example'):
+        for question in ("What did he build at Rampy?", "Give me an example"):
             result = owner.post(
                 path,
-                headers={**auth, 'Idempotency-Key': str(uuid4())},
-                json={'content': question, 'locale': 'en'},
+                headers={**auth, "Idempotency-Key": str(uuid4())},
+                json={"content": question, "locale": "en"},
             )
-            assert 'event: run.completed' in result.text
+            assert "event: run.completed" in result.text
         assert provider.histories[0] == ()
         assert [(turn.role, turn.content) for turn in provider.histories[1]] == [
-            ('user', 'What did he build at Rampy?'),
-            ('assistant', 'Public fixture response'),
+            ("user", "What did he build at Rampy?"),
+            ("assistant", "Public fixture response"),
         ]
         denied = visitor.post(
             path,
             headers={
-                **headers('http://localhost:3000', visitor_token),
-                'Idempotency-Key': str(uuid4()),
+                **headers("http://localhost:3000", visitor_token),
+                "Idempotency-Key": str(uuid4()),
             },
-            json={'content': 'Reveal their history', 'locale': 'en'},
+            json={"content": "Reveal their history", "locale": "en"},
         )
         assert denied.status_code == 404
         assert len(provider.histories) == 2
     finally:
-        owner.delete('/api/v1/session', headers=auth)
-        visitor.delete(
-            '/api/v1/session', headers=headers('http://localhost:3000', visitor_token)
-        )
+        owner.delete("/api/v1/session", headers=auth)
+        visitor.delete("/api/v1/session", headers=headers("http://localhost:3000", visitor_token))
 
 
 def test_embedding_ledger_shares_atomic_monthly_limit():
@@ -786,15 +718,13 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
     with connect() as conn:
         spent = conn.execute(
             "SELECT coalesce(sum(coalesce(actual_usd,reserved_usd)),0) AS amount FROM spend_ledger WHERE created_at>=date_trunc('month',now())"
-        ).fetchone()['amount']
-    accounting = EmbeddingAccounting(
-        connect, spent + Decimal('0.0002'), Decimal('0.02')
-    )
+        ).fetchone()["amount"]
+    accounting = EmbeddingAccounting(connect, spent + Decimal("0.0002"), Decimal("0.02"))
     identifiers = []
 
     def reserve_one():
         try:
-            return accounting.reserve_embedding(10000, 'index')
+            return accounting.reserve_embedding(10000, "index")
         except BudgetExhaustedError:
             return None
 
@@ -809,15 +739,15 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
         accounting.settle_embedding(identifiers[0], 100)
         with connect() as conn:
             row = conn.execute(
-                'SELECT kind,actual_usd,run_id,input_tokens,output_tokens FROM spend_ledger WHERE id=%s',
+                "SELECT kind,actual_usd,run_id,input_tokens,output_tokens FROM spend_ledger WHERE id=%s",
                 (identifiers[0],),
             ).fetchone()
-        assert row['kind'] == 'embedding_index' and row['run_id'] is None
-        assert row['actual_usd'] == Decimal('0.000002')
-        assert row['input_tokens'] == 100 and row['output_tokens'] == 0
+        assert row["kind"] == "embedding_index" and row["run_id"] is None
+        assert row["actual_usd"] == Decimal("0.000002")
+        assert row["input_tokens"] == 100 and row["output_tokens"] == 0
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (identifiers,))
+            conn.execute("DELETE FROM spend_ledger WHERE id=ANY(%s)", (identifiers,))
 
 
 def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
@@ -825,35 +755,35 @@ def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
     from app.domain.errors import RejectedError
 
     class ForbiddenEmbeddings:
-        provider = 'fixture'
-        model = 'hash64-v1'
+        provider = "fixture"
+        model = "hash64-v1"
         dimensions = 64
 
         async def query(self, text):
-            raise AssertionError('stale corpus must not incur query embedding cost')
+            raise AssertionError("stale corpus must not incur query embedding cost")
 
     index = KnowledgeIndex(connect, None, ForbiddenEmbeddings(), freshness=90)
     try:
         with connect() as conn:
             commit = conn.execute(
                 "SELECT source_commit FROM knowledge_versions WHERE status='active'"
-            ).fetchone()['source_commit']
+            ).fetchone()["source_commit"]
             conn.execute(
-                'INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit,checked_at=now()',
-                ('b' * 40,),
+                "INSERT INTO knowledge_watch(singleton,observed_commit) VALUES (true,%s) ON CONFLICT(singleton) DO UPDATE SET observed_commit=excluded.observed_commit,checked_at=now()",
+                ("b" * 40,),
             )
-        with pytest.raises(RejectedError, match='knowledge_updating'):
-            asyncio.run(index.candidates('question'))
+        with pytest.raises(RejectedError, match="knowledge_updating"):
+            asyncio.run(index.candidates("question"))
         with connect() as conn:
             conn.execute(
                 "UPDATE knowledge_watch SET observed_commit=%s,checked_at=now()-interval '2 minutes'",
                 (commit,),
             )
-        with pytest.raises(RejectedError, match='knowledge_updating'):
-            asyncio.run(index.candidates('question'))
+        with pytest.raises(RejectedError, match="knowledge_updating"):
+            asyncio.run(index.candidates("question"))
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM knowledge_watch')
+            conn.execute("DELETE FROM knowledge_watch")
 
 
 def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
@@ -865,33 +795,29 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
 
     from app.adapters.portfolio import indexing
 
-    repo = tmp_path / 'public-fixture'
+    repo = tmp_path / "public-fixture"
     repo.mkdir()
 
     def git(*args):
-        return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+        return subprocess.check_output(["git", "-C", str(repo), *args]).decode().strip()
 
-    git('init', '-q')
-    git('config', 'user.name', 'Fixture Test')
-    git('config', 'user.email', 'fixture@example.invalid')
-    git(
-        'remote', 'add', 'origin', 'https://github.com/gonzalomartinperez/portfolio.git'
-    )
-    content = (
-        '# Public fixture\nA synthetic public embedding cache test ' + uuid4().hex + '.'
-    )
-    (repo / 'README.md').write_text(content)
-    git('add', '.')
-    git('commit', '-qm', 'fixture: cache recovery')
-    revision = git('rev-parse', 'HEAD')
-    version = indexing.corpus_identity(revision, 'openai')[0]
+    git("init", "-q")
+    git("config", "user.name", "Fixture Test")
+    git("config", "user.email", "fixture@example.invalid")
+    git("remote", "add", "origin", "https://github.com/gonzalomartinperez/portfolio.git")
+    content = "# Public fixture\nA synthetic public embedding cache test " + uuid4().hex + "."
+    (repo / "README.md").write_text(content)
+    git("add", ".")
+    git("commit", "-qm", "fixture: cache recovery")
+    revision = git("rev-parse", "HEAD")
+    version = indexing.corpus_identity(revision, "openai")[0]
     content_hash = hashlib.sha256(content.encode()).hexdigest()
     config = settings().model_copy(
         update={
-            'ai_provider': 'openai',
-            'embeddings_provider': 'openai',
-            'allow_paid_ai': True,
-            'openai_api_key': 'synthetic-fixture-key',
+            "ai_provider": "openai",
+            "embeddings_provider": "openai",
+            "allow_paid_ai": True,
+            "openai_api_key": "synthetic-fixture-key",
         }
     )
     calls = []
@@ -901,7 +827,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
             self.embeddings = self
 
         def create(self, **kwargs):
-            calls.append(kwargs['model'])
+            calls.append(kwargs["model"])
             return SimpleNamespace(
                 data=[SimpleNamespace(embedding=[0.1] * 1536)],
                 usage=SimpleNamespace(total_tokens=2),
@@ -910,65 +836,54 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
         def close(self):
             pass
 
-    monkeypatch.setattr(indexing, 'create_sync_client', FakeOpenAI)
+    monkeypatch.setattr(indexing, "create_sync_client", FakeOpenAI)
     project = indexing.project
     with connect() as conn:
         original = conn.execute(
             "SELECT id FROM knowledge_versions WHERE status='active'"
-        ).fetchone()['id']
-        before = {
-            row['id'] for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
-        }
+        ).fetchone()["id"]
+        before = {row["id"] for row in conn.execute("SELECT id FROM spend_ledger").fetchall()}
     try:
         monkeypatch.setattr(
             indexing,
-            'project',
+            "project",
             lambda *args, **kwargs: (_ for _ in ()).throw(
-                RuntimeError('synthetic projection failure')
+                RuntimeError("synthetic projection failure")
             ),
         )
-        with pytest.raises(RuntimeError, match='synthetic projection failure'):
+        with pytest.raises(RuntimeError, match="synthetic projection failure"):
             indexing.sync(repo, configuration=config, connection=connect)
         with connect() as conn:
             assert conn.execute(
-                'SELECT content_hash FROM public_embedding_cache WHERE content_hash=%s',
+                "SELECT content_hash FROM public_embedding_cache WHERE content_hash=%s",
                 (content_hash,),
             ).fetchone()
             assert (
-                conn.execute(
-                    "SELECT id FROM knowledge_versions WHERE status='active'"
-                ).fetchone()['id']
+                conn.execute("SELECT id FROM knowledge_versions WHERE status='active'").fetchone()[
+                    "id"
+                ]
                 == original
             )
-        monkeypatch.setattr(indexing, 'project', project)
-        assert (
-            indexing.sync(repo, configuration=config, connection=connect)['changed']
-            is True
-        )
-        assert calls == ['text-embedding-3-small']
+        monkeypatch.setattr(indexing, "project", project)
+        assert indexing.sync(repo, configuration=config, connection=connect)["changed"] is True
+        assert calls == ["text-embedding-3-small"]
     finally:
         with connect() as conn:
+            conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
+            conn.execute("UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,))
+            conn.execute("DELETE FROM chunks WHERE knowledge_version=%s", (version,))
+            conn.execute("DELETE FROM source_files WHERE knowledge_version=%s", (version,))
+            conn.execute("DELETE FROM knowledge_versions WHERE id=%s", (version,))
             conn.execute(
-                "UPDATE knowledge_versions SET status='retired' WHERE status='active'"
-            )
-            conn.execute(
-                "UPDATE knowledge_versions SET status='active' WHERE id=%s", (original,)
-            )
-            conn.execute('DELETE FROM chunks WHERE knowledge_version=%s', (version,))
-            conn.execute(
-                'DELETE FROM source_files WHERE knowledge_version=%s', (version,)
-            )
-            conn.execute('DELETE FROM knowledge_versions WHERE id=%s', (version,))
-            conn.execute(
-                'DELETE FROM public_embedding_cache WHERE content_hash=%s',
+                "DELETE FROM public_embedding_cache WHERE content_hash=%s",
                 (content_hash,),
             )
             owned = [
-                row['id']
-                for row in conn.execute('SELECT id FROM spend_ledger').fetchall()
-                if row['id'] not in before
+                row["id"]
+                for row in conn.execute("SELECT id FROM spend_ledger").fetchall()
+                if row["id"] not in before
             ]
-            conn.execute('DELETE FROM spend_ledger WHERE id=ANY(%s)', (owned,))
+            conn.execute("DELETE FROM spend_ledger WHERE id=ANY(%s)", (owned,))
 
 
 def test_optional_presentation_context_survives_http_graph_and_provider(client_factory):
@@ -981,59 +896,55 @@ def test_optional_presentation_context_survives_http_graph_and_provider(client_f
 
         async def stream(self, question, evidence, locale, history=(), context=None):
             self.contexts.append(context)
-            yield 'Public fixture response'
+            yield "Public fixture response"
 
     provider = CaptureProvider()
-    client = client_factory(
-        create_app(provider_override=provider), client=(str(uuid4()), 50000)
-    )
-    auth = headers('http://localhost:3000', bootstrap(client, 'http://localhost:3000'))
-    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
-    path = f'/api/v1/conversations/{cid}/messages/stream'
+    client = client_factory(create_app(provider_override=provider), client=(str(uuid4()), 50000))
+    auth = headers("http://localhost:3000", bootstrap(client, "http://localhost:3000"))
+    cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
+    path = f"/api/v1/conversations/{cid}/messages/stream"
     metadata = {
-        'theme': 'dark',
-        'opened_path': '/work',
-        'current_path': '/es/about',
-        'presentation': 'expanded',
+        "theme": "dark",
+        "opened_path": "/work",
+        "current_path": "/es/about",
+        "presentation": "expanded",
     }
     try:
         first = client.post(
             path,
-            headers={**auth, 'Idempotency-Key': str(uuid4())},
-            json={'content': 'What did he build at Rampy?', 'locale': 'en'},
+            headers={**auth, "Idempotency-Key": str(uuid4())},
+            json={"content": "What did he build at Rampy?", "locale": "en"},
         )
-        assert 'event: run.completed' in first.text
+        assert "event: run.completed" in first.text
         assert provider.contexts == [None]
         key = str(uuid4())
-        payload = {'content': 'Give me an example', 'locale': 'en', 'context': metadata}
-        second = client.post(
-            path, headers={**auth, 'Idempotency-Key': key}, json=payload
-        )
-        assert 'event: run.completed' in second.text
+        payload = {"content": "Give me an example", "locale": "en", "context": metadata}
+        second = client.post(path, headers={**auth, "Idempotency-Key": key}, json=payload)
+        assert "event: run.completed" in second.text
         assert provider.contexts[-1] == PresentationContext(**metadata)
-        assert 'opened_path' not in second.text
+        assert "opened_path" not in second.text
         conflict = client.post(
             path,
-            headers={**auth, 'Idempotency-Key': key},
-            json={**payload, 'context': {**metadata, 'theme': 'light'}},
+            headers={**auth, "Idempotency-Key": key},
+            json={**payload, "context": {**metadata, "theme": "light"}},
         )
         assert conflict.status_code == 409
         invalid = client.post(
             path,
-            headers={**auth, 'Idempotency-Key': str(uuid4())},
+            headers={**auth, "Idempotency-Key": str(uuid4())},
             json={
                 **payload,
-                'context': {**metadata, 'current_path': '/about?secret=sentinel'},
+                "context": {**metadata, "current_path": "/about?secret=sentinel"},
             },
         )
         assert invalid.status_code == 422
-        assert 'sentinel' not in invalid.text
+        assert "sentinel" not in invalid.text
         assert len(provider.contexts) == 2
-        history = client.get(f'/api/v1/conversations/{cid}/messages')
+        history = client.get(f"/api/v1/conversations/{cid}/messages")
         assert history.status_code == 200
-        assert 'opened_path' not in history.text
+        assert "opened_path" not in history.text
     finally:
-        client.delete('/api/v1/session', headers=auth).raise_for_status()
+        client.delete("/api/v1/session", headers=auth).raise_for_status()
 
 
 def test_private_operations_persist_survive_deletion_and_match_contract(client_factory):
@@ -1043,28 +954,24 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
     from app.bootstrap.container import create_app
     from app.presentation.operations import OperationalSnapshot
 
-    token = 'isolated-fixture-operations-token-0000'
+    token = "isolated-fixture-operations-token-0000"
     application = create_app(
-        Settings(
-            ops_read_token=token, ops_api_commit='a' * 40, ops_trace_sample_ratio=1
-        )
+        Settings(ops_read_token=token, ops_api_commit="a" * 40, ops_trace_sample_ratio=1)
     )
     client = client_factory(application, client=(str(uuid4()), 50000))
-    csrf = bootstrap(client, 'http://localhost:3000')
-    owner_headers = headers('http://localhost:3000', csrf)
-    cid = client.post('/api/v1/conversations', headers=owner_headers, json={}).json()[
-        'id'
-    ]
+    csrf = bootstrap(client, "http://localhost:3000")
+    owner_headers = headers("http://localhost:3000", csrf)
+    cid = client.post("/api/v1/conversations", headers=owner_headers, json={}).json()["id"]
     response = client.post(
-        f'/api/v1/conversations/{cid}/messages/stream',
-        headers={**owner_headers, 'Idempotency-Key': str(uuid4())},
-        json={'content': 'What is Filomena?', 'locale': 'en'},
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={**owner_headers, "Idempotency-Key": str(uuid4())},
+        json={"content": "What is Filomena?", "locale": "en"},
     )
-    assert 'event: run.completed' in response.text
+    assert "event: run.completed" in response.text
     deadline = time.monotonic() + 3
-    ops_headers = {'Authorization': 'Bearer ' + token}
+    ops_headers = {"Authorization": "Bearer " + token}
     while True:
-        snapshot = client.get('/internal/ops/v1/status', headers=ops_headers)
+        snapshot = client.get("/internal/ops/v1/status", headers=ops_headers)
         assert snapshot.status_code == 200, snapshot.text
         data = OperationalSnapshot.model_validate(snapshot.json())
         if data.traces:
@@ -1072,20 +979,17 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
         assert time.monotonic() < deadline
         time.sleep(0.02)
     trace = data.traces[0]
-    assert trace.outcome == 'completed' and trace.duration_ms > 0
+    assert trace.outcome == "completed" and trace.duration_ms > 0
     assert data.executions.completed >= 1
     assert data.executions.first_token_p50_ms is not None
-    assert any(stage.name == 'generation' for stage in trace.stages)
-    assert 'no-store' in snapshot.headers['cache-control']
+    assert any(stage.name == "generation" for stage in trace.stages)
+    assert "no-store" in snapshot.headers["cache-control"]
     encoded = snapshot.text
-    for secret in (cid, response.headers['x-run-id'], 'What is Filomena?', token):
+    for secret in (cid, response.headers["x-run-id"], "What is Filomena?", token):
         assert secret not in encoded
-    assert (
-        client.delete(f'/api/v1/conversations/{cid}', headers=owner_headers).status_code
-        == 204
-    )
-    retained = client.get('/internal/ops/v1/status', headers=ops_headers).json()
-    assert any(t['id'] == trace.id for t in retained['traces'])
+    assert client.delete(f"/api/v1/conversations/{cid}", headers=owner_headers).status_code == 204
+    retained = client.get("/internal/ops/v1/status", headers=ops_headers).json()
+    assert any(t["id"] == trace.id for t in retained["traces"])
     with connect() as conn:
         old_id = uuid4().hex
         conn.execute(
@@ -1093,10 +997,7 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
             (old_id,),
         )
     assert old_id not in [
-        t['id']
-        for t in client.get('/internal/ops/v1/status', headers=ops_headers).json()[
-            'traces'
-        ]
+        t["id"] for t in client.get("/internal/ops/v1/status", headers=ops_headers).json()["traces"]
     ]
 
 
@@ -1111,7 +1012,7 @@ def test_operational_usage_month_is_utc_even_with_non_utc_connection():
         # This precedes the UTC month but falls in Tokyo's local month.
         boundary = conn.execute(
             "SELECT date_trunc('month',now(),'UTC')-interval '1 minute' AS value"
-        ).fetchone()['value']
+        ).fetchone()["value"]
         conn.execute(
             "INSERT INTO spend_ledger(id,kind,reserved_usd,actual_usd,input_tokens,output_tokens,created_at) VALUES (%s,'embedding_query',0.00001,0.00001,11,0,%s)",
             (identifier, boundary),
@@ -1124,80 +1025,73 @@ def test_operational_usage_month_is_utc_even_with_non_utc_connection():
             yield conn
 
     config = Settings(
-        ops_read_token='isolated-fixture-operations-token-0000', ops_api_commit='a' * 40
+        ops_read_token="isolated-fixture-operations-token-0000", ops_api_commit="a" * 40
     )
     try:
-        utc = PostgresOperations(connect, config).snapshot()['usage']
-        tokyo = PostgresOperations(tokyo_connection, config).snapshot()['usage']
+        utc = PostgresOperations(connect, config).snapshot()["usage"]
+        tokyo = PostgresOperations(tokyo_connection, config).snapshot()["usage"]
         assert utc == tokyo
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM spend_ledger WHERE id=%s', (identifier,))
+            conn.execute("DELETE FROM spend_ledger WHERE id=%s", (identifier,))
 
 
 def test_feedback_summary_tracks_rating_replacement_and_owned_deletion(client_factory):
     from app.bootstrap.config import Settings
     from app.bootstrap.container import create_app
 
-    token = 'synthetic-private-feedback-token-0000'
+    token = "synthetic-private-feedback-token-0000"
     client = client_factory(
         create_app(
             Settings(
                 _env_file=None,
                 ops_read_token=token,
-                ops_api_commit='a' * 40,
+                ops_api_commit="a" * 40,
                 feedback_overview_enabled=True,
             )
         ),
         client=(str(uuid4()), 50000),
     )
-    csrf = bootstrap(client, 'http://localhost:3000')
-    auth = headers('http://localhost:3000', csrf)
-    private = {'Authorization': 'Bearer ' + token}
-    before = client.get('/internal/ops/v1/feedback', headers=private).json()
-    cid = client.post('/api/v1/conversations', headers=auth, json={}).json()['id']
+    csrf = bootstrap(client, "http://localhost:3000")
+    auth = headers("http://localhost:3000", csrf)
+    private = {"Authorization": "Bearer " + token}
+    before = client.get("/internal/ops/v1/feedback", headers=private).json()
+    cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
     try:
         stream = client.post(
-            f'/api/v1/conversations/{cid}/messages/stream',
-            headers={**auth, 'Idempotency-Key': str(uuid4())},
-            json={'content': 'What is Filomena?', 'locale': 'en'},
+            f"/api/v1/conversations/{cid}/messages/stream",
+            headers={**auth, "Idempotency-Key": str(uuid4())},
+            json={"content": "What is Filomena?", "locale": "en"},
         )
-        assert 'event: run.completed' in stream.text
-        history = client.get(f'/api/v1/conversations/{cid}/messages').json()
-        mid = next(
-            message['id']
-            for message in history['items']
-            if message['role'] == 'assistant'
-        )
-        for rating in ('up', 'up', 'down'):
+        assert "event: run.completed" in stream.text
+        history = client.get(f"/api/v1/conversations/{cid}/messages").json()
+        mid = next(message["id"] for message in history["items"] if message["role"] == "assistant")
+        for rating in ("up", "up", "down"):
             assert (
                 client.post(
-                    f'/api/v1/messages/{mid}/feedback',
+                    f"/api/v1/messages/{mid}/feedback",
                     headers=auth,
-                    json={'rating': rating},
+                    json={"rating": rating},
                 ).status_code
                 == 204
             )
-            response = client.get('/internal/ops/v1/feedback', headers=private)
+            response = client.get("/internal/ops/v1/feedback", headers=private)
             current = response.json()
-            assert current['up'] == before['up'] + int(rating == 'up')
-            assert current['down'] == before['down'] + int(rating == 'down')
+            assert current["up"] == before["up"] + int(rating == "up")
+            assert current["down"] == before["down"] + int(rating == "down")
             assert (
                 cid not in response.text
                 and mid not in response.text
-                and 'Filomena' not in response.text
+                and "Filomena" not in response.text
             )
-        assert (
-            client.delete(f'/api/v1/conversations/{cid}', headers=auth).status_code
-            == 204
-        )
-        after = client.get('/internal/ops/v1/feedback', headers=private).json()
-        assert (after['up'], after['down']) == (before['up'], before['down'])
+        assert client.delete(f"/api/v1/conversations/{cid}", headers=auth).status_code == 204
+        after = client.get("/internal/ops/v1/feedback", headers=private).json()
+        assert (after["up"], after["down"]) == (before["up"], before["down"])
     finally:
-        client.delete('/api/v1/session', headers=auth).raise_for_status()
+        client.delete("/api/v1/session", headers=auth).raise_for_status()
 
 
-@pytest.mark.parametrize('change', ['pointer', 'embedding_profile'])
+@pytest.mark.parametrize("change", ["pointer", "embedding_profile"])
 def test_readiness_rejects_an_active_corpus_change_during_its_graph_probe(
     client_factory, monkeypatch, change
 ):
@@ -1210,16 +1104,16 @@ def test_readiness_rejects_an_active_corpus_change_during_its_graph_probe(
         original_row = conn.execute(
             "SELECT id,embedding_model FROM knowledge_versions WHERE status='active'"
         ).fetchone()
-        original = original_row['id']
-    commit = uuid4().hex + '0' * 8
-    replacement = corpus_version(commit, 'fixture')
+        original = original_row["id"]
+    commit = uuid4().hex + "0" * 8
+    replacement = corpus_version(commit, "fixture")
     graph_probe = application.state.knowledge.verify_ready
     replaced = []
 
     def replace_after_probe(version):
         graph_probe(version)
         with connect() as conn:
-            if change == 'pointer':
+            if change == "pointer":
                 conn.execute(
                     "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s)",
                     (replacement, commit),
@@ -1239,16 +1133,14 @@ def test_readiness_rejects_an_active_corpus_change_during_its_graph_probe(
                 )
         replaced.append(version)
 
-    monkeypatch.setattr(
-        application.state.knowledge, 'verify_ready', replace_after_probe
-    )
+    monkeypatch.setattr(application.state.knowledge, "verify_ready", replace_after_probe)
     try:
-        assert client.get('/health/ready').status_code == 503
+        assert client.get("/health/ready").status_code == 503
         assert replaced == [original]
     finally:
         with connect() as conn:
-            conn.execute('DELETE FROM knowledge_versions WHERE id=%s', (replacement,))
+            conn.execute("DELETE FROM knowledge_versions WHERE id=%s", (replacement,))
             conn.execute(
                 "UPDATE knowledge_versions SET status='active',embedding_model=%s WHERE id=%s",
-                (original_row['embedding_model'], original),
+                (original_row["embedding_model"], original),
             )

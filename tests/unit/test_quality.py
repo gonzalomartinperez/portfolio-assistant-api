@@ -11,142 +11,134 @@ from tests.support import retrieve
 
 
 def test_production_configuration_fails_closed():
-    with pytest.raises(ValueError, match='HTTPS origins'):
-        Settings(environment='production')
-    with pytest.raises(ValueError, match='paid provider'):
-        Settings(ai_provider='openai', allow_paid_ai=False)
+    with pytest.raises(ValueError, match="HTTPS origins"):
+        Settings(environment="production")
+    with pytest.raises(ValueError, match="paid provider"):
+        Settings(ai_provider="openai", allow_paid_ai=False)
 
 
 def test_citation_metadata_rejects_spoofed_url_and_hash():
-    path = 'src/content/en/projects.ts'
-    commit = 'a' * 40
+    path = "src/content/en/projects.ts"
+    commit = "a" * 40
     row = {
-        'path': path,
-        'start_line': 1,
-        'end_line': 2,
-        'content': 'public evidence',
-        'content_hash': hashlib.sha256(b'public evidence').hexdigest(),
-        'url': f'https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L2',
+        "path": path,
+        "start_line": 1,
+        "end_line": 2,
+        "content": "public evidence",
+        "content_hash": hashlib.sha256(b"public evidence").hexdigest(),
+        "url": f"https://github.com/gonzalomartinperez/portfolio/blob/{commit}/{path}#L1-L2",
     }
     assert verified(row, commit, {path})
-    assert not verified({**row, 'url': 'https://evil.example/'}, commit, {path})
-    assert not verified({**row, 'content': 'changed'}, commit, {path})
-    assert not verified(row, commit, {'src/content/en/profile.ts'})
+    assert not verified({**row, "url": "https://evil.example/"}, commit, {path})
+    assert not verified({**row, "content": "changed"}, commit, {path})
+    assert not verified(row, commit, {"src/content/en/profile.ts"})
 
 
 @pytest.mark.parametrize(
-    ('question', 'expected'),
+    ("question", "expected"),
     [
-        ('Would he be a fit for AI Engineer?', None),
-        ('Is he ready for Machine Learning roles?', None),
-        ('Did he work for UnknownEmployer?', 'UnknownEmployer'),
-        ('What was he building for UnknownEmployer?', 'UnknownEmployer'),
-        ('What did he implement for UnknownEmployer?', 'UnknownEmployer'),
-        ('What did he build at ExampleCompany?', 'ExampleCompany'),
-        ('¿Qué construyó en ExampleCompany?', 'ExampleCompany'),
+        ("Would he be a fit for AI Engineer?", None),
+        ("Is he ready for Machine Learning roles?", None),
+        ("Did he work for UnknownEmployer?", "UnknownEmployer"),
+        ("What was he building for UnknownEmployer?", "UnknownEmployer"),
+        ("What did he implement for UnknownEmployer?", "UnknownEmployer"),
+        ("What did he build at ExampleCompany?", "ExampleCompany"),
+        ("¿Qué construyó en ExampleCompany?", "ExampleCompany"),
     ],
 )
-def test_affiliation_distinguishes_target_roles_from_employer_claims(
-    question, expected
-):
+def test_affiliation_distinguishes_target_roles_from_employer_claims(question, expected):
     assert requested_affiliation(question) == expected
 
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1',
-    reason='requires the reviewed public corpus in PostgreSQL and Neo4j',
+    os.getenv("TEST_INTEGRATION") != "1",
+    reason="requires the reviewed public corpus in PostgreSQL and Neo4j",
 )
 @pytest.mark.parametrize(
-    ('question', 'locale', 'key', 'needle'),
+    ("question", "locale", "key", "needle"),
     [
         (
-            'What is Filomena?',
-            'en',
-            'en/projects',
-            'Health-sciences exams',
+            "What is Filomena?",
+            "en",
+            "en/projects",
+            "Health-sciences exams",
         ),
         (
-            'Which technologies were used in Filomena?',
-            'en',
-            'en/projects',
-            'Laravel',
+            "Which technologies were used in Filomena?",
+            "en",
+            "en/projects",
+            "Laravel",
         ),
         (
-            'What did Gonzalo do at Rampy?',
-            'en',
-            'en/experience',
-            'Rampy',
+            "What did Gonzalo do at Rampy?",
+            "en",
+            "en/experience",
+            "Rampy",
         ),
         (
-            '¿Dónde estudió Gonzalo?',
-            'es',
-            'es/education',
-            'Universidad Nacional del Sur',
+            "¿Dónde estudió Gonzalo?",
+            "es",
+            "es/education",
+            "Universidad Nacional del Sur",
         ),
-        ('How is the portfolio built?', 'en', 'README.md', 'Next.js'),
+        ("How is the portfolio built?", "en", "README.md", "Next.js"),
         (
-            'Would he be a fit for AI Engineer?',
-            'en',
-            'en/experience',
-            'retrieval',
+            "Would he be a fit for AI Engineer?",
+            "en",
+            "en/experience",
+            "retrieval",
         ),
     ],
 )
 def test_reviewed_direct_questions(question, locale, key, needle):
     rows, commits = retrieve(question, locale)
-    assert rows and canonical_key(rows[0]['path']) == key
+    assert rows and canonical_key(rows[0]["path"]) == key
     assert len(commits[0]) == 40
-    evidence = '\n'.join(
-        f'PUBLIC SOURCE {row["path"]} lines {row["start_line"]}-{row["end_line"]}:\n{row["content"]}'
+    evidence = "\n".join(
+        f"PUBLIC SOURCE {row['path']} lines {row['start_line']}-{row['end_line']}:\n{row['content']}"
         for row in rows
     )
     assert needle in fixture_message(question, evidence, locale)
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL and Neo4j'
-)
+@pytest.mark.skipif(os.getenv("TEST_INTEGRATION") != "1", reason="requires PostgreSQL and Neo4j")
 def test_unknown_question_has_no_evidence_and_graph_is_bounded():
-    assert retrieve('quasar xylophone', 'en')[0] == []
-    graph, _ = retrieve('What is Filomena?', 'en', strategy='graph')
-    hybrid, _ = retrieve('What is Filomena?', 'en', strategy='hybrid')
+    assert retrieve("quasar xylophone", "en")[0] == []
+    graph, _ = retrieve("What is Filomena?", "en", strategy="graph")
+    hybrid, _ = retrieve("What is Filomena?", "en", strategy="hybrid")
     assert graph and hybrid
-    assert all(canonical_key(row['path']) == 'en/projects' for row in graph)
-    assert canonical_key(hybrid[0]['path']) == 'en/projects'
+    assert all(canonical_key(row["path"]) == "en/projects" for row in graph)
+    assert canonical_key(hybrid[0]["path"]) == "en/projects"
 
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1', reason='requires PostgreSQL public corpus'
+    os.getenv("TEST_INTEGRATION") != "1", reason="requires PostgreSQL public corpus"
 )
 def test_graph_outage_falls_back_to_verified_text(monkeypatch):
     async def unavailable(*args, **kwargs):
         return ()
 
-    monkeypatch.setattr(
-        'app.adapters.retrieval.KnowledgeIndex.relationships', unavailable
-    )
-    rows, _ = retrieve('What is Filomena?', 'en')
-    assert rows and canonical_key(rows[0]['path']) == 'en/projects'
+    monkeypatch.setattr("app.adapters.retrieval.KnowledgeIndex.relationships", unavailable)
+    rows, _ = retrieve("What is Filomena?", "en")
+    assert rows and canonical_key(rows[0]["path"]) == "en/projects"
 
 
 @pytest.mark.parametrize(
-    ('peer', 'trusted', 'forwarded', 'expected'),
+    ("peer", "trusted", "forwarded", "expected"),
     [
-        ('198.51.100.10', '', '203.0.113.4', '198.51.100.10'),
-        ('198.51.100.10', '10.0.0.2', '203.0.113.4', '198.51.100.10'),
-        ('10.0.0.2', '10.0.0.2', '203.0.113.4', '203.0.113.4'),
-        ('10.0.0.2', '10.0.0.2', '192.0.2.99,203.0.113.4', '203.0.113.4'),
-        ('10.0.0.2', '10.0.0.2', 'not-an-address', '10.0.0.2'),
-        ('10.0.0.2', '10.0.0.2', ','.join(['203.0.113.4'] * 6), '10.0.0.2'),
-        ('10.0.0.2', '10.0.0.2', '', '10.0.0.2'),
+        ("198.51.100.10", "", "203.0.113.4", "198.51.100.10"),
+        ("198.51.100.10", "10.0.0.2", "203.0.113.4", "198.51.100.10"),
+        ("10.0.0.2", "10.0.0.2", "203.0.113.4", "203.0.113.4"),
+        ("10.0.0.2", "10.0.0.2", "192.0.2.99,203.0.113.4", "203.0.113.4"),
+        ("10.0.0.2", "10.0.0.2", "not-an-address", "10.0.0.2"),
+        ("10.0.0.2", "10.0.0.2", ",".join(["203.0.113.4"] * 6), "10.0.0.2"),
+        ("10.0.0.2", "10.0.0.2", "", "10.0.0.2"),
     ],
 )
-def test_forwarded_addresses_require_a_trusted_immediate_peer(
-    peer, trusted, forwarded, expected
-):
+def test_forwarded_addresses_require_a_trusted_immediate_peer(peer, trusted, forwarded, expected):
     from types import SimpleNamespace
 
     from starlette.requests import Request
@@ -155,10 +147,10 @@ def test_forwarded_addresses_require_a_trusted_immediate_peer(
 
     request = Request(
         {
-            'type': 'http',
-            'client': (peer, 1000),
-            'headers': [(b'x-forwarded-for', forwarded.encode())],
-            'app': SimpleNamespace(
+            "type": "http",
+            "client": (peer, 1000),
+            "headers": [(b"x-forwarded-for", forwarded.encode())],
+            "app": SimpleNamespace(
                 state=SimpleNamespace(config=SimpleNamespace(trusted_proxy_ips=trusted))
             ),
         }

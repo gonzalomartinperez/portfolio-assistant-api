@@ -42,20 +42,20 @@ from app.application.presentation_context import PresentationContext
 from app.domain.budget import MAX_OUTPUT_TOKENS
 from app.domain.fixture import fixture_message
 
-CASSETTE_ROOT = Path('evals/cassettes')
-LEDGER_PATH = CASSETTE_ROOT / 'spend-ledger.json'
+CASSETTE_ROOT = Path("evals/cassettes")
+LEDGER_PATH = CASSETTE_ROOT / "spend-ledger.json"
 CASSETTE_DATE = date(2026, 11, 14)
-RE_RECORD_MESSAGE = 're-record required: prompt, model or evidence changed'
+RE_RECORD_MESSAGE = "re-record required: prompt, model or evidence changed"
 EXIT_RE_RECORD = 3
-CAMPAIGN_CAP_USD = Decimal('2.00')
-MONTHLY_CAP_USD = Decimal('8.00')
+CAMPAIGN_CAP_USD = Decimal("2.00")
+MONTHLY_CAP_USD = Decimal("8.00")
 
 
 class CassetteMissingError(Exception):
     """Record mode ``none`` found no cassette for the request key."""
 
     def __init__(self, key: str) -> None:
-        super().__init__(f'{RE_RECORD_MESSAGE} (key {key})')
+        super().__init__(f"{RE_RECORD_MESSAGE} (key {key})")
         self.key = key
 
 
@@ -81,27 +81,27 @@ class CassetteConfig:
 
 
 def canonical_json(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def cassette_key(request: ModelRequest, config: CassetteConfig) -> str:
     payload = {
-        'prompt_version': request.prompt_version,
-        'model': config.model,
-        'reasoning_effort': config.reasoning_effort,
-        'max_output_tokens': config.max_output_tokens,
-        'messages': request.messages,
+        "prompt_version": request.prompt_version,
+        "model": config.model,
+        "reasoning_effort": config.reasoning_effort,
+        "max_output_tokens": config.max_output_tokens,
+        "messages": request.messages,
     }
-    return hashlib.sha256(canonical_json(payload).encode('utf-8')).hexdigest()
+    return hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
 
 
 def prompt_slug(prompt_version: str) -> str:
     """Filesystem-safe directory name for a prompt_version (never a path component)."""
-    return re.sub(r'[^A-Za-z0-9@+._-]+', '_', prompt_version).lstrip('.') or '_'
+    return re.sub(r"[^A-Za-z0-9@+._-]+", "_", prompt_version).lstrip(".") or "_"
 
 
 def cassette_path(root: Path, request: ModelRequest, key: str) -> Path:
-    return root / prompt_slug(request.prompt_version) / f'{key}.jsonl'
+    return root / prompt_slug(request.prompt_version) / f"{key}.jsonl"
 
 
 def build_request(
@@ -113,9 +113,7 @@ def build_request(
     config: CassetteConfig,
 ) -> ModelRequest:
     question, history = visitor_inputs(question, history)
-    return assemble_request(
-        question, evidence, locale, history, context, None, config.today
-    )
+    return assemble_request(question, evidence, locale, history, context, None, config.today)
 
 
 @dataclass(frozen=True)
@@ -128,33 +126,33 @@ def read_cassette(path: Path, key: str) -> Cassette:
     deltas: list[str] = []
     usage: Usage | None = None
     meta = False
-    for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         try:
             row = json.loads(line)
-            kind = row['type']
-            if kind == 'meta' and number == 1 and row['key'] == key:
+            kind = row["type"]
+            if kind == "meta" and number == 1 and row["key"] == key:
                 meta = True
-            elif kind == 'delta' and meta and usage is None:
-                deltas.append(str(row['text']))
-            elif kind == 'usage' and meta and usage is None:
+            elif kind == "delta" and meta and usage is None:
+                deltas.append(str(row["text"]))
+            elif kind == "usage" and meta and usage is None:
                 usage = Usage(
-                    int(row['input_tokens']),
-                    int(row['output_tokens']),
-                    row.get('prompt_version'),
+                    int(row["input_tokens"]),
+                    int(row["output_tokens"]),
+                    row.get("prompt_version"),
                 )
             else:
-                raise CassetteFormatError(f'{path}:{number}: unexpected row')
+                raise CassetteFormatError(f"{path}:{number}: unexpected row")
         except (ValueError, KeyError, TypeError) as error:
-            raise CassetteFormatError(f'{path}:{number}: invalid cassette') from error
+            raise CassetteFormatError(f"{path}:{number}: invalid cassette") from error
     if not meta:
-        raise CassetteFormatError(f'{path}: missing meta row for key')
+        raise CassetteFormatError(f"{path}: missing meta row for key")
     return Cassette(tuple(deltas), usage)
 
 
 def _atomic_write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f'.{path.name}.tmp')
-    temporary.write_text(text, encoding='utf-8')
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(text, encoding="utf-8")
     os.replace(temporary, path)
 
 
@@ -168,25 +166,25 @@ def write_cassette(
 ) -> None:
     rows: list[dict[str, object]] = [
         {
-            'type': 'meta',
-            'key': key,
-            'prompt_version': request.prompt_version,
-            'model': config.model,
-            'reasoning_effort': config.reasoning_effort,
-            'max_output_tokens': config.max_output_tokens,
+            "type": "meta",
+            "key": key,
+            "prompt_version": request.prompt_version,
+            "model": config.model,
+            "reasoning_effort": config.reasoning_effort,
+            "max_output_tokens": config.max_output_tokens,
         },
-        *({'type': 'delta', 'text': text} for text in deltas),  # type: ignore[list-item]
+        *({"type": "delta", "text": text} for text in deltas),  # type: ignore[list-item]
     ]
     if usage is not None:
         rows.append(
             {
-                'type': 'usage',
-                'input_tokens': usage.input_tokens,
-                'output_tokens': usage.output_tokens,
-                'prompt_version': usage.prompt_version,
+                "type": "usage",
+                "input_tokens": usage.input_tokens,
+                "output_tokens": usage.output_tokens,
+                "prompt_version": usage.prompt_version,
             }
         )
-    _atomic_write(path, ''.join(canonical_json(row) + '\n' for row in rows))
+    _atomic_write(path, "".join(canonical_json(row) + "\n" for row in rows))
 
 
 async def _replay(cassette: Cassette) -> AsyncGenerator[str | Usage]:
@@ -214,9 +212,7 @@ class ReplayProvider:
         if not evidence:  # The real provider answers without a model call.
             yield fixture_message(question, evidence, locale)
             return
-        request = build_request(
-            question, evidence, locale, history, context, self.config
-        )
+        request = build_request(question, evidence, locale, history, context, self.config)
         key = cassette_key(request, self.config)
         path = cassette_path(self.config.root, request, key)
         if not path.is_file():
@@ -229,35 +225,30 @@ class ReplayProvider:
 def load_ledger(path: Path) -> dict[str, Decimal]:
     """Read the committed month -> USD ledger; a missing or invalid file fails closed."""
     try:
-        raw = json.loads(path.read_text(encoding='utf-8'))
+        raw = json.loads(path.read_text(encoding="utf-8"))
         ledger = {str(month): Decimal(str(usd)) for month, usd in raw.items()}
     except (OSError, ValueError, AttributeError, ArithmeticError) as error:
-        raise RecordingRefusedError(
-            f'spend ledger {path} is missing or invalid'
-        ) from error
+        raise RecordingRefusedError(f"spend ledger {path} is missing or invalid") from error
     if any(
-        not re.fullmatch(r'\d{4}-\d{2}', month) or not usd.is_finite() or usd < 0
+        not re.fullmatch(r"\d{4}-\d{2}", month) or not usd.is_finite() or usd < 0
         for month, usd in ledger.items()
     ):
-        raise RecordingRefusedError(f'spend ledger {path} is invalid')
+        raise RecordingRefusedError(f"spend ledger {path} is invalid")
     return ledger
 
 
 def recording_enabled(environ: Mapping[str, str] = os.environ) -> bool:
     """The explicit campaign switch: both flags, checked by the CLI and the recorder."""
-    return (
-        environ.get('EVAL_RECORDING') == '1'
-        and environ.get('EVAL_ENVIRONMENT') == 'eval-live'
-    )
+    return environ.get("EVAL_RECORDING") == "1" and environ.get("EVAL_ENVIRONMENT") == "eval-live"
 
 
 def save_ledger(path: Path, ledger: dict[str, Decimal]) -> None:
     # Round charges up so the persisted total never understates the spend.
     body = {
-        month: str(usd.quantize(Decimal('0.000001'), rounding=ROUND_UP))
+        month: str(usd.quantize(Decimal("0.000001"), rounding=ROUND_UP))
         for month, usd in sorted(ledger.items())
     }
-    _atomic_write(path, json.dumps(body, indent=2, sort_keys=True) + '\n')
+    _atomic_write(path, json.dumps(body, indent=2, sort_keys=True) + "\n")
 
 
 class RecordingCassetteProvider:
@@ -277,22 +268,22 @@ class RecordingCassetteProvider:
     ) -> None:
         if not recording_enabled():
             raise RecordingRefusedError(
-                'recording requires EVAL_RECORDING=1 and EVAL_ENVIRONMENT=eval-live'
+                "recording requires EVAL_RECORDING=1 and EVAL_ENVIRONMENT=eval-live"
             )
         if not allow_paid_ai:
-            raise RecordingRefusedError('recording requires ALLOW_PAID_AI=true')
+            raise RecordingRefusedError("recording requires ALLOW_PAID_AI=true")
         if any(
             not price.is_finite() or price <= 0
             for price in (input_usd_per_million, output_usd_per_million)
         ):
-            raise RecordingRefusedError('token prices must be finite and positive')
+            raise RecordingRefusedError("token prices must be finite and positive")
         if (
             config.reasoning_effort != REASONING_EFFORT
             or config.max_output_tokens != MAX_OUTPUT_TOKENS
-            or getattr(inner, 'model', config.model) != config.model
+            or getattr(inner, "model", config.model) != config.model
         ):
             raise RecordingRefusedError(
-                'cassette config does not describe the request the provider sends'
+                "cassette config does not describe the request the provider sends"
             )
         if (
             campaign_budget_usd is None
@@ -300,7 +291,7 @@ class RecordingCassetteProvider:
             or not 0 < campaign_budget_usd <= CAMPAIGN_CAP_USD
         ):
             raise RecordingRefusedError(
-                f'recording requires an explicit --campaign-budget-usd of at most {CAMPAIGN_CAP_USD}'
+                f"recording requires an explicit --campaign-budget-usd of at most {CAMPAIGN_CAP_USD}"
             )
         load_ledger(ledger_path)
         self.inner = inner
@@ -315,29 +306,28 @@ class RecordingCassetteProvider:
 
     def cost(self, input_tokens: int, output_tokens: int) -> Decimal:
         return (
-            Decimal(input_tokens) * self.input_price
-            + Decimal(output_tokens) * self.output_price
+            Decimal(input_tokens) * self.input_price + Decimal(output_tokens) * self.output_price
         ) / 1_000_000
 
     def worst_case(self, request: ModelRequest) -> Decimal:
         """Upper bound of one call: bytes bound the input tokens, output is the maximum."""
-        sent = sum(len(m['content'].encode('utf-8')) for m in request.messages)
+        sent = sum(len(m["content"].encode("utf-8")) for m in request.messages)
         return self.cost(sent, self.config.max_output_tokens)
 
     def _guard(self, reserve: Decimal) -> None:
-        month = f'{self.clock():%Y-%m}'
+        month = f"{self.clock():%Y-%m}"
         month_total = load_ledger(self.ledger_path).get(month, Decimal(0))
         if self.spent + reserve > self.budget:
             raise SpendCapError(
-                f'campaign budget USD {self.budget} would be exceeded; owner decides'
+                f"campaign budget USD {self.budget} would be exceeded; owner decides"
             )
         if month_total + reserve > MONTHLY_CAP_USD:
             raise SpendCapError(
-                f'monthly eval cap USD {MONTHLY_CAP_USD} would be exceeded; owner decides'
+                f"monthly eval cap USD {MONTHLY_CAP_USD} would be exceeded; owner decides"
             )
 
     def _charge(self, amount: Decimal) -> None:
-        month = f'{self.clock():%Y-%m}'
+        month = f"{self.clock():%Y-%m}"
         ledger = load_ledger(self.ledger_path)
         ledger[month] = ledger.get(month, Decimal(0)) + amount
         self.spent += amount
@@ -354,14 +344,10 @@ class RecordingCassetteProvider:
         if not evidence:
             yield fixture_message(question, evidence, locale)
             return
-        request = build_request(
-            question, evidence, locale, history, context, self.config
-        )
+        request = build_request(question, evidence, locale, history, context, self.config)
         key = cassette_key(request, self.config)
         path = cassette_path(self.config.root, request, key)
-        if (
-            path.is_file()
-        ):  # Incremental: existing keys are replayed, never re-recorded.
+        if path.is_file():  # Incremental: existing keys are replayed, never re-recorded.
             async for item in _replay(read_cassette(path, key)):
                 yield item
             return
@@ -384,9 +370,7 @@ class RecordingCassetteProvider:
         finally:
             # Absence of usage never implies a refund: charge the worst case.
             self._charge(
-                self.cost(usage.input_tokens, usage.output_tokens)
-                if usage is not None
-                else reserve
+                self.cost(usage.input_tokens, usage.output_tokens) if usage is not None else reserve
             )
         if complete:
             write_cassette(path, key, request, self.config, deltas, usage)

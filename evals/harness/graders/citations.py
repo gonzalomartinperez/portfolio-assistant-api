@@ -7,16 +7,14 @@ from evals.harness.items import Item
 from evals.harness.result import GradeResult, GradingContext, RunResult
 
 _CONTEXT = GradingContext()
-_MARKDOWN = re.compile(rf'```[\s\S]*?```|`[^`\n]*`|(?<![\w])({MARKER})(?!\()')
-_BIBLIOGRAPHY = re.compile(r'^\s*\[\d+\]:?\s*https?://', re.MULTILINE)
+_MARKDOWN = re.compile(rf"```[\s\S]*?```|`[^`\n]*`|(?<![\w])({MARKER})(?!\()")
+_BIBLIOGRAPHY = re.compile(r"^\s*\[\d+\]:?\s*https?://", re.MULTILINE)
 _URL = re.compile(r'https?://[^\s)\]>"\']+')
-_PINNED = re.compile(
-    r'https://github\.com/gonzalomartinperez/portfolio/blob/[0-9a-f]{40}/\S+'
-)
+_PINNED = re.compile(r"https://github\.com/gonzalomartinperez/portfolio/blob/[0-9a-f]{40}/\S+")
 
 
 def _base(key: str) -> str:
-    return key.split('#', 1)[0]
+    return key.split("#", 1)[0]
 
 
 def key_retrieved(key: str, retrieved: tuple[str, ...]) -> bool:
@@ -41,9 +39,7 @@ def citations_nonempty(
 ) -> GradeResult:
     """At least one citation marker in the answer maps to a cited source."""
     valid = {n for n in _markers(result.answer) if 1 <= n <= len(result.citations)}
-    return GradeResult(
-        'citations_nonempty', bool(valid), f'valid markers: {len(valid)}'
-    )
+    return GradeResult("citations_nonempty", bool(valid), f"valid markers: {len(valid)}")
 
 
 def citations_in_retrieved(
@@ -53,23 +49,17 @@ def citations_in_retrieved(
     markers = _markers(result.answer)
     stray = sorted(n for n in markers if n < 1 or n > len(result.citations))
     if stray:
-        return GradeResult(
-            'citations_in_retrieved', False, f'markers without source: {stray}'
-        )
+        return GradeResult("citations_in_retrieved", False, f"markers without source: {stray}")
     if _BIBLIOGRAPHY.search(result.answer):
-        return GradeResult(
-            'citations_in_retrieved', False, 'bibliography numbering for links'
-        )
+        return GradeResult("citations_in_retrieved", False, "bibliography numbering for links")
     if result.citations and result.retrieved_keys is None:
-        return GradeResult(
-            'citations_in_retrieved', False, 'retrieval was not observed'
-        )
+        return GradeResult("citations_in_retrieved", False, "retrieval was not observed")
     retrieved = result.retrieved_keys or ()
     outside = [c.key for c in result.citations if not key_retrieved(c.key, retrieved)]
     return GradeResult(
-        'citations_in_retrieved',
+        "citations_in_retrieved",
         not outside,
-        f'not retrieved: {outside}' if outside else 'ok',
+        f"not retrieved: {outside}" if outside else "ok",
     )
 
 
@@ -80,18 +70,16 @@ def citation_urls_allowlisted(
     ctx = ctx or _CONTEXT
 
     def approved(url: str) -> bool:
-        return any(
-            url == a or url.startswith(a.rstrip('/') + '/') for a in ctx.approved_urls
-        )
+        return any(url == a or url.startswith(a.rstrip("/") + "/") for a in ctx.approved_urls)
 
     cited = {c.url for c in result.citations}
     bad = [u for u in cited if not (_PINNED.fullmatch(u) or approved(u))]
-    answer_urls = {u.rstrip('.,;:!?') for u in _URL.findall(result.answer)}
+    answer_urls = {u.rstrip(".,;:!?") for u in _URL.findall(result.answer)}
     bad += [u for u in answer_urls if u not in cited and not approved(u)]
     return GradeResult(
-        'citation_urls_allowlisted',
+        "citation_urls_allowlisted",
         not bad,
-        f'{len(bad)} url(s) not allowlisted' if bad else 'ok',
+        f"{len(bad)} url(s) not allowlisted" if bad else "ok",
     )
 
 
@@ -100,13 +88,11 @@ def retrieval_gold_in_topk(
 ) -> GradeResult:
     """Every canonical gold key is among the first ``k`` retrieved sources."""
     if result.retrieved_keys is None:
-        return GradeResult(
-            'retrieval_gold_in_topk', False, 'retrieval was not observed'
-        )
+        return GradeResult("retrieval_gold_in_topk", False, "retrieval was not observed")
     top = result.retrieved_keys[:k]
     missing = [g for g in item.gold_evidence_ids if not key_retrieved(g, top)]
     return GradeResult(
-        'retrieval_gold_in_topk',
+        "retrieval_gold_in_topk",
         not missing,
-        f'missing: {missing}' if missing else 'ok',
+        f"missing: {missing}" if missing else "ok",
     )

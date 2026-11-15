@@ -23,30 +23,28 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILLS = ROOT / '.agents' / 'skills'
+SKILLS = ROOT / ".agents" / "skills"
 THRESHOLD = 0.5
-SPLITS = ('train', 'validation')
-ERROR = '<error>'
+SPLITS = ("train", "validation")
+ERROR = "<error>"
 PROVIDER_SWITCHES = frozenset(
-    {'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_USE_VERTEX', 'CLAUDE_CODE_USE_FOUNDRY'}
+    {"CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY"}
 )
-ROUTER_SYSTEM = (
-    'You are a skill router. Follow the instructions in the user message exactly.'
-)
+ROUTER_SYSTEM = "You are a skill router. Follow the instructions in the user message exactly."
 ROUTER_COMMAND = (
-    'claude',
-    '-p',
-    '--model',
-    'haiku',
-    '--max-turns',
-    '1',
-    '--tools',
-    '',
-    '--disable-slash-commands',
-    '--no-session-persistence',
-    '--setting-sources',
-    '',
-    '--system-prompt',
+    "claude",
+    "-p",
+    "--model",
+    "haiku",
+    "--max-turns",
+    "1",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--no-session-persistence",
+    "--setting-sources",
+    "",
+    "--system-prompt",
     ROUTER_SYSTEM,
 )
 
@@ -63,42 +61,40 @@ def scalar(value: str) -> str:
 
 def read_skill(path: Path) -> tuple[str, str]:
     """Return `(name, description)` from a SKILL.md with single-line frontmatter values."""
-    front = re.match(r'\A---\n(.*?)\n---\n', path.read_text(), re.DOTALL)
+    front = re.match(r"\A---\n(.*?)\n---\n", path.read_text(), re.DOTALL)
     if front is None:
-        raise ValueError(f'{path}: missing frontmatter')
-    fields = dict(
-        re.findall(r'^(name|description):[ \t]*(.+)$', front[1], re.MULTILINE)
-    )
-    if set(fields) != {'name', 'description'}:
-        raise ValueError(f'{path}: name and description must be single-line values')
-    return scalar(fields['name']), scalar(fields['description'])
+        raise ValueError(f"{path}: missing frontmatter")
+    fields = dict(re.findall(r"^(name|description):[ \t]*(.+)$", front[1], re.MULTILINE))
+    if set(fields) != {"name", "description"}:
+        raise ValueError(f"{path}: name and description must be single-line values")
+    return scalar(fields["name"]), scalar(fields["description"])
 
 
 def load_catalog(root: Path = SKILLS) -> dict[str, str]:
     """Map every skill name to its description, sorted by name."""
-    pairs = (read_skill(folder / 'SKILL.md') for folder in sorted(root.iterdir()))
+    pairs = (read_skill(folder / "SKILL.md") for folder in sorted(root.iterdir()))
     return dict(sorted(pairs))
 
 
 def build_prompt(catalog: dict[str, str], query: str) -> str:
     """Build the router prompt: every skill, the request, and the answer format."""
-    listing = '\n'.join(f'- {name}: {text}' for name, text in catalog.items())
+    listing = "\n".join(f"- {name}: {text}" for name, text in catalog.items())
     return (
-        'An agent has these skills. Each entry is `name: description`.\n\n'
-        f'{listing}\n\n'
-        'A user sends the request below in a fresh session. Decide which single skill '
-        'you would load to handle it. Use the descriptions only. Answer with the exact '
-        'skill name and nothing else, or `none` if no skill applies.\n\n'
-        f'Request: {query}\n'
+        "An agent has these skills. Each entry is `name: description`.\n\n"
+        f"{listing}\n\n"
+        "A user sends the request below in a fresh session. Decide which single skill "
+        "you would load to handle it. Use the descriptions only. Answer with the exact "
+        "skill name and nothing else, or `none` if no skill applies.\n\n"
+        f"Request: {query}\n"
     )
 
 
 def parse_answer(answer: str, names: list[str]) -> str:
     """Return the skill name the model chose, or `none` (also for unknown answers)."""
     text = answer.strip().lower()
-    pattern = '|'.join(re.escape(n) for n in sorted(names, key=len, reverse=True))
-    found = re.search(rf'(?<![a-z0-9-])({pattern}|none)(?![a-z0-9-])', text)
-    return found[1] if found else 'none'
+    pattern = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
+    found = re.search(rf"(?<![a-z0-9-])({pattern}|none)(?![a-z0-9-])", text)
+    return found[1] if found else "none"
 
 
 def fraction(picks: list[str], skill: str) -> float | None:
@@ -118,27 +114,23 @@ def summarize(rows: list[dict]) -> dict:
     Queries whose every router call failed have no fraction; they are counted in `errored` and
     left out of every ratio instead of being scored as "not triggered".
     """
-    errored = sum(r['triggered_fraction'] is None for r in rows)
-    rows = [r for r in rows if r['triggered_fraction'] is not None]
-    tp = sum(r['should_trigger'] and r['triggered_fraction'] >= THRESHOLD for r in rows)
-    fn = sum(r['should_trigger'] and r['triggered_fraction'] < THRESHOLD for r in rows)
-    fp = sum(
-        not r['should_trigger'] and r['triggered_fraction'] >= THRESHOLD for r in rows
-    )
-    tn = sum(
-        not r['should_trigger'] and r['triggered_fraction'] < THRESHOLD for r in rows
-    )
+    errored = sum(r["triggered_fraction"] is None for r in rows)
+    rows = [r for r in rows if r["triggered_fraction"] is not None]
+    tp = sum(r["should_trigger"] and r["triggered_fraction"] >= THRESHOLD for r in rows)
+    fn = sum(r["should_trigger"] and r["triggered_fraction"] < THRESHOLD for r in rows)
+    fp = sum(not r["should_trigger"] and r["triggered_fraction"] >= THRESHOLD for r in rows)
+    tn = sum(not r["should_trigger"] and r["triggered_fraction"] < THRESHOLD for r in rows)
     ratio = lambda top, bottom: round(top / bottom, 4) if bottom else None
     return {
-        'queries': len(rows),
-        'errored': errored,
-        'tp': tp,
-        'fp': fp,
-        'fn': fn,
-        'tn': tn,
-        'precision': ratio(tp, tp + fp),
-        'recall': ratio(tp, tp + fn),
-        'accuracy': ratio(tp + tn, len(rows)),
+        "queries": len(rows),
+        "errored": errored,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "tn": tn,
+        "precision": ratio(tp, tp + fp),
+        "recall": ratio(tp, tp + fn),
+        "accuracy": ratio(tp + tn, len(rows)),
     }
 
 
@@ -146,25 +138,23 @@ def score_skill(skill: str, queries: list[dict], picks: dict[str, list[str]]) ->
     """Score every query of one skill and summarize per split."""
     rows = []
     for item in queries:
-        runs = picks[item['query']]
+        runs = picks[item["query"]]
         share = fraction(runs, skill)
         rows.append(
             {
-                'query': item['query'],
-                'split': item['split'],
-                'should_trigger': item['should_trigger'],
-                'triggered_fraction': None if share is None else round(share, 4),
-                'picks': runs,
-                'errors': runs.count(ERROR),
-                'passed': None
-                if share is None
-                else judge(item['should_trigger'], share),
+                "query": item["query"],
+                "split": item["split"],
+                "should_trigger": item["should_trigger"],
+                "triggered_fraction": None if share is None else round(share, 4),
+                "picks": runs,
+                "errors": runs.count(ERROR),
+                "passed": None if share is None else judge(item["should_trigger"], share),
             }
         )
     return {
-        'errors': sum(r['errors'] for r in rows),
-        'splits': {s: summarize([r for r in rows if r['split'] == s]) for s in SPLITS},
-        'queries': rows,
+        "errors": sum(r["errors"] for r in rows),
+        "splits": {s: summarize([r for r in rows if r["split"] == s]) for s in SPLITS},
+        "queries": rows,
     }
 
 
@@ -172,12 +162,12 @@ def overall(skills: dict[str, dict], split: str) -> dict:
     """Pool the counts of every skill for one split."""
     pooled = [
         {
-            'should_trigger': row['should_trigger'],
-            'triggered_fraction': row['triggered_fraction'],
+            "should_trigger": row["should_trigger"],
+            "triggered_fraction": row["triggered_fraction"],
         }
         for entry in skills.values()
-        for row in entry['queries']
-        if row['split'] == split
+        for row in entry["queries"]
+        if row["split"] == split
     ]
     return summarize(pooled)
 
@@ -185,13 +175,13 @@ def overall(skills: dict[str, dict], split: str) -> dict:
 def merge(existing: dict | None, fresh: dict) -> dict:
     """Merge a new run into an earlier file: keep each skill's `first`, replace `final`."""
     skills: dict[str, dict] = {}
-    previous = (existing or {}).get('skills', {})
-    for name, entry in fresh['skills'].items():
-        first = previous[name]['first'] if name in previous else entry['final']
-        skills[name] = {'first': first, 'final': entry['final']}
+    previous = (existing or {}).get("skills", {})
+    for name, entry in fresh["skills"].items():
+        first = previous[name]["first"] if name in previous else entry["final"]
+        skills[name] = {"first": first, "final": entry["final"]}
     for name, entry in previous.items():
         skills.setdefault(name, entry)
-    return {**fresh, 'skills': dict(sorted(skills.items()))}
+    return {**fresh, "skills": dict(sorted(skills.items()))}
 
 
 def router_env(environ: dict[str, str] | None = None) -> dict[str, str]:
@@ -204,7 +194,7 @@ def router_env(environ: dict[str, str] | None = None) -> dict[str, str]:
     return {
         name: value
         for name, value in source.items()
-        if not name.startswith('ANTHROPIC_') and name not in PROVIDER_SWITCHES
+        if not name.startswith("ANTHROPIC_") and name not in PROVIDER_SWITCHES
     }
 
 
@@ -232,10 +222,10 @@ def ask_router(prompt: str, timeout: int = 180, attempts: int = 2) -> str:
 
 def load_queries(skill: str, root: Path = SKILLS) -> tuple[list[dict], int]:
     """Read one skill's trigger queries and its runs_per_query."""
-    data = json.loads((root / skill / 'evals' / 'triggers.json').read_text())
-    if data['skill'] != skill:
-        raise ValueError(f'{skill}: triggers.json names {data["skill"]}')
-    return data['queries'], int(data['runs_per_query'])
+    data = json.loads((root / skill / "evals" / "triggers.json").read_text())
+    if data["skill"] != skill:
+        raise ValueError(f"{skill}: triggers.json names {data['skill']}")
+    return data["queries"], int(data["runs_per_query"])
 
 
 def run(args: argparse.Namespace) -> dict:
@@ -244,22 +234,18 @@ def run(args: argparse.Namespace) -> dict:
     chosen = args.skills or names
     unknown = sorted(set(chosen) - set(names))
     if unknown:
-        raise SystemExit(f'unknown skills: {", ".join(unknown)}')
-    wanted = SPLITS if args.split == 'all' else (args.split,)
+        raise SystemExit(f"unknown skills: {', '.join(unknown)}")
+    wanted = SPLITS if args.split == "all" else (args.split,)
     jobs: list[tuple[str, str, int]] = []
     queries: dict[str, list[dict]] = {}
     for skill in chosen:
         items, runs = load_queries(skill)
-        queries[skill] = [i for i in items if i['split'] in wanted]
-        jobs += [
-            (skill, i['query'], n)
-            for i in queries[skill]
-            for n in range(args.runs or runs)
-        ]
+        queries[skill] = [i for i in items if i["split"] in wanted]
+        jobs += [(skill, i["query"], n) for i in queries[skill] for n in range(args.runs or runs)]
     if args.dry_run:
-        first = queries[chosen[0]][0]['query']
+        first = queries[chosen[0]][0]["query"]
         print(build_prompt(catalog, first))
-        print(f'[dry run] {len(jobs)} router calls for {len(chosen)} skills')
+        print(f"[dry run] {len(jobs)} router calls for {len(chosen)} skills")
         raise SystemExit(0)
 
     def call(job: tuple[str, str, int]) -> str:
@@ -275,87 +261,86 @@ def run(args: argparse.Namespace) -> dict:
     for skill in chosen:
         scored = score_skill(skill, queries[skill], picks[skill])
         digest = hashlib.sha256(catalog[skill].encode()).hexdigest()[:12]
-        scored['description_sha256'] = digest
-        skills[skill] = {'final': scored}
+        scored["description_sha256"] = digest
+        skills[skill] = {"final": scored}
     return {
-        'generated': datetime.now(UTC).strftime('%Y-%m-%dT%H:%MZ'),
-        'router_model': 'haiku via claude -p (subscription, no API key)',
-        'split': args.split,
-        'runs_override': args.runs,
-        'threshold': THRESHOLD,
-        'errors': sum(entry['final']['errors'] for entry in skills.values()),
-        'skills': skills,
+        "generated": datetime.now(UTC).strftime("%Y-%m-%dT%H:%MZ"),
+        "router_model": "haiku via claude -p (subscription, no API key)",
+        "split": args.split,
+        "runs_override": args.runs,
+        "threshold": THRESHOLD,
+        "errors": sum(entry["final"]["errors"] for entry in skills.values()),
+        "skills": skills,
     }
 
 
-def table(results: dict, split: str = 'validation') -> str:
+def table(results: dict, split: str = "validation") -> str:
     """Markdown table of first and final numbers for one split."""
-    fmt = lambda value: 'n/a' if value is None else f'{value:.2f}'
+    fmt = lambda value: "n/a" if value is None else f"{value:.2f}"
     lines = [
-        '| Skill | First acc | Final acc | Precision | Recall | Queries |',
-        '| --- | --- | --- | --- | --- | --- |',
+        "| Skill | First acc | Final acc | Precision | Recall | Queries |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
-    for name, entry in results['skills'].items():
-        first = entry['first']['splits'][split]
-        final = entry['final']['splits'][split]
+    for name, entry in results["skills"].items():
+        first = entry["first"]["splits"][split]
+        final = entry["final"]["splits"][split]
         lines.append(
-            f'| `{name}` | {fmt(first["accuracy"])} | {fmt(final["accuracy"])} | '
-            f'{fmt(final["precision"])} | {fmt(final["recall"])} | {final["queries"]} |'
+            f"| `{name}` | {fmt(first['accuracy'])} | {fmt(final['accuracy'])} | "
+            f"{fmt(final['precision'])} | {fmt(final['recall'])} | {final['queries']} |"
         )
-    first_all = overall({n: e['first'] for n, e in results['skills'].items()}, split)
-    final_all = overall({n: e['final'] for n, e in results['skills'].items()}, split)
+    first_all = overall({n: e["first"] for n, e in results["skills"].items()}, split)
+    final_all = overall({n: e["final"] for n, e in results["skills"].items()}, split)
     lines.append(
-        f'| **overall** | {fmt(first_all["accuracy"])} | {fmt(final_all["accuracy"])} | '
-        f'{fmt(final_all["precision"])} | {fmt(final_all["recall"])} | '
-        f'{final_all["queries"]} |'
+        f"| **overall** | {fmt(first_all['accuracy'])} | {fmt(final_all['accuracy'])} | "
+        f"{fmt(final_all['precision'])} | {fmt(final_all['recall'])} | "
+        f"{final_all['queries']} |"
     )
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def finish(fresh: dict, out: Path) -> dict:
     """Merge with an existing file, add overall numbers and write the JSON."""
     existing = json.loads(out.read_text()) if out.exists() else None
-    for entry in fresh['skills'].values():
-        entry['first'] = entry['final']
+    for entry in fresh["skills"].values():
+        entry["first"] = entry["final"]
     merged = merge(existing, fresh)
-    for label in ('first', 'final'):
-        merged[f'overall_{label}'] = {
-            s: overall({n: e[label] for n, e in merged['skills'].items()}, s)
-            for s in SPLITS
+    for label in ("first", "final"):
+        merged[f"overall_{label}"] = {
+            s: overall({n: e[label] for n, e in merged["skills"].items()}, s) for s in SPLITS
         }
-    merged['errors_in_file'] = sum(
-        entry['final'].get('errors', 0) for entry in merged['skills'].values()
+    merged["errors_in_file"] = sum(
+        entry["final"].get("errors", 0) for entry in merged["skills"].values()
     )
-    out.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + '\n')
+    out.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
     return merged
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--skills', nargs='+', help='subset of skill names')
-    parser.add_argument('--split', choices=(*SPLITS, 'all'), default='validation')
-    parser.add_argument('--runs', type=int, help='override runs_per_query')
-    parser.add_argument('--jobs', type=int, default=4, help='parallel router calls')
-    parser.add_argument('--out', type=Path, help='JSON result path (merged if present)')
-    parser.add_argument('--markdown', type=Path, help='write the validation table')
-    parser.add_argument('--dry-run', action='store_true', help='print one prompt only')
+    parser.add_argument("--skills", nargs="+", help="subset of skill names")
+    parser.add_argument("--split", choices=(*SPLITS, "all"), default="validation")
+    parser.add_argument("--runs", type=int, help="override runs_per_query")
+    parser.add_argument("--jobs", type=int, default=4, help="parallel router calls")
+    parser.add_argument("--out", type=Path, help="JSON result path (merged if present)")
+    parser.add_argument("--markdown", type=Path, help="write the validation table")
+    parser.add_argument("--dry-run", action="store_true", help="print one prompt only")
     args = parser.parse_args(argv)
     if not args.dry_run and args.out is None:
-        parser.error('--out is required unless --dry-run')
+        parser.error("--out is required unless --dry-run")
     result = run(args)
     merged = finish(result, args.out)
     print(table(merged))
     if args.markdown:
         args.markdown.write_text(table(merged))
-    if result['errors']:
+    if result["errors"]:
         print(
-            f'error: {result["errors"]} router calls failed; they are excluded from the '
-            'fractions and the run is not valid evidence until they are re-run',
+            f"error: {result['errors']} router calls failed; they are excluded from the "
+            "fractions and the run is not valid evidence until they are re-run",
             file=sys.stderr,
         )
         return 1
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

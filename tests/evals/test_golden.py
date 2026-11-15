@@ -26,10 +26,8 @@ from evals.harness.golden import (
     run_golden,
 )
 
-REQUIRED = os.getenv('REQUIRE_GOLDEN_CASSETTES') == '1'
-PENDING = (
-    'golden cassettes not recorded yet: recording campaign pending (DR-04, eval-live)'
-)
+REQUIRED = os.getenv("REQUIRE_GOLDEN_CASSETTES") == "1"
+PENDING = "golden cassettes not recorded yet: recording campaign pending (DR-04, eval-live)"
 
 
 def cassettes_missing() -> None:
@@ -40,8 +38,8 @@ def cassettes_missing() -> None:
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1' and not REQUIRED,
-    reason='isolated stores required',
+    os.getenv("TEST_INTEGRATION") != "1" and not REQUIRED,
+    reason="isolated stores required",
 )
 def test_every_active_golden_item_passes_from_cassettes():
     if not has_cassettes():
@@ -53,16 +51,16 @@ def test_every_active_golden_item_passes_from_cassettes():
     if replay.missing:
         pytest.fail(RE_RECORD_MESSAGE, pytrace=False)
     failing = failing_by_stratum(outcomes)
-    assert not failing, f'failing golden items by stratum: {failing}'
+    assert not failing, f"failing golden items by stratum: {failing}"
     assert outcomes
 
 
 def test_recording_is_refused_without_the_explicit_flags(monkeypatch, capsys):
-    monkeypatch.delenv('EVAL_RECORDING', raising=False)
-    monkeypatch.delenv('EVAL_ENVIRONMENT', raising=False)
+    monkeypatch.delenv("EVAL_RECORDING", raising=False)
+    monkeypatch.delenv("EVAL_ENVIRONMENT", raising=False)
     assert not recording_enabled()
-    assert not recording_enabled({'EVAL_RECORDING': '1'})
-    assert not recording_enabled({'EVAL_ENVIRONMENT': 'eval-live'})
-    assert recording_enabled({'EVAL_RECORDING': '1', 'EVAL_ENVIRONMENT': 'eval-live'})
-    assert main(['--record', '--campaign-budget-usd', '1']) == 4
-    assert 'recording refused' in capsys.readouterr().err
+    assert not recording_enabled({"EVAL_RECORDING": "1"})
+    assert not recording_enabled({"EVAL_ENVIRONMENT": "eval-live"})
+    assert recording_enabled({"EVAL_RECORDING": "1", "EVAL_ENVIRONMENT": "eval-live"})
+    assert main(["--record", "--campaign-budget-usd", "1"]) == 4
+    assert "recording refused" in capsys.readouterr().err
