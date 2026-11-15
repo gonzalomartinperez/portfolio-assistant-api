@@ -1,7 +1,7 @@
 """Anonymous public ingestion and separately authorized aggregate reads."""
 
 from dataclasses import asdict
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -50,7 +50,7 @@ class ProductEventBody(BaseModel):
         )
 
     @model_validator(mode="after")
-    def semantic_dimensions(self):
+    def semantic_dimensions(self) -> Self:
         self.event()
         return self
 
@@ -74,7 +74,7 @@ class ProductSnapshot(BaseModel):
     counts: list[ProductCount] = Field(max_length=4000)
 
 
-def enabled(request: Request):
+def enabled(request: Request) -> None:
     if not request.app.state.config.product_analytics_enabled:
         raise HTTPException(404, "analytics_disabled")
 
@@ -85,7 +85,7 @@ def enabled(request: Request):
     operation_id="recordProductEvent",
     dependencies=[Depends(enabled)],
 )
-def record(request: Request, body: ProductEventBody | ProductInteractionBody):
+def record(request: Request, body: ProductEventBody | ProductInteractionBody) -> Response:
     if request.headers.get("content-type", "").split(";")[0] != "application/json":
         raise HTTPException(415, "invalid_content_type")
     # Do not attach anonymous events to an authenticated session by accident.
@@ -101,8 +101,9 @@ def record(request: Request, body: ProductEventBody | ProductInteractionBody):
     include_in_schema=False,
     dependencies=[Depends(authorize), Depends(enabled)],
 )
-def aggregates(request: Request):
-    return request.app.state.product_analytics.snapshot()
+def aggregates(request: Request) -> dict[str, object]:
+    snapshot: dict[str, object] = request.app.state.product_analytics.snapshot()
+    return snapshot
 
 
 @router.get(
@@ -119,7 +120,7 @@ def detailed_aggregates(
     region_id: Region = "home-featured",
     viewport: Viewport = "desktop",
     locale: Literal["all", "en", "es"] = "all",
-):
+) -> ProductReportSnapshot:
     keys = {"period", "offset", "section", "region_id", "viewport", "locale"}
     if any(
         key not in keys or len(request.query_params.getlist(key)) != 1

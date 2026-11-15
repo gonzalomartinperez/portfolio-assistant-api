@@ -35,7 +35,7 @@ class FeedbackView(BaseModel):
     response_model=FeedbackView,
     dependencies=[Depends(authorize)],
 )
-def read_feedback(request: Request):
+def read_feedback(request: Request) -> FeedbackView:
     if not request.app.state.config.feedback_overview_enabled:
         raise HTTPException(404, "feedback_overview_disabled")
     reader: FeedbackReadPort = request.app.state.feedback
