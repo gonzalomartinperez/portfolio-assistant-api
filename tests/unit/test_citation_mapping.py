@@ -78,3 +78,11 @@ def test_stream_final_and_persistence_use_the_same_canonical_answer():
         assert events[-1].name == "run.completed"
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("fixture", "support"), [(True, None), (False, lambda content, answer, path: True)]
+)
+def test_run_service_rejects_inconsistent_fixture_wiring(fixture, support):
+    with pytest.raises(ValueError, match="citation_support"):
+        RunService(Store(), object(), fixture=fixture, citation_support=support)

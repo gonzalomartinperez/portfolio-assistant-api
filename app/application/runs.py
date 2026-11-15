@@ -132,6 +132,8 @@ class RunService:
         timeout_seconds: float = 60,
         observer: ExecutionObserver | None = None,
     ):
+        if fixture != (citation_support is not None):
+            raise ValueError("fixture mode requires citation_support, and only fixture mode")
         self.observer = observer
         self.store = store
         self.workflow = workflow
