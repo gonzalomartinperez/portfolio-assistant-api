@@ -402,6 +402,7 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
     client = client_factory(application, client=(str(uuid4()), 50000))
     application.state.runs.workflow = SyntheticWorkflow()
     application.state.runs.fixture = False
+    application.state.runs.citation_support = None
     auth = headers("http://localhost:3000", bootstrap(client, "http://localhost:3000"))
     try:
         cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
