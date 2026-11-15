@@ -3,7 +3,7 @@
 import asyncio
 import hmac
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Self
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -42,7 +42,7 @@ class ExecutionsView(StrictModel):
     first_token_p95_ms: float | None = Field(ge=0, le=10**12)
 
     @model_validator(mode="after")
-    def consistent_counts(self):
+    def consistent_counts(self) -> Self:
         if self.completed + self.cancelled + self.failed > self.total:
             raise ValueError("inconsistent_counts")
         return self
@@ -131,16 +131,16 @@ async def metrics(request: Request) -> Response:
             "UTC-month configured USD estimate; not provider invoice.",
             registry=registry,
         ).set(value)
-    for name, value in (
+    for name, latency_ms in (
         ("p50", data.executions.first_token_p50_ms),
         ("p95", data.executions.first_token_p95_ms),
     ):
-        if value is not None:
+        if latency_ms is not None:
             Gauge(
                 "assistant_first_chunk_" + name + "_seconds",
                 "Server first fragment latency over 30 days.",
                 registry=registry,
-            ).set(value / 1000)
+            ).set(latency_ms / 1000)
     Gauge(
         "assistant_operational_observations_dropped",
         "Observations lost to bounded buffering or storage/export errors.",

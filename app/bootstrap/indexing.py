@@ -7,6 +7,7 @@ import tempfile
 from functools import partial
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 from app.adapters.portfolio.indexing import git
 from app.adapters.portfolio.indexing import sync as sync_projection
@@ -21,7 +22,7 @@ def sync(
     watched: bool = False,
     stop: Event | None = None,
     snapshot: bool = False,
-):
+) -> dict[str, Any]:
     config = settings()
     return sync_projection(
         repo,
@@ -34,7 +35,7 @@ def sync(
     )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, help="Git checkout, or the frozen corpus directory")
     parser.add_argument("--source", choices=["local", "github", "snapshot"], default="local")
