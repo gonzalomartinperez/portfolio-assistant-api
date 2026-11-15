@@ -10,6 +10,7 @@ import pytest
 from neo4j import GraphDatabase
 
 from app.adapters.portfolio import indexing
+from app.adapters.portfolio.source_format import facts_for
 
 pytestmark = [
     pytest.mark.integration,
@@ -110,7 +111,9 @@ def test_profile_switch_preserves_legacy_and_retired_projections(
     try:
         # Reproduce the actual pre-upgrade IDs and legacy profile, not the new namespace.
         with driver.session(database=config.neo4j_database) as graph:
-            indexing.project(graph, legacy, [record], {path: content})
+            indexing.project(
+                graph, legacy, [record], {path: content}, explicit_facts=facts_for({path: content})
+            )
         with connect() as conn:
             conn.execute(
                 "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s)",

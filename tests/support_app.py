@@ -7,6 +7,7 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.adapters.providers.fixture_answer import fixture_supports
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import Evidence
 from app.application.conversations import Conversations
@@ -190,7 +191,11 @@ def build_app(
     app.state.conversations = Conversations(app.state.store, 7, settings.rate_hash_key)
     workflow = LangGraphWorkflow(app.state.retrieval, app.state.provider, accounting)
     app.state.runs = RunService(
-        app.state.run_store, workflow, fixture=fixture, timeout_seconds=timeout
+        app.state.run_store,
+        workflow,
+        fixture=fixture,
+        citation_support=fixture_supports if fixture else None,
+        timeout_seconds=timeout,
     )
     app.state.ready = lambda: "009"
     app.state.cleanup = lambda: None

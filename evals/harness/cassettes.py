@@ -36,11 +36,11 @@ from app.adapters.providers.answer import (
     assemble_request,
     visitor_inputs,
 )
+from app.adapters.providers.fixture_answer import fixture_message
 from app.application.contracts import Provider, Usage
 from app.application.conversation_context import Turn
 from app.application.presentation_context import PresentationContext
 from app.domain.budget import MAX_OUTPUT_TOKENS
-from app.domain.fixture import fixture_message
 
 CASSETTE_ROOT = Path("evals/cassettes")
 LEDGER_PATH = CASSETTE_ROOT / "spend-ledger.json"

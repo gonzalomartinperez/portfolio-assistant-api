@@ -13,7 +13,7 @@ from app.adapters.providers.embedding import embed
 from app.bootstrap.config import settings
 from app.bootstrap.maintenance import connect, reserve, settle
 from app.domain.errors import BudgetExhaustedError
-from app.domain.fixture import insufficient_message
+from app.domain.messages import insufficient_message
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve

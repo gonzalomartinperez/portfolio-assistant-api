@@ -28,6 +28,7 @@ from app.adapters.providers.answer import (
     ResponsesProvider,
 )
 from app.adapters.providers.embedding import FixtureEmbeddings, OpenAIEmbeddings
+from app.adapters.providers.fixture_answer import fixture_supports
 from app.adapters.providers.http import create_async_client, create_sync_client
 from app.adapters.providers.language import LocalLanguageDetector
 from app.adapters.providers.web_search import OpenAIWebSearch
@@ -200,6 +201,7 @@ def create_app(
                 PostgresRuns(connection),
                 workflow,
                 fixture=config.ai_provider == "fixture",
+                citation_support=(fixture_supports if config.ai_provider == "fixture" else None),
                 timeout_seconds=config.run_timeout_seconds,
                 observer=observer,
             )

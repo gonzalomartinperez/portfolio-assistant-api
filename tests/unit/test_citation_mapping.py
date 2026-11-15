@@ -38,7 +38,7 @@ from tests.unit.test_workflow import SOURCE, Store
 def test_noncontiguous_references_preserve_code_links_and_evidence(text, expected, indices):
     sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
     assert normalize_citation_markers(text, len(sources)) == expected
-    assert [source["id"] for source in citations(sources, text, False)] == [
+    assert [source["id"] for source in citations(sources, text, None)] == [
         str(index) for index in indices
     ]
 
