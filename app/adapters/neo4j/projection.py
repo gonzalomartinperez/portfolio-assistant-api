@@ -4,8 +4,6 @@ import hashlib
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from app.domain.graph import facts
-
 
 def project(
     graph: Any,
@@ -13,7 +11,7 @@ def project(
     records: Sequence[Mapping[str, Any]],
     documents: Mapping[str, str],
     *,
-    explicit_facts: Mapping[str, Sequence[Any]] | None = None,
+    explicit_facts: Mapping[str, Sequence[Any]],
 ) -> int:
     graph.run(
         "CREATE CONSTRAINT document_identity IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE"
@@ -34,10 +32,8 @@ def project(
             ],
         ).consume()
         count = 0
-        for path, content in documents.items():
-            for fact in (
-                facts(path, content) if explicit_facts is None else explicit_facts.get(path, ())
-            ):
+        for path in documents:
+            for fact in explicit_facts.get(path, ()):
                 supports = [
                     r
                     for r in records

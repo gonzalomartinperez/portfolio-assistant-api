@@ -1,5 +1,13 @@
 import re
 
+from app.domain.evidence import (
+    ALIASES,
+    asks_spoken_languages,
+    requested_affiliation,
+    tokens,
+)
+from app.domain.messages import insufficient_message
+
 
 def metric_excerpts(content: str) -> list[str]:
     """Keep metric value, label and qualification together for output and attribution."""
@@ -41,14 +49,6 @@ def fixture_supports(content: str, answer: str, path: str) -> bool:
     )
 
 
-def insufficient_message(locale: str) -> str:
-    return (
-        "No tengo información pública suficiente para confirmar ese dato."
-        if locale == "es"
-        else "I don't have enough public information to confirm that."
-    )
-
-
 def fixture_message(question: str, evidence: str, locale: str) -> str:
     # A deterministic excerpt viewer, not a model-quality simulation.
     insufficient = insufficient_message(locale)
@@ -64,13 +64,6 @@ def fixture_message(question: str, evidence: str, locale: str) -> str:
             )
         return insufficient
     if "PUBLIC SOURCE " in evidence:
-        from .evidence import (
-            ALIASES,
-            asks_spoken_languages,
-            requested_affiliation,
-            tokens,
-        )
-
         terms = tokens(question)
         expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
         excerpts: list[str] = []

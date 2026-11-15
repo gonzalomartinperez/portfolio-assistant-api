@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import re
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -29,7 +29,7 @@ from app.domain.errors import (
     ProviderUnavailableError,
     RejectedError,
 )
-from app.domain.fixture import fixture_supports, insufficient_message
+from app.domain.messages import insufficient_message
 
 
 @dataclass(frozen=True)
@@ -92,8 +92,12 @@ def normalize_citation_markers(answer: str, count: int) -> str:
     )
 
 
-def citations(sources: tuple[Evidence, ...], answer: str, fixture: bool) -> list[dict[str, object]]:
-    if fixture:
+def citations(
+    sources: tuple[Evidence, ...],
+    answer: str,
+    citation_support: Callable[[str, str, str], bool] | None = None,
+) -> list[dict[str, object]]:
+    if citation_support is not None:
         if answer in (insufficient_message("en"), insufficient_message("es")):
             sources = ()
         else:
@@ -101,7 +105,7 @@ def citations(sources: tuple[Evidence, ...], answer: str, fixture: bool) -> list
             sources = tuple(
                 source
                 for source in sources[:2]
-                if fixture_supports(source.content, answer, source.path)
+                if citation_support(source.content, answer, source.path)
             )
     else:
         used = referenced_sources(answer, len(sources))
@@ -124,13 +128,17 @@ class RunService:
         workflow: Workflow,
         *,
         fixture: bool,
+        citation_support: Callable[[str, str, str], bool] | None = None,
         timeout_seconds: float = 60,
         observer: ExecutionObserver | None = None,
     ):
+        if fixture != (citation_support is not None):
+            raise ValueError("fixture mode requires citation_support, and only fixture mode")
         self.observer = observer
         self.store = store
         self.workflow = workflow
         self.fixture = fixture
+        self.citation_support = citation_support
         self.timeout_seconds = timeout_seconds
         self._cleanup_tasks: set[asyncio.Task[None]] = set()
         self._active_runs: set[UUID] = set()
@@ -301,7 +309,7 @@ class RunService:
                     elif event.kind == "answer":
                         answer = event.text
             with phase("finalization"):
-                refs = citations(sources, answer, self.fixture)
+                refs = citations(sources, answer, self.citation_support)
                 if not self.fixture:
                     answer = normalize_citation_markers(answer, len(sources))
                 message_id = await self.store.complete(run_id, conversation_id, answer, refs)

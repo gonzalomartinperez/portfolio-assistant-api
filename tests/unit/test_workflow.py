@@ -5,6 +5,7 @@ from unittest.mock import ANY
 import pytest
 
 from app.adapters.providers.answer import ResponsesProvider
+from app.adapters.providers.fixture_answer import fixture_supports
 from app.ai.workflow import LangGraphWorkflow
 from app.application.answer import generate
 from app.application.contracts import (
@@ -353,7 +354,9 @@ def test_storage_outage_after_partial_output_still_delivers_safe_terminal():
             raise DependencyUnavailableError("storage_unavailable")
 
     async def run():
-        service = RunService(UnavailableStore(), Workflow(), fixture=True)
+        service = RunService(
+            UnavailableStore(), Workflow(), fixture=True, citation_support=fixture_supports
+        )
         events = [event async for event in service.execute(uuid4(), uuid4(), "q", "en")]
         assert [e.name for e in events] == [
             "run.started",

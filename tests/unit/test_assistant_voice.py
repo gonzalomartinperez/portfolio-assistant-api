@@ -59,14 +59,15 @@ def test_provider_applies_voice_without_weakening_grounding_or_generation_policy
 
 
 def test_conversational_abstention_has_no_fabricated_citation():
+    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
     from app.application.runs import citations
-    from app.domain.fixture import fixture_message, insufficient_message
+    from app.domain.messages import insufficient_message
     from tests.unit.test_workflow import SOURCE
 
     for locale in ("en", "es"):
         answer = fixture_message("Unknown fact", "", locale)
         assert answer == insufficient_message(locale)
-        assert citations((SOURCE,), answer, fixture=True) == []
+        assert citations((SOURCE,), answer, fixture_supports) == []
 
 
 def test_followup_keeps_a_named_topic_when_initial_question_also_requests_explanation():

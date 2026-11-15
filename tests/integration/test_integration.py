@@ -13,7 +13,7 @@ from app.adapters.providers.embedding import embed
 from app.bootstrap.config import settings
 from app.bootstrap.maintenance import connect, reserve, settle
 from app.domain.errors import BudgetExhaustedError
-from app.domain.fixture import insufficient_message
+from app.domain.messages import insufficient_message
 from app.main import app
 from app.migrate import main as migrate
 from tests.support import retrieve
@@ -402,6 +402,7 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
     client = client_factory(application, client=(str(uuid4()), 50000))
     application.state.runs.workflow = SyntheticWorkflow()
     application.state.runs.fixture = False
+    application.state.runs.citation_support = None
     auth = headers("http://localhost:3000", bootstrap(client, "http://localhost:3000"))
     try:
         cid = client.post("/api/v1/conversations", headers=auth, json={}).json()["id"]
