@@ -5,7 +5,8 @@ from app.application.request_context import request_id
 
 
 class RedactedJSON(logging.Formatter):
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
+        fields: dict[str, object]
         try:
             fields = json.loads(record.getMessage())
         except ValueError, TypeError:
@@ -16,7 +17,7 @@ class RedactedJSON(logging.Formatter):
         return json.dumps(fields)
 
 
-def configure():
+def configure() -> None:
     log = logging.getLogger("portfolio_assistant")
     if not log.handlers:
         handler = logging.StreamHandler()

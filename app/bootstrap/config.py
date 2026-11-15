@@ -2,7 +2,7 @@ import ipaddress
 import re
 from decimal import Decimal
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Self
 from urllib.parse import urlparse
 
 from pydantic import Field, field_validator, model_validator
@@ -84,11 +84,11 @@ class Settings(BaseSettings):
 
     @field_validator("ops_read_token", "ops_api_commit", "otel_private_endpoint", mode="before")
     @classmethod
-    def empty_optional_operations(cls, value):
+    def empty_optional_operations(cls, value: object) -> object:
         return None if value == "" else value
 
     @model_validator(mode="after")
-    def safe_configuration(self):
+    def safe_configuration(self) -> Self:
         if self.product_analytics_country_enabled and not self.product_analytics_country_proxy_ips:
             raise ValueError("country attribution requires explicitly trusted proxy addresses")
         if (
