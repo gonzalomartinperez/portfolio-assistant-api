@@ -227,7 +227,7 @@ def technical_topic_anchors(ranked: Ranked, ctx: RerankContext) -> Ranked:
     question = ctx.intent.question.casefold()
     names = [topic.name.casefold() for topic in TOPICS]
     anchors = [_topic_anchor(name, ctx) for name in names if name in question]
-    return list(dict.fromkeys([key for key in anchors if key] + ranked))
+    return list(dict.fromkeys([key for key in anchors if key is not None] + ranked))
 
 
 def goals_metrics_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
