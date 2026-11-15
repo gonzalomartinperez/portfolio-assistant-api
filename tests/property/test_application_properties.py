@@ -48,7 +48,7 @@ def test_citations_map_only_to_supplied_sources(count, numbers):
     answer = " ".join(f"claim [{number}]" for number in numbers)
     used = referenced_sources(answer, count)
     assert used == tuple(sorted(set(numbers)))
-    mapped = citations(sources, answer, False)
+    mapped = citations(sources, answer, None)
     assert [item["id"] for item in mapped] == [str(number) for number in used]
     normalized = normalize_citation_markers(answer, count)
     # Normalized markers are the contiguous 1..len(used) range, in the same order.

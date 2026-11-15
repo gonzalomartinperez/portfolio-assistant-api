@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.domain.fixture import fixture_message
+from app.adapters.providers.fixture_answer import fixture_message
 from app.main import app
 from tests.support import ROOT
 

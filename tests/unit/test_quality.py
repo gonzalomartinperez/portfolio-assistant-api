@@ -3,9 +3,9 @@ import os
 
 import pytest
 
+from app.adapters.providers.fixture_answer import fixture_message
 from app.bootstrap.config import Settings
 from app.domain.evidence import requested_affiliation, verified
-from app.domain.fixture import fixture_message
 from app.domain.portfolio_paths import canonical_key
 from tests.support import retrieve
 

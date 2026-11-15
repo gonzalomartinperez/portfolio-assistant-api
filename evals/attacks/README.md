@@ -106,7 +106,7 @@ The other 36 have no rail at all:
 6. Output language is not enforced after generation (provider-adapter `rejects_output` only).
 7. Poisoned text inside bounded retrieved documents is passed to the model unchanged (LLM08).
 8. The workflow passes the raw visitor question to the provider; only retrieval and history are minimized here.
-9. Fixture mode (`RunService(fixture=True)`) skips marker normalization, so the citation rail is only
+9. Fixture mode (`RunService(fixture=True, citation_support=fixture_supports)`) skips marker normalization, so the citation rail is only
    exercised in production composition.
 
 ## OWASP LLM Top 10 2025 mapping

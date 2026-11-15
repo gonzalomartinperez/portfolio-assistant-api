@@ -151,7 +151,7 @@ def test_referential_refinement_survives_a_further_followup():
 
 
 def test_fixture_does_not_attribute_another_employers_contribution():
-    from app.domain.fixture import fixture_message
+    from app.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-5:
 company: "Rampy",
@@ -168,8 +168,8 @@ contributions: ["Built an unrelated infrastructure migration for another employe
 def test_short_qualified_metric_keeps_its_source_citation():
     from dataclasses import replace
 
+    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
     from app.application.runs import citations
-    from app.domain.fixture import fixture_message
 
     source = replace(SOURCE, content='value: "30%", label: "Latency", qualifier: "Estimated"')
     answer = fixture_message(
@@ -178,11 +178,11 @@ def test_short_qualified_metric_keeps_its_source_citation():
         "en",
     )
     assert "Latency: 30%. Estimated" in answer
-    assert citations((source,), answer, True)[0]["id"] == source.id
+    assert citations((source,), answer, fixture_supports)[0]["id"] == source.id
 
 
 def test_fixture_excludes_previous_employer_text_in_the_same_source_span():
-    from app.domain.fixture import fixture_message
+    from app.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-35:
 qualifier: "An estimated improvement for the previous employer only.",
@@ -198,7 +198,7 @@ contributions: ["Implemented an unrelated advertising platform elsewhere."],
 
 
 def test_explicit_comparison_can_include_both_employers():
-    from app.domain.fixture import fixture_message
+    from app.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-5:
 company: "Rampy",

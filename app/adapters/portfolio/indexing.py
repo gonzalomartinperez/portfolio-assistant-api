@@ -18,6 +18,7 @@ from neo4j import READ_ACCESS, Driver, GraphDatabase
 from app.adapters.neo4j.projection import project
 from app.adapters.neo4j.read_queries import prepare_reads
 from app.adapters.portfolio.projection import PublicProjection, graph_facts
+from app.adapters.portfolio.source_format import facts_for
 from app.adapters.postgres.db import Connect
 from app.adapters.postgres.ledger import EmbeddingAccounting
 from app.adapters.providers.embedding import (
@@ -522,16 +523,17 @@ def _sync(
     try:
         driver.verify_connectivity()
         with driver.session(database=config.neo4j_database) as session:
-            if structured is None:
-                facts_count = project(session, version, records, documents)
-            else:
-                facts_count = project(
-                    session,
-                    version,
-                    records,
-                    documents,
-                    explicit_facts=graph_facts(structured, documents),
-                )
+            facts_count = project(
+                session,
+                version,
+                records,
+                documents,
+                explicit_facts=(
+                    facts_for(documents)
+                    if structured is None
+                    else graph_facts(structured, documents)
+                ),
+            )
         prepare_graph(driver, config, version, records[0]["id"])
     finally:
         driver.close()
