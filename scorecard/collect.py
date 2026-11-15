@@ -120,6 +120,11 @@ def collect(artifacts: Path, root: Path = Path(".")) -> dict:
     m["static.mypy_strict_app_errors"] = metric(
         mypy_errors(artifacts / "mypy-strict-app.txt"), "artifacts/mypy-strict-app.txt"
     )
+    backlog = read_json(artifacts / "ruff-backlog.json")
+    backlog = backlog if isinstance(backlog, dict) else {}
+    m["static.ruff_backlog_total"] = metric(backlog.get("total"), "artifacts/ruff-backlog.json")
+    for name, count in (backlog.get("by_family") or {}).items():
+        m[f"static.ruff_backlog.{name}"] = metric(count, "artifacts/ruff-backlog.json")
     lanes = {}
     for lane in ("unit", "integration"):
         totals = junit_totals(artifacts / f"{lane}.xml")
