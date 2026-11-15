@@ -20,6 +20,7 @@ from app.presentation.feedback import router as feedback_router
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 from app.presentation.operations import router as operations_router
+from tests.support import FixedClock
 
 ORIGIN = "http://localhost:3000"
 SOURCE = Evidence(
@@ -188,7 +189,10 @@ def build_app(
     app.state.retrieval = retrieval or StubRetrieval()
     app.state.provider = provider or StubProvider()
     app.state.accounting = accounting
-    app.state.conversations = Conversations(app.state.store, 7, settings.rate_hash_key)
+    app.state.clock = FixedClock()
+    app.state.conversations = Conversations(
+        app.state.store, 7, settings.rate_hash_key, clock=FixedClock()
+    )
     workflow = LangGraphWorkflow(app.state.retrieval, app.state.provider, accounting)
     app.state.runs = RunService(
         app.state.run_store,
@@ -196,6 +200,7 @@ def build_app(
         fixture=fixture,
         citation_support=fixture_supports if fixture else None,
         timeout_seconds=timeout,
+        clock=FixedClock(),
     )
     app.state.ready = lambda: "009"
     app.state.cleanup = lambda: None

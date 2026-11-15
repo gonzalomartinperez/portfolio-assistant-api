@@ -13,6 +13,7 @@ from neo4j import GraphDatabase
 from psycopg.rows import DictRow, dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from app.adapters.clock import SystemClock
 from app.adapters.postgres.analytics import PostgresProductAnalytics
 from app.adapters.postgres.checkpoints import drain_cleanup
 from app.adapters.postgres.conversations import PostgresConversations
@@ -66,6 +67,8 @@ def create_app(
     default_prompts()  # Fail fast on a stale lock or missing prompt file.
     if provider_override is not None and config.ai_provider != "fixture":
         raise ValueError("provider overrides require fixture mode")
+
+    clock = SystemClock()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -125,6 +128,7 @@ def create_app(
                     )
                     if config.web_search_enabled
                     else None,
+                    clock=clock,
                 )
                 accounting = PostgresAccounting(
                     connection,
@@ -163,7 +167,7 @@ def create_app(
                 else None,
             )
             app.state.product_analytics = PostgresProductAnalytics(connection)
-            app.state.feedback = PostgresFeedback(connection)
+            app.state.feedback = PostgresFeedback(connection, clock=clock)
             app.state.knowledge = index
             # The pool's kwargs set row_factory=dict_row, which psycopg_pool's generics cannot see.
             saver = AsyncPostgresSaver(
@@ -180,6 +184,7 @@ def create_app(
                 PostgresConversations(connection),
                 config.retention_days,
                 config.rate_hash_key,
+                clock=clock,
             )
             if config.ops_read_token:
 
@@ -188,7 +193,7 @@ def create_app(
                     with database.connection(timeout=0.5) as conn:
                         yield conn
 
-                operations = PostgresOperations(operational_connection, config)
+                operations = PostgresOperations(operational_connection, config, clock=clock)
                 exporter = None
                 if not config.otel_sdk_disabled:
                     from app.adapters.observability.telemetry import PrivateTelemetry
@@ -215,6 +220,7 @@ def create_app(
                 citation_support=(fixture_supports if config.ai_provider == "fixture" else None),
                 timeout_seconds=config.run_timeout_seconds,
                 observer=observer,
+                clock=clock,
             )
             app.state.runs = runs
 
@@ -308,6 +314,7 @@ def create_app(
         },
     )
     app.state.config = config
+    app.state.clock = clock
     app.state.revision = config.ops_api_commit or "unknown"
     app.add_middleware(BodyLimit)
     app.add_middleware(

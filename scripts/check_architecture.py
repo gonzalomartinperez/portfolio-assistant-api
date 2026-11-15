@@ -26,6 +26,51 @@ ENTRY_POINTS = {
     "app.knowledge_sync",
     "app.knowledge_watch",
 }
+CLOCK_MODULE = "app.adapters.clock"
+WALL_CLOCK_READS = {
+    "datetime.datetime.now",
+    "datetime.datetime.utcnow",
+    "datetime.datetime.today",
+    "datetime.date.today",
+    "time.time",
+    "time.time_ns",
+}
+
+
+def wall_clock_errors(module: str, source: str) -> list[str]:
+    """Ban wall-clock reads (calls, references and aliases) outside the clock adapter."""
+    if module == CLOCK_MODULE:
+        return []
+    tree = ast.parse(source)
+    qualified: dict[str, str] = {}
+    errors = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.asname:
+                    qualified[alias.asname] = alias.name
+                else:
+                    root = alias.name.split(".")[0]
+                    qualified[root] = root
+        elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            for alias in node.names:
+                full = f"{node.module}.{alias.name}"
+                qualified[alias.asname or alias.name] = full
+                if full in WALL_CLOCK_READS:
+                    errors.append(f"{module}: wall-clock import {full}; inject Clock")
+
+    def resolve(node: ast.expr) -> str | None:
+        if isinstance(node, ast.Name):
+            return qualified.get(node.id)
+        if isinstance(node, ast.Attribute):
+            base = resolve(node.value)
+            return f"{base}.{node.attr}" if base else None
+        return None
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and resolve(node) in WALL_CLOCK_READS:
+            errors.append(f"{module}: wall-clock read {resolve(node)}; inject Clock")
+    return errors
 
 
 def dependencies(module: str, source: str, *, package: bool = False) -> set[str]:
@@ -84,7 +129,7 @@ def dependency_errors(module: str, source: str, *, package: bool = False) -> lis
             and node.func.attr == "import_module"
         ):
             errors.append(f"{module}: dynamic code/import bypass")
-    return errors
+    return errors + wall_clock_errors(module, source)
 
 
 def cycle_errors(graph: dict[str, set[str]]) -> list[str]:

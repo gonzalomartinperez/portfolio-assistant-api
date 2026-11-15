@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from app.presentation.http import execute_run
 from app.presentation.streaming import heartbeat
-from tests.support import ROOT
+from tests.support import ROOT, FixedClock
 
 pytestmark = pytest.mark.contract
 
@@ -46,7 +46,9 @@ def request_for(script):
 
     return SimpleNamespace(
         state=SimpleNamespace(request_id="r1"),
-        app=SimpleNamespace(state=SimpleNamespace(runs=SimpleNamespace(execute=execute))),
+        app=SimpleNamespace(
+            state=SimpleNamespace(runs=SimpleNamespace(execute=execute), clock=FixedClock())
+        ),
     )
 
 

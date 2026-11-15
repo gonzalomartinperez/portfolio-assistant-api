@@ -1,7 +1,6 @@
 """One synchronous aggregate run; no automatic visitor tracing or raw report input."""
 
 from dataclasses import asdict
-from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -11,6 +10,7 @@ from requests import Response, Session
 from requests.exceptions import RequestException
 from urllib3.util.retry import Retry
 
+from app.application.clock import Clock
 from app.application.evaluation_export import EvaluationSummary
 
 ENDPOINT = "https://api.smith.langchain.com"
@@ -31,7 +31,8 @@ class EvaluationSession(Session):
 
 
 class LangSmithEvaluationExporter:
-    def __init__(self, key: str):
+    def __init__(self, key: str, *, clock: Clock):
+        self._clock = clock
         self._key = key
 
     def export(self, summary: EvaluationSummary) -> bool:
@@ -59,7 +60,7 @@ class LangSmithEvaluationExporter:
                 tracing_sampling_rate=1.0,
                 workspace_id="",
             )
-            now = datetime.now(UTC)
+            now = self._clock.now()
             client.create_run(
                 name="synthetic-evaluation-summary",
                 inputs={},

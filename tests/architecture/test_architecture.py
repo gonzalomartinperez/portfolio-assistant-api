@@ -65,6 +65,42 @@ def test_allows_owned_ports(module, source):
     assert dependency_errors(module, source) == []
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from datetime import datetime\nx = datetime.now()",
+        "from datetime import datetime\nx = datetime.utcnow()",
+        "from datetime import datetime\nx = datetime.today()",
+        "from datetime import date\nx = date.today()",
+        "import time\nx = time.time()",
+        "import datetime\nx = datetime.datetime.now()",
+        "import datetime\nx = datetime.date.today()",
+        "import datetime as d\nx = d.datetime.utcnow()",
+        "from datetime import datetime as dt\nx = dt.now()",
+        "from datetime import date as day\nx = day.today()",
+        "import time as t\nx = t.time()",
+        "from datetime import datetime\nfield(default_factory=datetime.now)",
+        "from datetime import datetime\nfactory = datetime.utcnow",
+        "import time\nfactory = time.time",
+        "from time import time\nx = time()",
+        "from time import time as clock\nx = clock()",
+        "from datetime import UTC, datetime\nx = lambda: datetime.now(UTC).date()",
+    ],
+)
+def test_rejects_wall_clock_reads(source):
+    for module in ("app.application.example", "app.adapters.example", "app.presentation.example"):
+        assert any("wall-clock" in e for e in dependency_errors(module, source)), source
+
+
+def test_allows_clock_adapter_and_monotonic_timers():
+    adapter = "from datetime import UTC, datetime\nx = datetime.now(UTC)"
+    assert dependency_errors("app.adapters.clock", adapter) == []
+    monotonic = "import time\nfrom time import perf_counter, monotonic\nx = time.perf_counter()"
+    assert dependency_errors("app.application.example", monotonic) == []
+    assert dependency_errors("app.adapters.example", "from datetime import datetime\n") == []
+    assert dependency_errors("app.adapters.example", "x = clock.now()") == []
+
+
 def test_cycles_include_relative_imports_and_from_package_imports():
     assert dependencies("app.domain", "from . import b", package=True) == {"app.domain.b"}
     assert "app.domain.b" in dependencies("app.domain.a", "from . import b")

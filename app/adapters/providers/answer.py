@@ -3,13 +3,14 @@
 import asyncio
 import json
 from dataclasses import asdict, dataclass
-from datetime import UTC, date, datetime
+from datetime import date
 from typing import TYPE_CHECKING, Final, cast
 
 from openai import APIError, AsyncOpenAI
 
 from app.adapters.providers.fixture_answer import fixture_message
 from app.adapters.providers.voice import developer_prompt
+from app.application.clock import Clock
 from app.application.contracts import GenerationFailedError, Usage
 from app.application.conversation_context import (
     Turn,
@@ -100,9 +101,11 @@ class ResponsesProvider:
         model: str,
         rejects_language: Callable[[str], bool] | None = None,
         web_search: WebSearch | None = None,
-        today: Callable[[], date] = lambda: datetime.now(UTC).date(),
+        today: Callable[[], date] | None = None,
+        *,
+        clock: Clock,
     ):
-        self.today = today
+        self.today = today or (lambda: clock.now().date())
         self.client = client
         self.model = model
         self.rejects_language = rejects_language
