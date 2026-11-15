@@ -2,14 +2,17 @@
 
 import asyncio
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from decimal import Decimal
+from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from neo4j import GraphDatabase
-from psycopg.rows import dict_row
+from psycopg import AsyncConnection
+from psycopg.rows import DictRow, dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from app.adapters.postgres.analytics import PostgresProductAnalytics
@@ -60,7 +63,7 @@ def create_app(
         raise ValueError("provider overrides require fixture mode")
 
     @asynccontextmanager
-    async def lifespan(app):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         database = pool(config.database_url)
         checkpoints = AsyncConnectionPool(
             config.database_url,
@@ -133,7 +136,7 @@ def create_app(
                         )
                     ),
                 )
-            embeddings = FixtureEmbeddings()
+            embeddings: FixtureEmbeddings | OpenAIEmbeddings = FixtureEmbeddings()
             if config.embeddings_provider == "openai":
                 embedding_client = create_sync_client(api_key=config.openai_api_key)
                 embeddings = OpenAIEmbeddings(
@@ -157,7 +160,10 @@ def create_app(
             app.state.product_analytics = PostgresProductAnalytics(connection)
             app.state.feedback = PostgresFeedback(connection)
             app.state.knowledge = index
-            saver = AsyncPostgresSaver(checkpoints)
+            # The pool's kwargs set row_factory=dict_row, which psycopg_pool's generics cannot see.
+            saver = AsyncPostgresSaver(
+                cast("AsyncConnectionPool[AsyncConnection[DictRow]]", checkpoints)
+            )
             workflow = LangGraphWorkflow(
                 PublicRetrieval(index),
                 provider,
@@ -173,7 +179,7 @@ def create_app(
             if config.ops_read_token:
 
                 @contextmanager
-                def operational_connection():
+                def operational_connection() -> Iterator[Any]:
                     with database.connection(timeout=0.5) as conn:
                         yield conn
 
@@ -182,9 +188,10 @@ def create_app(
                 if not config.otel_sdk_disabled:
                     from app.adapters.observability.telemetry import PrivateTelemetry
 
+                    # Settings rejects a missing endpoint or revision whenever telemetry is on.
                     exporter = PrivateTelemetry(
-                        config.otel_private_endpoint,
-                        config.ops_api_commit,
+                        cast(str, config.otel_private_endpoint),
+                        cast(str, config.ops_api_commit),
                         config.ops_trace_sample_ratio,
                     )
                 observer = OperationalObserver(
@@ -208,23 +215,33 @@ def create_app(
             def ready() -> str | None:
                 check_schema(connection)
                 with database.connection() as conn:
-                    latest = conn.execute(
-                        "SELECT max(version) AS version FROM schema_migrations"
-                    ).fetchone()
-                    active = conn.execute(
-                        "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
-                        (embeddings.provider, embeddings.model),
-                    ).fetchone()
+                    latest = (
+                        conn.cursor(row_factory=dict_row)
+                        .execute("SELECT max(version) AS version FROM schema_migrations")
+                        .fetchone()
+                    )
+                    active = (
+                        conn.cursor(row_factory=dict_row)
+                        .execute(
+                            "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                            (embeddings.provider, embeddings.model),
+                        )
+                        .fetchone()
+                    )
                     if not active or active["id"] != corpus_version(
                         active["source_commit"], embeddings.provider
                     ):
                         raise RuntimeError("corpus_unavailable")
                 index.verify_ready(active["id"])
                 with database.connection() as conn:
-                    current = conn.execute(
-                        "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
-                        (embeddings.provider, embeddings.model),
-                    ).fetchone()
+                    current = (
+                        conn.cursor(row_factory=dict_row)
+                        .execute(
+                            "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                            (embeddings.provider, embeddings.model),
+                        )
+                        .fetchone()
+                    )
                     if current != active:
                         raise RuntimeError("corpus_changed")
                 version = latest["version"] if latest else None
@@ -232,7 +249,7 @@ def create_app(
 
             app.state.ready = ready
 
-            def cleanup():
+            def cleanup() -> None:
                 try:
                     drain_cleanup(connection=connection, database_url=config.database_url, limit=1)
                 except Exception:  # noqa: BLE001 - Deletion is committed; durable cleanup records must survive any adapter failure.
@@ -243,29 +260,31 @@ def create_app(
             app.state.cleanup = cleanup
             yield
         finally:
-            failures = []
+            failures: list[BaseException] = []
 
-            async def close_resource(callback, *args):
+            async def close_resource(
+                callback: Callable[..., Awaitable[object]], *args: object
+            ) -> None:
                 try:
                     await callback(*args)
                 except BaseException as error:  # noqa: BLE001 - Attempt every owned cleanup, then propagate all failures including cancellation.
                     failures.append(error)
 
             # LIFO preserves drain-before-close order, including partial startup.
-            async with AsyncExitStack() as cleanup:
-                cleanup.push_async_callback(close_resource, asyncio.to_thread, database.close)
-                cleanup.push_async_callback(close_resource, asyncio.to_thread, graph.close)
-                cleanup.push_async_callback(close_resource, checkpoints.close)
+            async with AsyncExitStack() as stack:
+                stack.push_async_callback(close_resource, asyncio.to_thread, database.close)
+                stack.push_async_callback(close_resource, asyncio.to_thread, graph.close)
+                stack.push_async_callback(close_resource, checkpoints.close)
                 if embedding_client:
-                    cleanup.push_async_callback(
+                    stack.push_async_callback(
                         close_resource, asyncio.to_thread, embedding_client.close
                     )
                 if client:
-                    cleanup.push_async_callback(close_resource, client.close)
+                    stack.push_async_callback(close_resource, client.close)
                 if observer:
-                    cleanup.push_async_callback(close_resource, observer.close)
+                    stack.push_async_callback(close_resource, observer.close)
                 if runs:
-                    cleanup.push_async_callback(close_resource, runs.drain_cleanup)
+                    stack.push_async_callback(close_resource, runs.drain_cleanup)
             if len(failures) == 1:
                 raise failures[0]
             if failures:

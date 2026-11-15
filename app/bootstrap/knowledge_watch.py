@@ -26,7 +26,7 @@ async def run() -> None:
     stop = asyncio.Event()
     index_stop = Event()
 
-    def stop_worker():
+    def stop_worker() -> None:
         index_stop.set()
         stop.set()
 
