@@ -10,13 +10,13 @@
     "static.mypy_errors": {
       "direction": "lower",
       "value": 0,
-      "source": "2026-11-14 uv run mypy (pyproject files scope, 82 source files after M3-5): Success, 0 errors",
+      "source": "2026-11-15 uv run mypy (pyproject files = app, evals, scripts/database_security_receipt.py after M4-1): Success, 0 errors",
       "required": true
     },
     "static.mypy_strict_app_errors": {
       "direction": "lower",
-      "value": 89,
-      "source": "2026-11-14 uv run mypy --strict app (99 source files, M3-5): 89 errors in 15 files (202 before)",
+      "value": 0,
+      "source": "2026-11-15 uv run mypy --strict app (101 source files, M4-1): 0 errors (89 at M3-5); the configured mypy scope now covers all of app",
       "required": true
     },
     "static.ruff_backlog_total": {
