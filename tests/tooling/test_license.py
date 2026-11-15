@@ -31,6 +31,13 @@ def test_actual_repository_and_complete_fixture_are_consistent(licensed_fixture)
     assert license_findings(licensed_fixture) == []
 
 
+def test_template_license_heading_is_accepted(licensed_fixture):
+    (licensed_fixture / 'README.md').write_text(
+        '## License\n\n[MIT](LICENSE) · [Notices](THIRD_PARTY_NOTICES.md)\n'
+    )
+    assert license_findings(licensed_fixture) == []
+
+
 @pytest.mark.parametrize(
     'mutation',
     [
