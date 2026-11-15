@@ -11,24 +11,24 @@ from app.domain.analytics_periods import CalendarWindow, Period
 
 @dataclass(frozen=True)
 class AnalyticsQuery:
-    period: Period = 'month'
+    period: Period = "month"
     offset: int = 0
-    section: Section = 'home'
-    region_id: Region = 'home-featured'
-    viewport: Viewport = 'desktop'
-    locale: Literal['all', 'en', 'es'] = 'all'
+    section: Section = "home"
+    region_id: Region = "home-featured"
+    viewport: Viewport = "desktop"
+    locale: Literal["all", "en", "es"] = "all"
 
     def __post_init__(self) -> None:
         if (
-            self.period not in ('day', 'week', 'month')
+            self.period not in ("day", "week", "month")
             or type(self.offset) is not int
             or not 0 <= self.offset <= 2
             or self.section not in REGIONS
             or self.region_id not in REGIONS[self.section] | SHELL_REGIONS
-            or self.viewport not in ('mobile', 'tablet', 'desktop')
-            or self.locale not in ('all', 'en', 'es')
+            or self.viewport not in ("mobile", "tablet", "desktop")
+            or self.locale not in ("all", "en", "es")
         ):
-            raise ValueError('invalid_analytics_query')
+            raise ValueError("invalid_analytics_query")
 
 
 @dataclass(frozen=True)
@@ -76,7 +76,7 @@ class HeatmapCell:
 class SemanticActivity:
     event_name: EventName
     section: Section
-    locale: Literal['en', 'es']
+    locale: Literal["en", "es"]
     target: Target | None
     count: int
 

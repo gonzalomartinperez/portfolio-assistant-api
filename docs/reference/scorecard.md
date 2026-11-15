@@ -14,13 +14,25 @@ uv run python -m scorecard check --current artifacts/scorecard.json --ratchets s
 uv run python -m scorecard tighten --current artifacts/scorecard.json --ratchets scorecard/ratchets
 ```
 
-Inputs in `artifacts/` (each optional): `ruff.json` (`ruff check --output-format json`), `mypy.txt`, `mypy-strict-app.txt` (`mypy --strict app`, the M3-5 typing ratchet),
+Inputs in `artifacts/` (each optional): `ruff.json` (`ruff check --output-format json`), `mypy.txt`, `mypy-strict-app.txt` (`mypy --strict app`, the M3-5 typing ratchet), `ruff-backlog.json` (`python -m scripts.ruff_backlog`: findings of the full standards.md ruleset by family; each family ratchets down to zero and then moves into `extend-select`),
 `unit.xml` and `integration.xml` (junit), `coverage.xml`, `mutation.json` (`{"score": 0.0}` placeholder),
 `image-sizes.json` (`{"api_bytes": 0, "worker_bytes": 0}`), `golden.json` (`{"passed": 0, "total": 0}`).
 Judged axes come from the latest `docs/evidence/scores/<date>.md`, else `not yet scored`.
 
 A missing input is recorded as `null` with status `missing`, and its criterion is `unmet`, never `pass`.
 Criteria without a collector yet (most of D1, D4, D5, D7, D8) are listed as `unmet`.
+
+## README results table
+
+The results table in `README.md` is generated from a committed, dated snapshot
+(`docs/evidence/scorecard-<date>.json`, the output of `scorecard collect`) by `scripts/readme_results.py`.
+A metric the snapshot did not measure renders as "not measured in this snapshot"; no number is typed by hand.
+To refresh it, collect new artifacts, write the snapshot, then update the README:
+
+```bash
+uv run python -m scorecard collect --artifacts <dir> --out docs/evidence/scorecard-<date>.json
+uv run python -m scripts.readme_results --write   # --check exits 1 on drift (tests/tooling/test_readme_results.py)
+```
 
 ## Ratchets
 

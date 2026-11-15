@@ -4,7 +4,7 @@ from evals.harness.items import Item
 from evals.harness.result import GradeResult, GradingContext, RunResult
 
 _CONTEXT = GradingContext()
-_METRICS = ('input_tokens', 'output_tokens', 'llm_calls', 'first_delta_ms', 'total_ms')
+_METRICS = ("input_tokens", "output_tokens", "llm_calls", "first_delta_ms", "total_ms")
 
 
 def budget_respected(
@@ -15,11 +15,11 @@ def budget_respected(
     problems = []
     for name, limit in ctx.budget.items():
         if name not in _METRICS:
-            problems.append(f'unknown budget key {name}')
+            problems.append(f"unknown budget key {name}")
             continue
         value = getattr(result, name)
         if value is None:
-            problems.append(f'{name} not observed')
+            problems.append(f"{name} not observed")
         elif value > limit:
-            problems.append(f'{name} {value} > {limit}')
-    return GradeResult('budget_respected', not problems, '; '.join(problems) or 'ok')
+            problems.append(f"{name} {value} > {limit}")
+    return GradeResult("budget_respected", not problems, "; ".join(problems) or "ok")

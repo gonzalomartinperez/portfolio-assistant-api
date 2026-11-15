@@ -7,6 +7,7 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.adapters.providers.fixture_answer import fixture_supports
 from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import Evidence
 from app.application.conversations import Conversations
@@ -20,9 +21,9 @@ from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 from app.presentation.operations import router as operations_router
 
-ORIGIN = 'http://localhost:3000'
+ORIGIN = "http://localhost:3000"
 SOURCE = Evidence(
-    'stub', 'Stub', 'https://example.test', 'page', 'a' * 40, 'README.md', 1, 2, 'Stub'
+    "stub", "Stub", "https://example.test", "page", "a" * 40, "README.md", 1, 2, "Stub"
 )
 
 
@@ -36,7 +37,7 @@ class FakeStore:
         if self.fault:
             raise self.fault
         if owner is not None and self.owners.get(key) != owner:
-            raise RejectedError('not_found', 404)
+            raise RejectedError("not_found", 404)
 
     def seed(self, owner):
         """Create one conversation, run and message owned by `owner`."""
@@ -89,9 +90,7 @@ class FakeStore:
     def run(self, session_id, run_id, cancel=False):
         self._check(session_id, run_id)
         now = datetime.now(UTC)
-        return Run(
-            run_id, uuid4(), 'cancelled' if cancel else 'running', None, None, now, now
-        )
+        return Run(run_id, uuid4(), "cancelled" if cancel else "running", None, None, now, now)
 
     def feedback(self, session_id, message_id, rating):
         self._check(session_id, message_id)
@@ -145,7 +144,7 @@ class StubProvider:
         if self.fault:
             raise self.fault
         for index in range(self.chunks):
-            yield f'part {index} [1] '
+            yield f"part {index} [1] "
             await asyncio.sleep(self.delay)
 
 
@@ -184,7 +183,7 @@ def build_app(
     settings = Settings(_env_file=None, **config)
     app = FastAPI()
     app.state.config = settings
-    app.state.revision = 'unknown'
+    app.state.revision = "unknown"
     app.state.store, app.state.run_store = store or FakeStore(), FakeRunStore()
     app.state.retrieval = retrieval or StubRetrieval()
     app.state.provider = provider or StubProvider()
@@ -192,32 +191,34 @@ def build_app(
     app.state.conversations = Conversations(app.state.store, 7, settings.rate_hash_key)
     workflow = LangGraphWorkflow(app.state.retrieval, app.state.provider, accounting)
     app.state.runs = RunService(
-        app.state.run_store, workflow, fixture=fixture, timeout_seconds=timeout
+        app.state.run_store,
+        workflow,
+        fixture=fixture,
+        citation_support=fixture_supports if fixture else None,
+        timeout_seconds=timeout,
     )
-    app.state.ready = lambda: '009'
+    app.state.ready = lambda: "009"
     app.state.cleanup = lambda: None
     app.state.knowledge = type(
-        'Knowledge',
+        "Knowledge",
         (),
-        {'starter_prompts': lambda self, locale: ('v1', 'a' * 40, [])},
+        {"starter_prompts": lambda self, locale: ("v1", "a" * 40, [])},
     )()
-    app.state.product_analytics = type(
-        'Analytics', (), {'record': lambda self, *a: 'accepted'}
-    )()
+    app.state.product_analytics = type("Analytics", (), {"record": lambda self, *a: "accepted"})()
     app.add_middleware(BodyLimit)
     # Same arguments as app.bootstrap.container.create_app.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.origins,
         allow_credentials=True,
-        allow_methods=['GET', 'POST', 'PATCH', 'DELETE'],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=[
-            'Content-Type',
-            'X-CSRF-Token',
-            'X-Session-Bootstrap',
-            'Idempotency-Key',
+            "Content-Type",
+            "X-CSRF-Token",
+            "X-Session-Bootstrap",
+            "Idempotency-Key",
         ],
-        expose_headers=['X-Run-ID', 'X-Request-ID'],
+        expose_headers=["X-Run-ID", "X-Request-ID"],
     )
     install(app, settings.origins)
     for item in (router, operations_router, analytics_router, feedback_router):

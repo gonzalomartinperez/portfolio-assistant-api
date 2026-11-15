@@ -1,344 +1,179 @@
-# Portfolio Assistant API
-
-**A grounded conversation about Gonzalo’s work, backed by public evidence.**
-
-The backend for Gonzalo Martin Perez’s professional assistant: bilingual conversations,
-public-portfolio synchronization, hybrid retrieval, streamed answers and private
-operational measurements. The public chat lives in the portfolio; this repository
-owns the reasoning, contracts and persistence behind it.
-
-![Python 3.14, FastAPI, LangGraph 1.x, PostgreSQL 18, pgvector, Neo4j 5.26, OpenAI and private OpenTelemetry](docs/assets/technology-stack.svg)
-
-[Explore the assistant](#the-assistant-in-use) · [Run locally](#quick-start-without-a-model-key) · [Architecture](#how-it-works) · [Verification](#verification-and-evidence) · [Documentation](#documentation-map)
-
-> **Current state:** implemented and verified locally with deterministic fixtures and
-> separately documented real-model evaluations. The public portfolio assistant remains
-> disabled. The VPS is not yet purchased/provisioned and production activation is
-> not authorized. Dependency/image vulnerability findings are advisory for deployment
-> by owner decision; they remain visible in the
-> [final local artifact evidence](docs/evidence/archive/2026-10/final-artifact-closeout-2026-10-18.md).
-> This does not certify a clean stack or waive source, integrity, secret, health or
-> data-safety checks. Publication and activation require separate approval.
-
-## What this backend does
-
-| Capability | What a visitor or operator gets |
-| --- | --- |
-| Evidence-grounded answers | Projects, experience, education and skills explained with message-specific public sources. Unknown facts remain uncertain. |
-| Context-aware conversation | Follow-up questions retain the visitor’s topic; assistant claims never become retrieval evidence. |
-| English and Spanish | US English and neutral Latin American Spanish, with explicit handling of unsupported languages. |
-| Current portfolio knowledge | A synchronization worker observes approved public revisions and activates complete, versioned indexes. |
-| Reliable streaming | Explicit completion, interruption and cancellation; owned sessions/history and CSRF protection. |
-| Private operations | Availability, corpus freshness, execution outcomes, latency and estimated usage without exposing transcripts. |
-| Optional website counts | Default-off, bounded accepted interactions with quotas and seven-day aggregates; no visitor journeys. |
-| Answer feedback | Default-off private current-rating counts and a reviewed improvement process; no raw-chat export or automatic training. |
-
-The live provider is **OpenAI only**, using **GPT-6 Luna with medium reasoning effort**.
-There is no alternate-model fallback or automatic billed generation retry. An unavailable
-provider produces an honest unavailable state. Cost figures are configured estimates,
-not an OpenAI invoice; reservations and settled usage remain distinct.
-
-## The assistant in use
-
-These are actual browser captures of the native portfolio UI. Completed answers and
-citations are replayed from an authorized GPT-6 Luna evaluation through deterministic
-HTTP/SSE fixtures. They show the application, not a mockup or an enabled production site.
-
-### Expanded conversation
-
-A recruiter’s question, a substantive answer, inspectable source spans and a follow-up
-composer in the same conversation surface.
+<!-- Variant: PUBLIC -->
+<div align="center">
+  <h1>Portfolio Assistant API</h1>
+  <p>Bilingual, evidence-grounded RAG assistant API with citations, a spend cap and a streaming contract.</p>
+  <a href="https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/gonzalomartinperez/portfolio-assistant-api/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/gonzalomartinperez/portfolio-assistant-api/releases"><img alt="Release" src="https://img.shields.io/github/v/release/gonzalomartinperez/portfolio-assistant-api"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/gonzalomartinperez/portfolio-assistant-api"></a>
+</div>
 
 <p align="center">
-  <a href="docs/assets/gallery/02-expanded-conversation.png"><img src="docs/assets/gallery/02-expanded-conversation.png" width="900" alt="Expanded native conversation showing a recruiter question, a recorded model answer, three public source links and an unsent follow-up"></a>
+  <a href="docs/explanation/gallery.md"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/assistant/compact-dark-en.png">
+    <img src="docs/assets/gallery/07-mobile-es.png" width="320" alt="The portfolio assistant answering a visitor question with cited public sources"></picture></a>
 </p>
 
-### From first question to recovery
+## Why
 
-Click a frame to inspect the original-resolution PNG.
+Answers about a person must come from published evidence, never from model memory. This API is the
+backend of the assistant in Gonzalo Martin Perez's public portfolio. It retrieves approved public
+content, validates every citation against that evidence and streams the answer, in US English or neutral
+Latin American Spanish. Spend limits, ownership checks and privacy rules are enforced in code, and the
+default mode is deterministic fixtures with no paid calls.
 
-<table>
-  <tr>
-    <td valign="top" width="50%"><strong>1 · A welcoming starting point</strong><br>Identity, scope and a useful starter question.<br><a href="docs/assets/gallery/01-welcome.png"><img src="docs/assets/gallery/01-welcome.png" width="420" alt="Compact assistant empty state with Gonzalo’s avatar, introductory copy, starter question and composer"></a></td>
-    <td valign="top" width="50%"><strong>2 · A compact, sourced answer</strong><br>A recorded achievement with estimates clearly qualified.<br><a href="docs/assets/gallery/03-compact-sources.png"><img src="docs/assets/gallery/03-compact-sources.png" width="420" alt="Compact assistant displaying a question about a Rampy achievement, a qualified answer, public sources and follow-up composer"></a></td>
-  </tr>
-  <tr>
-    <td valign="top"><strong>3 · Conversation controls</strong><br>History and conversation actions belong to the shared native feature.<br><a href="docs/assets/gallery/04-history.png"><img src="docs/assets/gallery/04-history.png" width="420" alt="Native conversation drawer with a new-conversation action and saved-conversation controls"></a></td>
-    <td valign="top"><strong>4 · Honest interruption</strong><br>Partial output remains readable; recovery checks saved history.<br><a href="docs/assets/gallery/05-interrupted.png"><img src="docs/assets/gallery/05-interrupted.png" width="420" alt="Interrupted response with preserved partial text and an explicit connection-ended notice"></a></td>
-  </tr>
-</table>
+## Highlights
 
-<details>
-<summary><strong>Mobile, Spanish/light theme and unavailable-service states</strong></summary>
+- Grounded answers: citations are checked against retrieved public sources; unknown facts stay uncertain ([architecture](docs/explanation/architecture.md)).
+- Hybrid retrieval over a versioned public corpus: vector, lexical and a Neo4j evidence graph ([graph retrieval](docs/explanation/graph-retrieval.md)).
+- A pinned v1 wire contract (OpenAPI plus an SSE schema), drift-checked in CI ([API contract](docs/reference/api-contract.md)).
+- Atomic spend reservations in PostgreSQL and private, bounded operational measurements with no transcripts ([observability](docs/explanation/private-observability.md)).
+- Offline quality lanes: an 80-item bilingual golden set with a cassette replay lane, a retrieval harness and a 60-item attack pack ([evals](docs/reference/evals.md)).
+- Measured results come from a scorecard snapshot, see [Quality](#quality).
 
-The narrow viewport uses the same conversation implementation. Long responses scroll
-inside the panel; the composer remains separate from the reading surface.
+## Architecture
 
-<p align="center">
-  <a href="docs/assets/gallery/07-mobile-es.png"><img src="docs/assets/gallery/07-mobile-es.png" width="320" alt="Mobile native assistant in Spanish and the light theme, with a real recorded public-answer replay and visible composer"></a>
-  <a href="docs/assets/gallery/06-unavailable.png"><img src="docs/assets/gallery/06-unavailable.png" width="320" alt="Native assistant showing a safe unavailable-service notice and recovery controls"></a>
-</p>
-
-</details>
-
-[Gallery provenance and limits](docs/evidence/archive/2026-10/readme-gallery.md) distinguish recorded
-model output, fixture failures and browser emulation. Captures do not prove physical-device,
-production-routing or live-provider availability. No credentials or private visitor messages
-are included. The portfolio working tree and disabled rollout were not changed.
-
-## How it works
-
-<p align="center">
-  <a href="docs/assets/architecture-overview.svg"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview.svg"><source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" width="1100" alt="Native chat, approved portfolio synchronization, API workflow, OpenAI and private evidence/operations boundaries. Click for the full-size diagram"></picture></a>
-</p>
-
-Solid arrows show requests or synchronization; dashed arrows show returned data.
-Frames identify trust boundaries. This overview describes implemented responsibilities,
-not production deployment or a security certification. Open the original to zoom. [Diagram source and visual conventions](docs/explanation/architecture.md)
-explain the symbols and review procedure.
-
-
-
-<details>
-<summary>Editable Mermaid source</summary>
-
-```text
-flowchart LR
-    subgraph Knowledge[Versioned public knowledge]
-        P[Approved portfolio revision] --> W[Observe and index]
-        W --> V[(PostgreSQL + pgvector)]
-        W --> G[(Neo4j evidence graph)]
-    end
-    U[Native portfolio chat] --> H[Session + CSRF boundary]
-    H --> L[LangGraph workflow]
-    V --> L
-    G --> L
-    L --> O[OpenAI · GPT-6 Luna]
-    O --> S[Validated answer + source mapping]
-    S --> E[Incremental SSE]
-    E --> U
-    S --> C[(Owned conversation history)]
+```mermaid
+C4Context
+  title Portfolio Assistant API, system context
+  Person(visitor, "Visitor or recruiter", "Asks about Gonzalo's public work")
+  Person(owner, "Owner", "Operates through the backoffice")
+  System(site, "portfolio", "Public bilingual site and chat client")
+  System(api, "portfolio-assistant-api", "Grounded RAG, sessions, spend cap, SSE")
+  System(bo, "portfolio-backoffice", "Private reads: status and operations")
+  System_Ext(openai, "OpenAI", "Generation and embeddings, opt-in")
+  System_Ext(gh, "GitHub (portfolio repo)", "Approved public source")
+  Rel(visitor, site, "HTTPS")
+  Rel(site, api, "REST and SSE")
+  Rel(bo, api, "Private server-to-server reads")
+  Rel(api, openai, "Provider calls under a budget")
+  Rel(api, gh, "Reads approved public content")
+  Rel(owner, bo, "Browser")
 ```
 
-</details>
-
-**Retrieve → ground → generate → validate → persist.** Vector retrieval and graph facts
-provide public evidence. The application validates citations against that evidence and
-associates them with the persisted answer. Language and presentation context can guide
-an answer, but cannot replace evidence or system instructions.
-
-The knowledge worker observes the published public source, pins an immutable revision,
-and publishes a complete index before switching the active version. Freshness policy can
-reject generation while knowledge is stale. Private career-ops material and authored
-evaluation questions never enter the runtime corpus.
-
-### Boundaries and ownership
-
-<details>
-<summary>Editable Mermaid source · Dependency directions</summary>
-
-```text
-flowchart TB
-    B[Bootstrap · composition and lifecycle] --> P[Presentation · HTTP and SSE]
-    P --> A[Application · use cases and ports]
-    A --> D[Domain · pure policy and state]
-    B --> AI[AI · injected workflow and retrieval]
-    AI --> A
-    B --> I[Adapters · provider, stores and source]
-    I --> A
-    I --> D
+```mermaid
+C4Container
+  title Portfolio Assistant API, containers
+  Person(site, "portfolio", "Chat client")
+  System_Ext(openai, "OpenAI", "Opt-in")
+  System_Ext(gh, "GitHub (portfolio repo)", "Approved public source")
+  System_Boundary(b, "portfolio-assistant-api") {
+    Container(api, "api", "FastAPI, LangGraph", "Presentation, application, ai; composed at startup")
+    Container(worker, "worker", "Python", "Knowledge sync and watch")
+    ContainerDb(pg, "PostgreSQL 18 + pgvector", "Sessions, runs, ledger, corpus, vectors, checkpoints")
+    ContainerDb(neo, "Neo4j 5.26", "Relationship projection")
+  }
+  Rel(site, api, "REST and SSE")
+  Rel(api, pg, "psycopg pools")
+  Rel(api, neo, "Bolt, read-only queries")
+  Rel(api, openai, "Answers and query embeddings, under a budget")
+  Rel(worker, openai, "Embeddings at indexing")
+  Rel(worker, gh, "Reads approved content")
+  Rel(worker, pg, "Publishes corpus versions")
+  Rel(worker, neo, "Projects the graph")
 ```
 
-</details>
+Dependencies point inward: `app/domain` is pure standard library, `app/application` owns use cases and
+ports, and `app/ai`, adapters and presentation depend on it, never the reverse; tests enforce the direction.
+Details are in [architecture](docs/explanation/architecture.md) and the [decision records](docs/decisions/README.md).
 
-| Location | Responsibility |
-| --- | --- |
-| `app/domain`, `app/application` | Framework-independent policy, explicit lifecycle and small ports. |
-| `app/ai` | LangGraph orchestration and retrieval with injected capabilities. |
-| `app/adapters`, `app/presentation` | Concrete I/O, validation, HTTP and SSE boundaries. |
-| `contracts`, `migrations`, `evals` | Pinned wire artifacts, explicit schema evolution and reproducible evaluation cases. |
+## Quickstart
 
-Import-boundary tests enforce this direction. Strict mypy covers the inner layers and AI
-contracts. Cancellation, deadlines and cleanup are part of application behavior.
-
-The [portfolio](https://github.com/gonzalomartinperez/portfolio) owns the public UI and
-approved content; the [backoffice](https://github.com/gonzalomartinperez/portfolio-backoffice)
-owns authenticated operations. Private **vps-ops** owns Coolify, proxy/TLS, production
-composition, secrets, release selection and recovery. This repository owns its application
-image, migrations and runtime contract.
-
-## Quick start without a model key
-
-**Requirements:** Linux/WSL, Git, Docker Compose and uv **0.13.1**. Frozen installation
-uses Python **3.14.8**. Run from this repository’s root.
-
-```sh
-uv sync --frozen
-export ASSISTANT_PROJECT=assistant-readme-demo
-# Choose unused loopback ports before sourcing the fixture environment.
-export POSTGRES_PORT=55463 NEO4J_PORT=57713 NEO4J_HTTP_PORT=57513
-source scripts/fixture-env.sh
-docker compose -f infra/compose/local.yaml up --build -d --wait
-uv run python -m app.migrate
-uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
+```bash
+just sync                  # uv sync --frozen
+just check                 # the CI static checks
+just test                  # offline unit, contract and architecture tests
 ```
 
-The source command indexes the frozen, approved public portfolio snapshot in
-`evals/corpus` (no network; see [ADR016](docs/decisions/016-frozen-public-corpus-snapshot.md)).
-Refresh it only by an explicit PR with `uv run python -m scripts.refresh_corpus --source <portfolio checkout> --ref <commit>`;
-`--check` verifies the committed files against `manifest.json`. Fixture
-mode makes **no paid model or embedding calls**. In a second terminal:
+Requirements: Python 3.14 (uv installs it), [uv](https://docs.astral.sh/uv/), [just](https://just.systems/) and Docker. To run the API
+in fixture mode and get a first cited answer with `just demo`, follow the
+[local development tutorial](docs/tutorials/local-development.md).
 
-```sh
-uv run python -m scripts.demo
-uv run python -m scripts.demo --locale es
+## Usage
+
+With the fixture API from the tutorial running on `localhost:8000` (needs `curl` and `jq`):
+
+```bash
+H='Origin: http://localhost:3000'; J='Content-Type: application/json'; API=http://localhost:8000/api/v1
+CSRF=$(curl -s -c jar -H "$H" -H "$J" -H 'X-Session-Bootstrap: 1' -d '{}' $API/session | jq -r .csrf_token)
+ID=$(curl -s -b jar -H "$H" -H "$J" -H "X-CSRF-Token: $CSRF" -d '{}' $API/conversations | jq -r .id)
+curl -N -b jar -H "$H" -H "$J" -H "X-CSRF-Token: $CSRF" -H "Idempotency-Key: $(uuidgen)" \
+  -d '{"content":"What is Filomena?","locale":"en"}' $API/conversations/$ID/messages/stream
 ```
 
-The demo establishes a session, sends a question, receives SSE output and deletes its
-session without printing credentials. Liveness is `/health/live`; readiness is
-`/health/ready` and requires migrations, an active corpus and graph connectivity.
+The stream emits `run.started`, `message.delta`, `message.completed` and a terminal `run.completed`,
+`run.failed` or `run.cancelled`; a broken connection is not completion. See the
+[API contract](docs/reference/api-contract.md) and [contracts/openapi.json](contracts/openapi.json); the assistant UI is in the [light and dark gallery](docs/explanation/gallery.md).
 
-To stop the selected fixture services, use `docker compose -f infra/compose/local.yaml stop` from the terminal
-where the fixture environment is loaded. Preserve volumes; do not use `down -v` against
-shared environments. [Local development](docs/tutorials/local-development.md) covers alternate
-ports, real-service tests and local source indexing. [Environment](docs/reference/environment.md)
-explains private `.env.local` configuration and authorized real-provider setup.
+## Quality
 
-## Public and private contracts
+| Gate | Tool | Threshold |
+|---|---|---|
+| `ci-gate` | GitHub Actions, shared engineering-standards action | Every job selected for the change must succeed ([CI](docs/reference/ci.md)) |
+| Static | ruff, ruff format, mypy strict on the scope in `pyproject.toml` | Zero findings and zero errors |
+| Offline tests | pytest `-m 'not integration'` | Zero failures; test count is a ratchet in [`scorecard/ratchets/tests.json`](scorecard/ratchets/tests.json) |
+| Coverage | coverage.py branch, both lanes combined | Per-layer floors in [`tests/coverage-floors.json`](tests/coverage-floors.json); 90% on changed lines in PRs |
+| Mutation | mutmut on changed, scoped files | Break below the score in [`tests/mutation-baseline.json`](tests/mutation-baseline.json) after its warning period |
+| Contract | `pytest -m contract`, Schemathesis, oasdiff | No breaking v1 change without the `contract-major` label |
+| Retrieval | `evals.harness.retrieval --compare` | Blocks a significant Recall@5 drop against [`evals/baselines/retrieval.json`](evals/baselines/retrieval.json) |
+| Golden replay | `just eval-golden` | Every active item replays from committed cassettes; local only until the owner-approved recording campaign commits them |
 
-| Surface | Contract |
-| --- | --- |
-| Sessions and conversations | [`/api/v1` OpenAPI](contracts/openapi.json), including session ownership, CSRF, history/deletion and optional portfolio context. |
-| Incremental answers | [SSE schema](contracts/sse.schema.json) and [examples](contracts/sse.examples.json); a broken connection is not completion. |
-| Starting questions | `/api/v1/knowledge/suggestions`, grounded in the active approved corpus. |
-| Operational snapshot | `/internal/ops/v1/status`, authenticated server-to-server, excluded from public OpenAPI. |
-| Operational metrics | `/internal/ops/v1/metrics`, private bearer access and cache exclusion. |
+Latest scorecard snapshot, rendered from committed files by `scripts/readme_results.py`
+(see [scorecard tooling](docs/reference/scorecard.md)):
 
-<details>
-<summary>Editable Mermaid source · Private operations flow</summary>
+<!-- results:start -->
+Generated by `scripts/readme_results.py` from [`scorecard-2026-11-14.json`](docs/evidence/scorecard-2026-11-14.json).
 
-```text
-flowchart LR
-    API[Bounded anonymous measurements] --> DB[(PostgreSQL operational facts)]
-    DB --> OPS[Private status + metrics]
-    OPS --> BO[OAuth-protected backoffice server]
-    API -. Opt-in manual OTLP .-> COL[Private collector · vps-ops]
-    COL -. Deployment-owned .-> OBS[Prometheus + Grafana]
-```
+| Check | Result | Source |
+|---|---|---|
+| Lint (ruff) | 0 findings | [`static.ruff_findings`](docs/evidence/scorecard-2026-11-14.json) |
+| Types (mypy) | 0 errors | [`static.mypy_errors`](docs/evidence/scorecard-2026-11-14.json) |
+| Types (mypy --strict app) | 89 errors | [`static.mypy_strict_app_errors`](docs/evidence/scorecard-2026-11-14.json) |
+| Offline tests | 1,549 tests, 0 failed, 8 skipped | [`tests.unit.total`](docs/evidence/scorecard-2026-11-14.json) |
+| Branch coverage (offline lane) | 72.9% | [`coverage.branch_rate`](docs/evidence/scorecard-2026-11-14.json) |
+| Integration tests | not measured in this snapshot | [`tests.integration.total`](docs/evidence/scorecard-2026-11-14.json) |
+| Golden replay pass rate | not measured in this snapshot | [`eval.golden_pass_rate`](docs/evidence/scorecard-2026-11-14.json) |
+| Mutation score | not measured in this snapshot | [`mutation.score`](docs/evidence/scorecard-2026-11-14.json) |
+| Image size | not measured in this snapshot | [`image.api_bytes`](docs/evidence/scorecard-2026-11-14.json) |
+| Golden set size | 80 items (EN 40, ES 40) | [`evals/golden/manifest.json`](evals/golden/manifest.json) |
+| Attack pack size | 60 items | [`evals/attacks/manifest.json`](evals/attacks/manifest.json) |
+| Retrieval Recall@5 (hybrid baseline) | 0.810 over 131 scored queries | [`evals/baselines/retrieval.json`](evals/baselines/retrieval.json) |
+<!-- results:end -->
 
-</details>
+## Documentation
 
-No prompts, transcripts, session credentials or visitor identities enter operational
-payloads. Manual OTLP export is opt-in; exporter failures do not retry chat generation.
-Health checks never call the paid provider. Shared Prometheus/Grafana deployment and
-end-to-end production dashboard pairing remain unverified. See
-[the private operations contract](docs/explanation/private-observability.md).
+| Quadrant | Start here |
+|---|---|
+| Tutorials | [Local development](docs/tutorials/local-development.md) |
+| How-to | [Maintain knowledge](docs/how-to/maintain-knowledge.md) · [Deploy with vps-ops](docs/how-to/deploy-with-vps-ops.md) · [Release](docs/how-to/release.md) |
+| Reference | [API contract](docs/reference/api-contract.md) · [Environment](docs/reference/environment.md) · [Evals](docs/reference/evals.md) · [CI](docs/reference/ci.md) · [Scorecard](docs/reference/scorecard.md) |
+| Explanation | [Architecture](docs/explanation/architecture.md) · [Threat model](docs/explanation/threat-model.md) · [Graph retrieval](docs/explanation/graph-retrieval.md) |
+| Decisions and evidence | [Decision records](docs/decisions/README.md) · [Evidence](docs/evidence/README.md) |
+| Master plan | [Master plan](docs/master-plan/README.md) · [Documentation map](docs/README.md) |
 
-## Verification and evidence
+## Ecosystem
 
-```sh
-uv run ruff check app tests contracts scripts evals
-uv run ruff format --check app tests contracts scripts evals
-uv run mypy
-uv run pytest -q
-uv run python -m scripts.validate_skills
-uv run python -m scripts.validate_compose
-uv run python -m contracts.export
-git diff --exit-code contracts
-```
+| Repository | Role |
+|---|---|
+| [portfolio](https://github.com/gonzalomartinperez/portfolio) | Public bilingual portfolio site |
+| [portfolio-assistant-api](https://github.com/gonzalomartinperez/portfolio-assistant-api) | Portfolio assistant API (RAG, evals) |
+| [portfolio-backoffice](https://github.com/gonzalomartinperez/portfolio-backoffice) | Portfolio backoffice (IAM, operations) |
+| [pequeverso](https://github.com/gonzalomartinperez/pequeverso) | Pequeverso public store site |
+| [pequeverso-assistant-api](https://github.com/gonzalomartinperez/pequeverso-assistant-api) | Pequeverso shopping assistant API |
+| [pequeverso-backoffice](https://github.com/gonzalomartinperez/pequeverso-backoffice) | Pequeverso backoffice (IAM, operations) |
+| vps-ops (private) | Operations CLI and deploy contract |
 
-For an isolated prepared database/corpus, use `TEST_INTEGRATION=1 uv run pytest -q`.
-Ordinary tests explicitly skip those integrations. CI runs static/offline and
-real-service/container jobs independently, then requires the aggregate `checks` gate.
-Frozen dependencies, pinned actions, current-head checks and image scans remain mandatory.
+## Contributing and security
 
-| Evidence | What was actually verified |
-| --- | --- |
-| [Deep model evaluation](docs/evidence/archive/2026-10/live-depth-2026-10-10.md) | 300-turn evaluation campaign with real-provider calls, revalidation, citation/history audits and explicit quality limits. |
-| [Bilingual voice](docs/explanation/assistant-voice.md) | Focused real-model voice checks and follow-up topic-retention regressions. |
-| [1000-question bank](docs/reference/evals.md) | Authored bilingual intent families and fixture coverage; not 1000 independently live-scored answers. |
-| [Bounded 2026-10-17 live smoke](docs/evidence/archive/2026-10/bounded-live-smoke-2026-10-17.md) | Six observed completed flows, five real model generations, semantic indexing and verified citation provenance under an explicit USD 0.50 ceiling, tied to source `02b6f2784564669597fe8a4c2adf53bf807737a6`. |
-| [Manual synthetic evaluation export](docs/reference/synthetic-evaluation-export.md) | Default-off LangSmith aggregate exporter with offline SDK tests; no visitor tracing or real external export. Implemented after that evaluated source revision. |
-| [Private operations](docs/evidence/archive/2026-10/private-observability-2026-10-12.md) | Runtime mapping, real stores, transport limits, OTLP fixture receiver and backoffice adapter evidence. |
-| [PostgreSQL 18](docs/evidence/archive/2026-10/postgres18-2026-10-12.md) | Fresh pgvector store, migrations and container compatibility. |
-| [Versioned query plans](docs/evidence/archive/2026-10/database-queries-2026-10-17.md) | Measured ledger/graph access paths, migration 008, source-hashed synthetic receipts and structural CI regressions; no VPS latency claim. |
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities
+privately as described in [SECURITY.md](SECURITY.md); questions and bugs are covered by [SUPPORT.md](SUPPORT.md).
 
-Release tags are immutable by default. The owner explicitly requested a single GitHub
-`v1.0.0` tag for the final verified source on 2026-10-18; prior tag objects must be
-backed up and independently restored before that normalization. Historical reports
-retain their original commit/image identifiers and version labels: renaming a tag
-never extends an earlier evaluation to newer code. Future tag changes require new
-explicit authority, trigger review and current source verification; a tag grants no
-publication, deployment or paid-call authority.
+## Scope and limits
 
-These are local/test-environment results, not field performance or production guarantees.
-Dependency/image vulnerability findings remain advisory under the current owner policy.
-Effective proxy behavior, backup/restore, live OAuth pairing and physical-device
-acceptance remain separately documented verification requirements.
+- The public portfolio assistant stays off until the owner activates it; production deployment is owned by private vps-ops.
+- A single-maintainer project: no guaranteed response time and no paid support ([SUPPORT.md](SUPPORT.md)).
+- Fixture results do not establish real-model safety; paid calls need explicit owner authorization.
+- Only approved public portfolio content enters the runtime corpus.
 
-## Deployment and documentation
+## License
 
-Build the application-owned image with:
-
-```sh
-docker build --platform linux/amd64 -f infra/docker/app/Dockerfile -t portfolio-assistant-api:local .
-```
-
-It runs non-root on private port **8000**. Startup does not migrate or ingest knowledge;
-those are explicit operations. vps-ops selects reviewed prebuilt image digests and performs
-separately authorized deployment. Main promotion does not authorize publication or deployment.
-
-Within-project PostgreSQL consolidation is a [proposed compatibility blueprint](docs/decisions/005-project-postgres-consolidation.md),
-not an implemented or tested production topology. API and IAM remain separate databases/identities.
-
-## Documentation map
-
-| Work | Start here |
-| --- | --- |
-| Install, configure and connect | [Local development](docs/tutorials/local-development.md) · [Environment](docs/reference/environment.md) |
-| Understand policy and boundaries | [Architecture](docs/explanation/architecture.md) · [Engineering coordination](docs/explanation/engineering-coordination.md) · [Threat model](docs/explanation/threat-model.md) |
-| Integrate a client or refresh types | [API contract](docs/reference/api-contract.md) · [Frontend handoff](docs/reference/frontend-handoff.md) |
-| Verify direct website collection and country trust | [Direct-edge v1 contract](docs/reference/contracts/analytics-direct-edge-v1.md) |
-| Maintain public knowledge | [Knowledge synchronization](docs/how-to/maintain-knowledge.md) |
-| Operate private measurements | [Observability](docs/explanation/private-observability.md) |
-| Prepare a compatible VPS release | [Runtime contract](docs/reference/deployment-contract.md) · [vps-ops handoff](docs/evidence/archive/2026-10/vps-ops-request.md) |
-| Review CI and dependency updates | [CI](docs/reference/ci.md) · [Dependency policy](docs/reference/dependency-updates.md) |
-| Contribute or use repository skills | [Contributing](CONTRIBUTING.md) · [Codex/Claude skills](docs/reference/agent-skills.md) |
-| Review support and remaining work | [Supported versions](docs/reference/support-policy.md) · [Roadmap progress](docs/master-plan/progress.md) |
-| Browse all documentation | [Documentation map](docs/README.md) |
-| Read the decisions and the dated evidence | [Decision records](docs/decisions/README.md) · [Evidence index](docs/evidence/README.md) |
-| Review the future improvement plan (planning only) | [Master plan 2026-10](docs/master-plan/README.md) |
-
-Software licensing and content scope are documented [below](#software-license).
-See [third-party notices](THIRD_PARTY_NOTICES.md) and [security reporting](SECURITY.md).
-
-Optional [official-documentation context](docs/explanation/bounded-web-context.md) complements
-portfolio evidence through closed technical topics; no autonomous browsing or career
-facts from general search. It defaults off and shares the application spend ceiling.
-
-Shared runtime/version acceptance: [runtime baseline](docs/reference/runtime-baseline.md).
-
-## Privacy and release gates
-
-Volunteered context supports useful follow-ups; it is not automatic model training.
-[Context minimization and the human improvement loop](docs/explanation/feedback-and-improvement.md)
-describe actual patterns, original-history retention, private rating aggregates and limits.
-The [dated Neo4j assessment](docs/evidence/archive/2026-10/neo4j-release-blocker-2026-10-17.md)
-retains unresolved Jackson findings and its original failed results. Under the
-[current deployment policy](docs/reference/deployment-contract.md#deployment-authorization-and-vulnerability-policy),
-dependency/image CVEs inform maintenance rather than veto deployment. No VPS,
-deployment or collection activation is authorized or verified.
-
-## Software license
-
-Application code and first-party engineering documentation use the
-[MIT license](LICENSE). Personal identity, portfolio/career content, screenshots
-and third-party materials retain their separate [scope and notices](THIRD_PARTY_NOTICES.md).
-The software grant does not imply rights over employer/client work or permission
-to reuse personal data. The production image includes both notice files.
-
-`uv run python -m scripts.check_license` validates the standard grant, SPDX metadata
-and document links in CI. It is a consistency check, not a dependency-license or
-legal audit. Identify this licensing change by its actual source revision; historical
-version labels do not establish which later code or notices were evaluated.
+Code and first-party documentation are [MIT](LICENSE); personal content and third-party material keep their own terms, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

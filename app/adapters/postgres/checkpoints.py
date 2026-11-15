@@ -15,7 +15,7 @@ def delete_checkpoint(thread_id: str, database_url: str) -> None:
         prepare_threshold=0,
         row_factory=dict_row,
         connect_timeout=5,
-        options='-c statement_timeout=5000',
+        options="-c statement_timeout=5000",
     ) as conn:
         PostgresSaver(conn).delete_thread(thread_id)
 
@@ -28,14 +28,14 @@ def drain_cleanup(*, connection: Connect, database_url: str, limit: int = 100) -
             (limit,),
         ).fetchall()
     for row in rows:
-        delete_checkpoint(row['thread_id'], database_url)
+        delete_checkpoint(row["thread_id"], database_url)
         with connection() as conn:
             conn.execute(
-                'UPDATE checkpoint_cleanup SET cleaned_at=now() WHERE thread_id=%s',
-                (row['thread_id'],),
+                "UPDATE checkpoint_cleanup SET cleaned_at=now() WHERE thread_id=%s",
+                (row["thread_id"],),
             )
             conn.execute(
                 "DELETE FROM checkpoint_cleanup WHERE thread_id=%s AND created_at<now()-interval '10 minutes'",
-                (row['thread_id'],),
+                (row["thread_id"],),
             )
     return len(rows)

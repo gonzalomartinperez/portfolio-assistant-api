@@ -31,6 +31,50 @@ reintroduction and all adapter→bootstrap backedges. Root ASGI/CLI paths remain
 stable; see [ADR006](../decisions/006-canonical-adapters.md) and the
 [pre-move consumer map](../evidence/archive/2026-10/common-layout-preflight-2026-10-18.md).
 
+## System context and containers
+
+The [README](../../README.md#architecture) carries the same two C4 views.
+
+```mermaid
+C4Context
+  title Portfolio Assistant API, system context
+  Person(visitor, "Visitor or recruiter", "Asks about Gonzalo's public work")
+  Person(owner, "Owner", "Operates through the backoffice")
+  System(site, "portfolio", "Public bilingual site and chat client")
+  System(api, "portfolio-assistant-api", "Grounded RAG, sessions, spend cap, SSE")
+  System(bo, "portfolio-backoffice", "Private reads: status and operations")
+  System_Ext(openai, "OpenAI", "Generation and embeddings, opt-in")
+  System_Ext(gh, "GitHub (portfolio repo)", "Approved public source")
+  Rel(visitor, site, "HTTPS")
+  Rel(site, api, "REST and SSE")
+  Rel(bo, api, "Private server-to-server reads")
+  Rel(api, openai, "Provider calls under a budget")
+  Rel(api, gh, "Reads approved public content")
+  Rel(owner, bo, "Browser")
+```
+
+```mermaid
+C4Container
+  title Portfolio Assistant API, containers
+  Person(site, "portfolio", "Chat client")
+  System_Ext(openai, "OpenAI", "Opt-in")
+  System_Ext(gh, "GitHub (portfolio repo)", "Approved public source")
+  System_Boundary(b, "portfolio-assistant-api") {
+    Container(api, "api", "FastAPI, LangGraph", "Presentation, application, ai; composed at startup")
+    Container(worker, "worker", "Python", "Knowledge sync and watch")
+    ContainerDb(pg, "PostgreSQL 18 + pgvector", "Sessions, runs, ledger, corpus, vectors, checkpoints")
+    ContainerDb(neo, "Neo4j 5.26", "Relationship projection")
+  }
+  Rel(site, api, "REST and SSE")
+  Rel(api, pg, "psycopg pools")
+  Rel(api, neo, "Bolt, read-only queries")
+  Rel(api, openai, "Answers and query embeddings, under a budget")
+  Rel(worker, openai, "Embeddings at indexing")
+  Rel(worker, gh, "Reads approved content")
+  Rel(worker, pg, "Publishes corpus versions")
+  Rel(worker, neo, "Projects the graph")
+```
+
 ## One request
 
 The browser bootstraps an anonymous secret cookie and CSRF token. Application

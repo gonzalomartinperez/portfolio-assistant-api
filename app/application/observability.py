@@ -8,10 +8,8 @@ from datetime import datetime
 from time import perf_counter
 from typing import Literal, Protocol
 
-Phase = Literal[
-    'language', 'vector_retrieval', 'graph_retrieval', 'generation', 'finalization'
-]
-Outcome = Literal['completed', 'cancelled', 'failed']
+Phase = Literal["language", "vector_retrieval", "graph_retrieval", "generation", "finalization"]
+Outcome = Literal["completed", "cancelled", "failed"]
 
 
 @dataclass(frozen=True)
@@ -38,9 +36,9 @@ class ExecutionObserver(Protocol):
         ...
 
 
-stage_origin: ContextVar[float | None] = ContextVar('stage_origin', default=None)
+stage_origin: ContextVar[float | None] = ContextVar("stage_origin", default=None)
 
-measurements: ContextVar[list[Stage] | None] = ContextVar('measurements', default=None)
+measurements: ContextVar[list[Stage] | None] = ContextVar("measurements", default=None)
 
 
 @contextmanager

@@ -3,16 +3,18 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 
 from app.domain.analytics import EventName, Section, Target
 from app.domain.analytics_country import COUNTRIES
 from app.domain.analytics_interactions import LayoutRevision, Region, Viewport
 from app.domain.analytics_periods import Period
 
+_COUNTRY_ENUM: list[JsonValue] = [*sorted(COUNTRIES | {"unknown", "withheld"})]
+
 
 class StrictAggregate(BaseModel):
-    model_config = ConfigDict(extra='forbid', strict=True)
+    model_config = ConfigDict(extra="forbid", strict=True)
 
 
 class ReportWindow(StrictAggregate):
@@ -27,7 +29,7 @@ class ReportSelection(StrictAggregate):
     section: Section
     region_id: Region
     viewport: Viewport
-    locale: Literal['all', 'en', 'es']
+    locale: Literal["all", "en", "es"]
 
 
 class ReportTotals(StrictAggregate):
@@ -45,15 +47,15 @@ class ReportCountry(StrictAggregate):
     country: str = Field(
         min_length=2,
         max_length=8,
-        json_schema_extra={'enum': sorted(COUNTRIES | {'unknown', 'withheld'})},
+        json_schema_extra={"enum": _COUNTRY_ENUM},
     )
     count: int = Field(ge=1, le=310000)
 
-    @field_validator('country')
+    @field_validator("country")
     @classmethod
     def reviewed_country(cls, value: str) -> str:
-        if value not in COUNTRIES and value not in ('unknown', 'withheld'):
-            raise ValueError('invalid_country_label')
+        if value not in COUNTRIES and value not in ("unknown", "withheld"):
+            raise ValueError("invalid_country_label")
         return value
 
 
@@ -76,21 +78,21 @@ class ReportCell(StrictAggregate):
 class ReportAction(StrictAggregate):
     event_name: EventName
     section: Section
-    locale: Literal['en', 'es']
+    locale: Literal["en", "es"]
     target: Target | None
     count: int = Field(ge=1, le=310000)
 
 
 class ProductReportSnapshot(StrictAggregate):
     schema_version: Literal[2] = 2
-    project: Literal['portfolio'] = 'portfolio'
-    timezone: Literal['UTC'] = 'UTC'
+    project: Literal["portfolio"] = "portfolio"
+    timezone: Literal["UTC"] = "UTC"
     retention_days: Literal[93] = 93
     grid_size: Literal[8] = 8
     minimum_bucket: Literal[3] = 3
-    coverage: Literal['received_events_only'] = 'received_events_only'
-    country_collection: Literal['disabled', 'trusted_proxy_header']
-    layout_revision: LayoutRevision = 'portfolio-v1'
+    coverage: Literal["received_events_only"] = "received_events_only"
+    country_collection: Literal["disabled", "trusted_proxy_header"]
+    layout_revision: LayoutRevision = "portfolio-v1"
     selection: ReportSelection
     window: ReportWindow
     generated_at: datetime

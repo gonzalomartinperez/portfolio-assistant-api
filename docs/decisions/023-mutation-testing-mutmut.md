@@ -37,8 +37,8 @@ Use mutmut 3.8.1 with explicit file paths in `[tool.mutmut]`, unit test selectio
 `also_copy` for application imports and contract fixtures, and two workers.
 The scoped domain files are budget, privacy, evidence, analytics periods and web
 policy; application files are answer, runs, conversations and contracts. Retrieval
-fusion/rules currently live in the single `app/ai/retrieval.py` module, so that
-module is included. No standalone prompt loader or `evals/harness/graders` exists
+fusion/rules currently live in the `app/ai/retrieval/` package (formerly one module), so that
+package is included. No standalone prompt loader or `evals/harness/graders` exists
 on this branch; both are skipped until present. Tests are never mutation targets.
 
 ### Measured spike

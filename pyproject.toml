@@ -23,11 +23,11 @@ dependencies = [
 ]
 
 [project.scripts]
-assistant-api = "app.bootstrap.entrypoints:api"
-assistant-migrate = "app.bootstrap.entrypoints:migrate"
-assistant-retention = "app.bootstrap.entrypoints:retention"
-assistant-knowledge-sync = "app.bootstrap.entrypoints:knowledge_sync"
-assistant-knowledge-watch = "app.bootstrap.entrypoints:knowledge_watch"
+assistant-api = "app.bootstrap.entrypoints.api:main"
+assistant-migrate = "app.bootstrap.entrypoints.migrate:main"
+assistant-retention = "app.bootstrap.entrypoints.retention:main"
+assistant-knowledge-sync = "app.bootstrap.entrypoints.knowledge_sync:main"
+assistant-knowledge-watch = "app.bootstrap.entrypoints.knowledge_watch:main"
 
 [build-system]
 requires = ["uv_build==0.13.1"]
@@ -58,8 +58,11 @@ load = [
     "locust>=2.47.0",
 ]
 
+[tool.ruff]
+line-length = 100
+
 [tool.ruff.lint]
-extend-select = ["I", "N", "UP", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
+extend-select = ["W", "F", "I", "B", "UP", "PIE", "LOG", "G", "N", "RET", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -77,11 +80,11 @@ markers = [
 ]
 
 [tool.mypy]
-files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "evals/harness", "app/adapters/neo4j", "app/adapters/observability", "app/adapters/portfolio", "app/adapters/postgres", "app/adapters/providers", "app/adapters/retrieval.py", "app/presentation/middleware.py"]
+files = ["app", "evals", "scripts/database_security_receipt.py"]
 strict = true
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 
 [tool.ruff.per-file-target-version]
 # Privileged stdlib-only jobs use the hosted runner's system Python, not application dependencies.
@@ -98,7 +101,14 @@ paths_to_mutate = [
     "app/application/answer.py",
     "app/application/runs.py",
     "app/application/contracts.py",
-    "app/ai/retrieval.py",
+    "app/ai/retrieval/__init__.py",
+    "app/ai/retrieval/candidates.py",
+    "app/ai/retrieval/fusion.py",
+    "app/ai/retrieval/pipeline.py",
+    "app/ai/retrieval/query.py",
+    "app/ai/retrieval/rerank.py",
+    "app/ai/retrieval/select.py",
+    "app/ai/retrieval/source_shape.py",
 ]
 tests_dir = [
     "tests/unit/test_operations.py",

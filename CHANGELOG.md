@@ -17,6 +17,11 @@ All notable changes to this project are documented here. The format follows
 - One weekly grouped dependency pull request, enforced by a guard workflow.
 - Community files (support, code of conduct, issue forms), standards drift check and release automation.
 
+### Deprecated
+
+- The `python -m app.migrate`, `app.retention`, `app.knowledge_sync` and `app.knowledge_watch` commands; use the
+  `assistant-*` console scripts (now under `app/bootstrap/entrypoints/`). Removal waits for the vps-ops switch.
+
 ### Fixed
 
 - Retrieval evidence keys are independent of the portfolio content layout.

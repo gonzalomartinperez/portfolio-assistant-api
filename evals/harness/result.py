@@ -25,7 +25,7 @@ class RunResult:
     citations: tuple[CitedSource, ...] = ()
     retrieved_keys: tuple[str, ...] | None = None
     evidence_text: str | None = None
-    question: str = ''
+    question: str = ""
     abstained: bool = False
     input_tokens: int | None = None
     output_tokens: int | None = None
@@ -37,11 +37,11 @@ class RunResult:
 
 # Section 11 limits of the stubbed and cassette lane.
 DEFAULT_BUDGET: Mapping[str, float] = {
-    'input_tokens': 6000,
-    'output_tokens': 800,
-    'llm_calls': 6,
-    'first_delta_ms': 250,
-    'total_ms': 1000,
+    "input_tokens": 6000,
+    "output_tokens": 800,
+    "llm_calls": 6,
+    "first_delta_ms": 250,
+    "total_ms": 1000,
 }
 
 
@@ -61,4 +61,4 @@ class GradeResult:
 
     name: str
     passed: bool
-    detail: str = ''
+    detail: str = ""

@@ -1,0 +1,397 @@
+{
+  "criteria": {
+    "D1.guard_violations": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D1.import_linter": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D1.negative_fixtures_pass": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.dead_code": {
+      "axis": "D2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.max_cc": {
+      "axis": "D2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.mypy_errors": {
+      "axis": "D2",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D2.ruff_findings": {
+      "axis": "D2",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D3.branch_coverage": {
+      "axis": "D3",
+      "rule": ">= 0.85",
+      "status": "fail",
+      "value": 0.7294
+    },
+    "D3.diff_coverage": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.flaky_30d": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.mutation_score": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.tests_failing": {
+      "axis": "D3",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D4.build_once_digest": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.pr_p50": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.pr_p95": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.single_dependabot_pr": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.codeql_open_high": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.pinned_actions": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.sbom_attested": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.zizmor_high": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.answer_cost_p95": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.error_rate": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.image_within_ratchet": {
+      "axis": "D6",
+      "rule": "bytes <= infra/docker/app/image.json",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.rss_growth": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.ttfe_p95_stubbed": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.health_contract": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.log_redaction_test": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.request_id_propagation_test": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.adr_index": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.changelog_current": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.links_ok": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.readme_headings": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P1.problem_schema_valid": {
+      "axis": "P1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P2.ttft_budget": {
+      "axis": "P2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P3.golden_pass": {
+      "axis": "P3",
+      "rule": "== 1.0",
+      "status": "unmet",
+      "value": null
+    },
+    "P4.oasdiff_clean": {
+      "axis": "P4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P4.schemathesis": {
+      "axis": "P4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P5.consumer_compile": {
+      "axis": "P5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P6.standards_drift": {
+      "axis": "P6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    }
+  },
+  "generated": "2026-11-14T23:56:02+00:00",
+  "judged": {
+    "scores": null,
+    "source": null,
+    "status": "not yet scored"
+  },
+  "metrics": {
+    "coverage.branch_rate": {
+      "source": "coverage.xml",
+      "status": "ok",
+      "value": 0.7294
+    },
+    "coverage.line_rate": {
+      "source": "coverage.xml",
+      "status": "ok",
+      "value": 0.8399
+    },
+    "eval.golden_pass_rate": {
+      "source": "artifacts/golden.json",
+      "status": "missing",
+      "value": null
+    },
+    "image.api_bytes": {
+      "source": "artifacts/image-sizes.json",
+      "status": "missing",
+      "value": null
+    },
+    "image.worker_bytes": {
+      "source": "artifacts/image-sizes.json",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D1": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D2": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D3": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D4": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D5": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D6": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D7": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D8": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P1": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P2": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P3": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P4": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P5": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "judged.P6": {
+      "source": "not yet scored",
+      "status": "missing",
+      "value": null
+    },
+    "mutation.score": {
+      "source": "artifacts/mutation.json (placeholder)",
+      "status": "missing",
+      "value": null
+    },
+    "static.mypy_errors": {
+      "source": "artifacts/mypy.txt",
+      "status": "ok",
+      "value": 0
+    },
+    "static.mypy_strict_app_errors": {
+      "source": "artifacts/mypy-strict-app.txt",
+      "status": "ok",
+      "value": 89
+    },
+    "static.ruff_findings": {
+      "source": "artifacts/ruff.json",
+      "status": "ok",
+      "value": 0
+    },
+    "tests.integration.failures": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration.skipped": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration.total": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration_share": {
+      "source": "unit.xml and integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.unit.failures": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 0
+    },
+    "tests.unit.skipped": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 8
+    },
+    "tests.unit.total": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 1549
+    }
+  },
+  "schema": 1
+}

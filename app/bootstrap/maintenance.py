@@ -1,18 +1,20 @@
 """Operator defaults; persistence adapters receive explicit configuration."""
 
+from contextlib import AbstractContextManager
 from decimal import Decimal
 from functools import partial
 
 from app.adapters.postgres import checkpoints, db, ledger, retention
+from app.adapters.postgres.db import Connect
 from app.bootstrap.config import settings
 
 
-def connect():
+def connect() -> AbstractContextManager[object]:
     return db.connect(settings().database_url)
 
 
 def reserve(
-    run_id: str, amount: Decimal, *, connection=connect, cutoff: Decimal | None = None
+    run_id: str, amount: Decimal, *, connection: Connect = connect, cutoff: Decimal | None = None
 ) -> None:
     ledger.reserve(
         run_id,
@@ -27,7 +29,7 @@ def settle(
     input_tokens: int,
     output_tokens: int,
     *,
-    connection=connect,
+    connection: Connect = connect,
     input_price: Decimal | None = None,
     output_price: Decimal | None = None,
 ) -> None:
@@ -50,7 +52,7 @@ def delete_checkpoint(thread_id: str, database_url: str | None = None) -> None:
 
 
 def drain_cleanup(
-    *, connection=connect, database_url: str | None = None, limit: int = 100
+    *, connection: Connect = connect, database_url: str | None = None, limit: int = 100
 ) -> int:
     return checkpoints.drain_cleanup(
         connection=connection,

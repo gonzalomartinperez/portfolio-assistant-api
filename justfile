@@ -49,6 +49,7 @@ score:
     uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]
     uv run mypy > artifacts/mypy.txt 2>&1 || [ $? -eq 1 ]
     uv run mypy --strict app > artifacts/mypy-strict-app.txt 2>&1 || [ $? -eq 1 ]
+    uv run python -m scripts.ruff_backlog --out artifacts/ruff-backlog.json
     uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
     uv run python -m scorecard collect --artifacts artifacts --out artifacts/scorecard.json
     uv run python -m scorecard check --current artifacts/scorecard.json --ratchets scorecard/ratchets

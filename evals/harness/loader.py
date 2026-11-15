@@ -22,40 +22,36 @@ def load_items(path: Path, *, sealed: bool = False) -> list[Item]:
     errors: list[str] = []
     ids: dict[str, int] = {}
     questions: dict[str, tuple[int, str]] = {}
-    for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
-        where = f'{path}:{number}'
+        where = f"{path}:{number}"
         try:
             raw = json.loads(line)
         except json.JSONDecodeError as error:
-            errors.append(f'{where}: invalid JSON ({error.msg})')
+            errors.append(f"{where}: invalid JSON ({error.msg})")
             continue
-        label = raw.get('id', '?') if isinstance(raw, dict) else '?'
+        label = raw.get("id", "?") if isinstance(raw, dict) else "?"
         try:
             item = model.model_validate(raw)
         except ValidationError as error:
             for problem in error.errors(include_input=False):
-                field = '.'.join(str(part) for part in problem['loc']) or 'item'
-                errors.append(f'{where}: item {label}: {field}: {problem["msg"]}')
+                field = ".".join(str(part) for part in problem["loc"]) or "item"
+                errors.append(f"{where}: item {label}: {field}: {problem['msg']}")
             continue
         if item.id in ids:
-            errors.append(
-                f'{where}: item {item.id}: duplicate id (first at line {ids[item.id]})'
-            )
+            errors.append(f"{where}: item {item.id}: duplicate id (first at line {ids[item.id]})")
             continue
         ids[item.id] = number
         question = normalized_question(item)
         if question in questions:
             first, other = questions[question]
-            errors.append(
-                f'{where}: item {item.id}: duplicate question of {other} (line {first})'
-            )
+            errors.append(f"{where}: item {item.id}: duplicate question of {other} (line {first})")
             continue
         questions[question] = (number, item.id)
         items.append(item)
     if errors:
-        raise ItemLoadError('\n'.join(errors))
+        raise ItemLoadError("\n".join(errors))
     return items
 
 

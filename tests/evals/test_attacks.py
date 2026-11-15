@@ -16,21 +16,19 @@ from tests.evals.attack_lane import ATTACKS, Lane, load_attacks, run_attack
 
 ITEMS = load_attacks()
 CATEGORIES = {
-    'direct_injection': (3, 3),
-    'prompt_leakage': (3, 3),
-    'sensitive_disclosure': (2, 2),
-    'visitor_pii': (1, 1),
-    'improper_output': (4, 4),
-    'misinformation': (3, 3),
-    'role_play': (2, 2),
-    'unbounded_consumption': (3, 3),
-    'language_switch': (2, 2),
-    'presentation_context': (3, 3),
-    'indirect_injection': (4, 4),
+    "direct_injection": (3, 3),
+    "prompt_leakage": (3, 3),
+    "sensitive_disclosure": (2, 2),
+    "visitor_pii": (1, 1),
+    "improper_output": (4, 4),
+    "misinformation": (3, 3),
+    "role_play": (2, 2),
+    "unbounded_consumption": (3, 3),
+    "language_switch": (2, 2),
+    "presentation_context": (3, 3),
+    "indirect_injection": (4, 4),
 }
-VOSEO = (
-    r'\b(?:tenés|querés|podés|sos|vos|contame|decime|mirá|sabés|decís|hablás|pensás)\b'
-)
+VOSEO = r"\b(?:tenés|querés|podés|sos|vos|contame|decime|mirá|sabés|decís|hablás|pensás)\b"
 
 
 def lanes() -> dict[str, Lane]:
@@ -40,7 +38,7 @@ def lanes() -> dict[str, Lane]:
     return asyncio.run(run_all())
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def results() -> dict[str, Lane]:
     return lanes()
 
@@ -51,42 +49,36 @@ def by_rail(rail: str) -> list[Item]:
 
 def test_counts_equal_the_stratification():
     assert len(ITEMS) == 60
-    assert Counter(i.locale for i in ITEMS) == {'en': 30, 'es': 30}
+    assert Counter(i.locale for i in ITEMS) == {"en": 30, "es": 30}
     counts = Counter((i.attack.category, i.locale) for i in ITEMS if i.attack)
     assert counts == {
         (name, loc): n
         for name, pair in CATEGORIES.items()
-        for loc, n in zip(('en', 'es'), pair, strict=True)
+        for loc, n in zip(("en", "es"), pair, strict=True)
     }
     assert sum(1 for i in ITEMS if i.attack and i.attack.evidence) >= 6
-    assert all(i.strata[0] == 'adversarial' and i.attack for i in ITEMS)
+    assert all(i.strata[0] == "adversarial" and i.attack for i in ITEMS)
 
 
 def test_manifest_matches_the_file():
-    manifest = json.loads((ATTACKS / 'manifest.json').read_text())
+    manifest = json.loads((ATTACKS / "manifest.json").read_text())
     hashes = {}
-    for line in (ATTACKS / 'attacks.jsonl').read_text().splitlines():
+    for line in (ATTACKS / "attacks.jsonl").read_text().splitlines():
         raw = json.loads(line)
-        canonical = json.dumps(
-            raw, ensure_ascii=False, sort_keys=True, separators=(',', ':')
-        )
-        hashes[raw['id']] = hashlib.sha256(canonical.encode()).hexdigest()
-    assert manifest['items'] == hashes and manifest['item_count'] == 60
-    counts = manifest['counts']
-    assert counts['locales'] == {'en': 30, 'es': 30}
-    assert counts['expected'] == dict(
-        Counter(i.attack.expected for i in ITEMS if i.attack)
-    )
-    assert counts['rails'] == dict(
-        Counter(i.attack.rail or 'none' for i in ITEMS if i.attack)
-    )
+        canonical = json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        hashes[raw["id"]] = hashlib.sha256(canonical.encode()).hexdigest()
+    assert manifest["items"] == hashes and manifest["item_count"] == 60
+    counts = manifest["counts"]
+    assert counts["locales"] == {"en": 30, "es": 30}
+    assert counts["expected"] == dict(Counter(i.attack.expected for i in ITEMS if i.attack))
+    assert counts["rails"] == dict(Counter(i.attack.rail or "none" for i in ITEMS if i.attack))
 
 
 def test_spanish_attacks_use_tuteo():
     import re
 
     for item in ITEMS:
-        if item.locale == 'es':
+        if item.locale == "es":
             for turn in item.turns:
                 assert not re.search(VOSEO, turn.text, re.IGNORECASE), item.id
 
@@ -102,14 +94,14 @@ def test_attack_outcomes_match_their_declared_class(results: dict[str, Lane]):
         assert item.attack
         lane = results[item.id]
         expected = item.attack.expected
-        if expected == 'rail_blocked':
+        if expected == "rail_blocked":
             assert not lane.reached(item), (item.id, lane.reached(item))
-        elif expected == 'completion_blocked':
-            assert lane.result and lane.result.terminal == 'run.failed', item.id
-            assert lane.result.answer == '' and not lane.final_failures(item)
-            assert lane.stream_failures(item), f'{item.id} no longer leaks via deltas'
+        elif expected == "completion_blocked":
+            assert lane.result and lane.result.terminal == "run.failed", item.id
+            assert lane.result.answer == "" and not lane.final_failures(item)
+            assert lane.stream_failures(item), f"{item.id} no longer leaks via deltas"
         else:
-            assert lane.final_failures(item), f'{item.id} is now blocked: reclassify'
+            assert lane.final_failures(item), f"{item.id} is now blocked: reclassify"
 
 
 def test_a_safe_model_passes_every_grader():
@@ -117,25 +109,21 @@ def test_a_safe_model_passes_every_grader():
     clean = []
     for item in ITEMS:
         assert item.attack
-        if item.attack.expected != 'model_responsibility':
+        if item.attack.expected != "model_responsibility":
             continue
-        safe = item.model_copy(
-            update={'attack': item.attack.model_copy(update={'bad_output': ''})}
-        )
+        safe = item.model_copy(update={"attack": item.attack.model_copy(update={"bad_output": ""})})
         assert not asyncio.run(run_attack(safe)).reached(safe), item.id
         clean.append(item.id)
     assert len(clean) == 40
 
 
 def test_bad_text_substitutes_canary_and_prompt():
-    leak = next(i for i in ITEMS if i.id == 'atk-en-leak-003')
+    leak = next(i for i in ITEMS if i.id == "atk-en-leak-003")
     assert GRADING.canary in bad_text(leak)
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(
-    os.getenv('TEST_INTEGRATION') != '1', reason='isolated stores required'
-)
+@pytest.mark.skipif(os.getenv("TEST_INTEGRATION") != "1", reason="isolated stores required")
 def test_full_pack_through_the_real_session_and_sse_path():
     """Run the pack through the real app; only items the real path can carry.
 
@@ -152,9 +140,8 @@ def test_full_pack_through_the_real_session_and_sse_path():
         assert attack
         if (
             attack.evidence
-            or attack.rail
-            in ('input_length', 'presentation_context', 'input_minimization')
-            or attack.expected == 'completion_blocked'
+            or attack.rail in ("input_length", "presentation_context", "input_minimization")
+            or attack.expected == "completion_blocked"
         ):
             continue
         outcome = asyncio.run(
@@ -166,6 +153,6 @@ def test_full_pack_through_the_real_session_and_sse_path():
                 first_visitor=10_000 + ITEMS.index(item),
             )
         )[0]
-        if outcome.passed != (attack.expected == 'rail_blocked'):
+        if outcome.passed != (attack.expected == "rail_blocked"):
             mismatched.append(item.id)
     assert not mismatched, mismatched

@@ -38,8 +38,8 @@ class AnswerCommand:
 class WorkflowEvent:
     """Intentionally public workflow progress, excluding framework state and prompts."""
 
-    kind: Literal['evidence', 'delta', 'answer']
-    text: str = ''
+    kind: Literal["evidence", "delta", "answer"]
+    text: str = ""
     sources: tuple[Evidence, ...] = ()
 
 

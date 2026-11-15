@@ -26,7 +26,7 @@ async def run() -> None:
     stop = asyncio.Event()
     index_stop = Event()
 
-    def stop_worker():
+    def stop_worker() -> None:
         index_stop.set()
         stop.set()
 
@@ -36,13 +36,13 @@ async def run() -> None:
     try:
         with (
             connection() as lock,
-            tempfile.TemporaryDirectory(prefix='portfolio-watch-') as directory,
+            tempfile.TemporaryDirectory(prefix="portfolio-watch-") as directory,
         ):
             lock.autocommit = True
-            if not lock.execute(
-                'SELECT pg_try_advisory_lock(472023) AS acquired'
-            ).fetchone()['acquired']:
-                raise RuntimeError('knowledge watcher is already running')
+            if not lock.execute("SELECT pg_try_advisory_lock(472023) AS acquired").fetchone()[
+                "acquired"
+            ]:
+                raise RuntimeError("knowledge watcher is already running")
             repo = Path(directory)
             await watch(
                 PublishedPortfolio(repo),
