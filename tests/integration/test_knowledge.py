@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.domain.graph import facts
+from app.adapters.portfolio.source_format import facts
 
 
 def test_graph_facts_are_explicit_and_keep_supporting_line_spans():

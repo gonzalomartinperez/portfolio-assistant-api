@@ -117,12 +117,12 @@ def test_real_offline_language_detector_and_ambiguous_names():
 
 def test_live_citations_only_include_references_actually_used():
     other = replace(SOURCE, id="second")
-    assert [ref["id"] for ref in citations((SOURCE, other), "Supported claim [2].", False)] == [
+    assert [ref["id"] for ref in citations((SOURCE, other), "Supported claim [2].", None)] == [
         "second"
     ]
-    assert citations((SOURCE,), "No claim about Gonzalo.", False) == []
+    assert citations((SOURCE,), "No claim about Gonzalo.", None) == []
     with pytest.raises(ValueError):
-        citations((SOURCE,), "Unsupported source [9].", False)
+        citations((SOURCE,), "Unsupported source [9].", None)
 
 
 def projection():
@@ -371,7 +371,7 @@ def test_code_samples_are_not_confused_with_source_references():
     answer = (
         "A technical example: `items[99]`.\n```python\nvalue = [99]\n```\nGrounded statement [1]."
     )
-    assert [ref["id"] for ref in citations((SOURCE,), answer, False)] == [SOURCE.id]
+    assert [ref["id"] for ref in citations((SOURCE,), answer, None)] == [SOURCE.id]
 
 
 def test_explicit_previous_language_survives_a_short_followup():
@@ -479,10 +479,10 @@ def test_spoken_language_queries_do_not_capture_programming_or_response_preferen
 def test_language_retrieval_and_fixture_preserve_the_source_levels(locale, question):
     import hashlib
 
+    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
     from app.ai.retrieval import PublicRetrieval
     from app.application.answer import context
     from app.application.knowledge import Chunk, Corpus
-    from app.domain.fixture import fixture_message, fixture_supports
 
     content = 'languages: [{ language: "English", level: "B2" }, { language: "Spanish", level: "Native" }],'
     path = f"src/content/{locale}/profile.ts"

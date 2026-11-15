@@ -38,7 +38,7 @@ from tests.unit.test_workflow import SOURCE, Store
 def test_noncontiguous_references_preserve_code_links_and_evidence(text, expected, indices):
     sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
     assert normalize_citation_markers(text, len(sources)) == expected
-    assert [source["id"] for source in citations(sources, text, False)] == [
+    assert [source["id"] for source in citations(sources, text, None)] == [
         str(index) for index in indices
     ]
 
@@ -78,3 +78,11 @@ def test_stream_final_and_persistence_use_the_same_canonical_answer():
         assert events[-1].name == "run.completed"
 
     asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("fixture", "support"), [(True, None), (False, lambda content, answer, path: True)]
+)
+def test_run_service_rejects_inconsistent_fixture_wiring(fixture, support):
+    with pytest.raises(ValueError, match="citation_support"):
+        RunService(Store(), object(), fixture=fixture, citation_support=support)

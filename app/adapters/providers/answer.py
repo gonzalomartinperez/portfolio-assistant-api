@@ -10,6 +10,7 @@ from typing import Final, cast
 from openai import APIError, AsyncOpenAI
 from openai.types.responses import ResponseInputParam
 
+from app.adapters.providers.fixture_answer import fixture_message
 from app.adapters.providers.voice import developer_prompt
 from app.application.contracts import GenerationFailedError, Usage
 from app.application.conversation_context import (
@@ -21,7 +22,6 @@ from app.application.presentation_context import PresentationContext
 from app.application.web_context import WebSearch, WebSupplement, supplement
 from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS
 from app.domain.errors import ProviderUnavailableError
-from app.domain.fixture import fixture_message
 from app.domain.privacy import minimize_visitor_text
 
 REASONING_EFFORT: Final = "medium"
