@@ -1,4 +1,4 @@
-"""Compatibility CLI; new code imports app.bootstrap.indexing."""
+"""Deprecated `python -m app.knowledge_sync` shim; use `assistant-knowledge-sync` (app.bootstrap.entrypoints.knowledge_sync)."""
 
 from app.bootstrap.indexing import main, sync
 

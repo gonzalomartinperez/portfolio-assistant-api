@@ -108,13 +108,17 @@ public immutable revision with `python -m app.knowledge_sync --source github --r
 target (the `api` target has no Git). Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
-Console scripts are equivalent to the `python -m` forms and both are supported:
-`assistant-api` (uvicorn on 0.0.0.0:8000, as the image command),
-`assistant-migrate` (`app.migrate`), `assistant-retention` (`app.retention`),
-`assistant-knowledge-sync` (`app.knowledge_sync`) and `assistant-knowledge-watch`
-(`app.knowledge_watch`). They exist wherever the project is installed: a checkout
-after `uv sync` and both image targets (the image installs the project editable, so
-`app` and `/app/migrations` resolve from `/app`).
+Console scripts are the canonical commands. Each is the `main()` of one module under
+`app/bootstrap/entrypoints/`:
+`assistant-api` (uvicorn on 0.0.0.0:8000, the image command; serves `app.main:app`),
+`assistant-migrate`, `assistant-retention`, `assistant-knowledge-sync` and
+`assistant-knowledge-watch` (the worker image command). They exist wherever the project is
+installed: a checkout after `uv sync` and both image targets (the image installs the project
+editable, so `app` and `/app/migrations` resolve from `/app`). The `python -m app.migrate`,
+`app.retention`, `app.knowledge_sync` and `app.knowledge_watch` forms used above are
+deprecated compatibility shims with identical behaviour. They are removed in the contract
+phase, only after vps-ops schedules the console scripts (a `releases/production.lock` change
+owned and merged by vps-ops). Until then both forms are supported.
 
 `/healthz` and `/readyz` are the canonical health names; `/health/live` and
 `/health/ready` remain until vps-ops confirms the switch (contract phase later,

@@ -1,4 +1,4 @@
-"""Compatibility CLI; new code imports app.bootstrap.knowledge_watch."""
+"""Deprecated `python -m app.knowledge_watch` shim; use `assistant-knowledge-watch` (app.bootstrap.entrypoints.knowledge_watch)."""
 
 import asyncio
 

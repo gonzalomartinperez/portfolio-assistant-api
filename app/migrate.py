@@ -1,4 +1,4 @@
-"""Compatibility CLI; new code imports app.bootstrap.migrations."""
+"""Deprecated `python -m app.migrate` shim; use `assistant-migrate` (app.bootstrap.entrypoints.migrate)."""
 
 from app.bootstrap.migrations import main
 

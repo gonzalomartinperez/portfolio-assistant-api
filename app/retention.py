@@ -1,4 +1,4 @@
-"""Compatibility CLI; new code imports app.bootstrap.maintenance."""
+"""Deprecated `python -m app.retention` shim; use `assistant-retention` (app.bootstrap.entrypoints.retention)."""
 
 from app.bootstrap.maintenance import prune
 
