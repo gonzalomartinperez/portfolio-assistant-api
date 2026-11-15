@@ -18,6 +18,186 @@
       "value": 89,
       "source": "2026-11-14 uv run mypy --strict app (99 source files, M3-5): 89 errors in 15 files (202 before)",
       "required": true
+    },
+    "static.ruff_backlog_total": {
+      "direction": "lower",
+      "value": 1572,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.E": {
+      "direction": "lower",
+      "value": 3,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.W": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.F": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.I": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.B": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.C4": {
+      "direction": "lower",
+      "value": 4,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.UP": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.SIM": {
+      "direction": "lower",
+      "value": 3,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.RUF": {
+      "direction": "lower",
+      "value": 30,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.PERF": {
+      "direction": "lower",
+      "value": 19,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.PIE": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.PT": {
+      "direction": "lower",
+      "value": 203,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.PTH": {
+      "direction": "lower",
+      "value": 9,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.TC": {
+      "direction": "lower",
+      "value": 163,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.ASYNC": {
+      "direction": "lower",
+      "value": 1,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.S": {
+      "direction": "lower",
+      "value": 187,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.T20": {
+      "direction": "lower",
+      "value": 79,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.TRY": {
+      "direction": "lower",
+      "value": 14,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.ARG": {
+      "direction": "lower",
+      "value": 27,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.FAST": {
+      "direction": "lower",
+      "value": 3,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.LOG": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.G": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.DTZ": {
+      "direction": "lower",
+      "value": 6,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.ERA": {
+      "direction": "lower",
+      "value": 1,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.FURB": {
+      "direction": "lower",
+      "value": 1,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.N": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.RET": {
+      "direction": "lower",
+      "value": 0,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.D": {
+      "direction": "lower",
+      "value": 655,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
+    },
+    "static.ruff_backlog.ANN": {
+      "direction": "lower",
+      "value": 164,
+      "source": "2026-11-14 uv run python -m scripts.ruff_backlog (target ruleset, standards.md Lint), M3-4",
+      "required": true
     }
   }
 }

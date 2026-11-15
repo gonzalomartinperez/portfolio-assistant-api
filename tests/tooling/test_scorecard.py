@@ -18,6 +18,9 @@ def write_artifacts(directory: Path, failures: int = 0) -> None:
     (directory / "mypy-strict-app.txt").write_text(
         "Found 7 errors in 3 files (checked 9 source files)\n"
     )
+    (directory / "ruff-backlog.json").write_text(
+        '{"total": 5, "by_family": {"D": 4, "S": 1, "B": 0}}'
+    )
     (directory / "unit.xml").write_text(JUNIT.format(t=10, f=failures, s=1))
     (directory / "integration.xml").write_text(JUNIT.format(t=5, f=0, s=0))
     (directory / "coverage.xml").write_text('<coverage line-rate="0.9" branch-rate="0.8"/>')
@@ -30,6 +33,9 @@ def test_collectors_read_synthetic_artifacts(tmp_path):
     assert m["static.ruff_findings"]["value"] == 2
     assert m["static.mypy_errors"]["value"] == 3
     assert m["static.mypy_strict_app_errors"]["value"] == 7
+    assert m["static.ruff_backlog_total"]["value"] == 5
+    assert m["static.ruff_backlog.D"]["value"] == 4
+    assert m["static.ruff_backlog.B"]["value"] == 0
     assert m["tests.unit.total"]["value"] == 10
     assert m["tests.unit.skipped"]["value"] == 1
     assert m["tests.integration_share"]["value"] == pytest.approx(5 / 15)

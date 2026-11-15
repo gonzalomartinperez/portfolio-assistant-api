@@ -62,7 +62,7 @@ load = [
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["I", "N", "UP", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
+extend-select = ["W", "F", "I", "B", "UP", "PIE", "LOG", "G", "N", "RET", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
