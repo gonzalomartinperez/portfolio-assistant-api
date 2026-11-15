@@ -1,3 +1,4 @@
+# Frozen copy for the M4-2 characterization test; delete once the rule ablation (PR-B) lands.
 """Deterministic retrieval orchestration over injected indexes."""
 
 import json
@@ -23,7 +24,7 @@ from app.domain.portfolio_paths import profile_parts, profile_paths
 from app.domain.web_policy import TOPICS
 
 
-class PublicRetrieval:
+class LegacyRetrieval:
     def __init__(self, index: KnowledgeIndex, strategy: str = "hybrid"):
         if strategy not in ("hybrid", "vector", "lexical", "graph"):
             raise ValueError("unsupported retrieval strategy")
