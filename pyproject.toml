@@ -80,7 +80,7 @@ markers = [
 ]
 
 [tool.mypy]
-files = ["app/domain", "app/application", "app/ai", "scripts/database_security_receipt.py", "evals/harness", "app/adapters/neo4j", "app/adapters/observability", "app/adapters/portfolio", "app/adapters/postgres", "app/adapters/providers", "app/adapters/retrieval.py", "app/presentation/middleware.py"]
+files = ["app", "evals", "scripts/database_security_receipt.py"]
 strict = true
 
 [tool.ruff.format]
