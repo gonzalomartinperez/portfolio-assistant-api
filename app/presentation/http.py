@@ -2,15 +2,18 @@ import ipaddress
 import json
 import logging
 import time
+from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
 from datetime import UTC, datetime
+from typing import NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 
-from app.application.conversations import digest
+from app.application.conversations import Conversations, digest
 from app.application.presentation_context import PresentationContext
+from app.domain.conversations import Conversation, Run, Session
 from app.presentation.events import events
 from app.presentation.models import (
     ConversationCreate,
@@ -21,6 +24,7 @@ from app.presentation.models import (
     HealthView,
     Locale,
     MessagePage,
+    MessageView,
     Page,
     ReadinessView,
     RunView,
@@ -37,22 +41,27 @@ router = APIRouter(
 )
 
 
-def utcnow():
+def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def fail(code: str, status: int = 400):
+def fail(code: str, status: int = 400) -> NoReturn:
     raise HTTPException(status_code=status, detail=code)
 
 
-def current_session(request: Request):
-    return request.app.state.conversations.authenticate(
+def conversations_service(request: Request) -> Conversations:
+    service: Conversations = request.app.state.conversations
+    return service
+
+
+def current_session(request: Request) -> Session:
+    return conversations_service(request).authenticate(
         request.cookies.get(request.app.state.config.cookie_name)
     )
 
 
-def mutation_session(request: Request, session=Depends(current_session)):
-    return request.app.state.conversations.authorize_mutation(
+def mutation_session(request: Request, session: Session = Depends(current_session)) -> Session:
+    return conversations_service(request).authorize_mutation(
         session, request.headers.get("x-csrf-token", "")
     )
 
@@ -79,13 +88,13 @@ def client_ip(request: Request) -> str:
     return peer
 
 
-@router.get("/health/live", operation_id="healthLive")
-def live():
+@router.get("/health/live", operation_id="healthLive", response_model=None)
+def live() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/health/ready", operation_id="healthReady")
-def ready(request: Request):
+@router.get("/health/ready", operation_id="healthReady", response_model=None)
+def ready(request: Request) -> dict[str, str]:
     try:
         request.app.state.ready()
         return {"status": "ok"}
@@ -98,7 +107,7 @@ def revision(request: Request) -> str:
 
 
 @router.get("/healthz", response_model=HealthView, operation_id="healthz")
-def healthz(request: Request):
+def healthz(request: Request) -> dict[str, str]:
     return {"status": "ok", "version": revision(request)}
 
 
@@ -108,7 +117,7 @@ def healthz(request: Request):
     responses={503: {"model": ErrorBody}},
     operation_id="readyz",
 )
-def readyz(request: Request):
+def readyz(request: Request) -> dict[str, str]:
     try:
         schema = request.app.state.ready()
     except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
@@ -126,7 +135,7 @@ def create_session(
     request: Request,
     response: Response,
     x_session_bootstrap: str | None = Header(default=None),
-):
+) -> SessionView:
     if (
         x_session_bootstrap != "1"
         or request.headers.get("content-type", "").split(";")[0] != "application/json"
@@ -151,7 +160,7 @@ def create_session(
 
 
 @router.get("/api/v1/session", response_model=SessionView, operation_id="getSession")
-def get_session(request: Request, session=Depends(current_session)):
+def get_session(request: Request, session: Session = Depends(current_session)) -> SessionView:
     return SessionView(
         csrf_token=session.csrf_token,
         expires_at=session.expires_at,
@@ -160,7 +169,9 @@ def get_session(request: Request, session=Depends(current_session)):
 
 
 @router.delete("/api/v1/session", status_code=204, operation_id="deleteSession")
-def delete_session(request: Request, response: Response, session=Depends(mutation_session)):
+def delete_session(
+    request: Request, response: Response, session: Session = Depends(mutation_session)
+) -> None:
     request.app.state.conversations.delete_session(session)
     request.app.state.cleanup()
     response.delete_cookie(request.app.state.config.cookie_name, path="/")
@@ -172,9 +183,9 @@ def delete_session(request: Request, response: Response, session=Depends(mutatio
     operation_id="createConversation",
 )
 def create_conversation(
-    request: Request, body: ConversationCreate, session=Depends(mutation_session)
-):
-    return request.app.state.conversations.create(session, body.title)
+    request: Request, body: ConversationCreate, session: Session = Depends(mutation_session)
+) -> Conversation:
+    return conversations_service(request).create(session, body.title)
 
 
 @router.get("/api/v1/conversations", response_model=Page, operation_id="listConversations")
@@ -182,11 +193,11 @@ def list_conversations(
     request: Request,
     limit: int = 30,
     cursor: datetime | None = None,
-    session=Depends(current_session),
-):
+    session: Session = Depends(current_session),
+) -> Page:
     rows = request.app.state.conversations.list_conversations(session, limit, cursor)
     return Page(
-        items=[asdict(row) for row in rows[:limit]],
+        items=[ConversationView.model_validate(asdict(row)) for row in rows[:limit]],
         next_cursor=rows[limit - 1].updated_at.isoformat() if len(rows) > limit else None,
     )
 
@@ -200,9 +211,9 @@ def rename_conversation(
     request: Request,
     conversation_id: UUID,
     body: ConversationUpdate,
-    session=Depends(mutation_session),
-):
-    return request.app.state.conversations.rename(session, conversation_id, body.title)
+    session: Session = Depends(mutation_session),
+) -> Conversation:
+    return conversations_service(request).rename(session, conversation_id, body.title)
 
 
 @router.delete(
@@ -210,7 +221,9 @@ def rename_conversation(
     status_code=204,
     operation_id="deleteConversation",
 )
-def delete_conversation(request: Request, conversation_id: UUID, session=Depends(mutation_session)):
+def delete_conversation(
+    request: Request, conversation_id: UUID, session: Session = Depends(mutation_session)
+) -> None:
     request.app.state.conversations.delete(session, conversation_id)
     request.app.state.cleanup()
 
@@ -225,16 +238,18 @@ def list_messages(
     conversation_id: UUID,
     limit: int = 50,
     cursor: datetime | None = None,
-    session=Depends(current_session),
-):
+    session: Session = Depends(current_session),
+) -> MessagePage:
     rows = request.app.state.conversations.messages(session, conversation_id, limit, cursor)
     return MessagePage(
-        items=[asdict(row) for row in rows[:limit]],
+        items=[MessageView.model_validate(asdict(row)) for row in rows[:limit]],
         next_cursor=rows[limit - 1].created_at.isoformat() if len(rows) > limit else None,
     )
 
 
-def sse(event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict):
+def sse(
+    event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict[str, object]
+) -> str:
     body = events.validate_python(
         {
             "type": event_type,
@@ -255,7 +270,7 @@ async def execute_run(
     question: str,
     locale: str,
     context: PresentationContext | None = None,
-):
+) -> AsyncGenerator[str]:
     sequence = 0
     started = time.perf_counter()
     terminal = "interrupted"
@@ -296,8 +311,8 @@ def stream_message(
     conversation_id: UUID,
     body: SendMessage,
     idempotency_key: str = Header(min_length=8, max_length=128),
-    session=Depends(mutation_session),
-):
+    session: Session = Depends(mutation_session),
+) -> ClosingStreamingResponse:
     run_id = request.app.state.conversations.prepare_run(
         session,
         conversation_id,
@@ -333,13 +348,13 @@ def stream_message(
 
 
 @router.get("/api/v1/runs/{run_id}", response_model=RunView, operation_id="getRun")
-def get_run(request: Request, run_id: UUID, session=Depends(current_session)):
-    return request.app.state.conversations.run(session, run_id)
+def get_run(request: Request, run_id: UUID, session: Session = Depends(current_session)) -> Run:
+    return conversations_service(request).run(session, run_id)
 
 
 @router.post("/api/v1/runs/{run_id}/cancel", response_model=RunView, operation_id="cancelRun")
-def cancel_run(request: Request, run_id: UUID, session=Depends(mutation_session)):
-    return request.app.state.conversations.run(session, run_id, cancel=True)
+def cancel_run(request: Request, run_id: UUID, session: Session = Depends(mutation_session)) -> Run:
+    return conversations_service(request).run(session, run_id, cancel=True)
 
 
 @router.post(
@@ -351,8 +366,8 @@ def record_feedback(
     request: Request,
     message_id: UUID,
     body: FeedbackCreate,
-    session=Depends(mutation_session),
-):
+    session: Session = Depends(mutation_session),
+) -> None:
     request.app.state.conversations.feedback(session, message_id, body.rating)
 
 
@@ -361,7 +376,7 @@ def record_feedback(
     response_model=SuggestionsView,
     operation_id="getKnowledgeSuggestions",
 )
-def get_knowledge_suggestions(request: Request, locale: Locale = "en"):
+def get_knowledge_suggestions(request: Request, locale: Locale = "en") -> SuggestionsView:
     version, commit, prompts = request.app.state.knowledge.starter_prompts(locale)
     return SuggestionsView(
         corpus_version=version,
