@@ -1,6 +1,7 @@
 """Deprecated `python -m app.knowledge_sync` shim; use `assistant-knowledge-sync` (app.bootstrap.entrypoints.knowledge_sync)."""
 
-from app.bootstrap.indexing import main, sync
+from app.bootstrap.entrypoints.knowledge_sync import main
+from app.bootstrap.indexing import sync
 
 __all__ = ["main", "sync"]
 

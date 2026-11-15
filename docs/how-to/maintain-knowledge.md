@@ -1,7 +1,7 @@
 # Continuous public knowledge
 
 The API owns one bounded sync worker, not a production scheduler. Start it locally
-with `uv run python -m app.knowledge_watch` after migrations and initial indexing.
+with `uv run assistant-knowledge-watch` after migrations and initial indexing.
 Fixture mode costs nothing. vps-ops decides its Coolify process/resource and credentials.
 
 For the eight-file `src/content` → `content` transition, follow the

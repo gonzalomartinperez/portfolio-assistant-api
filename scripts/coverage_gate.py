@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 FLOORS_PATH = Path("tests/coverage-floors.json")
+# Deprecated `python -m` shims (removed in the contract phase) plus the ASGI module.
 ENTRY_POINTS = (
     "app/main.py",
     "app/migrate.py",
@@ -28,7 +29,9 @@ GROUPS = {
     "adapters": lambda path: path.startswith("app/adapters/"),
     "presentation": lambda path: path.startswith("app/presentation/"),
     "bootstrap": lambda path: path.startswith("app/bootstrap/"),
-    "entrypoints": lambda path: path in ENTRY_POINTS,
+    "entrypoints": lambda path: (
+        path.startswith("app/bootstrap/entrypoints/") or path in ENTRY_POINTS
+    ),
 }
 CONDITION = re.compile(r"\((\d+)/(\d+)\)")
 

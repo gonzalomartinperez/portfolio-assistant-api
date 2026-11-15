@@ -80,7 +80,3 @@ def main() -> None:
             )
             result = sync(repo, "FETCH_HEAD")
     print(json.dumps(result, indent=2))
-
-
-if __name__ == "__main__":
-    main()
