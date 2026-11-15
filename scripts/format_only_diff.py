@@ -20,13 +20,13 @@ type Formatter = Callable[[str, bytes], bytes]
 
 
 def git(*args: str) -> bytes:
-    return subprocess.run(['git', *args], check=True, capture_output=True).stdout
+    return subprocess.run(["git", *args], check=True, capture_output=True).stdout
 
 
 def ruff_format(path: str, source: bytes) -> bytes:
     """Format source as ruff would format the file at path with the repository configuration."""
     return subprocess.run(
-        [sys.executable, '-m', 'ruff', 'format', '--stdin-filename', path, '-'],
+        [sys.executable, "-m", "ruff", "format", "--stdin-filename", path, "-"],
         input=source,
         check=True,
         capture_output=True,
@@ -39,15 +39,13 @@ def changed(base: str, paths: Sequence[str]) -> list[tuple[str, str]]:
     A modification keeps status M only when both sides are regular non-executable files
     (mode 100644); mode changes, symlinks and submodules are reported as status X.
     """
-    out = git(
-        'diff', '--raw', '--no-renames', '--no-abbrev', f'{base}...HEAD', '--', *paths
-    )
+    out = git("diff", "--raw", "--no-renames", "--no-abbrev", f"{base}...HEAD", "--", *paths)
     rows = []
     for line in out.decode().splitlines():
-        meta, _, path = line.partition('\t')
-        old_mode, new_mode, _old, _new, status = meta.lstrip(':').split()
-        if status == 'M' and not old_mode == new_mode == '100644':
-            status = 'X'
+        meta, _, path = line.partition("\t")
+        old_mode, new_mode, _old, _new, status = meta.lstrip(":").split()
+        if status == "M" and not old_mode == new_mode == "100644":
+            status = "X"
         rows.append((status, path))
     return rows
 
@@ -60,43 +58,41 @@ def format_only(
 ) -> list[str]:
     """Return the reasons the change set is not format-only (empty list means format-only)."""
     if not rows:
-        return ['no changed files under the given paths']
+        return ["no changed files under the given paths"]
     reasons = []
     for status, path in rows:
-        if status != 'M':
-            reasons.append(f'{path}: status {status} is not a plain modification')
-        elif not path.endswith('.py'):
-            reasons.append(f'{path}: not a Python file')
+        if status != "M":
+            reasons.append(f"{path}: status {status} is not a plain modification")
+        elif not path.endswith(".py"):
+            reasons.append(f"{path}: not a Python file")
         elif formatter(path, base_content(path)) != head_content(path):
-            reasons.append(f'{path}: differs from ruff format of the base version')
+            reasons.append(f"{path}: differs from ruff format of the base version")
     return reasons
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        '--base', required=True, help='base ref, for example origin/develop'
-    )
-    parser.add_argument('paths', nargs='+')
+    parser.add_argument("--base", required=True, help="base ref, for example origin/develop")
+    parser.add_argument("paths", nargs="+")
     args = parser.parse_args(argv)
     try:
-        merge_base = git('merge-base', args.base, 'HEAD').decode().strip()
+        merge_base = git("merge-base", args.base, "HEAD").decode().strip()
         reasons = format_only(
             changed(merge_base, args.paths),
-            lambda path: git('show', f'{merge_base}:{path}'),
-            lambda path: git('show', f'HEAD:{path}'),
+            lambda path: git("show", f"{merge_base}:{path}"),
+            lambda path: git("show", f"HEAD:{path}"),
             ruff_format,
         )
     except subprocess.CalledProcessError as error:
-        print(f'format-only check failed to run: {error}', file=sys.stderr)
+        print(f"format-only check failed to run: {error}", file=sys.stderr)
         return 2
     for reason in reasons:
         print(reason)
     if reasons:
         return 1
-    print('format-only: every changed file is ruff format output of its base version')
+    print("format-only: every changed file is ruff format output of its base version")
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

@@ -8,7 +8,7 @@ from openai import AsyncOpenAI, DefaultAsyncHttpxClient, DefaultHttpxClient, Ope
 def create_sync_client(*, api_key: str | None, timeout: float = 20) -> OpenAI:
     """Transfer transport ownership only after SDK construction succeeds."""
     if not api_key:
-        raise ValueError('provider API key is required')
+        raise ValueError("provider API key is required")
     with ExitStack() as ownership:
         transport = DefaultHttpxClient(
             verify=True, trust_env=False, follow_redirects=False, timeout=timeout
@@ -16,7 +16,7 @@ def create_sync_client(*, api_key: str | None, timeout: float = 20) -> OpenAI:
         ownership.callback(transport.close)
         client = OpenAI(
             api_key=api_key,
-            base_url='https://api.openai.com/v1',
+            base_url="https://api.openai.com/v1",
             timeout=timeout,
             max_retries=0,
             http_client=transport,
@@ -25,12 +25,10 @@ def create_sync_client(*, api_key: str | None, timeout: float = 20) -> OpenAI:
         return client
 
 
-async def create_async_client(
-    *, api_key: str | None, timeout: float = 45
-) -> AsyncOpenAI:
+async def create_async_client(*, api_key: str | None, timeout: float = 45) -> AsyncOpenAI:
     """Transfer async transport ownership only after SDK construction succeeds."""
     if not api_key:
-        raise ValueError('provider API key is required')
+        raise ValueError("provider API key is required")
     async with AsyncExitStack() as ownership:
         transport = DefaultAsyncHttpxClient(
             verify=True, trust_env=False, follow_redirects=False, timeout=timeout
@@ -38,7 +36,7 @@ async def create_async_client(
         ownership.push_async_callback(transport.aclose)
         client = AsyncOpenAI(
             api_key=api_key,
-            base_url='https://api.openai.com/v1',
+            base_url="https://api.openai.com/v1",
             timeout=timeout,
             max_retries=0,
             http_client=transport,

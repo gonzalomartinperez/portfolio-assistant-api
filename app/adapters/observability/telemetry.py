@@ -21,9 +21,7 @@ from opentelemetry.sdk.trace.sampling import TraceIdRatioBased
 
 from app.application.observability import Execution
 
-trace_override: ContextVar[int | None] = ContextVar(
-    'operational_trace_id', default=None
-)
+trace_override: ContextVar[int | None] = ContextVar("operational_trace_id", default=None)
 
 
 class OperationalIDs(IdGenerator):
@@ -47,7 +45,7 @@ class PrivateSession(requests.Session):
     def request(  # type: ignore[override]  # requests declares many keyword parameters; kwargs are forwarded unchanged
         self, method: str, url: str | bytes, **kwargs: Any
     ) -> requests.Response:
-        kwargs['allow_redirects'] = False
+        kwargs["allow_redirects"] = False
         return super().request(method, url, **kwargs)
 
 
@@ -55,17 +53,16 @@ class PrivateTelemetry:
     def __init__(self, endpoint: str, revision: str, sample_ratio: float):
         # Vendor environment hooks can inject headers, credentials or extensions.
         if any(
-            key.startswith('OTEL_')
-            and key not in ('OTEL_SDK_DISABLED', 'OTEL_PRIVATE_ENDPOINT')
+            key.startswith("OTEL_") and key not in ("OTEL_SDK_DISABLED", "OTEL_PRIVATE_ENDPOINT")
             for key in os.environ
         ):
-            raise ValueError('unsupported_telemetry_environment')
+            raise ValueError("unsupported_telemetry_environment")
         resource = Resource(
-            {'service.name': 'portfolio-assistant-api', 'service.version': revision}
+            {"service.name": "portfolio-assistant-api", "service.version": revision}
         )
         handler = logging.StreamHandler()
         handler.setFormatter(SafeTelemetryLog())
-        logger = logging.getLogger('opentelemetry')
+        logger = logging.getLogger("opentelemetry")
         logger.handlers = [handler]
         logger.propagate = False
         session = PrivateSession()
@@ -81,7 +78,7 @@ class PrivateTelemetry:
         self.traces.add_span_processor(
             BatchSpanProcessor(
                 OTLPSpanExporter(
-                    endpoint=endpoint.rstrip('/') + '/v1/traces',
+                    endpoint=endpoint.rstrip("/") + "/v1/traces",
                     headers={},
                     compression=Compression.NoCompression,
                     max_request_size=256000,
@@ -94,13 +91,13 @@ class PrivateTelemetry:
                 export_timeout_millis=1000,
             )
         )
-        self.tracer = self.traces.get_tracer('assistant.operations')
+        self.tracer = self.traces.get_tracer("assistant.operations")
         self.meters = MeterProvider(
             resource=resource,
             metric_readers=[
                 PeriodicExportingMetricReader(
                     OTLPMetricExporter(
-                        endpoint=endpoint.rstrip('/') + '/v1/metrics',
+                        endpoint=endpoint.rstrip("/") + "/v1/metrics",
                         headers={},
                         compression=Compression.NoCompression,
                         max_request_size=256000,
@@ -112,17 +109,13 @@ class PrivateTelemetry:
                 )
             ],
         )
-        meter = self.meters.get_meter('assistant.operations')
-        self.executions = meter.create_counter(
-            'assistant.executions', unit='{execution}'
-        )
-        self.duration = meter.create_histogram('assistant.execution.duration', unit='s')
-        self.first_token = meter.create_histogram(
-            'assistant.first_chunk.duration', unit='s'
-        )
+        meter = self.meters.get_meter("assistant.operations")
+        self.executions = meter.create_counter("assistant.executions", unit="{execution}")
+        self.duration = meter.create_histogram("assistant.execution.duration", unit="s")
+        self.first_token = meter.create_histogram("assistant.first_chunk.duration", unit="s")
 
     def record(self, execution: Execution) -> bool:
-        labels = {'outcome': execution.outcome}
+        labels = {"outcome": execution.outcome}
         self.executions.add(1, labels)
         self.duration.record(execution.duration_ms / 1000, labels)
         if execution.first_token_ms is not None:
@@ -132,7 +125,7 @@ class PrivateTelemetry:
         token = trace_override.set(int(execution.trace_id, 16))
         try:
             root = self.tracer.start_span(
-                'assistant.execution',
+                "assistant.execution",
                 context=Context(),
                 attributes=labels,
                 start_time=start,
@@ -143,13 +136,11 @@ class PrivateTelemetry:
             for stage in execution.stages:
                 child_start = start + int(stage.start_offset_ms * 1000000)
                 child = self.tracer.start_span(
-                    'assistant.' + stage.name,
+                    "assistant." + stage.name,
                     context=set_span_in_context(root),
                     start_time=child_start,
                 )
-                child.end(
-                    end_time=min(end, child_start + int(stage.duration_ms * 1000000))
-                )
+                child.end(end_time=min(end, child_start + int(stage.duration_ms * 1000000)))
             root.end(end_time=end)
             return sampled
         finally:

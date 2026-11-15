@@ -16,7 +16,7 @@ from app.bootstrap.config import settings
 
 def sync(
     repo: Path,
-    ref: str = 'HEAD',
+    ref: str = "HEAD",
     *,
     watched: bool = False,
     stop: Event | None = None,
@@ -36,56 +36,50 @@ def sync(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--repo', type=Path, help='Git checkout, or the frozen corpus directory'
-    )
-    parser.add_argument(
-        '--source', choices=['local', 'github', 'snapshot'], default='local'
-    )
-    parser.add_argument(
-        '--ref', help='Local Git ref, or main/develop/full commit SHA for GitHub'
-    )
+    parser.add_argument("--repo", type=Path, help="Git checkout, or the frozen corpus directory")
+    parser.add_argument("--source", choices=["local", "github", "snapshot"], default="local")
+    parser.add_argument("--ref", help="Local Git ref, or main/develop/full commit SHA for GitHub")
     args = parser.parse_args()
-    if args.source == 'snapshot':
+    if args.source == "snapshot":
         if not args.repo:
-            parser.error('--repo (the corpus directory) is required for snapshot sync')
+            parser.error("--repo (the corpus directory) is required for snapshot sync")
         result = sync(args.repo, snapshot=True)
-    elif args.source == 'local':
+    elif args.source == "local":
         if not args.repo:
-            parser.error('--repo is required for local sync')
-        result = sync(args.repo, args.ref or 'HEAD')
+            parser.error("--repo is required for local sync")
+        result = sync(args.repo, args.ref or "HEAD")
     else:
-        ref = args.ref or 'main'
-        if ref not in ('main', 'develop') and not re.fullmatch(r'[0-9a-f]{40}', ref):
-            parser.error('GitHub ref must be main, develop or a full commit SHA')
-        with tempfile.TemporaryDirectory(prefix='portfolio-public-sync-') as temp:
-            repo = Path(temp) / 'gonzalomartinperez' / 'portfolio'
+        ref = args.ref or "main"
+        if ref not in ("main", "develop") and not re.fullmatch(r"[0-9a-f]{40}", ref):
+            parser.error("GitHub ref must be main, develop or a full commit SHA")
+        with tempfile.TemporaryDirectory(prefix="portfolio-public-sync-") as temp:
+            repo = Path(temp) / "gonzalomartinperez" / "portfolio"
             repo.mkdir(parents=True)
-            git(repo, 'init', '-q')
+            git(repo, "init", "-q")
             git(
                 repo,
-                'remote',
-                'add',
-                'origin',
-                'https://github.com/gonzalomartinperez/portfolio.git',
+                "remote",
+                "add",
+                "origin",
+                "https://github.com/gonzalomartinperez/portfolio.git",
             )
             git(
                 repo,
-                '-c',
-                'http.followRedirects=false',
-                '-c',
-                'protocol.allow=never',
-                '-c',
-                'protocol.https.allow=always',
-                'fetch',
-                '-q',
-                '--depth=1',
-                'origin',
+                "-c",
+                "http.followRedirects=false",
+                "-c",
+                "protocol.allow=never",
+                "-c",
+                "protocol.https.allow=always",
+                "fetch",
+                "-q",
+                "--depth=1",
+                "origin",
                 ref,
             )
-            result = sync(repo, 'FETCH_HEAD')
+            result = sync(repo, "FETCH_HEAD")
     print(json.dumps(result, indent=2))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

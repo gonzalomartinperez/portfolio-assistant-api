@@ -16,18 +16,16 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.application.request_context import request_id
 from app.domain.errors import RejectedError
 
-log = logging.getLogger('portfolio_assistant')
+log = logging.getLogger("portfolio_assistant")
 
 
-def error(
-    request: Request, code: str, status: int, message: str | None = None
-) -> JSONResponse:
+def error(request: Request, code: str, status: int, message: str | None = None) -> JSONResponse:
     return JSONResponse(
         status_code=status,
         content={
-            'code': code,
-            'message': message or code.replace('_', ' '),
-            'request_id': request.state.request_id,
+            "code": code,
+            "message": message or code.replace("_", " "),
+            "request_id": request.state.request_id,
         },
     )
 
@@ -42,41 +40,39 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
         return error(request, str(exc.detail), exc.status_code)
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error(
-        request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
-        return error(request, 'invalid_request', 422, 'Invalid request')
+    async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        return error(request, "invalid_request", 422, "Invalid request")
 
-    @app.middleware('http')
+    @app.middleware("http")
     async def guard(request: Request, call_next: RequestResponseEndpoint) -> Response:
         request.state.request_id = uuid4().hex
         request_id.set(request.state.request_id)
         started = time.perf_counter()
         if (
-            request.method in ('POST', 'PATCH', 'DELETE')
-            and request.headers.get('origin') not in origins
+            request.method in ("POST", "PATCH", "DELETE")
+            and request.headers.get("origin") not in origins
         ):
-            response: Response = error(request, 'origin_denied', 403, 'Origin denied')
+            response: Response = error(request, "origin_denied", 403, "Origin denied")
         else:
             try:
                 response = await call_next(request)
             except Exception:  # noqa: BLE001 - Public HTTP fault boundary: translate unexpected failures without leaking details.
-                response = error(request, 'dependency_unavailable', 503)
-        if request.url.path.startswith(('/api/', '/internal/')):
-            response.headers['Cache-Control'] = 'no-store, no-transform'
-            response.headers['Pragma'] = 'no-cache'
-        response.headers['X-Request-ID'] = request.state.request_id
-        vary = response.headers.get('Vary', '')
-        if 'Origin' not in vary:
-            response.headers['Vary'] = ', '.join(filter(None, (vary, 'Origin')))
-        route = request.scope.get('route')
+                response = error(request, "dependency_unavailable", 503)
+        if request.url.path.startswith(("/api/", "/internal/")):
+            response.headers["Cache-Control"] = "no-store, no-transform"
+            response.headers["Pragma"] = "no-cache"
+        response.headers["X-Request-ID"] = request.state.request_id
+        vary = response.headers.get("Vary", "")
+        if "Origin" not in vary:
+            response.headers["Vary"] = ", ".join(filter(None, (vary, "Origin")))
+        route = request.scope.get("route")
         log.info(
             json.dumps(
                 {
-                    'request_id': request.state.request_id,
-                    'operation': route.name if route else 'unmatched',
-                    'status': response.status_code,
-                    'duration_ms': round((time.perf_counter() - started) * 1000, 1),
+                    "request_id": request.state.request_id,
+                    "operation": route.name if route else "unmatched",
+                    "status": response.status_code,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 1),
                 }
             )
         )
@@ -90,17 +86,17 @@ class BodyLimit:
         self.timeout = timeout
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope['type'] != 'http' or scope['method'] not in (
-            'POST',
-            'PATCH',
-            'DELETE',
+        if scope["type"] != "http" or scope["method"] not in (
+            "POST",
+            "PATCH",
+            "DELETE",
         ):
             await self.app(scope, receive, send)
             return
         # Bounded buffering also covers chunked requests and lying Content-Length.
         maximum = (
             min(self.maximum, 1024)
-            if scope.get('path') == '/api/v1/analytics/events'
+            if scope.get("path") == "/api/v1/analytics/events"
             else self.maximum
         )
         chunks: list[Message] = []
@@ -114,33 +110,33 @@ class BodyLimit:
                 identifier = uuid4().hex
                 response = JSONResponse(
                     {
-                        'code': 'request_timeout',
-                        'message': 'Request timed out',
-                        'request_id': identifier,
+                        "code": "request_timeout",
+                        "message": "Request timed out",
+                        "request_id": identifier,
                     },
                     status_code=408,
-                    headers={'X-Request-ID': identifier, 'Cache-Control': 'no-store'},
+                    headers={"X-Request-ID": identifier, "Cache-Control": "no-store"},
                 )
                 await response(scope, receive, send)
                 return
-            if message['type'] == 'http.disconnect':
+            if message["type"] == "http.disconnect":
                 return
-            size += len(message.get('body', b''))
+            size += len(message.get("body", b""))
             if size > maximum:
                 request_id = uuid4().hex
                 response = JSONResponse(
                     {
-                        'code': 'invalid_request',
-                        'message': 'Invalid request',
-                        'request_id': request_id,
+                        "code": "invalid_request",
+                        "message": "Invalid request",
+                        "request_id": request_id,
                     },
                     status_code=422,
-                    headers={'X-Request-ID': request_id},
+                    headers={"X-Request-ID": request_id},
                 )
                 await response(scope, receive, send)
                 return
             chunks.append(message)
-            if not message.get('more_body', False):
+            if not message.get("more_body", False):
                 break
 
         async def buffered() -> Message:

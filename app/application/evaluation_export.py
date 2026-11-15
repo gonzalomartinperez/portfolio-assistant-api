@@ -12,23 +12,23 @@ class EvaluationSummary:
     completed: int
     failed: int
     total_ms: int
-    scope: Literal['synthetic_evaluation'] = 'synthetic_evaluation'
+    scope: Literal["synthetic_evaluation"] = "synthetic_evaluation"
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(r'[a-f0-9]{40}', self.source_commit):
-            raise ValueError('invalid evaluation revision')
+        if not re.fullmatch(r"[a-f0-9]{40}", self.source_commit):
+            raise ValueError("invalid evaluation revision")
         values = (self.cases, self.completed, self.failed, self.total_ms)
         if any(type(value) is not int for value in values):
-            raise ValueError('evaluation counts must be integers')
+            raise ValueError("evaluation counts must be integers")
         if (
-            self.scope != 'synthetic_evaluation'
+            self.scope != "synthetic_evaluation"
             or not 1 <= self.cases <= 10000
             or not 0 <= self.completed <= self.cases
             or not 0 <= self.failed <= self.cases
             or self.completed + self.failed != self.cases
             or not 0 <= self.total_ms <= 3600000
         ):
-            raise ValueError('invalid synthetic evaluation summary')
+            raise ValueError("invalid synthetic evaluation summary")
 
 
 class EvaluationExporter(Protocol):
@@ -40,9 +40,9 @@ def export_evaluation(
     *,
     authorized: bool,
     exporter: EvaluationExporter | None = None,
-) -> Literal['disabled', 'exported', 'unavailable']:
+) -> Literal["disabled", "exported", "unavailable"]:
     if not authorized:
-        return 'disabled'
+        return "disabled"
     if exporter is None:
-        return 'unavailable'
-    return 'exported' if exporter.export(summary) else 'unavailable'
+        return "unavailable"
+    return "exported" if exporter.export(summary) else "unavailable"

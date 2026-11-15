@@ -28,7 +28,7 @@ class KnowledgeIndex:
         graph: Any,
         embeddings: Embeddings | None = None,
         *,
-        database: str = 'neo4j',
+        database: str = "neo4j",
         freshness: int | None = None,
     ) -> None:
         self.connect = connect
@@ -45,10 +45,10 @@ class KnowledgeIndex:
                 ).fetchone()
                 if not version:
                     return None
-                if version['id'] != corpus_version(
-                    version['source_commit'], self.embeddings.provider
+                if version["id"] != corpus_version(
+                    version["source_commit"], self.embeddings.provider
                 ):
-                    raise RejectedError('knowledge_updating', 503)
+                    raise RejectedError("knowledge_updating", 503)
                 if self.freshness is not None:
                     watch = conn.execute(
                         "SELECT observed_commit, checked_at > now() - %s * interval '1 second' AS fresh FROM knowledge_watch WHERE singleton",
@@ -56,31 +56,31 @@ class KnowledgeIndex:
                     ).fetchone()
                     if (
                         not watch
-                        or not watch['fresh']
-                        or watch['observed_commit'] != version['source_commit']
+                        or not watch["fresh"]
+                        or watch["observed_commit"] != version["source_commit"]
                     ):
-                        raise RejectedError('knowledge_updating', 503)
+                        raise RejectedError("knowledge_updating", 503)
                 if (
-                    version['embedding_provider'] != self.embeddings.provider
-                    or version['embedding_model'] != self.embeddings.model
+                    version["embedding_provider"] != self.embeddings.provider
+                    or version["embedding_model"] != self.embeddings.model
                 ):
-                    raise RejectedError('knowledge_updating', 503)
+                    raise RejectedError("knowledge_updating", 503)
                 rows = conn.execute(
-                    'SELECT id,title,url,source_type,path,start_line,end_line,content,content_hash FROM chunks WHERE knowledge_version=%s ORDER BY id LIMIT 500',
-                    (version['id'],),
+                    "SELECT id,title,url,source_type,path,start_line,end_line,content,content_hash FROM chunks WHERE knowledge_version=%s ORDER BY id LIMIT 500",
+                    (version["id"],),
                 ).fetchall()
                 paths = frozenset(
-                    r['path']
+                    r["path"]
                     for r in conn.execute(
-                        'SELECT path FROM source_files WHERE knowledge_version=%s',
-                        (version['id'],),
+                        "SELECT path FROM source_files WHERE knowledge_version=%s",
+                        (version["id"],),
                     ).fetchall()
                 )
                 lexical = tuple(
-                    r['id']
+                    r["id"]
                     for r in conn.execute(
                         "SELECT id FROM chunks WHERE knowledge_version=%s AND search_document @@ websearch_to_tsquery('simple',%s) ORDER BY ts_rank(search_document,websearch_to_tsquery('simple',%s)) DESC,id LIMIT 12",
-                        (version['id'], question, question),
+                        (version["id"], question, question),
                     ).fetchall()
                 )
             return version, rows, paths, lexical
@@ -90,35 +90,31 @@ class KnowledgeIndex:
             return None
         version, rows, paths, lexical = snapshot
         encoded = vector(await self.embeddings.query(question))
-        column = (
-            'semantic_embedding'
-            if self.embeddings.provider == 'openai'
-            else 'embedding'
-        )
+        column = "semantic_embedding" if self.embeddings.provider == "openai" else "embedding"
 
         def neighbors() -> tuple[str, ...]:
             with self.connect() as conn:
                 return tuple(
-                    r['id']
+                    r["id"]
                     for r in conn.execute(
-                        f'SELECT id FROM chunks WHERE knowledge_version=%s AND {column} IS NOT NULL ORDER BY {column} <=> %s::vector,id LIMIT 12',
-                        (version['id'], encoded),
+                        f"SELECT id FROM chunks WHERE knowledge_version=%s AND {column} IS NOT NULL ORDER BY {column} <=> %s::vector,id LIMIT 12",
+                        (version["id"], encoded),
                     ).fetchall()
                 )
 
         nearest = await asyncio.to_thread(neighbors)
         return Corpus(
-            version['id'],
-            version['source_commit'],
+            version["id"],
+            version["source_commit"],
             tuple(Chunk(**row) for row in rows),
             paths,
             nearest,
             lexical,
-            self.embeddings.provider == 'openai',
+            self.embeddings.provider == "openai",
         )
 
     async def relationships(
-        self, version: str, terms: set[str], locale: str = 'en', expand: bool = False
+        self, version: str, terms: set[str], locale: str = "en", expand: bool = False
     ) -> tuple[str, ...]:
         def read() -> tuple[str, ...]:
             try:
@@ -134,10 +130,10 @@ class KnowledgeIndex:
                         ),
                         version=version,
                         names=sorted(terms),
-                        prefix=f'src/content/{locale}/',
-                        root_prefix=f'content/{locale}/',
+                        prefix=f"src/content/{locale}/",
+                        root_prefix=f"content/{locale}/",
                     )
-                    ids = tuple(record['id'] for record in direct)
+                    ids = tuple(record["id"] for record in direct)
                     if not expand:
                         return ids
                     related = graph.run(
@@ -147,16 +143,16 @@ class KnowledgeIndex:
                         ),
                         version=version,
                         names=sorted(terms),
-                        prefix=f'src/content/{locale}/',
-                        root_prefix=f'content/{locale}/',
+                        prefix=f"src/content/{locale}/",
+                        root_prefix=f"content/{locale}/",
                     )
-                    neighbors = tuple(record['id'] for record in related)
+                    neighbors = tuple(record["id"] for record in related)
                     # Keep seed evidence as well as the evidence reached through shared technology.
-                    return tuple(
-                        dict.fromkeys(ids[:2] + neighbors[:3] + ids[2:] + neighbors[3:])
-                    )[:20]
+                    return tuple(dict.fromkeys(ids[:2] + neighbors[:3] + ids[2:] + neighbors[3:]))[
+                        :20
+                    ]
             except Neo4jError, ServiceUnavailable, SessionExpired:
-                logging.getLogger('portfolio_assistant').warning(
+                logging.getLogger("portfolio_assistant").warning(
                     '{"operation":"graph_retrieval","status":"unavailable"}'
                 )
                 return ()
@@ -166,20 +162,18 @@ class KnowledgeIndex:
     def verify_ready(self, version: str) -> None:
         with self.connect() as conn:
             document = conn.execute(
-                'SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1', (version,)
+                "SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1", (version,)
             ).fetchone()
         if not document:
-            raise ValueError('public graph projection unavailable')
+            raise ValueError("public graph projection unavailable")
         with self.graph.session(
             database=self.database,
             default_access_mode=READ_ACCESS,
             disable_auto_commit_retries=True,
         ) as graph:
-            probe_reads(graph, version, document['id'])
+            probe_reads(graph, version, document["id"])
 
-    def starter_prompts(
-        self, locale: Locale
-    ) -> tuple[str, str, tuple[Suggestion, ...]]:
+    def starter_prompts(self, locale: Locale) -> tuple[str, str, tuple[Suggestion, ...]]:
         from app.domain.knowledge import suggestions
 
         with self.connect() as conn:
@@ -187,11 +181,9 @@ class KnowledgeIndex:
                 "SELECT id,source_commit FROM knowledge_versions WHERE status='active'"
             ).fetchone()
             if not version:
-                raise RejectedError('knowledge_updating', 503)
-            if version['id'] != corpus_version(
-                version['source_commit'], self.embeddings.provider
-            ):
-                raise RejectedError('knowledge_updating', 503)
+                raise RejectedError("knowledge_updating", 503)
+            if version["id"] != corpus_version(version["source_commit"], self.embeddings.provider):
+                raise RejectedError("knowledge_updating", 503)
             if self.freshness is not None:
                 watch = conn.execute(
                     "SELECT observed_commit, checked_at > now() - %s * interval '1 second' AS fresh FROM knowledge_watch WHERE singleton",
@@ -199,33 +191,33 @@ class KnowledgeIndex:
                 ).fetchone()
                 if (
                     not watch
-                    or not watch['fresh']
-                    or watch['observed_commit'] != version['source_commit']
+                    or not watch["fresh"]
+                    or watch["observed_commit"] != version["source_commit"]
                 ):
-                    raise RejectedError('knowledge_updating', 503)
+                    raise RejectedError("knowledge_updating", 503)
             paths = frozenset(
-                row['path']
+                row["path"]
                 for row in conn.execute(
-                    'SELECT path FROM source_files WHERE knowledge_version=%s',
-                    (version['id'],),
+                    "SELECT path FROM source_files WHERE knowledge_version=%s",
+                    (version["id"],),
                 ).fetchall()
             )
             achievements = bool(
                 conn.execute(
-                    'SELECT 1 FROM chunks WHERE knowledge_version=%s AND path=ANY(%s) AND content LIKE %s AND content LIKE %s LIMIT 1',
+                    "SELECT 1 FROM chunks WHERE knowledge_version=%s AND path=ANY(%s) AND content LIKE %s AND content LIKE %s LIMIT 1",
                     (
-                        version['id'],
+                        version["id"],
                         [
-                            *profile_paths(locale, 'experience'),
-                            'public/assistant-knowledge.json',
+                            *profile_paths(locale, "experience"),
+                            "public/assistant-knowledge.json",
                         ],
-                        '%qualifier%',
-                        '%value%',
+                        "%qualifier%",
+                        "%value%",
                     ),
                 ).fetchone()
             )
         return (
-            version['id'],
-            version['source_commit'],
+            version["id"],
+            version["source_commit"],
             suggestions(paths, locale, achievements=achievements),
         )

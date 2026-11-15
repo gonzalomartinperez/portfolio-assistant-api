@@ -6,8 +6,8 @@ def api() -> None:
     import uvicorn
 
     uvicorn.run(
-        'app.main:app',
-        host='0.0.0.0',
+        "app.main:app",
+        host="0.0.0.0",
         port=8000,
         access_log=False,
         proxy_headers=False,

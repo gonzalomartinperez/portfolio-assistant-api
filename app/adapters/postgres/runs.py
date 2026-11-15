@@ -11,40 +11,36 @@ class PostgresRuns:
         self.connect = connect
 
     async def start(self, run_id: UUID) -> bool:
-        return await asyncio.to_thread(self._transition, run_id, 'running')
+        return await asyncio.to_thread(self._transition, run_id, "running")
 
     async def history(self, run_id: UUID, conversation_id: UUID) -> tuple[Turn, ...]:
         def read() -> tuple[Turn, ...]:
             with self.connect() as conn:
                 rows = conn.execute(
-                    'SELECT m.role,left(m.content,2000) AS content FROM messages m '
-                    'JOIN runs r ON r.conversation_id=m.conversation_id '
-                    'JOIN conversations c ON c.id=r.conversation_id '
-                    'JOIN sessions s ON s.id=c.session_id '
+                    "SELECT m.role,left(m.content,2000) AS content FROM messages m "
+                    "JOIN runs r ON r.conversation_id=m.conversation_id "
+                    "JOIN conversations c ON c.id=r.conversation_id "
+                    "JOIN sessions s ON s.id=c.session_id "
                     "WHERE r.id=%s AND r.conversation_id=%s AND r.state='running' "
-                    'AND s.expires_at>now() AND m.created_at<r.created_at '
-                    'ORDER BY m.created_at DESC,m.id DESC LIMIT 12',
+                    "AND s.expires_at>now() AND m.created_at<r.created_at "
+                    "ORDER BY m.created_at DESC,m.id DESC LIMIT 12",
                     (run_id, conversation_id),
                 ).fetchall()
-                return tuple(
-                    Turn(row['role'], row['content']) for row in reversed(rows)
-                )
+                return tuple(Turn(row["role"], row["content"]) for row in reversed(rows))
 
         return await asyncio.to_thread(read)
 
     async def running(self, run_id: UUID) -> bool:
         def read() -> bool:
             with self.connect() as conn:
-                row = conn.execute(
-                    'SELECT state FROM runs WHERE id=%s', (run_id,)
-                ).fetchone()
-                return bool(row and row['state'] == 'running')
+                row = conn.execute("SELECT state FROM runs WHERE id=%s", (run_id,)).fetchone()
+                return bool(row and row["state"] == "running")
 
         return await asyncio.to_thread(read)
 
     def _transition(self, run_id: UUID, target: str, code: str | None = None) -> bool:
         with self.connect() as conn:
-            if target == 'running':
+            if target == "running":
                 return bool(
                     conn.execute(
                         "UPDATE runs SET state='running',lease_until=now()+interval '5 minutes',updated_at=now() WHERE id=%s AND state='pending' RETURNING id",
@@ -68,9 +64,9 @@ class PostgresRuns:
         def save() -> UUID | None:
             with self.connect() as conn:
                 state = conn.execute(
-                    'SELECT state FROM runs WHERE id=%s FOR UPDATE', (run_id,)
+                    "SELECT state FROM runs WHERE id=%s FOR UPDATE", (run_id,)
                 ).fetchone()
-                if not state or state['state'] != 'running':
+                if not state or state["state"] != "running":
                     return None
                 message_id = uuid4()
                 conn.execute(
@@ -86,9 +82,7 @@ class PostgresRuns:
         return await asyncio.to_thread(save)
 
     async def fail(self, run_id: UUID, code: str) -> bool:
-        return await asyncio.to_thread(self._transition, run_id, 'failed', code)
+        return await asyncio.to_thread(self._transition, run_id, "failed", code)
 
     async def interrupt(self, run_id: UUID) -> None:
-        await asyncio.to_thread(
-            self._transition, run_id, 'interrupted', 'run_interrupted'
-        )
+        await asyncio.to_thread(self._transition, run_id, "interrupted", "run_interrupted")

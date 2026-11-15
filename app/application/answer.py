@@ -27,10 +27,10 @@ def bounded_sources(sources: tuple[Evidence, ...]) -> tuple[Evidence, ...]:
 
 
 def context(sources: tuple[Evidence, ...], *, include_urls: bool = False) -> str:
-    return '\n'.join(
-        f'PUBLIC SOURCE [{index}] {source.path} lines {source.start_line}-{source.end_line}'
-        + (f' canonical_url={source.url}' if include_urls else '')
-        + f':\n{source.content}'
+    return "\n".join(
+        f"PUBLIC SOURCE [{index}] {source.path} lines {source.start_line}-{source.end_line}"
+        + (f" canonical_url={source.url}" if include_urls else "")
+        + f":\n{source.content}"
         for index, source in enumerate(sources[:5], 1)
     )
 
@@ -52,7 +52,7 @@ async def generate(
                 sources,
                 include_urls=bool(
                     re.search(
-                        r'\b(?:sources?|fuentes?|links?|enlaces?|verify|verificar|consultar|leer|read|c[oó]digo|code)\b',
+                        r"\b(?:sources?|fuentes?|links?|enlaces?|verify|verificar|consultar|leer|read|c[oó]digo|code)\b",
                         command.question,
                         re.IGNORECASE,
                     )
@@ -70,5 +70,5 @@ async def generate(
                 continue
             count += len(item)
             if count > max_characters:
-                raise GenerationFailedError('output_limit')
+                raise GenerationFailedError("output_limit")
             yield item

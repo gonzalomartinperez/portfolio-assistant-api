@@ -16,39 +16,39 @@ class WebTopic:
 
 TOPICS = (
     WebTopic(
-        'LangGraph',
-        'docs.langchain.com',
-        'LangGraph official documentation orchestration persistence streaming',
+        "LangGraph",
+        "docs.langchain.com",
+        "LangGraph official documentation orchestration persistence streaming",
     ),
     WebTopic(
-        'Neo4j',
-        'neo4j.com',
-        'Neo4j official documentation graph retrieval vector search',
+        "Neo4j",
+        "neo4j.com",
+        "Neo4j official documentation graph retrieval vector search",
     ),
     WebTopic(
-        'pgvector',
-        'github.com',
-        'pgvector pgvector official README vector similarity indexing',
+        "pgvector",
+        "github.com",
+        "pgvector pgvector official README vector similarity indexing",
     ),
     WebTopic(
-        'PostgreSQL',
-        'www.postgresql.org',
-        'PostgreSQL official documentation transaction isolation indexing',
+        "PostgreSQL",
+        "www.postgresql.org",
+        "PostgreSQL official documentation transaction isolation indexing",
     ),
     WebTopic(
-        'FastAPI',
-        'fastapi.tiangolo.com',
-        'FastAPI official documentation asynchronous requests lifespan',
+        "FastAPI",
+        "fastapi.tiangolo.com",
+        "FastAPI official documentation asynchronous requests lifespan",
     ),
     WebTopic(
-        'Next.js',
-        'nextjs.org',
-        'Next.js official documentation server client components rendering',
+        "Next.js",
+        "nextjs.org",
+        "Next.js official documentation server client components rendering",
     ),
     WebTopic(
-        'OpenTelemetry',
-        'opentelemetry.io',
-        'OpenTelemetry official documentation traces metrics instrumentation',
+        "OpenTelemetry",
+        "opentelemetry.io",
+        "OpenTelemetry official documentation traces metrics instrumentation",
     ),
 )
 
@@ -59,19 +59,19 @@ def technical_topic(question: str, evidence: str) -> WebTopic | None:
     if not evidence or blocks_private_query(question, terms):
         return None
     if re.search(
-        r'https?://|www\.|@|\b(?:ignore|ignora|override|system prompt|prompt del sistema|password|contrasena|contraseña|reveal|revela|nationality|nacionalidad|edad|age|address|domicilio|weather|clima|pizza|gossip|celebrity|lottery|loteria|noticias|news)\b',
+        r"https?://|www\.|@|\b(?:ignore|ignora|override|system prompt|prompt del sistema|password|contrasena|contraseña|reveal|revela|nationality|nacionalidad|edad|age|address|domicilio|weather|clima|pizza|gossip|celebrity|lottery|loteria|noticias|news)\b",
         question,
         re.IGNORECASE,
     ):
         return None
     if not re.search(
-        r'\b(?:gonzalo|portfolio|portafolio|rampy|pequeverso|teamcubation|asistente|assistant)\b',
+        r"\b(?:gonzalo|portfolio|portafolio|rampy|pequeverso|teamcubation|asistente|assistant)\b",
         question,
         re.IGNORECASE,
     ):
         return None
     if not re.search(
-        r'\b(?:current|latest|today|official|explain|compare|actual|actuales|actualmente|reciente|oficial|explica|explicame|explícame|compara)\b',
+        r"\b(?:current|latest|today|official|explain|compare|actual|actuales|actualmente|reciente|oficial|explica|explicame|explícame|compara)\b",
         question,
         re.IGNORECASE,
     ):
@@ -85,7 +85,7 @@ def technical_topic(question: str, evidence: str) -> WebTopic | None:
 
 def approved_web_url(url: str, topic: WebTopic) -> bool:
     """Exact HTTPS authority, bounded document URL; pgvector is one upstream repo."""
-    if '\\' in url or len(url) > 1024 or any(ord(char) < 33 for char in url):
+    if "\\" in url or len(url) > 1024 or any(ord(char) < 33 for char in url):
         return False
     try:
         parsed = urlsplit(url)
@@ -94,19 +94,19 @@ def approved_web_url(url: str, topic: WebTopic) -> bool:
     except ValueError:
         return False
     return bool(
-        parsed.scheme == 'https'
+        parsed.scheme == "https"
         and parsed.hostname == topic.domain
         and not parsed.username
         and not parsed.password
         and not parsed.query
         and not parsed.fragment
-        and not any(part in ('.', '..') for part in unquote(parsed.path).split('/'))
+        and not any(part in (".", "..") for part in unquote(parsed.path).split("/"))
         and (
-            topic.name != 'pgvector'
-            or parsed.path == '/pgvector/pgvector'
+            topic.name != "pgvector"
+            or parsed.path == "/pgvector/pgvector"
             or bool(
                 re.fullmatch(
-                    r'/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md',
+                    r"/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md",
                     parsed.path,
                 )
             )
@@ -122,20 +122,20 @@ def canonical_web_url(url: str, topic: WebTopic) -> str | None:
     except ValueError:
         return None
     allowed = {
-        ('utm_source', 'openai'),
-        ('trk', 'article-ssr-frontend-pulse_little-text-block'),
+        ("utm_source", "openai"),
+        ("trk", "article-ssr-frontend-pulse_little-text-block"),
     }
-    if topic.name == 'pgvector' and re.fullmatch(
-        r'/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md', parsed.path
+    if topic.name == "pgvector" and re.fullmatch(
+        r"/pgvector/pgvector/blob/(?:main|master|[a-f0-9]{40})/README\.md", parsed.path
     ):
-        allowed.add(('plain', '1'))
+        allowed.add(("plain", "1"))
     if (
         len(query) > 3
         or len({key for key, _ in query}) != len(query)
         or any(pair not in allowed for pair in query)
     ):
         return None
-    if parsed.fragment and not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}', parsed.fragment):
+    if parsed.fragment and not re.fullmatch(r"[A-Za-z0-9_.:-]{1,128}", parsed.fragment):
         return None
-    canonical = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, '', ''))
+    canonical = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
     return canonical if approved_web_url(canonical, topic) else None

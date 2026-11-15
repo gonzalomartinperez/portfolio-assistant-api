@@ -31,11 +31,9 @@ from app.presentation.models import (
 )
 from app.presentation.streaming import ClosingStreamingResponse, heartbeat
 
-log = logging.getLogger('portfolio_assistant')
+log = logging.getLogger("portfolio_assistant")
 router = APIRouter(
-    responses={
-        code: {'model': ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)
-    }
+    responses={code: {"model": ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)}
 )
 
 
@@ -55,28 +53,24 @@ def current_session(request: Request):
 
 def mutation_session(request: Request, session=Depends(current_session)):
     return request.app.state.conversations.authorize_mutation(
-        session, request.headers.get('x-csrf-token', '')
+        session, request.headers.get("x-csrf-token", "")
     )
 
 
 def client_ip(request: Request) -> str:
-    peer = request.client.host if request.client else 'unknown'
+    peer = request.client.host if request.client else "unknown"
     trusted = {
         item.strip()
-        for item in request.app.state.config.trusted_proxy_ips.split(',')
+        for item in request.app.state.config.trusted_proxy_ips.split(",")
         if item.strip()
     }
     if peer not in trusted:
         return peer
-    forwarded = request.headers.get('x-forwarded-for', '').split(',')
+    forwarded = request.headers.get("x-forwarded-for", "").split(",")
     if len(forwarded) > 5:
         return peer
     try:
-        chain = [
-            str(ipaddress.ip_address(item.strip()))
-            for item in forwarded
-            if item.strip()
-        ]
+        chain = [str(ipaddress.ip_address(item.strip())) for item in forwarded if item.strip()]
     except ValueError:
         return peer
     for address in reversed(chain):
@@ -85,48 +79,48 @@ def client_ip(request: Request) -> str:
     return peer
 
 
-@router.get('/health/live', operation_id='healthLive')
+@router.get("/health/live", operation_id="healthLive")
 def live():
-    return {'status': 'ok'}
+    return {"status": "ok"}
 
 
-@router.get('/health/ready', operation_id='healthReady')
+@router.get("/health/ready", operation_id="healthReady")
 def ready(request: Request):
     try:
         request.app.state.ready()
-        return {'status': 'ok'}
+        return {"status": "ok"}
     except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
-        fail('dependency_unavailable', 503)
+        fail("dependency_unavailable", 503)
 
 
 def revision(request: Request) -> str:
-    return getattr(request.app.state, 'revision', 'unknown')
+    return getattr(request.app.state, "revision", "unknown")
 
 
-@router.get('/healthz', response_model=HealthView, operation_id='healthz')
+@router.get("/healthz", response_model=HealthView, operation_id="healthz")
 def healthz(request: Request):
-    return {'status': 'ok', 'version': revision(request)}
+    return {"status": "ok", "version": revision(request)}
 
 
 @router.get(
-    '/readyz',
+    "/readyz",
     response_model=ReadinessView,
-    responses={503: {'model': ErrorBody}},
-    operation_id='readyz',
+    responses={503: {"model": ErrorBody}},
+    operation_id="readyz",
 )
 def readyz(request: Request):
     try:
         schema = request.app.state.ready()
     except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
-        fail('dependency_unavailable', 503)
-    return {'status': 'ok', 'version': revision(request), 'schema_version': schema}
+        fail("dependency_unavailable", 503)
+    return {"status": "ok", "version": revision(request), "schema_version": schema}
 
 
 @router.post(
-    '/api/v1/session',
+    "/api/v1/session",
     response_model=SessionView,
-    responses={403: {'model': ErrorBody}},
-    operation_id='createSession',
+    responses={403: {"model": ErrorBody}},
+    operation_id="createSession",
 )
 def create_session(
     request: Request,
@@ -134,10 +128,10 @@ def create_session(
     x_session_bootstrap: str | None = Header(default=None),
 ):
     if (
-        x_session_bootstrap != '1'
-        or request.headers.get('content-type', '').split(';')[0] != 'application/json'
+        x_session_bootstrap != "1"
+        or request.headers.get("content-type", "").split(";")[0] != "application/json"
     ):
-        fail('bootstrap_denied', 403)
+        fail("bootstrap_denied", 403)
     raw, session = request.app.state.conversations.bootstrap(client_ip(request))
     config = request.app.state.config
     response.set_cookie(
@@ -145,8 +139,8 @@ def create_session(
         raw,
         httponly=True,
         secure=config.secure_cookies,
-        samesite='lax',
-        path='/',
+        samesite="lax",
+        path="/",
         max_age=config.retention_days * 86400,
     )
     return SessionView(
@@ -156,7 +150,7 @@ def create_session(
     )
 
 
-@router.get('/api/v1/session', response_model=SessionView, operation_id='getSession')
+@router.get("/api/v1/session", response_model=SessionView, operation_id="getSession")
 def get_session(request: Request, session=Depends(current_session)):
     return SessionView(
         csrf_token=session.csrf_token,
@@ -165,19 +159,17 @@ def get_session(request: Request, session=Depends(current_session)):
     )
 
 
-@router.delete('/api/v1/session', status_code=204, operation_id='deleteSession')
-def delete_session(
-    request: Request, response: Response, session=Depends(mutation_session)
-):
+@router.delete("/api/v1/session", status_code=204, operation_id="deleteSession")
+def delete_session(request: Request, response: Response, session=Depends(mutation_session)):
     request.app.state.conversations.delete_session(session)
     request.app.state.cleanup()
-    response.delete_cookie(request.app.state.config.cookie_name, path='/')
+    response.delete_cookie(request.app.state.config.cookie_name, path="/")
 
 
 @router.post(
-    '/api/v1/conversations',
+    "/api/v1/conversations",
     response_model=ConversationView,
-    operation_id='createConversation',
+    operation_id="createConversation",
 )
 def create_conversation(
     request: Request, body: ConversationCreate, session=Depends(mutation_session)
@@ -185,9 +177,7 @@ def create_conversation(
     return request.app.state.conversations.create(session, body.title)
 
 
-@router.get(
-    '/api/v1/conversations', response_model=Page, operation_id='listConversations'
-)
+@router.get("/api/v1/conversations", response_model=Page, operation_id="listConversations")
 def list_conversations(
     request: Request,
     limit: int = 30,
@@ -197,16 +187,14 @@ def list_conversations(
     rows = request.app.state.conversations.list_conversations(session, limit, cursor)
     return Page(
         items=[asdict(row) for row in rows[:limit]],
-        next_cursor=rows[limit - 1].updated_at.isoformat()
-        if len(rows) > limit
-        else None,
+        next_cursor=rows[limit - 1].updated_at.isoformat() if len(rows) > limit else None,
     )
 
 
 @router.patch(
-    '/api/v1/conversations/{conversation_id}',
+    "/api/v1/conversations/{conversation_id}",
     response_model=ConversationView,
-    operation_id='renameConversation',
+    operation_id="renameConversation",
 )
 def rename_conversation(
     request: Request,
@@ -218,21 +206,19 @@ def rename_conversation(
 
 
 @router.delete(
-    '/api/v1/conversations/{conversation_id}',
+    "/api/v1/conversations/{conversation_id}",
     status_code=204,
-    operation_id='deleteConversation',
+    operation_id="deleteConversation",
 )
-def delete_conversation(
-    request: Request, conversation_id: UUID, session=Depends(mutation_session)
-):
+def delete_conversation(request: Request, conversation_id: UUID, session=Depends(mutation_session)):
     request.app.state.conversations.delete(session, conversation_id)
     request.app.state.cleanup()
 
 
 @router.get(
-    '/api/v1/conversations/{conversation_id}/messages',
+    "/api/v1/conversations/{conversation_id}/messages",
     response_model=MessagePage,
-    operation_id='listMessages',
+    operation_id="listMessages",
 )
 def list_messages(
     request: Request,
@@ -241,31 +227,25 @@ def list_messages(
     cursor: datetime | None = None,
     session=Depends(current_session),
 ):
-    rows = request.app.state.conversations.messages(
-        session, conversation_id, limit, cursor
-    )
+    rows = request.app.state.conversations.messages(session, conversation_id, limit, cursor)
     return MessagePage(
         items=[asdict(row) for row in rows[:limit]],
-        next_cursor=rows[limit - 1].created_at.isoformat()
-        if len(rows) > limit
-        else None,
+        next_cursor=rows[limit - 1].created_at.isoformat() if len(rows) > limit else None,
     )
 
 
-def sse(
-    event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict
-):
+def sse(event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict):
     body = events.validate_python(
         {
-            'type': event_type,
-            'run_id': run_id,
-            'conversation_id': conversation_id,
-            'sequence': sequence,
-            'timestamp': utcnow(),
-            'payload': payload,
+            "type": event_type,
+            "run_id": run_id,
+            "conversation_id": conversation_id,
+            "sequence": sequence,
+            "timestamp": utcnow(),
+            "payload": payload,
         }
     )
-    return f'event: {event_type}\ndata: {body.model_dump_json()}\n\n'
+    return f"event: {event_type}\ndata: {body.model_dump_json()}\n\n"
 
 
 async def execute_run(
@@ -278,18 +258,16 @@ async def execute_run(
 ):
     sequence = 0
     started = time.perf_counter()
-    terminal = 'interrupted'
+    terminal = "interrupted"
     first_delta_ms = None
     try:
         async with aclosing(
-            request.app.state.runs.execute(
-                run_id, conversation_id, question, locale, context
-            )
+            request.app.state.runs.execute(run_id, conversation_id, question, locale, context)
         ) as stream:
             async for event in stream:
-                if event.name == 'message.delta' and first_delta_ms is None:
+                if event.name == "message.delta" and first_delta_ms is None:
                     first_delta_ms = round((time.perf_counter() - started) * 1000, 1)
-                if event.name in ('run.completed', 'run.failed', 'run.cancelled'):
+                if event.name in ("run.completed", "run.failed", "run.cancelled"):
                     terminal = event.name
                 yield sse(event.name, run_id, conversation_id, sequence, event.payload)
                 sequence += 1
@@ -297,21 +275,21 @@ async def execute_run(
         log.info(
             json.dumps(
                 {
-                    'operation': 'answer_stream',
-                    'request_id': request.state.request_id,
-                    'terminal': terminal,
-                    'events': sequence,
-                    'first_delta_ms': first_delta_ms,
-                    'duration_ms': round((time.perf_counter() - started) * 1000, 1),
+                    "operation": "answer_stream",
+                    "request_id": request.state.request_id,
+                    "terminal": terminal,
+                    "events": sequence,
+                    "first_delta_ms": first_delta_ms,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 1),
                 }
             )
         )
 
 
 @router.post(
-    '/api/v1/conversations/{conversation_id}/messages/stream',
-    operation_id='streamMessage',
-    responses={200: {'content': {'text/event-stream': {'schema': {'type': 'string'}}}}},
+    "/api/v1/conversations/{conversation_id}/messages/stream",
+    operation_id="streamMessage",
+    responses={200: {"content": {"text/event-stream": {"schema": {"type": "string"}}}}},
 )
 def stream_message(
     request: Request,
@@ -345,31 +323,29 @@ def stream_message(
                 else None,
             )
         ),
-        media_type='text/event-stream',
+        media_type="text/event-stream",
         headers={
-            'Cache-Control': 'no-store, no-transform',
-            'X-Accel-Buffering': 'no',
-            'X-Run-ID': str(run_id),
+            "Cache-Control": "no-store, no-transform",
+            "X-Accel-Buffering": "no",
+            "X-Run-ID": str(run_id),
         },
     )
 
 
-@router.get('/api/v1/runs/{run_id}', response_model=RunView, operation_id='getRun')
+@router.get("/api/v1/runs/{run_id}", response_model=RunView, operation_id="getRun")
 def get_run(request: Request, run_id: UUID, session=Depends(current_session)):
     return request.app.state.conversations.run(session, run_id)
 
 
-@router.post(
-    '/api/v1/runs/{run_id}/cancel', response_model=RunView, operation_id='cancelRun'
-)
+@router.post("/api/v1/runs/{run_id}/cancel", response_model=RunView, operation_id="cancelRun")
 def cancel_run(request: Request, run_id: UUID, session=Depends(mutation_session)):
     return request.app.state.conversations.run(session, run_id, cancel=True)
 
 
 @router.post(
-    '/api/v1/messages/{message_id}/feedback',
+    "/api/v1/messages/{message_id}/feedback",
     status_code=204,
-    operation_id='recordFeedback',
+    operation_id="recordFeedback",
 )
 def record_feedback(
     request: Request,
@@ -381,11 +357,11 @@ def record_feedback(
 
 
 @router.get(
-    '/api/v1/knowledge/suggestions',
+    "/api/v1/knowledge/suggestions",
     response_model=SuggestionsView,
-    operation_id='getKnowledgeSuggestions',
+    operation_id="getKnowledgeSuggestions",
 )
-def get_knowledge_suggestions(request: Request, locale: Locale = 'en'):
+def get_knowledge_suggestions(request: Request, locale: Locale = "en"):
     version, commit, prompts = request.app.state.knowledge.starter_prompts(locale)
     return SuggestionsView(
         corpus_version=version,

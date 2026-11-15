@@ -10,15 +10,15 @@ from app.presentation.models import Citation
 
 
 class Payload(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
 
 class StartedPayload(Payload):
-    state: Literal['running']
+    state: Literal["running"]
 
 
 class StatusPayload(Payload):
-    phase: Literal['evidence_found']
+    phase: Literal["evidence_found"]
     sources: int = Field(ge=0, le=5)
 
 
@@ -33,7 +33,7 @@ class MessagePayload(Payload):
 
 
 class CompletedPayload(Payload):
-    state: Literal['completed']
+    state: Literal["completed"]
 
 
 class FailedPayload(Payload):
@@ -41,8 +41,8 @@ class FailedPayload(Payload):
 
 
 class Envelope(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    schema_version: Literal['1'] = '1'
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal["1"] = "1"
     run_id: UUID
     conversation_id: UUID
     sequence: int = Field(ge=0)
@@ -50,42 +50,42 @@ class Envelope(BaseModel):
 
 
 class Started(Envelope):
-    type: Literal['run.started']
+    type: Literal["run.started"]
     payload: StartedPayload
 
 
 class Status(Envelope):
-    type: Literal['run.status']
+    type: Literal["run.status"]
     payload: StatusPayload
 
 
 class Delta(Envelope):
-    type: Literal['message.delta']
+    type: Literal["message.delta"]
     payload: DeltaPayload
 
 
 class MessageCompleted(Envelope):
-    type: Literal['message.completed']
+    type: Literal["message.completed"]
     payload: MessagePayload
 
 
 class Completed(Envelope):
-    type: Literal['run.completed']
+    type: Literal["run.completed"]
     payload: CompletedPayload
 
 
 class Failed(Envelope):
-    type: Literal['run.failed']
+    type: Literal["run.failed"]
     payload: FailedPayload
 
 
 class Cancelled(Envelope):
-    type: Literal['run.cancelled']
+    type: Literal["run.cancelled"]
     payload: Payload
 
 
 StreamEvent = Annotated[
     Started | Status | Delta | MessageCompleted | Completed | Failed | Cancelled,
-    Field(discriminator='type'),
+    Field(discriminator="type"),
 ]
 events = TypeAdapter(StreamEvent)

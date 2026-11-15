@@ -24,9 +24,9 @@ from app.domain.web_policy import TOPICS
 
 
 class PublicRetrieval:
-    def __init__(self, index: KnowledgeIndex, strategy: str = 'hybrid'):
-        if strategy not in ('hybrid', 'vector', 'lexical', 'graph'):
-            raise ValueError('unsupported retrieval strategy')
+    def __init__(self, index: KnowledgeIndex, strategy: str = "hybrid"):
+        if strategy not in ("hybrid", "vector", "lexical", "graph"):
+            raise ValueError("unsupported retrieval strategy")
         self.index = index
         self.strategy = strategy
 
@@ -37,49 +37,47 @@ class PublicRetrieval:
             return ()
         overview = bool(
             re.search(
-                r'(?i)(tell me about|cuéntame sobre|cuentame sobre|who is|quién es)\s+gonzalo',
+                r"(?i)(tell me about|cuéntame sobre|cuentame sobre|who is|quién es)\s+gonzalo",
                 question,
             )
         )
         if overview:
-            terms |= {'profile', 'summary', 'intro'}
+            terms |= {"profile", "summary", "intro"}
         repository_question = bool(
-            terms & {'repository', 'repo', 'repositorio', 'portfolio', 'readme'}
+            terms & {"repository", "repo", "repositorio", "portfolio", "readme"}
         )
         if not terms:
             return ()
-        with phase('vector_retrieval'):
+        with phase("vector_retrieval"):
             corpus = await self.index.candidates(question)
         if corpus is None:
             return ()
         # Do not answer an explicit employer/project premise with unrelated evidence.
         affiliation = requested_affiliation(question)
         if affiliation:
-            known_terms = set().union(
-                *(tokens(chunk.content) for chunk in corpus.chunks)
-            )
+            known_terms = set().union(*(tokens(chunk.content) for chunk in corpus.chunks))
             if not tokens(affiliation) <= known_terms:
                 return ()
         relationship = bool(
             terms
             & {
-                'compare',
-                'comparison',
-                'versus',
-                'compara',
-                'comparar',
-                'connect',
-                'connected',
-                'shared',
-                'share',
-                'shares',
-                'between',
-                'both',
-                'related',
-                'comparten',
-                'relacion',
-                'entre',
-                'ambos',
+                "compare",
+                "comparison",
+                "versus",
+                "compara",
+                "comparar",
+                "connect",
+                "connected",
+                "shared",
+                "share",
+                "shares",
+                "between",
+                "both",
+                "related",
+                "comparten",
+                "relacion",
+                "entre",
+                "ambos",
             }
         )
         # Explicit entity declarations anchor adjacent chunks in the same public document.
@@ -98,37 +96,33 @@ class PublicRetrieval:
             if (
                 not repository_question
                 and profile_parts(chunk.path) is None
-                and chunk.path != 'public/assistant-knowledge.json'
+                and chunk.path != "public/assistant-knowledge.json"
             ):
                 continue
             row: EvidenceRecord = {
-                'path': chunk.path,
-                'content': chunk.content,
-                'start_line': chunk.start_line,
-                'end_line': chunk.end_line,
-                'url': chunk.url,
-                'content_hash': chunk.content_hash,
+                "path": chunk.path,
+                "content": chunk.content,
+                "start_line": chunk.start_line,
+                "end_line": chunk.end_line,
+                "url": chunk.url,
+                "content_hash": chunk.content_hash,
             }
             score = lexical_score(row, terms, locale)
             if (
                 asks_spoken_languages(terms)
-                and chunk.path.endswith('/profile.ts')
-                and 'language:' in chunk.content
+                and chunk.path.endswith("/profile.ts")
+                and "language:" in chunk.content
             ):
                 score += 100
-            if (
-                overview
-                and chunk.path.endswith('/profile.ts')
-                and chunk.start_line == 1
-            ):
+            if overview and chunk.path.endswith("/profile.ts") and chunk.start_line == 1:
                 score += 100
             if (
-                chunk.path.endswith('/experience.ts')
+                chunk.path.endswith("/experience.ts")
                 and any(
                     tokens(name) & terms
                     for name in re.findall(r'company:\s*"([^"\n]+)"', chunk.content)
                 )
-                and 'contributions:' in chunk.content
+                and "contributions:" in chunk.content
             ):
                 score += 50
             if chunk.path in entity_paths:
@@ -137,9 +131,7 @@ class PublicRetrieval:
             preferred = (
                 profile is None
                 or profile[0] == locale
-                or not any(
-                    path in corpus.paths for path in profile_paths(locale, profile[1])
-                )
+                or not any(path in corpus.paths for path in profile_paths(locale, profile[1]))
             )
             if preferred and verified(row, corpus.commit, set(corpus.paths)):
                 eligible[chunk.id] = chunk
@@ -153,12 +145,10 @@ class PublicRetrieval:
             for key in corpus.nearest
             if key in eligible and (corpus.semantic or scores[key] >= 3)
         ]
-        lexical = list(
-            dict.fromkeys(lexical + [key for key in corpus.lexical if key in eligible])
-        )
+        lexical = list(dict.fromkeys(lexical + [key for key in corpus.lexical if key in eligible]))
         graph = []
-        if self.strategy == 'graph' or (self.strategy == 'hybrid' and relationship):
-            with phase('graph_retrieval'):
+        if self.strategy == "graph" or (self.strategy == "hybrid" and relationship):
+            with phase("graph_retrieval"):
                 graph = [
                     key
                     for key in await self.index.relationships(
@@ -166,11 +156,11 @@ class PublicRetrieval:
                     )
                     if key in eligible
                 ]
-        if self.strategy == 'vector':
+        if self.strategy == "vector":
             ranked = vector
-        elif self.strategy == 'lexical':
+        elif self.strategy == "lexical":
             ranked = lexical
-        elif self.strategy == 'graph':
+        elif self.strategy == "graph":
             ranked = graph
         elif relationship and graph:
             ranked = list(dict.fromkeys(graph + lexical + vector))
@@ -184,80 +174,74 @@ class PublicRetrieval:
                 for index, key in enumerate(ids):
                     ranks[key] = ranks.get(key, 0) + weight / (10 + index)
             ranked = sorted(ranks, key=lambda key: (-ranks[key], -scores[key], key))
-        if self.strategy == 'hybrid':
+        if self.strategy == "hybrid":
             if overview:
                 ranked.sort(
                     key=lambda key: (
                         not (
-                            eligible[key].path.endswith('/profile.ts')
+                            eligible[key].path.endswith("/profile.ts")
                             and eligible[key].start_line == 1
                         )
                     )
                 )
             elif affiliation and not relationship:
                 ranked = [
-                    key
-                    for key in ranked
-                    if tokens(affiliation) <= tokens(eligible[key].content)
+                    key for key in ranked if tokens(affiliation) <= tokens(eligible[key].content)
                 ]
                 ranked.sort(
                     key=lambda key: (
                         not any(
                             tokens(name) & tokens(affiliation)
-                            for name in re.findall(
-                                r'company:\s*"([^"\n]+)"', eligible[key].content
-                            )
+                            for name in re.findall(r'company:\s*"([^"\n]+)"', eligible[key].content)
                         )
                     )
                 )
             elif terms & {
-                'performance',
-                'improvements',
-                'metrics',
-                'metricas',
-                'rendimiento',
+                "performance",
+                "improvements",
+                "metrics",
+                "metricas",
+                "rendimiento",
             }:
                 ranked.sort(
                     key=lambda key: (
                         not (
-                            'qualifier:' in eligible[key].content
-                            and 'value:' in eligible[key].content
+                            "qualifier:" in eligible[key].content
+                            and "value:" in eligible[key].content
                         )
                     )
                 )
-            elif not terms & {'technologies', 'technology', 'tecnologias', 'stack'}:
+            elif not terms & {"technologies", "technology", "tecnologias", "stack"}:
                 ranked.sort(
                     key=lambda key: (
                         not any(
                             tokens(name) <= terms
-                            for name in re.findall(
-                                r'name:\s*"([^"\n]+)"', eligible[key].content
-                            )
+                            for name in re.findall(r'name:\s*"([^"\n]+)"', eligible[key].content)
                             if tokens(name)
                         )
                     )
                 )
-        if self.strategy == 'hybrid':
+        if self.strategy == "hybrid":
             if terms & {
-                'degree',
-                'graduated',
-                'graduation',
-                'qualification',
-                'education',
-                'formacion',
-                'formation',
-                'estudou',
-                'titulo',
-                'universidad',
-                'study',
-                'studied',
-                'estudio',
-                'estudios',
+                "degree",
+                "graduated",
+                "graduation",
+                "qualification",
+                "education",
+                "formacion",
+                "formation",
+                "estudou",
+                "titulo",
+                "universidad",
+                "study",
+                "studied",
+                "estudio",
+                "estudios",
             }:
                 qualification = [
                     key
                     for key in eligible
-                    if eligible[key].path.endswith('/education.ts')
+                    if eligible[key].path.endswith("/education.ts")
                     and eligible[key].start_line == 1
                 ]
                 ranked = list(dict.fromkeys(qualification + ranked))
@@ -268,13 +252,11 @@ class PublicRetrieval:
                 anchors = []
                 for subject in subjects:
                     matching = [
-                        key
-                        for key in ranked
-                        if tokens(subject) <= tokens(eligible[key].content)
+                        key for key in ranked if tokens(subject) <= tokens(eligible[key].content)
                     ]
                     if matching:
                         anchors.append(max(matching, key=lambda key: scores[key]))
-                if not subjects and terms & {'roles', 'empleos', 'puestos', 'trabajos'}:
+                if not subjects and terms & {"roles", "empleos", "puestos", "trabajos"}:
                     dated = []
                     companies: set[str] = set()
                     companions = []
@@ -285,37 +267,26 @@ class PublicRetrieval:
                         keys.sort(key=lambda key: eligible[key].start_line)
                         for index, key in enumerate(keys):
                             chunk = eligible[key]
-                            company = re.search(
-                                r'company:\s*"([^"\n]+)"', chunk.content
-                            )
+                            company = re.search(r'company:\s*"([^"\n]+)"', chunk.content)
                             if not company:
                                 continue
-                            following = (
-                                keys[index + 1] if index + 1 < len(keys) else None
-                            )
+                            following = keys[index + 1] if index + 1 < len(keys) else None
                             text = chunk.content[company.end() :]
-                            if (
-                                following
-                                and eligible[following].start_line == chunk.end_line + 1
-                            ):
-                                text += '\n' + eligible[following].content
-                            text = text.split('company:', 1)[0]
-                            start_date = re.search(
-                                r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', text
-                            )
+                            if following and eligible[following].start_line == chunk.end_line + 1:
+                                text += "\n" + eligible[following].content
+                            text = text.split("company:", 1)[0]
+                            start_date = re.search(r'startedOn:\s*"(\d{4}-\d{2}-\d{2})"', text)
                             if start_date:
-                                dated.append(
-                                    (start_date[1], company[1], key, following)
-                                )
+                                dated.append((start_date[1], company[1], key, following))
                     for _, company_name, key, following in sorted(dated, reverse=True):
                         if company_name not in companies:
                             anchors.append(key)
                             companies.add(company_name)
-                            if following and 'startedOn:' not in eligible[key].content:
+                            if following and "startedOn:" not in eligible[key].content:
                                 companions.append(following)
                     anchors += companions
                 ranked = list(dict.fromkeys(anchors + ranked))
-        if self.strategy == 'hybrid' and not overview:
+        if self.strategy == "hybrid" and not overview:
             technical_anchors = []
             for topic in TOPICS:
                 if topic.name.casefold() not in question.casefold():
@@ -344,18 +315,18 @@ class PublicRetrieval:
                     )
             ranked = list(dict.fromkeys(technical_anchors + ranked))
         if (
-            self.strategy == 'hybrid'
-            and terms & {'goals', 'targets', 'metas', 'objetivos'}
+            self.strategy == "hybrid"
+            and terms & {"goals", "targets", "metas", "objetivos"}
             and terms
             & {
-                'metrics',
-                'measurements',
-                'measured',
-                'estimated',
-                'mediciones',
-                'medidas',
-                'estimaciones',
-                'rendimiento',
+                "metrics",
+                "measurements",
+                "measured",
+                "estimated",
+                "mediciones",
+                "medidas",
+                "estimaciones",
+                "rendimiento",
             }
         ):
             goals = [
@@ -363,38 +334,30 @@ class PublicRetrieval:
                 for key in eligible
                 if profile_parts(eligible[key].path) is not None
                 and re.search(
-                    r'(?i)\b(?:design goal|design target|objetivo de|meta de)\b',
+                    r"(?i)\b(?:design goal|design target|objetivo de|meta de)\b",
                     eligible[key].content,
                 )
             ]
             if affiliation:
                 goals = [
-                    key
-                    for key in goals
-                    if tokens(affiliation) <= tokens(eligible[key].content)
+                    key for key in goals if tokens(affiliation) <= tokens(eligible[key].content)
                 ]
             if goals:
-                ranked = list(
-                    dict.fromkeys([max(goals, key=lambda key: scores[key])] + ranked)
-                )
-        logging.getLogger('portfolio_assistant').info(
+                ranked = list(dict.fromkeys([max(goals, key=lambda key: scores[key])] + ranked))
+        logging.getLogger("portfolio_assistant").info(
             json.dumps(
                 {
-                    'operation': 'retrieval',
-                    'strategy': self.strategy,
-                    'graph_expansion': relationship,
-                    'sources': min(5, len(ranked)),
-                    'duration_ms': round((time.perf_counter() - started) * 1000, 1),
+                    "operation": "retrieval",
+                    "strategy": self.strategy,
+                    "graph_expansion": relationship,
+                    "sources": min(5, len(ranked)),
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 1),
                 }
             )
         )
         return tuple(
             Evidence(
-                **{
-                    k: v
-                    for k, v in asdict(eligible[key]).items()
-                    if k != 'content_hash'
-                },
+                **{k: v for k, v in asdict(eligible[key]).items() if k != "content_hash"},
                 commit_sha=corpus.commit,
             )
             for key in ranked[:5]

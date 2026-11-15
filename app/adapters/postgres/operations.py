@@ -45,10 +45,10 @@ class PostgresOperations:
 
     def save(self, execution: Execution, sampled: bool) -> None:
         with self.connection() as conn:
-            conn.execute('SET LOCAL statement_timeout=500')
-            conn.execute('SET LOCAL lock_timeout=200')
+            conn.execute("SET LOCAL statement_timeout=500")
+            conn.execute("SET LOCAL lock_timeout=200")
             conn.execute(
-                'INSERT INTO operational_executions(trace_id,started_at,outcome,duration_ms,first_token_ms,stages,error_code,sampled) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING',
+                "INSERT INTO operational_executions(trace_id,started_at,outcome,duration_ms,first_token_ms,stages,error_code,sampled) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
                 (
                     execution.trace_id,
                     execution.started_at,
@@ -63,27 +63,23 @@ class PostgresOperations:
 
     def snapshot(self) -> dict[str, Any]:
         with self.connection() as conn:
-            conn.execute('SET LOCAL statement_timeout=2000')
+            conn.execute("SET LOCAL statement_timeout=2000")
             knowledge = conn.execute(
                 "SELECT id,source_commit,created_at FROM knowledge_versions WHERE status='active'"
             ).fetchone()
             if not knowledge:
-                raise RuntimeError('knowledge_unavailable')
+                raise RuntimeError("knowledge_unavailable")
             watch = conn.execute(
-                'SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton'
+                "SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton"
             ).fetchone()
-            age = (
-                (datetime.now(UTC) - watch['checked_at']).total_seconds()
-                if watch
-                else None
-            )
+            age = (datetime.now(UTC) - watch["checked_at"]).total_seconds() if watch else None
             state = (
-                'stale'
+                "stale"
                 if age is None or age > self.config.knowledge_freshness_seconds
                 else (
-                    'fresh'
-                    if watch['observed_commit'] == knowledge['source_commit']
-                    else 'updating'
+                    "fresh"
+                    if watch["observed_commit"] == knowledge["source_commit"]
+                    else "updating"
                 )
             )
             counts = conn.execute(
@@ -96,44 +92,44 @@ class PostgresOperations:
                 "SELECT trace_id,started_at,outcome,duration_ms,stages FROM operational_executions WHERE sampled AND started_at>=now()-interval '7 days' ORDER BY started_at DESC LIMIT 100"
             ).fetchall()
         return {
-            'schema_version': 1,
-            'observed_at': datetime.now(UTC).isoformat(),
-            'api_commit': self.config.ops_api_commit,
-            'availability': 'ready' if state == 'fresh' else 'degraded',
-            'knowledge': {
-                'state': state,
-                'source_commit': knowledge['source_commit'],
-                'corpus_version': knowledge['id'],
-                'indexed_at': knowledge['created_at'].isoformat(),
+            "schema_version": 1,
+            "observed_at": datetime.now(UTC).isoformat(),
+            "api_commit": self.config.ops_api_commit,
+            "availability": "ready" if state == "fresh" else "degraded",
+            "knowledge": {
+                "state": state,
+                "source_commit": knowledge["source_commit"],
+                "corpus_version": knowledge["id"],
+                "indexed_at": knowledge["created_at"].isoformat(),
             },
-            'executions': {
-                'total': counts['total'],
-                'completed': counts['completed'],
-                'cancelled': counts['cancelled'],
-                'failed': counts['failed'],
-                'first_token_p50_ms': counts['p50'],
-                'first_token_p95_ms': counts['p95'],
+            "executions": {
+                "total": counts["total"],
+                "completed": counts["completed"],
+                "cancelled": counts["cancelled"],
+                "failed": counts["failed"],
+                "first_token_p50_ms": counts["p50"],
+                "first_token_p95_ms": counts["p95"],
             },
-            'usage': {
-                'input_tokens': int(usage['input_tokens']),
-                'output_tokens': int(usage['output_tokens']),
-                'settled_usd': float(usage['settled']),
-                'reserved_usd': float(usage['reserved']),
-                'budget_usd': float(self.config.monthly_budget_usd),
-                'pricing_revision': 'configured-'
+            "usage": {
+                "input_tokens": int(usage["input_tokens"]),
+                "output_tokens": int(usage["output_tokens"]),
+                "settled_usd": float(usage["settled"]),
+                "reserved_usd": float(usage["reserved"]),
+                "budget_usd": float(self.config.monthly_budget_usd),
+                "pricing_revision": "configured-"
                 + hashlib.sha256(
-                    f'{self.config.input_usd_per_million}:{self.config.output_usd_per_million}:{self.config.embedding_usd_per_million}'.encode()
+                    f"{self.config.input_usd_per_million}:{self.config.output_usd_per_million}:{self.config.embedding_usd_per_million}".encode()
                 ).hexdigest()[:16],
             },
-            'traces': [
+            "traces": [
                 {
-                    'id': r['trace_id'],
-                    'started_at': r['started_at'].isoformat(),
-                    'outcome': r['outcome'],
-                    'duration_ms': r['duration_ms'],
-                    'stages': [
-                        {'name': s['name'], 'duration_ms': s['duration_ms']}
-                        for s in r['stages'][:16]
+                    "id": r["trace_id"],
+                    "started_at": r["started_at"].isoformat(),
+                    "outcome": r["outcome"],
+                    "duration_ms": r["duration_ms"],
+                    "stages": [
+                        {"name": s["name"], "duration_ms": s["duration_ms"]}
+                        for s in r["stages"][:16]
                     ],
                 }
                 for r in rows
@@ -159,7 +155,7 @@ class OperationalObserver:
 
     def start(self) -> None:
         if self.worker is not None:
-            raise RuntimeError('observer_already_started')
+            raise RuntimeError("observer_already_started")
         self.worker = asyncio.create_task(self._consume())
 
     def record(self, execution: Execution) -> None:
@@ -181,9 +177,7 @@ class OperationalObserver:
                         sampled = self.exporter.record(execution)
                     except Exception:  # noqa: BLE001 - Export is independent from durable accounting/observation.
                         self.dropped += 1
-                write = asyncio.create_task(
-                    asyncio.to_thread(self.store.save, execution, sampled)
-                )
+                write = asyncio.create_task(asyncio.to_thread(self.store.save, execution, sampled))
                 try:
                     await asyncio.shield(write)
                 except asyncio.CancelledError:
@@ -194,7 +188,7 @@ class OperationalObserver:
                     raise
             except Exception:  # noqa: BLE001 - Observational storage/export failures cannot interrupt generation or reveal payloads.
                 self.dropped += 1
-                logging.getLogger('portfolio_assistant').warning(
+                logging.getLogger("portfolio_assistant").warning(
                     '{"operation":"observability","status":"write_failed"}'
                 )
             finally:
@@ -216,6 +210,6 @@ class OperationalObserver:
                 await asyncio.to_thread(self.exporter.close)
             except Exception:  # noqa: BLE001 - Export cleanup cannot prevent database/provider cleanup.
                 self.dropped += 1
-                logging.getLogger('portfolio_assistant').warning(
+                logging.getLogger("portfolio_assistant").warning(
                     '{"operation":"observability","status":"shutdown_failed"}'
                 )
