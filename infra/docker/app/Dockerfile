@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 # Targets: api (default, last stage) and worker (adds git for the public-source CLI).
-FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS base
+FROM python:3.14.9-slim-trixie@sha256:35caba83af2fe6da9a5d922f9b0156f21d1246a48278c58a08bd253303ba42e8 AS base
 # apt, libapt-pkg7.0, zlib1g, liblzma5 and libpcre2-8-0 are pinned to their fixed Debian security versions.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     liblzma5=5.8.1-1+deb13u2 libpcre2-8-0=10.46-1~deb13u3 \
