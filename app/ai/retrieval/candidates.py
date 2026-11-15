@@ -1,10 +1,9 @@
 """Eligibility, lexical scoring and the lexical, vector and graph candidate lanes."""
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import app.ai.retrieval.source_shape as shape
-from app.ai.retrieval.query import QueryIntent
-from app.application.knowledge import Chunk, Corpus
 from app.domain.evidence import (
     EvidenceRecord,
     asks_spoken_languages,
@@ -14,12 +13,18 @@ from app.domain.evidence import (
 )
 from app.domain.portfolio_paths import profile_parts, profile_paths
 
+if TYPE_CHECKING:
+    from app.ai.retrieval.query import QueryIntent
+    from app.application.knowledge import Chunk, Corpus
+
 ASSISTANT_KNOWLEDGE = "public/assistant-knowledge.json"
 MIN_LEXICAL_SCORE = 3
 
 
 @dataclass(frozen=True)
 class Eligible:
+    """Verified, locale-preferred chunks and their lexical scores."""
+
     chunks: dict[str, Chunk]
     scores: dict[str, float]
 
@@ -89,6 +94,7 @@ def _preferred(chunk: Chunk, corpus: Corpus, locale: str) -> bool:
 
 
 def eligible_chunks(corpus: Corpus, intent: QueryIntent, locale: str) -> Eligible:
+    """Collect verified chunks in scope and score their lexical relevance."""
     terms = set(intent.terms)
     entities = entity_paths(corpus, intent.terms)
     chunks: dict[str, Chunk] = {}
@@ -114,6 +120,7 @@ def eligible_chunks(corpus: Corpus, intent: QueryIntent, locale: str) -> Eligibl
 
 
 def lexical_lane(corpus: Corpus, eligible: Eligible) -> list[str]:
+    """Order strong lexical matches before eligible index-provided candidates."""
     scores = eligible.scores
     scored = sorted(
         (key for key in eligible.chunks if scores[key] >= MIN_LEXICAL_SCORE),
@@ -123,6 +130,7 @@ def lexical_lane(corpus: Corpus, eligible: Eligible) -> list[str]:
 
 
 def vector_lane(corpus: Corpus, eligible: Eligible) -> list[str]:
+    """Keep eligible neighbors, requiring lexical support for nonsemantic corpora."""
     return [
         key
         for key in corpus.nearest

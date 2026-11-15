@@ -35,6 +35,8 @@ _RELATIONSHIP_TERMS = frozenset(
 
 @dataclass(frozen=True)
 class QueryIntent:
+    """Search terms and intent flags derived from a visitor question."""
+
     question: str
     terms: frozenset[str]
     overview: bool

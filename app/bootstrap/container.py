@@ -2,16 +2,14 @@
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from decimal import Decimal
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from neo4j import GraphDatabase
-from psycopg import AsyncConnection
 from psycopg.rows import DictRow, dict_row
 from psycopg_pool import AsyncConnectionPool
 
@@ -38,7 +36,6 @@ from app.adapters.providers.web_search import OpenAIWebSearch
 from app.adapters.retrieval import KnowledgeIndex
 from app.ai.retrieval import PublicRetrieval
 from app.ai.workflow import LangGraphWorkflow
-from app.application.contracts import Provider
 from app.application.conversations import Conversations
 from app.application.runs import RunService
 from app.bootstrap.config import Settings, settings
@@ -51,6 +48,13 @@ from app.presentation.feedback import router as feedback_router
 from app.presentation.http import router
 from app.presentation.middleware import BodyLimit, install
 from app.presentation.operations import router as operations_router
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+
+    from psycopg import AsyncConnection
+
+    from app.application.contracts import Provider
 
 
 def create_app(
@@ -191,8 +195,8 @@ def create_app(
 
                     # Settings rejects a missing endpoint or revision whenever telemetry is on.
                     exporter = PrivateTelemetry(
-                        cast(str, config.otel_private_endpoint),
-                        cast(str, config.ops_api_commit),
+                        cast("str", config.otel_private_endpoint),
+                        cast("str", config.ops_api_commit),
                         config.ops_trace_sample_ratio,
                     )
                 observer = OperationalObserver(

@@ -239,7 +239,7 @@ class Settings(BaseSettings):
             raise ValueError("production graph credentials and host must be explicit")
         if self.rate_hash_key == "local-fixture-only" or len(self.rate_hash_key) < 32:
             raise ValueError("production rate hash key must be random and at least 32 characters")
-        if self.allow_paid_ai and not _PAID_PRICING_FIELDS <= self.model_fields_set:
+        if self.allow_paid_ai and not self.model_fields_set >= _PAID_PRICING_FIELDS:
             raise ValueError(
                 "production paid pricing and reservation must be explicitly configured"
             )

@@ -1,8 +1,10 @@
 """Reviewed graph projection. Labels/relationship types are fixed, values parameterized."""
 
 import hashlib
-from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
 
 
 def project(

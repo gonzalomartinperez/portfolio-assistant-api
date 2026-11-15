@@ -1,12 +1,16 @@
 """Operator defaults; persistence adapters receive explicit configuration."""
 
-from contextlib import AbstractContextManager
 from decimal import Decimal
 from functools import partial
+from typing import TYPE_CHECKING
 
 from app.adapters.postgres import checkpoints, db, ledger, retention
-from app.adapters.postgres.db import Connect
 from app.bootstrap.config import settings
+
+if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
+
+    from app.adapters.postgres.db import Connect
 
 
 def connect() -> AbstractContextManager[object]:

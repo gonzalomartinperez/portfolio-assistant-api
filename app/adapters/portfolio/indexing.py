@@ -5,12 +5,9 @@ import json
 import os
 import re
 import subprocess
-from collections.abc import Callable, Iterator
 from decimal import Decimal
 from itertools import pairwise
-from pathlib import Path
-from threading import Event
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 from urllib.parse import quote
 
 from neo4j import READ_ACCESS, Driver, GraphDatabase
@@ -19,7 +16,6 @@ from app.adapters.neo4j.projection import project
 from app.adapters.neo4j.read_queries import prepare_reads
 from app.adapters.portfolio.projection import PublicProjection, graph_facts
 from app.adapters.portfolio.source_format import facts_for
-from app.adapters.postgres.db import Connect
 from app.adapters.postgres.ledger import EmbeddingAccounting
 from app.adapters.providers.embedding import (
     FixtureEmbeddings,
@@ -33,6 +29,13 @@ from app.domain.portfolio_paths import (
     corpus_version,
     profile_parts,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+    from pathlib import Path
+    from threading import Event
+
+    from app.adapters.postgres.db import Connect
 
 
 class IndexConfiguration(Protocol):
@@ -156,7 +159,7 @@ def snapshot_source(
             if profile in profiles:
                 raise ValueError("ambiguous public profile source layouts")
             profiles.add(profile)
-        blob_sha = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+        blob_sha = hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
         blobs[blob_sha] = data
         files.append((path, blob_sha))
     if len(files) > MAX_FILES:

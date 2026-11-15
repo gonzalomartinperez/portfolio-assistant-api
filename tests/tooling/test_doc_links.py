@@ -5,6 +5,7 @@ relative links point inside that repository.
 """
 
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -39,8 +40,11 @@ def anchors(path: Path) -> set[str]:
 
 
 def markdown_files() -> list[Path]:
+    git = shutil.which("git")
+    assert git is not None
+    # Fixed Git command and repository root; no external input enters the argv.
     tracked = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "*.md"], check=True, capture_output=True, text=True
+        [git, "-C", str(ROOT), "ls-files", "*.md"], check=True, capture_output=True, text=True
     ).stdout.splitlines()
     return [ROOT / name for name in tracked if not name.startswith(EXCLUDED)]
 

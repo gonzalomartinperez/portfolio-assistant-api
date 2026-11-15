@@ -6,13 +6,15 @@ import re
 import tempfile
 from functools import partial
 from pathlib import Path
-from threading import Event
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.adapters.portfolio.indexing import git
 from app.adapters.portfolio.indexing import sync as sync_projection
 from app.adapters.postgres.db import connect
 from app.bootstrap.config import settings
+
+if TYPE_CHECKING:
+    from threading import Event
 
 
 def sync(
