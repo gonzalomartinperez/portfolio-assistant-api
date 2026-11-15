@@ -1,6 +1,6 @@
 """Strict public interaction input; no raw coordinates, text or navigation targets."""
 
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -52,6 +52,6 @@ class ProductInteractionBody(BaseModel):
         )
 
     @model_validator(mode="after")
-    def semantic_dimensions(self):
+    def semantic_dimensions(self) -> Self:
         self.event()
         return self
