@@ -23,11 +23,11 @@ dependencies = [
 ]
 
 [project.scripts]
-assistant-api = "app.bootstrap.entrypoints:api"
-assistant-migrate = "app.bootstrap.entrypoints:migrate"
-assistant-retention = "app.bootstrap.entrypoints:retention"
-assistant-knowledge-sync = "app.bootstrap.entrypoints:knowledge_sync"
-assistant-knowledge-watch = "app.bootstrap.entrypoints:knowledge_watch"
+assistant-api = "app.bootstrap.entrypoints.api:main"
+assistant-migrate = "app.bootstrap.entrypoints.migrate:main"
+assistant-retention = "app.bootstrap.entrypoints.retention:main"
+assistant-knowledge-sync = "app.bootstrap.entrypoints.knowledge_sync:main"
+assistant-knowledge-watch = "app.bootstrap.entrypoints.knowledge_watch:main"
 
 [build-system]
 requires = ["uv_build==0.13.1"]

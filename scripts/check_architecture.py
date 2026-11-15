@@ -1,7 +1,9 @@
 """Static import contracts without loading application modules or their clients."""
 
 import ast
+import re
 import sys
+import tomllib
 from importlib.util import resolve_name
 from pathlib import Path
 
@@ -14,6 +16,9 @@ ALLOWED = {
     "presentation": {"presentation", "application", "domain"},
     "bootstrap": LAYERS,
 }
+# Deprecated `python -m` shims (removed in the contract phase, after vps-ops runs the
+# console scripts) plus the ASGI module `app.main`. Process entry points live under
+# `app.bootstrap.entrypoints`.
 ENTRY_POINTS = {
     "app.main",
     "app.migrate",
@@ -105,6 +110,46 @@ def cycle_errors(graph: dict[str, set[str]]) -> list[str]:
     return errors
 
 
+# Modules allowed to keep a `__main__` block outside app/bootstrap/entrypoints, with the reason.
+MAIN_BLOCK_ALLOWED = {
+    "app.bootstrap.evaluation_export": "documented opt-in operator command (python -m)",
+}
+CONSOLE_SCRIPT = re.compile(r"app\.bootstrap\.entrypoints\.[a-z_]+:main")
+
+
+def _is_main_guard(test: ast.expr) -> bool:
+    if not (isinstance(test, ast.Compare) and len(test.comparators) == 1):
+        return False
+    sides = (test.left, test.comparators[0])
+    return any(isinstance(side, ast.Name) and side.id == "__name__" for side in sides) and any(
+        isinstance(side, ast.Constant) and side.value == "__main__" for side in sides
+    )
+
+
+def entry_point_errors(module: str, source: str) -> list[str]:
+    """Process entry points (`__main__` blocks) belong under app.bootstrap.entrypoints."""
+    if (
+        module.startswith("app.bootstrap.entrypoints.")
+        or module in ENTRY_POINTS
+        or module in MAIN_BLOCK_ALLOWED
+    ):
+        return []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.If) and _is_main_guard(node.test):
+            return [f"{module}: process entry point outside app/bootstrap/entrypoints"]
+    return []
+
+
+def console_script_errors(pyproject: str) -> list[str]:
+    """Every console script must target main() of a module under app.bootstrap.entrypoints."""
+    scripts = tomllib.loads(pyproject).get("project", {}).get("scripts", {})
+    return [
+        f"console script {name} -> {target}: must be app.bootstrap.entrypoints.<name>:main"
+        for name, target in sorted(scripts.items())
+        if not CONSOLE_SCRIPT.fullmatch(target)
+    ]
+
+
 def architecture_errors(root: Path) -> list[str]:
     errors = []
     graph = {}
@@ -119,7 +164,11 @@ def architecture_errors(root: Path) -> list[str]:
             continue
         source = path.read_text()
         errors.extend(dependency_errors(module, source, package=package))
+        errors.extend(entry_point_errors(module, source))
         graph[module] = dependencies(module, source, package=package)
+    pyproject = root.parent / "pyproject.toml"
+    if pyproject.exists():
+        errors.extend(console_script_errors(pyproject.read_text()))
     return errors + cycle_errors(graph)
 
 

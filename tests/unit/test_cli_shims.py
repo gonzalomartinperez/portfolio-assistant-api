@@ -37,6 +37,7 @@ def test_import_does_not_run(monkeypatch, file, target):
 def test_knowledge_sync_reexports():
     from app import knowledge_sync
     from app.bootstrap import indexing
+    from app.bootstrap.entrypoints import knowledge_sync as entry
 
-    assert knowledge_sync.main is indexing.main
+    assert knowledge_sync.main is entry.main
     assert knowledge_sync.sync is indexing.sync

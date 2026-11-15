@@ -73,7 +73,7 @@ ops-owned retention/privacy review, not evidence the whole system is anonymous.
 
 **Local test limits:** dedupe 24 hours; aggregates current UTC day + six previous
 UTC days. Ingestion opportunistically deletes up to 1,000 expired IDs and old daily
-cells inside its transaction. `python -m app.retention` also prunes expired rows,
+cells inside its transaction. `assistant-retention` also prunes expired rows,
 including when ingestion is off. Logical expiry is not physical deletion or backup
 erasure; schedule maintenance and define encrypted backup expiry before production.
 Replays after ID expiry may count again. No unique-visitor or exact-ledger claim.

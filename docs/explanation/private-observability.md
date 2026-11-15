@@ -72,7 +72,7 @@ Do not assume fixture charts or this backend implementation verify the deployed 
 - Token counts sum known settled usage. Historical ledger rows with NULL token counts
   cannot be reconstructed and are excluded; zero is not proof of complete historical coverage.
 - Sampled trace drilldown uses seven days. Stored phases are cleared after seven days;
-  anonymous aggregate facts are deleted after 30 days by `python -m app.retention`.
+  anonymous aggregate facts are deleted after 30 days by `assistant-retention`.
   Sampling and drops must be considered when interpreting trace lists.
 
 ## Migration and operations

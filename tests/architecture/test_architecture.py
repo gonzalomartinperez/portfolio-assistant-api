@@ -4,9 +4,11 @@ import pytest
 
 from scripts.check_architecture import (
     architecture_errors,
+    console_script_errors,
     cycle_errors,
     dependencies,
     dependency_errors,
+    entry_point_errors,
 )
 from tests.support import ROOT as REPO_ROOT
 
@@ -83,3 +85,30 @@ def test_inner_and_http_layers_do_not_execute_queries():
             assert not any(
                 sql in source for sql in ("SELECT ", "INSERT INTO ", "UPDATE runs ", "MATCH (")
             ), path
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        'if __name__ == "__main__":\n    main()',
+        'if "__main__" == __name__:\n    main()',
+    ],
+)
+def test_rejects_entry_points_outside_bootstrap_entrypoints(source):
+    assert entry_point_errors("app.bootstrap.indexing", source)
+    assert entry_point_errors("app.adapters.example", source)
+
+
+def test_allows_entry_points_under_bootstrap_entrypoints_and_shims():
+    source = 'if __name__ == "__main__":\n    main()'
+    assert entry_point_errors("app.bootstrap.entrypoints.migrate", source) == []
+    assert entry_point_errors("app.migrate", source) == []
+    assert entry_point_errors("app.bootstrap.evaluation_export", source) == []
+
+
+def test_console_scripts_must_target_bootstrap_entrypoints():
+    good = '[project.scripts]\nassistant-api = "app.bootstrap.entrypoints.api:main"\n'
+    assert console_script_errors(good) == []
+    for target in ("app.main:run", "app.bootstrap.entrypoints.api:serve", "app.bootstrap:api"):
+        bad = f'[project.scripts]\nx = "{target}"\n'
+        assert console_script_errors(bad), target

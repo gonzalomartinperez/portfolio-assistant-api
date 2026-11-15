@@ -9,8 +9,8 @@ these instructions do not modify its checkout or services.
 uv sync --frozen
 source scripts/fixture-env.sh
 docker compose -f infra/compose/local.yaml up --build -d --wait
-uv run python -m app.migrate
-uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
+uv run assistant-migrate
+uv run assistant-knowledge-sync --source snapshot --repo evals/corpus
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
@@ -67,7 +67,7 @@ containers. Fixture timing is local evidence, not a production capacity guarante
 
 `uv.lock` and image digests pin reproducible installs. Python 3.14 is checked in the frozen lockfile, tests and production image. Mypy checks
 inner contracts and AI orchestration strictly. No ORM/queue/new service was added.
-Run `uv run python -m app.retention` every minute to prune expired data and retry
+Run `uv run assistant-retention` every minute to prune expired data and retry
 checkpoint tombstones. Detailed backup, upgrade and shutdown procedures are in
 [operations](../how-to/deploy-with-vps-ops.md). Configuration is documented in [environment](../reference/environment.md).
 

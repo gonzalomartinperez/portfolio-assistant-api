@@ -3,7 +3,7 @@ import tomllib
 
 import pytest
 
-from app.bootstrap import entrypoints
+from app.bootstrap.entrypoints import api, knowledge_sync, knowledge_watch, migrate, retention
 from tests.support import ROOT
 
 
@@ -18,10 +18,17 @@ def test_script_target_resolves(name):
     assert callable(getattr(importlib.import_module(module), function))
 
 
+def test_console_scripts_live_under_bootstrap_entrypoints():
+    for target in scripts().values():
+        module, function = target.split(":")
+        assert module.startswith("app.bootstrap.entrypoints.")
+        assert function == "main"
+
+
 def test_api_matches_container_command(monkeypatch):
     calls = []
     monkeypatch.setattr("uvicorn.run", lambda *args, **kwargs: calls.append((args, kwargs)))
-    entrypoints.api()
+    api.main()
     assert calls == [
         (
             ("app.main:app",),
@@ -39,20 +46,20 @@ def test_api_matches_container_command(monkeypatch):
 def test_migrate_delegates(monkeypatch):
     calls = []
     monkeypatch.setattr("app.bootstrap.migrations.main", lambda: calls.append("m"))
-    entrypoints.migrate()
+    migrate.main()
     assert calls == ["m"]
 
 
 def test_retention_prints_prune_result(monkeypatch, capsys):
     monkeypatch.setattr("app.bootstrap.maintenance.prune", lambda: {"pruned": 3})
-    entrypoints.retention()
+    retention.main()
     assert capsys.readouterr().out == "{'pruned': 3}\n"
 
 
 def test_knowledge_sync_delegates(monkeypatch):
     calls = []
     monkeypatch.setattr("app.bootstrap.indexing.main", lambda: calls.append("s"))
-    entrypoints.knowledge_sync()
+    knowledge_sync.main()
     assert calls == ["s"]
 
 
@@ -63,7 +70,7 @@ def test_knowledge_watch_runs_worker(monkeypatch):
         calls.append("w")
 
     monkeypatch.setattr("app.bootstrap.knowledge_watch.run", run)
-    entrypoints.knowledge_watch()
+    knowledge_watch.main()
     assert calls == ["w"]
 
 
