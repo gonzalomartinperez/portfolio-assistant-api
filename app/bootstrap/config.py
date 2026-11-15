@@ -3,12 +3,63 @@ import re
 from decimal import Decimal
 from functools import lru_cache
 from typing import Literal, Self
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.domain.budget import Budget
+
+_PAID_PRICING_FIELDS = frozenset(
+    {"input_usd_per_million", "output_usd_per_million", "reservation_usd"}
+)
+
+
+def _check_telemetry_port(endpoint: ParseResult) -> None:
+    try:
+        if endpoint.port is not None and endpoint.port == 0:
+            raise ValueError("invalid_port")
+    except ValueError:
+        raise ValueError("invalid_telemetry_port") from None
+
+
+def _is_private_host(host: str) -> bool:
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return _is_private_name(host)
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+        address = address.ipv4_mapped
+    return address.is_loopback or (
+        address.is_private
+        and not address.is_link_local
+        and not address.is_unspecified
+        and not address.is_multicast
+    )
+
+
+def _is_private_name(host: str) -> bool:
+    labels = host.split(".")
+    return (
+        (len(labels) == 1 or labels[-1] == "internal")
+        and len(host) <= 253
+        and all(re.fullmatch(r"[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?", label) for label in labels)
+    )
+
+
+def _https_origins(origins: list[ParseResult]) -> bool:
+    return bool(origins) and not any(
+        origin.scheme != "https"
+        or not origin.hostname
+        or origin.username
+        or origin.password
+        or origin.path
+        or origin.params
+        or origin.query
+        or origin.fragment
+        or origin.hostname in ("localhost", "127.0.0.1")
+        for origin in origins
+    )
 
 
 class Settings(BaseSettings):
@@ -89,6 +140,16 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def safe_configuration(self) -> Self:
+        self._check_exposure()
+        if not self.otel_sdk_disabled:
+            self._check_telemetry()
+        self._check_prices()
+        self._check_providers()
+        if self.environment == "production":
+            self._check_production()
+        return self
+
+    def _check_exposure(self) -> None:
         if self.product_analytics_country_enabled and not self.product_analytics_country_proxy_ips:
             raise ValueError("country attribution requires explicitly trusted proxy addresses")
         if (
@@ -100,48 +161,24 @@ class Settings(BaseSettings):
             raise ValueError("external tracing is disabled for this application")
         if self.ops_read_token and not self.ops_api_commit:
             raise ValueError("operational access requires an identified API revision")
-        if not self.otel_sdk_disabled:
-            if not self.ops_read_token or not self.otel_private_endpoint:
-                raise ValueError(
-                    "telemetry requires private endpoint and operational configuration"
-                )
-            endpoint = urlparse(self.otel_private_endpoint)
-            host = endpoint.hostname or ""
-            try:
-                if endpoint.port is not None and endpoint.port == 0:
-                    raise ValueError("invalid_port")
-            except ValueError:
-                raise ValueError("invalid_telemetry_port") from None
-            try:
-                address = ipaddress.ip_address(host)
-                if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
-                    address = address.ipv4_mapped
-                private = address.is_loopback or (
-                    address.is_private
-                    and not address.is_link_local
-                    and not address.is_unspecified
-                    and not address.is_multicast
-                )
-            except ValueError:
-                labels = host.split(".")
-                private = (
-                    (len(labels) == 1 or labels[-1] == "internal")
-                    and len(host) <= 253
-                    and all(
-                        re.fullmatch(r"[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?", label)
-                        for label in labels
-                    )
-                )
-            if (
-                endpoint.scheme not in ("http", "https")
-                or not private
-                or endpoint.username
-                or endpoint.password
-                or endpoint.query
-                or endpoint.fragment
-                or endpoint.path not in ("", "/")
-            ):
-                raise ValueError("telemetry endpoint must be a private origin without credentials")
+
+    def _check_telemetry(self) -> None:
+        if not self.ops_read_token or not self.otel_private_endpoint:
+            raise ValueError("telemetry requires private endpoint and operational configuration")
+        endpoint = urlparse(self.otel_private_endpoint)
+        _check_telemetry_port(endpoint)
+        if (
+            endpoint.scheme not in ("http", "https")
+            or not _is_private_host(endpoint.hostname or "")
+            or endpoint.username
+            or endpoint.password
+            or endpoint.query
+            or endpoint.fragment
+            or endpoint.path not in ("", "/")
+        ):
+            raise ValueError("telemetry endpoint must be a private origin without credentials")
+
+    def _check_prices(self) -> None:
         if self.web_search_enabled and (self.ai_provider != "openai" or not self.allow_paid_ai):
             raise ValueError("web search requires explicitly authorized OpenAI")
         if Decimal(self.web_search_usd_per_call) < Decimal("0.01"):
@@ -165,6 +202,8 @@ class Settings(BaseSettings):
             or Decimal(self.embedding_usd_per_million) <= 0
         ):
             raise ValueError("embedding price must be finite and positive")
+
+    def _check_providers(self) -> None:
         if self.embeddings_provider == "openai" and (
             self.ai_provider != "openai" or not self.allow_paid_ai or not self.openai_api_key
         ):
@@ -177,60 +216,33 @@ class Settings(BaseSettings):
             raise ValueError("paid provider requires explicit provider, allowance and key")
         if self.allow_paid_ai and self.ai_provider != "openai":
             raise ValueError("paid allowance requires the OpenAI provider")
-        if self.environment == "production":
-            if self.ai_provider == "openai" and (
-                not self.require_fresh_knowledge or self.embeddings_provider != "openai"
-            ):
-                raise ValueError(
-                    "production OpenAI requires semantic embeddings and fresh knowledge"
-                )
-            db = urlparse(self.database_url)
-            parsed_origins = [urlparse(origin) for origin in self.origins]
-            if (
-                not self.secure_cookies
-                or not parsed_origins
-                or any(
-                    origin.scheme != "https"
-                    or not origin.hostname
-                    or origin.username
-                    or origin.password
-                    or origin.path
-                    or origin.params
-                    or origin.query
-                    or origin.fragment
-                    or origin.hostname in ("localhost", "127.0.0.1")
-                    for origin in parsed_origins
-                )
-            ):
-                raise ValueError("production requires HTTPS origins and secure cookies")
-            if (
-                db.username in (None, "assistant", "postgres")
-                or db.password in (None, "assistant")
-                or db.hostname in (None, "localhost", "127.0.0.1")
-            ):
-                raise ValueError("production database credentials and host must be explicit")
-            if self.neo4j_password == "change-me" or self.neo4j_uri in (
-                "bolt://127.0.0.1:7688",
-                "bolt://localhost:7687",
-            ):
-                raise ValueError("production graph credentials and host must be explicit")
-            if self.rate_hash_key == "local-fixture-only" or len(self.rate_hash_key) < 32:
-                raise ValueError(
-                    "production rate hash key must be random and at least 32 characters"
-                )
-            if (
-                self.allow_paid_ai
-                and not {
-                    "input_usd_per_million",
-                    "output_usd_per_million",
-                    "reservation_usd",
-                }
-                <= self.model_fields_set
-            ):
-                raise ValueError(
-                    "production paid pricing and reservation must be explicitly configured"
-                )
-        return self
+
+    def _check_production(self) -> None:
+        if self.ai_provider == "openai" and (
+            not self.require_fresh_knowledge or self.embeddings_provider != "openai"
+        ):
+            raise ValueError("production OpenAI requires semantic embeddings and fresh knowledge")
+        db = urlparse(self.database_url)
+        parsed_origins = [urlparse(origin) for origin in self.origins]
+        if not self.secure_cookies or not _https_origins(parsed_origins):
+            raise ValueError("production requires HTTPS origins and secure cookies")
+        if (
+            db.username in (None, "assistant", "postgres")
+            or db.password in (None, "assistant")
+            or db.hostname in (None, "localhost", "127.0.0.1")
+        ):
+            raise ValueError("production database credentials and host must be explicit")
+        if self.neo4j_password == "change-me" or self.neo4j_uri in (
+            "bolt://127.0.0.1:7688",
+            "bolt://localhost:7687",
+        ):
+            raise ValueError("production graph credentials and host must be explicit")
+        if self.rate_hash_key == "local-fixture-only" or len(self.rate_hash_key) < 32:
+            raise ValueError("production rate hash key must be random and at least 32 characters")
+        if self.allow_paid_ai and not _PAID_PRICING_FIELDS <= self.model_fields_set:
+            raise ValueError(
+                "production paid pricing and reservation must be explicitly configured"
+            )
 
     @property
     def origins(self) -> list[str]:
