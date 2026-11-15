@@ -475,7 +475,10 @@ The static job collects branch coverage from the offline suite and the database 
 integration suite; a later step combines both and runs `scripts/coverage_gate.py`, which compares
 branch coverage per group (`whole`, `domain`, `application`, `ai`, `adapters`, `presentation`,
 `bootstrap`, `entrypoints`) with `tests/coverage-floors.json`. On pull requests `diff-cover`
-additionally requires 90% coverage of the changed lines.
+additionally requires 90% coverage of the changed lines. The only exception is a pull request whose `app/` changes are all
+plain modifications that equal `ruff format` of the base file (`scripts/format_only_diff.py`, the
+mechanical formatting PR): no behavior changed, so the step logs a notice instead of running
+diff-cover. Any added, deleted or otherwise edited file runs diff-cover as usual.
 
 Floors only ratchet up. After a run that exceeds a floor, raise that value (rounded down to an
 integer) in the same PR; never lower one. Roadmap exit targets for M2 are whole-repo at least 80%,
