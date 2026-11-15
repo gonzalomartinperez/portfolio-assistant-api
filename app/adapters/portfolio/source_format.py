@@ -1,9 +1,12 @@
 """Conservative extraction of explicit public TypeScript fields, never model facts."""
 
 import re
-from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 from app.domain.graph import Fact
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 def facts(path: str, content: str) -> tuple[Fact, ...]:

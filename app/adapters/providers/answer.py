@@ -2,13 +2,11 @@
 
 import asyncio
 import json
-from collections.abc import AsyncGenerator, Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
-from typing import Final, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from openai import APIError, AsyncOpenAI
-from openai.types.responses import ResponseInputParam
 
 from app.adapters.providers.fixture_answer import fixture_message
 from app.adapters.providers.voice import developer_prompt
@@ -18,11 +16,17 @@ from app.application.conversation_context import (
     bounded_history,
     retrieval_question,
 )
-from app.application.presentation_context import PresentationContext
 from app.application.web_context import WebSearch, WebSupplement, supplement
 from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS
 from app.domain.errors import ProviderUnavailableError
 from app.domain.privacy import minimize_visitor_text
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Callable
+
+    from openai.types.responses import ResponseInputParam
+
+    from app.application.presentation_context import PresentationContext
 
 REASONING_EFFORT: Final = "medium"
 
@@ -126,7 +130,7 @@ class ResponsesProvider:
         try:
             events = await self.client.responses.create(
                 model=self.model,
-                input=cast(ResponseInputParam, messages),
+                input=cast("ResponseInputParam", messages),
                 max_output_tokens=MAX_OUTPUT_TOKENS,
                 reasoning={"effort": REASONING_EFFORT},
                 store=False,

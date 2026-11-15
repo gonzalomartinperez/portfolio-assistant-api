@@ -64,7 +64,9 @@ def test_snapshot_source_matches_git_object_ids():
     assert [path for path, _ in files] == sorted(item["path"] for item in manifest()["files"])
     for path, blob_sha in files:
         assert (
-            hashlib.sha1(b"blob %d\0" % len(read(blob_sha)) + read(blob_sha)).hexdigest()
+            hashlib.sha1(
+                b"blob %d\0" % len(read(blob_sha)) + read(blob_sha), usedforsecurity=False
+            ).hexdigest()
             == blob_sha
         )
         assert (ROOT / path).read_bytes() == read(blob_sha)

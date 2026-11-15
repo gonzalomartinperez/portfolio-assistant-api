@@ -62,6 +62,8 @@ _GOAL_TEXT = re.compile(r"(?i)\b(?:design goal|design target|objetivo de|meta de
 
 @dataclass(frozen=True)
 class RerankContext:
+    """Shared query intent and eligible candidates for each ranking step."""
+
     intent: QueryIntent
     eligible: Eligible
 
@@ -70,6 +72,8 @@ Ranked = list[str]
 
 
 class Step(NamedTuple):
+    """A named ranking operation with an applicability predicate."""
+
     id: str
     applies: Callable[[RerankContext], bool]
     apply: Callable[[Ranked, RerankContext], Ranked]
@@ -88,11 +92,13 @@ def _stable_first(ranked: Ranked, first: Callable[[str], bool]) -> Ranked:
 
 
 def overview_first(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Stably promote the first chunk of each profile document."""
     chunks = ctx.eligible.chunks
     return _stable_first(ranked, lambda key: shape.is_profile_head(chunks[key]))
 
 
 def affiliation_filter(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Keep affiliation mentions and promote matching company declarations."""
     chunks = ctx.eligible.chunks
     wanted = tokens(ctx.intent.affiliation or "")
     ranked = _mentioning_affiliation(ranked, ctx)
@@ -103,11 +109,13 @@ def affiliation_filter(ranked: Ranked, ctx: RerankContext) -> Ranked:
 
 
 def performance_metrics(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Stably promote chunks containing qualified metric values."""
     chunks = ctx.eligible.chunks
     return _stable_first(ranked, lambda key: shape.has_metric_entry(chunks[key].content))
 
 
 def exact_name(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Stably promote chunks whose declared names occur in the query."""
     chunks = ctx.eligible.chunks
     terms = ctx.intent.terms
     return _stable_first(
@@ -138,6 +146,7 @@ FIRST_MATCH: tuple[Step, ...] = (
 
 
 def qualification_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Prepend eligible education headers while preserving unique ids."""
     qualification = [
         key for key, chunk in ctx.eligible.chunks.items() if shape.is_education_head(chunk)
     ]
@@ -199,6 +208,7 @@ def _role_anchors(ctx: RerankContext) -> Ranked:
 
 
 def relationship_anchors(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Prepend subject matches or recent distinct roles for relationship queries."""
     chunks = ctx.eligible.chunks
     subjects = comparison_subjects(ctx.intent.question, tuple(c.content for c in chunks.values()))
     anchors = _subject_anchors(ranked, subjects, ctx)
@@ -224,6 +234,7 @@ def _topic_anchor(topic_name: str, ctx: RerankContext) -> str | None:
 
 
 def technical_topic_anchors(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Prepend the best eligible match for each technical topic in the query."""
     question = ctx.intent.question.casefold()
     names = [topic.name.casefold() for topic in TOPICS]
     anchors = [_topic_anchor(name, ctx) for name in names if name in question]
@@ -231,6 +242,7 @@ def technical_topic_anchors(ranked: Ranked, ctx: RerankContext) -> Ranked:
 
 
 def goals_metrics_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
+    """Prepend the strongest profile goal match when one is available."""
     chunks = ctx.eligible.chunks
     goals = [
         key
@@ -240,7 +252,7 @@ def goals_metrics_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
     goals = _mentioning_affiliation(goals, ctx)
     if not goals:
         return ranked
-    return list(dict.fromkeys([max(goals, key=lambda key: ctx.eligible.scores[key])] + ranked))
+    return list(dict.fromkeys([max(goals, key=lambda key: ctx.eligible.scores[key]), *ranked]))
 
 
 # Every applicable step runs, in this order, after the first-match group.
@@ -261,6 +273,7 @@ ANCHORS: tuple[Step, ...] = (
 
 
 def rerank(ranked: Ranked, intent: QueryIntent, eligible: Eligible) -> Ranked:
+    """Apply the first matching ranking step followed by all applicable anchors."""
     ctx = RerankContext(intent, eligible)
     for step in FIRST_MATCH:
         if step.applies(ctx):

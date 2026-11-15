@@ -1,7 +1,7 @@
 """Anonymous public ingestion and separately authorized aggregate reads."""
 
 from dataclasses import asdict
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -115,7 +115,7 @@ def aggregates(request: Request) -> dict[str, object]:
 def detailed_aggregates(
     request: Request,
     period: Period = "month",
-    offset: int = Query(default=0, ge=0, le=2),
+    offset: Annotated[int, Query(ge=0, le=2)] = 0,
     section: Section = "home",
     region_id: Region = "home-featured",
     viewport: Viewport = "desktop",

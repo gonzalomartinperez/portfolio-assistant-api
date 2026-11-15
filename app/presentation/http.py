@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
 from datetime import UTC, datetime
-from typing import NoReturn
+from typing import Annotated, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
@@ -134,7 +134,7 @@ def readyz(request: Request) -> dict[str, str]:
 def create_session(
     request: Request,
     response: Response,
-    x_session_bootstrap: str | None = Header(default=None),
+    x_session_bootstrap: Annotated[str | None, Header()] = None,
 ) -> SessionView:
     if (
         x_session_bootstrap != "1"
@@ -160,7 +160,9 @@ def create_session(
 
 
 @router.get("/api/v1/session", response_model=SessionView, operation_id="getSession")
-def get_session(request: Request, session: Session = Depends(current_session)) -> SessionView:
+def get_session(
+    request: Request, session: Annotated[Session, Depends(current_session)]
+) -> SessionView:
     return SessionView(
         csrf_token=session.csrf_token,
         expires_at=session.expires_at,
@@ -170,7 +172,7 @@ def get_session(request: Request, session: Session = Depends(current_session)) -
 
 @router.delete("/api/v1/session", status_code=204, operation_id="deleteSession")
 def delete_session(
-    request: Request, response: Response, session: Session = Depends(mutation_session)
+    request: Request, response: Response, session: Annotated[Session, Depends(mutation_session)]
 ) -> None:
     request.app.state.conversations.delete_session(session)
     request.app.state.cleanup()
@@ -183,7 +185,9 @@ def delete_session(
     operation_id="createConversation",
 )
 def create_conversation(
-    request: Request, body: ConversationCreate, session: Session = Depends(mutation_session)
+    request: Request,
+    body: ConversationCreate,
+    session: Annotated[Session, Depends(mutation_session)],
 ) -> Conversation:
     return conversations_service(request).create(session, body.title)
 
@@ -211,7 +215,7 @@ def rename_conversation(
     request: Request,
     conversation_id: UUID,
     body: ConversationUpdate,
-    session: Session = Depends(mutation_session),
+    session: Annotated[Session, Depends(mutation_session)],
 ) -> Conversation:
     return conversations_service(request).rename(session, conversation_id, body.title)
 
@@ -222,7 +226,7 @@ def rename_conversation(
     operation_id="deleteConversation",
 )
 def delete_conversation(
-    request: Request, conversation_id: UUID, session: Session = Depends(mutation_session)
+    request: Request, conversation_id: UUID, session: Annotated[Session, Depends(mutation_session)]
 ) -> None:
     request.app.state.conversations.delete(session, conversation_id)
     request.app.state.cleanup()
@@ -310,8 +314,8 @@ def stream_message(
     request: Request,
     conversation_id: UUID,
     body: SendMessage,
-    idempotency_key: str = Header(min_length=8, max_length=128),
-    session: Session = Depends(mutation_session),
+    idempotency_key: Annotated[str, Header(min_length=8, max_length=128)],
+    session: Annotated[Session, Depends(mutation_session)],
 ) -> ClosingStreamingResponse:
     run_id = request.app.state.conversations.prepare_run(
         session,
@@ -348,12 +352,16 @@ def stream_message(
 
 
 @router.get("/api/v1/runs/{run_id}", response_model=RunView, operation_id="getRun")
-def get_run(request: Request, run_id: UUID, session: Session = Depends(current_session)) -> Run:
+def get_run(
+    request: Request, run_id: UUID, session: Annotated[Session, Depends(current_session)]
+) -> Run:
     return conversations_service(request).run(session, run_id)
 
 
 @router.post("/api/v1/runs/{run_id}/cancel", response_model=RunView, operation_id="cancelRun")
-def cancel_run(request: Request, run_id: UUID, session: Session = Depends(mutation_session)) -> Run:
+def cancel_run(
+    request: Request, run_id: UUID, session: Annotated[Session, Depends(mutation_session)]
+) -> Run:
     return conversations_service(request).run(session, run_id, cancel=True)
 
 
@@ -366,7 +374,7 @@ def record_feedback(
     request: Request,
     message_id: UUID,
     body: FeedbackCreate,
-    session: Session = Depends(mutation_session),
+    session: Annotated[Session, Depends(mutation_session)],
 ) -> None:
     request.app.state.conversations.feedback(session, message_id, body.rating)
 

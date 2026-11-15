@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+from typing import TYPE_CHECKING
 
 from app.ai.retrieval.candidates import (
     Eligible,
@@ -15,9 +16,11 @@ from app.ai.retrieval.fusion import fuse
 from app.ai.retrieval.query import QueryIntent, build_intent
 from app.ai.retrieval.rerank import rerank
 from app.ai.retrieval.select import LIMIT, select_evidence
-from app.application.contracts import Evidence
-from app.application.knowledge import Corpus, KnowledgeIndex
 from app.application.observability import phase
+
+if TYPE_CHECKING:
+    from app.application.contracts import Evidence
+    from app.application.knowledge import Corpus, KnowledgeIndex
 
 STRATEGIES = ("hybrid", "vector", "lexical", "graph")
 
@@ -45,7 +48,10 @@ def _rank(
 
 
 class PublicRetrieval:
+    """Retrieve cited public evidence using the selected candidate strategy."""
+
     def __init__(self, index: KnowledgeIndex, strategy: str = "hybrid"):
+        """Bind an index and validate the requested retrieval strategy."""
         if strategy not in STRATEGIES:
             raise ValueError("unsupported retrieval strategy")
         self.index = index
@@ -63,6 +69,7 @@ class PublicRetrieval:
             return [key for key in keys if key in eligible.chunks]
 
     async def search(self, question: str, locale: str) -> tuple[Evidence, ...]:
+        """Return up to five verified sources, or no evidence for unsupported queries."""
         started = time.perf_counter()
         intent = build_intent(question)
         if intent is None:

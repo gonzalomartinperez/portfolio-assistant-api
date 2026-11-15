@@ -1,6 +1,9 @@
 """Weighted reciprocal-rank fusion of candidate lanes."""
 
-from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
 
 
 def fuse(
