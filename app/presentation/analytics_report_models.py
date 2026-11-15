@@ -3,12 +3,14 @@
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 
 from app.domain.analytics import EventName, Section, Target
 from app.domain.analytics_country import COUNTRIES
 from app.domain.analytics_interactions import LayoutRevision, Region, Viewport
 from app.domain.analytics_periods import Period
+
+_COUNTRY_ENUM: list[JsonValue] = [*sorted(COUNTRIES | {"unknown", "withheld"})]
 
 
 class StrictAggregate(BaseModel):
@@ -45,7 +47,7 @@ class ReportCountry(StrictAggregate):
     country: str = Field(
         min_length=2,
         max_length=8,
-        json_schema_extra={"enum": sorted(COUNTRIES | {"unknown", "withheld"})},
+        json_schema_extra={"enum": _COUNTRY_ENUM},
     )
     count: int = Field(ge=1, le=310000)
 
