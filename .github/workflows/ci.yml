@@ -156,7 +156,7 @@ jobs:
     name: Database tests
     if: contains(fromJSON(needs.classify.outputs.jobs), 'database')
     runs-on: ubuntu-24.04
-    # 20 minutes for the gated steps plus the 8-minute cap of the non-gating ablation step.
+    # 20 minutes for the other steps plus the 8-minute cap of the ablation measurement.
     timeout-minutes: 28
     services:
       neo4j:
@@ -242,7 +242,6 @@ jobs:
       if: always()
       timeout-minutes: 8
       run: uv run --frozen --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report-ablation.json --ablate
-      continue-on-error: true
       env:
         EVALUATION_POSTGRES_CONTAINER: ${{ steps.postgres.outputs.container_id }}
         EVALUATION_NEO4J_CONTAINER: ${{ job.services.neo4j.id }}

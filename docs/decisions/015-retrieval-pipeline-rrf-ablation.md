@@ -44,7 +44,9 @@ Relationship queries with graph hits still put the graph lane first.
 Measure offset 60 as `hybrid_rrf60` with the same weights before changing the default.
 The offset must be an integer from 1 to 10,000; `parse_rules` and `RetrievalRules` reject
 anything else. The CI database job budget includes the ablation step's own 8-minute cap,
-so the non-gating measurement cannot consume the time of the gated steps.
+so the measurement cannot consume the time of the other steps. The step has no metric
+thresholds (its deltas never fail CI), but a crash of the harness fails the job, because
+the CI profile forbids hidden step failures in gated jobs.
 
 A disabled additive boost contributes zero and a disabled multiplier leaves the
 score unscaled. A disabled anchor leaves the current ranking unchanged and later
