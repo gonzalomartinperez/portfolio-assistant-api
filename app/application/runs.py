@@ -3,12 +3,10 @@
 import asyncio
 import logging
 import re
-from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
 from time import perf_counter
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID, uuid4
 
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
@@ -22,7 +20,6 @@ from app.application.observability import (
     phase,
     stage_origin,
 )
-from app.application.presentation_context import PresentationContext
 from app.domain.errors import (
     BudgetExhaustedError,
     DependencyUnavailableError,
@@ -30,6 +27,12 @@ from app.domain.errors import (
     RejectedError,
 )
 from app.domain.messages import insufficient_message
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Callable
+
+    from app.application.clock import Clock
+    from app.application.presentation_context import PresentationContext
 
 
 @dataclass(frozen=True)
@@ -131,7 +134,9 @@ class RunService:
         citation_support: Callable[[str, str, str], bool] | None = None,
         timeout_seconds: float = 60,
         observer: ExecutionObserver | None = None,
+        clock: Clock,
     ):
+        self.clock = clock
         if fixture != (citation_support is not None):
             raise ValueError("fixture mode requires citation_support, and only fixture mode")
         self.observer = observer
@@ -182,7 +187,7 @@ class RunService:
         locale: str,
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[RunEvent]:
-        started_at = datetime.now(UTC)
+        started_at = self.clock.now()
         started = perf_counter()
         first_token = None
         outcome: Outcome = "cancelled"

@@ -21,6 +21,7 @@ from evals.harness.items import Item
 from evals.harness.loader import load_items
 from evals.harness.result import GradeResult, RunResult
 from evals.harness.runner import RecordingProvider, collect, item_context
+from tests.support import FixedClock
 from tests.unit.test_workflow import Store
 
 ATTACKS = Path(__file__).resolve().parents[2] / "evals" / "attacks"
@@ -114,7 +115,7 @@ async def run_attack(item: Item, *, hint: str | None = None, detector: bool = Tr
         Retrieval(), recorder, detector=LocalLanguageDetector() if detector else None
     )
     store = Store()
-    service = RunService(store, workflow, fixture=False)
+    service = RunService(store, workflow, fixture=False, clock=FixedClock())
     events = [
         (event.name, {"type": event.name, "payload": event.payload})
         async for event in service.execute(uuid4(), uuid4(), message.content, hint or item.locale)

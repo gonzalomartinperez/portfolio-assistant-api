@@ -12,6 +12,7 @@ from app.adapters.providers.answer import ResponsesProvider
 from app.application.contracts import GenerationFailedError
 from app.bootstrap.config import Settings
 from app.domain.errors import ProviderUnavailableError
+from tests.support import FixedClock
 
 
 def test_utf8_environment_configuration_and_environment_override(tmp_path, monkeypatch):
@@ -74,7 +75,7 @@ def test_real_sdk_partial_stream_closes_without_replaying_generation(termination
             max_retries=0,
             http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)),
         ) as client:
-            stream = ResponsesProvider(client, "gpt-6-luna").stream(
+            stream = ResponsesProvider(client, "gpt-6-luna", clock=FixedClock()).stream(
                 "Question", "Approved public evidence", "en"
             )
             assert await anext(stream) == "Partial answer."

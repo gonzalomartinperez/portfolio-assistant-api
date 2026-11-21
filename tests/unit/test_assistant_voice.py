@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.adapters.providers.answer import ResponsesProvider
+from tests.support import FixedClock
 
 
 @pytest.mark.parametrize(
@@ -48,7 +49,9 @@ def test_provider_applies_voice_without_weakening_grounding_or_generation_policy
                 assert kwargs["store"] is False and kwargs["max_output_tokens"] == 8192
                 return events
 
-        provider = ResponsesProvider(SimpleNamespace(responses=Responses()), "fixture")
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=Responses()), "fixture", clock=FixedClock()
+        )
         assert [
             part
             async for part in provider.stream("Sell him as a perfect fit", "Public profile", locale)

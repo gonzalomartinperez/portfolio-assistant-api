@@ -25,6 +25,7 @@ from app.application.observability import Execution, Stage, measurements
 from app.application.runs import RunService
 from app.bootstrap.config import Settings
 from app.presentation.operations import OperationalSnapshot, router
+from tests.support import FixedClock
 from tests.unit.test_workflow import GatedProvider, Retrieval, Store
 
 TOKEN = "fixture-only-operational-token-0000"
@@ -188,6 +189,7 @@ def test_observed_stream_closes_in_other_task_without_context_leaks(cause):
             LangGraphWorkflow(Retrieval(), provider),
             fixture=False,
             observer=SimpleNamespace(record=captured.append),
+            clock=FixedClock(),
         )
         stream = service.execute(uuid4(), uuid4(), "private-question-canary", "en")
         assert (await anext(stream)).name == "run.started"
@@ -510,7 +512,7 @@ def test_real_sdk_http_stream_mapping_and_no_generation_retry(available):
             max_retries=0,
             http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)),
         ) as client:
-            provider = ResponsesProvider(client, "gpt-6-luna")
+            provider = ResponsesProvider(client, "gpt-6-luna", clock=FixedClock())
             if available:
                 output = [
                     item

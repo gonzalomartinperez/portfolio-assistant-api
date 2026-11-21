@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID, uuid4
 
 from app.domain.conversations import Conversation, Message, Run, Session
 from app.domain.errors import RejectedError
+
+if TYPE_CHECKING:
+    from app.application.clock import Clock
 
 
 def digest(value: str) -> str:
@@ -88,7 +91,10 @@ class ConversationStore(Protocol):
 class Conversations:
     """Anonymous-session policies composed with an authorized persistence capability."""
 
-    def __init__(self, store: ConversationStore, retention_days: int, rate_hash_key: str):
+    def __init__(
+        self, store: ConversationStore, retention_days: int, rate_hash_key: str, *, clock: Clock
+    ):
+        self.clock = clock
         self.store = store
         self.retention_days = retention_days
         self.rate_hash_key = rate_hash_key
@@ -107,7 +113,7 @@ class Conversations:
     def bootstrap(self, subject: str) -> tuple[str, Session]:
         self.store.rate_limit(digest(self.rate_hash_key + subject), "bootstrap", 20)
         raw, csrf = secrets.token_urlsafe(48), secrets.token_urlsafe(32)
-        session = Session(uuid4(), csrf, datetime.now(UTC) + timedelta(days=self.retention_days))
+        session = Session(uuid4(), csrf, self.clock.now() + timedelta(days=self.retention_days))
         self.store.create_session(session.id, digest(raw), csrf, session.expires_at)
         return raw, session
 

@@ -5,8 +5,8 @@ import time
 from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
-from datetime import UTC, datetime
-from typing import Annotated, NoReturn
+from datetime import datetime
+from typing import TYPE_CHECKING, Annotated, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
@@ -36,13 +36,12 @@ from app.presentation.models import (
 from app.presentation.streaming import ClosingStreamingResponse, heartbeat
 
 log = logging.getLogger("portfolio_assistant")
+if TYPE_CHECKING:
+    from app.application.clock import Clock
+
 router = APIRouter(
     responses={code: {"model": ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)}
 )
-
-
-def utcnow() -> datetime:
-    return datetime.now(UTC)
 
 
 def fail(code: str, status: int = 400) -> NoReturn:
@@ -252,7 +251,13 @@ def list_messages(
 
 
 def sse(
-    event_type: str, run_id: UUID, conversation_id: UUID, sequence: int, payload: dict[str, object]
+    event_type: str,
+    run_id: UUID,
+    conversation_id: UUID,
+    sequence: int,
+    payload: dict[str, object],
+    *,
+    clock: Clock,
 ) -> str:
     body = events.validate_python(
         {
@@ -260,7 +265,7 @@ def sse(
             "run_id": run_id,
             "conversation_id": conversation_id,
             "sequence": sequence,
-            "timestamp": utcnow(),
+            "timestamp": clock.now(),
             "payload": payload,
         }
     )
@@ -288,7 +293,14 @@ async def execute_run(
                     first_delta_ms = round((time.perf_counter() - started) * 1000, 1)
                 if event.name in ("run.completed", "run.failed", "run.cancelled"):
                     terminal = event.name
-                yield sse(event.name, run_id, conversation_id, sequence, event.payload)
+                yield sse(
+                    event.name,
+                    run_id,
+                    conversation_id,
+                    sequence,
+                    event.payload,
+                    clock=request.app.state.clock,
+                )
                 sequence += 1
     finally:
         log.info(

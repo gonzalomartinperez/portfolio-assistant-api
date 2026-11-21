@@ -8,6 +8,7 @@ import pytest
 
 from app.application.contracts import WorkflowEvent
 from app.application.runs import RunService, citations, normalize_citation_markers
+from tests.support import FixedClock
 from tests.unit.test_workflow import SOURCE, Store
 
 
@@ -66,7 +67,7 @@ def test_stream_final_and_persistence_use_the_same_canonical_answer():
 
     async def run():
         store = RecordingStore()
-        service = RunService(store, Workflow(), fixture=False)
+        service = RunService(store, Workflow(), fixture=False, clock=FixedClock())
         events = [event async for event in service.execute(uuid4(), uuid4(), "question", "en")]
         assert "".join(
             event.payload["text"] for event in events if event.name == "message.delta"
@@ -85,4 +86,4 @@ def test_stream_final_and_persistence_use_the_same_canonical_answer():
 )
 def test_run_service_rejects_inconsistent_fixture_wiring(fixture, support):
     with pytest.raises(ValueError, match="citation_support"):
-        RunService(Store(), object(), fixture=fixture, citation_support=support)
+        RunService(Store(), object(), fixture=fixture, citation_support=support, clock=FixedClock())

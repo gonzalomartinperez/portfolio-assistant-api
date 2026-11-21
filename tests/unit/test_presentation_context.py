@@ -15,6 +15,7 @@ from app.ai.workflow import LangGraphWorkflow
 from app.application.contracts import AnswerCommand
 from app.application.presentation_context import PortfolioPath, PresentationContext
 from app.presentation.models import SendMessage
+from tests.support import FixedClock
 from tests.unit.test_workflow import SOURCE
 
 CONTEXT = {
@@ -135,7 +136,9 @@ def test_provider_keeps_metadata_in_untrusted_user_data_and_closes_stream():
             return events
 
     async def run():
-        provider = ResponsesProvider(SimpleNamespace(responses=Responses()), "gpt-6-luna")
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=Responses()), "gpt-6-luna", clock=FixedClock()
+        )
         async with aclosing(
             provider.stream("Question", "Verified source", "en", context=context)
         ) as stream:
