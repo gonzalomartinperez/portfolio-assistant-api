@@ -22,7 +22,7 @@ class FixedClock:
     def __init__(self, current: datetime = FIXED_NOW) -> None:
         if current.tzinfo is None:
             raise ValueError("FixedClock requires a timezone-aware datetime")
-        self.current = current
+        self.current = current.astimezone(UTC)
 
     def now(self) -> datetime:
         return self.current

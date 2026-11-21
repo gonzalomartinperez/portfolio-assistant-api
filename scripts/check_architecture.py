@@ -210,6 +210,7 @@ def architecture_errors(root: Path) -> list[str]:
         package = path.name == "__init__.py"
         module = module.removesuffix(".__init__")
         if module == "app":
+            errors.extend(wall_clock_errors(module, path.read_text()))
             continue
         if module.split(".")[1] not in LAYERS and module not in ENTRY_POINTS:
             errors.append(f"unclassified application module: {module}")

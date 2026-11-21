@@ -105,7 +105,7 @@ class ResponsesProvider:
         *,
         clock: Clock,
     ):
-        self.today = today or (lambda: clock.now().date())
+        self.today = today if today is not None else (lambda: clock.now().date())
         self.client = client
         self.model = model
         self.rejects_language = rejects_language

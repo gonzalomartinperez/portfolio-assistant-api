@@ -152,3 +152,10 @@ def test_console_scripts_must_target_bootstrap_entrypoints():
     for target in ("app.main:run", "app.bootstrap.entrypoints.api:serve", "app.bootstrap:api"):
         bad = f'[project.scripts]\nx = "{target}"\n'
         assert console_script_errors(bad), target
+
+
+def test_root_package_is_scanned_for_wall_clock_reads(tmp_path):
+    root = tmp_path / "app"
+    root.mkdir()
+    (root / "__init__.py").write_text("import time\nSTARTED = time.time()\n")
+    assert any("wall-clock" in error for error in architecture_errors(root))
