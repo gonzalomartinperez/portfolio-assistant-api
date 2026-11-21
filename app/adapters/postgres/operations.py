@@ -5,13 +5,14 @@ import hashlib
 import logging
 import secrets
 from dataclasses import asdict
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from psycopg.types.json import Jsonb
 
-from app.adapters.postgres.db import Connect
-from app.application.clock import Clock
-from app.application.observability import Execution
+if TYPE_CHECKING:
+    from app.adapters.postgres.db import Connect
+    from app.application.clock import Clock
+    from app.application.observability import Execution
 
 
 class OperationsConfig(Protocol):

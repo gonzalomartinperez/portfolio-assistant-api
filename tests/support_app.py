@@ -189,10 +189,9 @@ def build_app(
     app.state.retrieval = retrieval or StubRetrieval()
     app.state.provider = provider or StubProvider()
     app.state.accounting = accounting
-    app.state.clock = FixedClock()
-    app.state.conversations = Conversations(
-        app.state.store, 7, settings.rate_hash_key, clock=FixedClock()
-    )
+    clock = FixedClock()  # one shared instance: SSE, conversations and runs agree on "now"
+    app.state.clock = clock
+    app.state.conversations = Conversations(app.state.store, 7, settings.rate_hash_key, clock=clock)
     workflow = LangGraphWorkflow(app.state.retrieval, app.state.provider, accounting)
     app.state.runs = RunService(
         app.state.run_store,
@@ -200,7 +199,7 @@ def build_app(
         fixture=fixture,
         citation_support=fixture_supports if fixture else None,
         timeout_seconds=timeout,
-        clock=FixedClock(),
+        clock=clock,
     )
     app.state.ready = lambda: "009"
     app.state.cleanup = lambda: None

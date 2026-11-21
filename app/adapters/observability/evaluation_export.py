@@ -1,7 +1,7 @@
 """One synchronous aggregate run; no automatic visitor tracing or raw report input."""
 
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from langsmith import Client
@@ -10,8 +10,9 @@ from requests import Response, Session
 from requests.exceptions import RequestException
 from urllib3.util.retry import Retry
 
-from app.application.clock import Clock
-from app.application.evaluation_export import EvaluationSummary
+if TYPE_CHECKING:
+    from app.application.clock import Clock
+    from app.application.evaluation_export import EvaluationSummary
 
 ENDPOINT = "https://api.smith.langchain.com"
 PROJECT = "portfolio-synthetic-evaluations"

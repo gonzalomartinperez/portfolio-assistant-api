@@ -6,12 +6,11 @@ from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
 from datetime import datetime
-from typing import Annotated, NoReturn
+from typing import TYPE_CHECKING, Annotated, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 
-from app.application.clock import Clock
 from app.application.conversations import Conversations, digest
 from app.application.presentation_context import PresentationContext
 from app.domain.conversations import Conversation, Run, Session
@@ -37,6 +36,9 @@ from app.presentation.models import (
 from app.presentation.streaming import ClosingStreamingResponse, heartbeat
 
 log = logging.getLogger("portfolio_assistant")
+if TYPE_CHECKING:
+    from app.application.clock import Clock
+
 router = APIRouter(
     responses={code: {"model": ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)}
 )

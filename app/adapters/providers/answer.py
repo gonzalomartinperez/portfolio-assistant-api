@@ -3,14 +3,12 @@
 import asyncio
 import json
 from dataclasses import asdict, dataclass
-from datetime import date
 from typing import TYPE_CHECKING, Final, cast
 
 from openai import APIError, AsyncOpenAI
 
 from app.adapters.providers.fixture_answer import fixture_message
 from app.adapters.providers.voice import developer_prompt
-from app.application.clock import Clock
 from app.application.contracts import GenerationFailedError, Usage
 from app.application.conversation_context import (
     Turn,
@@ -24,9 +22,11 @@ from app.domain.privacy import minimize_visitor_text
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable
+    from datetime import date
 
     from openai.types.responses import ResponseInputParam
 
+    from app.application.clock import Clock
     from app.application.presentation_context import PresentationContext
 
 REASONING_EFFORT: Final = "medium"

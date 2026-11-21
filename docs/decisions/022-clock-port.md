@@ -1,11 +1,11 @@
 # ADR022: Clock port for wall-clock time
 
-Status: accepted (2026-11-15, master plan task M4-3b).
+Status: accepted (2026-11-15, master plan task M4-3, Clock part).
 
 ## Context and problem
 
-Seven call sites read wall-clock time directly (`datetime.now(UTC)`): session expiry in
-`Conversations`, `started_at` in `RunService`, the operations snapshot and feedback summary
+Eight call sites read wall-clock time directly (`datetime.now(UTC)`): session expiry in
+`Conversations`, `started_at` in `RunService`, the operations snapshot (two reads) and feedback summary
 timestamps, the evaluation export run time, the provider's "today" default and the SSE event
 timestamp in `app/presentation/http.py`. Tests that needed a stable "now" had to patch the
 module clock or avoid asserting on time, and nothing prevented a new direct read from
@@ -57,10 +57,17 @@ are not wall time and are unchanged.
 
 - `scripts/check_architecture.py` (`wall_clock_errors`, run by `uv run python -m
   scripts.check_architecture` and `tests/architecture/test_architecture.py::test_architecture`)
-  rejects `datetime.now`, `utcnow`, `datetime.today`, `date.today`, `time.time` and `time.time_ns`
+  rejects `datetime.now`, `utcnow`, `datetime.today`, `date.today`, `time.time`, `time.time_ns`,
+  `time.gmtime`, `time.localtime`, `time.ctime` and `time.strftime`
   in every `app/` module except `app/adapters/clock.py`: calls, bare references such as
   `default_factory=datetime.now`, `datetime.datetime.now`, aliases
-  (`from datetime import datetime as dt; dt.now()`, `import time as t`) and `from time import time`.
+  (`from datetime import datetime as dt; dt.now()`, `import time as t`) and `from time import time`. It is a best-effort syntactic guard: star imports
+  (`from datetime import *`) and assignment aliases (`D = datetime; D.now()`) are not tracked,
+  and `getattr`, `time.clock_gettime(time.CLOCK_REALTIME)` and dynamic imports
+  (`__import__("time")`) are left to review. The operator harness `evals/harness/golden.py`
+  composes its own `SystemClock` in record mode; `evals/` and `scripts/` are outside the guard.
+- `tests/unit/test_clock_wiring.py` proves the injected value reaches session expiry, the SSE
+  timestamp and the provider's default date.
 - `tests/architecture/test_architecture.py::test_rejects_wall_clock_reads` holds one negative
   probe per form; `test_allows_clock_adapter_and_monotonic_timers` proves the adapter and
   `time.perf_counter` stay allowed.

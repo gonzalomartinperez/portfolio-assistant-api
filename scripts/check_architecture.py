@@ -34,6 +34,11 @@ WALL_CLOCK_READS = {
     "datetime.date.today",
     "time.time",
     "time.time_ns",
+    # Without a timestamp argument these read the wall clock; app/ has no use for them.
+    "time.gmtime",
+    "time.localtime",
+    "time.ctime",
+    "time.strftime",
 }
 
 
@@ -67,9 +72,11 @@ def wall_clock_errors(module: str, source: str) -> list[str]:
             return f"{base}.{node.attr}" if base else None
         return None
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Attribute) and resolve(node) in WALL_CLOCK_READS:
-            errors.append(f"{module}: wall-clock read {resolve(node)}; inject Clock")
+    errors.extend(
+        f"{module}: wall-clock read {resolve(node)}; inject Clock"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Attribute) and resolve(node) in WALL_CLOCK_READS
+    )
     return errors
 
 

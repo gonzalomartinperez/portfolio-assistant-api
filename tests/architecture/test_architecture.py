@@ -85,6 +85,10 @@ def test_allows_owned_ports(module, source):
         "from time import time\nx = time()",
         "from time import time as clock\nx = clock()",
         "from datetime import UTC, datetime\nx = lambda: datetime.now(UTC).date()",
+        "import time\nx = time.gmtime()",
+        "import time\nx = time.localtime()",
+        "from time import ctime\nx = ctime()",
+        "import time\nx = time.strftime('%Y')",
     ],
 )
 def test_rejects_wall_clock_reads(source):

@@ -5,12 +5,14 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID, uuid4
 
-from app.application.clock import Clock
 from app.domain.conversations import Conversation, Message, Run, Session
 from app.domain.errors import RejectedError
+
+if TYPE_CHECKING:
+    from app.application.clock import Clock
 
 
 def digest(value: str) -> str:

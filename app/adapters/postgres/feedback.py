@@ -1,8 +1,12 @@
 """Current ratings on retained answers, without reading their content or IDs."""
 
-from app.adapters.postgres.db import Connect
-from app.application.clock import Clock
+from typing import TYPE_CHECKING
+
 from app.application.feedback import FeedbackSummary
+
+if TYPE_CHECKING:
+    from app.adapters.postgres.db import Connect
+    from app.application.clock import Clock
 
 
 class PostgresFeedback:

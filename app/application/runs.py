@@ -3,14 +3,12 @@
 import asyncio
 import logging
 import re
-from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
 from dataclasses import asdict, dataclass
 from time import perf_counter
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 from uuid import UUID, uuid4
 
-from app.application.clock import Clock
 from app.application.contracts import AnswerCommand, Evidence, Workflow, WorkflowEvent
 from app.application.conversation_context import Turn, bounded_history
 from app.application.observability import (
@@ -22,7 +20,6 @@ from app.application.observability import (
     phase,
     stage_origin,
 )
-from app.application.presentation_context import PresentationContext
 from app.domain.errors import (
     BudgetExhaustedError,
     DependencyUnavailableError,
@@ -30,6 +27,12 @@ from app.domain.errors import (
     RejectedError,
 )
 from app.domain.messages import insufficient_message
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Callable
+
+    from app.application.clock import Clock
+    from app.application.presentation_context import PresentationContext
 
 
 @dataclass(frozen=True)
