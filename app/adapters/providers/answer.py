@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Final, cast
 
@@ -21,10 +22,11 @@ from app.domain.errors import ProviderUnavailableError
 from app.domain.privacy import minimize_visitor_text
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Callable
+    from collections.abc import AsyncGenerator, AsyncIterator, Callable
     from datetime import date
 
-    from openai.types.responses import ResponseInputParam
+    from openai import AsyncStream
+    from openai.types.responses import ResponseInputParam, ResponseStreamEvent
 
     from app.application.clock import Clock
     from app.application.presentation_context import PresentationContext
@@ -119,6 +121,7 @@ class ResponsesProvider:
         history: tuple[Turn, ...] = (),
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[str | Usage]:
+        """Stream translated deltas and usage with the SDK stream scoped to this call."""
         if not evidence:
             yield fixture_message(question, evidence, locale)
             return
@@ -126,6 +129,37 @@ class ResponsesProvider:
         web = await supplement(question, evidence, self.web_search)
         request = assemble_request(question, evidence, locale, history, context, web, self.today())
         messages, prompt_version = request.messages, request.prompt_version
+        async with self._open_events(messages) as events:
+            completed = False
+            prefix = "" if self.rejects_language is not None else None
+            async for event in events:
+                if event.type == "response.output_text.delta" and event.delta:
+                    prefix, text = self._accept_delta(prefix, event.delta)
+                    if text:
+                        yield text
+                elif event.type == "response.completed":
+                    if prefix:
+                        self._check_language(prefix)
+                        yield prefix
+                        prefix = ""
+                    completed = True
+                    usage = event.response.usage
+                    if usage is not None:
+                        yield Usage(
+                            usage.input_tokens,
+                            usage.output_tokens,
+                            prompt_version,
+                        )
+                elif event.type in ("response.failed", "response.incomplete", "error"):
+                    raise GenerationFailedError("provider_failed")
+            if not completed:
+                raise GenerationFailedError("provider_interrupted")
+
+    @asynccontextmanager
+    async def _open_events(
+        self, messages: list[dict[str, str]]
+    ) -> AsyncIterator[AsyncStream[ResponseStreamEvent]]:
+        """Enforce the request bound and close the SDK stream on every exit."""
         # Bound the escaped text actually sent, with room for message framing.
         input_bytes = sum(len(message["content"].encode("utf-8")) for message in messages)
         if input_bytes + 1024 > MAX_INPUT_TOKENS:
@@ -141,41 +175,24 @@ class ResponsesProvider:
             )
         except APIError:
             raise ProviderUnavailableError("provider_unavailable") from None
-        completed = False
-        prefix = ""
-        language_checked = self.rejects_language is None
         try:
-            async for event in events:
-                if event.type == "response.output_text.delta" and event.delta:
-                    if language_checked:
-                        yield event.delta
-                    else:
-                        prefix += event.delta
-                        if len(prefix) >= 256:
-                            if self.rejects_language and self.rejects_language(prefix[:512]):
-                                raise GenerationFailedError("output_language")
-                            language_checked = True
-                            yield prefix
-                            prefix = ""
-                elif event.type == "response.completed":
-                    if prefix:
-                        if self.rejects_language and self.rejects_language(prefix):
-                            raise GenerationFailedError("output_language")
-                        yield prefix
-                        prefix = ""
-                    completed = True
-                    usage = event.response.usage
-                    if usage is not None:
-                        yield Usage(
-                            usage.input_tokens,
-                            usage.output_tokens,
-                            prompt_version,
-                        )
-                elif event.type in ("response.failed", "response.incomplete", "error"):
-                    raise GenerationFailedError("provider_failed")
-            if not completed:
-                raise GenerationFailedError("provider_interrupted")
+            yield events
         except APIError:
             raise ProviderUnavailableError("provider_unavailable") from None
         finally:
             await events.close()
+
+    def _accept_delta(self, prefix: str | None, delta: str) -> tuple[str | None, str]:
+        """Buffer the initial text while a language check is pending."""
+        if prefix is None:
+            return None, delta
+        prefix += delta
+        if len(prefix) < 256:
+            return prefix, ""
+        self._check_language(prefix[:512])
+        return None, prefix
+
+    def _check_language(self, text: str) -> None:
+        """Reject disallowed output before exposing the buffered text."""
+        if self.rejects_language and self.rejects_language(text):
+            raise GenerationFailedError("output_language")

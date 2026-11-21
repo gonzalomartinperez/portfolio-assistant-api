@@ -29,6 +29,7 @@ from app.domain.errors import (
 from app.domain.messages import insufficient_message
 
 if TYPE_CHECKING:
+    from asyncio import AbstractEventLoop
     from collections.abc import AsyncGenerator, Callable
 
     from app.application.clock import Clock
@@ -120,6 +121,28 @@ def citations(
         record.pop("content")
         result.append(record)
     return result
+
+
+@dataclass
+class _RunOutput:
+    """Collect the workflow's final answer and sources as progress is emitted."""
+
+    answer: str = ""
+    sources: tuple[Evidence, ...] = ()
+
+    def apply(self, event: WorkflowEvent) -> RunEvent | None:
+        """Retain finalization data and translate visible workflow updates."""
+        if event.kind == "evidence":
+            self.sources = event.sources
+            return RunEvent(
+                "run.status",
+                {"phase": "evidence_found", "sources": len(self.sources)},
+            )
+        if event.kind == "delta":
+            return RunEvent("message.delta", {"text": event.text})
+        if event.kind == "answer":
+            self.answer = event.text
+        return None
 
 
 class RunService:
@@ -257,8 +280,7 @@ class RunService:
         context: PresentationContext | None = None,
     ) -> AsyncGenerator[RunEvent]:
         """Yield v1 events; cancel silent providers and never save partial answers."""
-        answer = ""
-        sources: tuple[Evidence, ...] = ()
+        output = _RunOutput()
         pending: asyncio.Task[WorkflowEvent] | None = None
         self._active_runs.add(run_id)
         try:
@@ -283,18 +305,12 @@ class RunService:
             ) as stream:
                 while True:
                     pending = asyncio.create_task(anext(stream))
-                    # Poll persisted cancellation even while the upstream provider is silent.
                     try:
-                        while not pending.done():
-                            remaining = deadline - loop.time()
-                            if remaining <= 0:
-                                raise TimeoutError("run deadline exceeded")
-                            await asyncio.wait({pending}, timeout=min(0.1, remaining))
-                            if not await self.store.running(run_id):
-                                pending.cancel()
-                                await asyncio.gather(pending, return_exceptions=True)
-                                yield RunEvent("run.cancelled", {})
-                                return
+                        if not await self._wait_for_workflow(run_id, pending, loop, deadline):
+                            pending.cancel()
+                            await asyncio.gather(pending, return_exceptions=True)
+                            yield RunEvent("run.cancelled", {})
+                            return
                     except BaseException:
                         pending.cancel()
                         await asyncio.gather(pending, return_exceptions=True)
@@ -303,47 +319,16 @@ class RunService:
                         event = pending.result()
                     except StopAsyncIteration:
                         break
-                    if event.kind == "evidence":
-                        sources = event.sources
-                        yield RunEvent(
-                            "run.status",
-                            {"phase": "evidence_found", "sources": len(sources)},
-                        )
-                    elif event.kind == "delta":
-                        yield RunEvent("message.delta", {"text": event.text})
-                    elif event.kind == "answer":
-                        answer = event.text
-            with phase("finalization"):
-                refs = citations(sources, answer, self.citation_support)
-                if not self.fixture:
-                    answer = normalize_citation_markers(answer, len(sources))
-                message_id = await self.store.complete(run_id, conversation_id, answer, refs)
-            if message_id is None:
+                    if (progress := output.apply(event)) is not None:
+                        yield progress
+            completed = await self._finalize(run_id, conversation_id, output)
+            if completed is None:
                 yield RunEvent("run.cancelled", {})
                 return
-            yield RunEvent(
-                "message.completed",
-                {"message_id": str(message_id), "content": answer, "citations": refs},
-            )
+            yield completed
             yield RunEvent("run.completed", {"state": "completed"})
         except Exception as error:  # noqa: BLE001 - Public stream fault boundary: preserve a terminal event without exposing internals.
-            code = (
-                "budget_exhausted"
-                if isinstance(error, BudgetExhaustedError)
-                else "provider_unavailable"
-                if isinstance(error, ProviderUnavailableError)
-                else error.code
-                if isinstance(error, RejectedError)
-                else "generation_failed"
-            )
-            try:
-                changed = await self.store.fail(run_id, code)
-            except DependencyUnavailableError:
-                # The persisted lease reconciles this run when storage recovers.
-                changed = True
-            yield (
-                RunEvent("run.failed", {"code": code}) if changed else RunEvent("run.cancelled", {})
-            )
+            yield await self._failure_event(run_id, error)
         finally:
             # The cleanup task survives cancellation from an ASGI task-group scope.
             cleanup = self._schedule_interrupt(run_id)
@@ -352,3 +337,55 @@ class RunService:
                 pending.cancel()
                 await asyncio.gather(pending, return_exceptions=True)
             await asyncio.shield(cleanup)
+
+    async def _wait_for_workflow(
+        self,
+        run_id: UUID,
+        pending: asyncio.Task[WorkflowEvent],
+        loop: AbstractEventLoop,
+        deadline: float,
+    ) -> bool:
+        """Poll persisted cancellation even when the upstream provider is silent."""
+        while not pending.done():
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                raise TimeoutError("run deadline exceeded")
+            await asyncio.wait({pending}, timeout=min(0.1, remaining))
+            if not await self.store.running(run_id):
+                return False
+        return True
+
+    async def _finalize(
+        self, run_id: UUID, conversation_id: UUID, output: _RunOutput
+    ) -> RunEvent | None:
+        """Persist the canonical answer before exposing the completed message."""
+        answer, sources = output.answer, output.sources
+        with phase("finalization"):
+            refs = citations(sources, answer, self.citation_support)
+            if not self.fixture:
+                answer = normalize_citation_markers(answer, len(sources))
+            message_id = await self.store.complete(run_id, conversation_id, answer, refs)
+        if message_id is None:
+            return None
+        return RunEvent(
+            "message.completed",
+            {"message_id": str(message_id), "content": answer, "citations": refs},
+        )
+
+    async def _failure_event(self, run_id: UUID, error: Exception) -> RunEvent:
+        """Report a safe failure or honor a concurrent terminal transition."""
+        code = (
+            "budget_exhausted"
+            if isinstance(error, BudgetExhaustedError)
+            else "provider_unavailable"
+            if isinstance(error, ProviderUnavailableError)
+            else error.code
+            if isinstance(error, RejectedError)
+            else "generation_failed"
+        )
+        try:
+            changed = await self.store.fail(run_id, code)
+        except DependencyUnavailableError:
+            # The persisted lease reconciles this run when storage recovers.
+            changed = True
+        return RunEvent("run.failed", {"code": code}) if changed else RunEvent("run.cancelled", {})
