@@ -5,13 +5,14 @@ import hashlib
 import logging
 import secrets
 from dataclasses import asdict
-from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from psycopg.types.json import Jsonb
 
-from app.adapters.postgres.db import Connect
-from app.application.observability import Execution
+if TYPE_CHECKING:
+    from app.adapters.postgres.db import Connect
+    from app.application.clock import Clock
+    from app.application.observability import Execution
 
 
 class OperationsConfig(Protocol):
@@ -39,7 +40,8 @@ class ExecutionExporter(Protocol):
 
 
 class PostgresOperations:
-    def __init__(self, connection: Connect, config: OperationsConfig) -> None:
+    def __init__(self, connection: Connect, config: OperationsConfig, *, clock: Clock) -> None:
+        self.clock = clock
         self.connection = connection
         self.config = config
 
@@ -72,7 +74,7 @@ class PostgresOperations:
             watch = conn.execute(
                 "SELECT observed_commit,checked_at FROM knowledge_watch WHERE singleton"
             ).fetchone()
-            age = (datetime.now(UTC) - watch["checked_at"]).total_seconds() if watch else None
+            age = (self.clock.now() - watch["checked_at"]).total_seconds() if watch else None
             state = (
                 "stale"
                 if age is None or age > self.config.knowledge_freshness_seconds
@@ -93,7 +95,7 @@ class PostgresOperations:
             ).fetchall()
         return {
             "schema_version": 1,
-            "observed_at": datetime.now(UTC).isoformat(),
+            "observed_at": self.clock.now().isoformat(),
             "api_commit": self.config.ops_api_commit,
             "availability": "ready" if state == "fresh" else "degraded",
             "knowledge": {

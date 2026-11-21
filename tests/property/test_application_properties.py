@@ -23,6 +23,7 @@ from app.application.runs import (
 )
 from app.presentation.http import execute_run, sse
 from scripts.scan_secrets import PATTERNS, matches
+from tests.support import FixedClock
 
 pytestmark = pytest.mark.property
 
@@ -105,7 +106,9 @@ async def collect(stream):
             yield event
 
     request = SimpleNamespace(
-        app=SimpleNamespace(state=SimpleNamespace(runs=SimpleNamespace(execute=execute))),
+        app=SimpleNamespace(
+            state=SimpleNamespace(runs=SimpleNamespace(execute=execute), clock=FixedClock())
+        ),
         state=SimpleNamespace(request_id="r"),
     )
     return [
@@ -134,7 +137,7 @@ def test_stream_frames_use_the_closed_event_set_with_one_terminal(deltas, termin
 @given(st.text(max_size=20).filter(lambda name: name not in EVENT_NAMES))
 def test_unknown_event_names_never_become_frames(name):
     with pytest.raises(ValidationError):
-        sse(name, uuid4(), uuid4(), 0, {})
+        sse(name, uuid4(), uuid4(), 0, {}, clock=FixedClock())
 
 
 # Language policy ------------------------------------------------------------

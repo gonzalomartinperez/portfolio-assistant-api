@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 
+from app.adapters.clock import SystemClock
 from app.adapters.observability.evaluation_export import LangSmithEvaluationExporter
 from app.application.evaluation_export import EvaluationSummary, export_evaluation
 
@@ -42,7 +43,9 @@ def run(path: Path, *, authorize_export: bool = False) -> str:
     key = os.environ.get("EVALUATION_LANGSMITH_API_KEY", "")
     if not 16 <= len(key) <= 256 or not key.isascii() or any(c.isspace() for c in key):
         raise ValueError("explicit evaluation credential required")
-    return export_evaluation(summary, authorized=True, exporter=LangSmithEvaluationExporter(key))
+    return export_evaluation(
+        summary, authorized=True, exporter=LangSmithEvaluationExporter(key, clock=SystemClock())
+    )
 
 
 def main() -> None:

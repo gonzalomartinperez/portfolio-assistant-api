@@ -20,6 +20,7 @@ from app.domain.prompts import (
     prompt_version,
     render,
 )
+from tests.support import FixedClock
 
 PROMPTS = Path(answer.__file__).parents[2] / "prompts"
 SNAPSHOTS = Path(__file__).parent / "snapshots"
@@ -138,6 +139,7 @@ def test_developer_message_is_byte_identical_to_the_inline_original(locale, web,
         "model",
         web_search=object() if web else None,
         today=lambda: date(2026, 11, 14),
+        clock=FixedClock(),
     )
 
     async def run():

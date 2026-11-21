@@ -10,6 +10,7 @@ from app.adapters.providers.web_search import OpenAIWebSearch
 from app.application.web_context import WebReference, WebSupplement, supplement
 from app.bootstrap.config import Settings
 from app.domain.web_policy import TOPICS, approved_web_url, technical_topic
+from tests.support import FixedClock
 
 
 @pytest.mark.parametrize(
@@ -335,7 +336,10 @@ def test_external_documentation_cannot_acquire_career_source_marker_ids():
                 return Events()
 
         provider = ResponsesProvider(
-            SimpleNamespace(responses=Responses()), "gpt-6-luna", web_search=Search()
+            SimpleNamespace(responses=Responses()),
+            "gpt-6-luna",
+            web_search=Search(),
+            clock=FixedClock(),
         )
         assert [
             item

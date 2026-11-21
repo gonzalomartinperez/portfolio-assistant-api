@@ -3,7 +3,6 @@
 import asyncio
 import json
 from dataclasses import asdict, dataclass
-from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING, Final, cast
 
 from openai import APIError, AsyncOpenAI
@@ -23,9 +22,11 @@ from app.domain.privacy import minimize_visitor_text
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable
+    from datetime import date
 
     from openai.types.responses import ResponseInputParam
 
+    from app.application.clock import Clock
     from app.application.presentation_context import PresentationContext
 
 REASONING_EFFORT: Final = "medium"
@@ -100,9 +101,11 @@ class ResponsesProvider:
         model: str,
         rejects_language: Callable[[str], bool] | None = None,
         web_search: WebSearch | None = None,
-        today: Callable[[], date] = lambda: datetime.now(UTC).date(),
+        today: Callable[[], date] | None = None,
+        *,
+        clock: Clock,
     ):
-        self.today = today
+        self.today = today if today is not None else (lambda: clock.now().date())
         self.client = client
         self.model = model
         self.rejects_language = rejects_language
