@@ -174,6 +174,19 @@ def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
     if not anchors:
         return 0
     score = 3.0 * len(terms & (content | path)) + len(anchors) + 2 * len(expanded & path)
+    score = _boost_path_score(score, row, terms, content)
+    profile = profile_parts(row["path"])
+    if profile is not None and profile[0] == locale:
+        score *= 1.35
+    elif profile is not None:
+        score *= 0.45
+    return score
+
+
+def _boost_path_score(
+    score: float, row: EvidenceRecord, terms: set[str], content: set[str]
+) -> float:
+    """Prioritize the sections that directly support the query terms."""
     if "portfolio" in terms and row["path"] == "README.md":
         score *= 2
         if "Engineering at a glance" in row["content"]:
@@ -196,11 +209,6 @@ def lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
             not tech and "summary:" in row["content"]
         ):
             score *= 3
-    profile = profile_parts(row["path"])
-    if profile is not None and profile[0] == locale:
-        score *= 1.35
-    elif profile is not None:
-        score *= 0.45
     return score
 
 

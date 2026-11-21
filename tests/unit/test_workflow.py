@@ -1,8 +1,12 @@
 import asyncio
 from contextlib import aclosing
-from unittest.mock import ANY
+from types import SimpleNamespace
+from unittest.mock import ANY, AsyncMock, MagicMock, Mock, call
+from uuid import UUID
 
+import httpx
 import pytest
+from openai import APIError
 
 from app.adapters.providers.answer import ResponsesProvider
 from app.adapters.providers.fixture_answer import fixture_supports
@@ -13,8 +17,10 @@ from app.application.contracts import (
     Evidence,
     GenerationFailedError,
     Usage,
+    WorkflowEvent,
 )
-from app.application.runs import RunService
+from app.application.runs import RunEvent, RunService
+from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError, RejectedError
 from tests.support import FixedClock
 
 SOURCE = Evidence(
@@ -125,6 +131,9 @@ def test_interrupted_stream_cancels_silent_provider_without_saving_partial_answe
             if cause == "cancel":
                 store.active = False
             rest = [event async for event in stream]
+            if cause == "cancel":
+                # The cancellation poll stops the run, not the 5-second deadline.
+                assert store.failure is None
             assert [event.name for event in rest] == [
                 "run.cancelled" if cause == "cancel" else "run.failed"
             ]
@@ -263,8 +272,6 @@ def test_output_limit_closes_provider_and_unknown_usage_is_not_refunded():
 
 
 def test_async_responses_translation_usage_prompt_roles_and_stream_close():
-    from types import SimpleNamespace
-
     async def run():
         class Events:
             closed = False
@@ -344,10 +351,9 @@ def test_http_send_failure_closes_stream_before_returning():
     asyncio.run(run())
 
 
-def test_storage_outage_after_partial_output_still_delivers_safe_terminal():
+def test_storage_outage_after_partial_output_still_delivers_safe_terminal(caplog):
     from uuid import uuid4
 
-    from app.application.contracts import WorkflowEvent
     from app.domain.errors import DependencyUnavailableError
 
     class Workflow:
@@ -382,12 +388,11 @@ def test_storage_outage_after_partial_output_still_delivers_safe_terminal():
         assert events[-1].payload == {"code": "generation_failed"}
 
     asyncio.run(run())
+    assert caplog.messages == ['{"operation":"run_cleanup","status":"lease_recovery_pending"}']
 
 
 @pytest.mark.parametrize("terminal", ["response.failed", "response.incomplete", None])
 def test_provider_failure_after_delta_is_not_completion(terminal):
-    from types import SimpleNamespace
-
     async def run():
         class Events:
             closed = False
@@ -414,7 +419,8 @@ def test_provider_failure_after_delta_is_not_completion(terminal):
         )
         stream = provider.stream("question", "public evidence", "en")
         assert await anext(stream) == "partial"
-        with pytest.raises(GenerationFailedError):
+        code = "provider_failed" if terminal else "provider_interrupted"
+        with pytest.raises(GenerationFailedError, match=rf"^{code}$"):
             await anext(stream)
         assert events.closed
 
@@ -445,8 +451,6 @@ def test_heartbeat_preserves_events_and_closes_silent_upstream():
 
 
 def test_provider_rejects_escaped_input_above_reserved_bound_before_io():
-    from types import SimpleNamespace
-
     from app.application.conversation_context import Turn
 
     class Responses:
@@ -461,5 +465,283 @@ def test_provider_rejects_escaped_input_above_reserved_bound_before_io():
         stream = provider.stream("\x00" * 4000, "\U0010ffff" * 19000, "en", history)
         with pytest.raises(GenerationFailedError, match="input_limit"):
             await anext(stream)
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("deltas", "rejected", "with_usage", "checked", "expected"),
+    [
+        (("short", ""), False, True, "short", ["short", Usage(10, 1, ANY)]),
+        (
+            ("x" * 255, "y", "tail"),
+            False,
+            True,
+            "x" * 255 + "y",
+            ["x" * 255 + "y", "tail", Usage(10, 1, ANY)],
+        ),
+        (("x" * 600,), False, False, "x" * 512, ["x" * 600]),
+        (("short",), None, False, "short", ["short"]),
+        (("x" * 256,), None, False, "x" * 256, ["x" * 256]),
+        (("short",), True, True, "short", []),
+        (("x" * 256,), True, True, "x" * 256, []),
+    ],
+)
+def test_responses_language_buffer_and_usage_order(deltas, rejected, with_usage, checked, expected):
+    async def items():
+        yield SimpleNamespace(type="response.created")
+        for delta in deltas:
+            yield SimpleNamespace(type="response.output_text.delta", delta=delta)
+        yield SimpleNamespace(
+            type="response.completed",
+            response=SimpleNamespace(
+                usage=SimpleNamespace(input_tokens=10, output_tokens=1) if with_usage else None,
+            ),
+        )
+
+    async def run():
+        events = SimpleNamespace(close=AsyncMock())
+
+        class Events:
+            __aiter__ = staticmethod(items)
+            close = events.close
+
+        create = AsyncMock(return_value=Events())
+        reject = MagicMock(return_value=rejected)
+        reject.__bool__.return_value = rejected is not None
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=SimpleNamespace(create=create)),
+            "fixture-model",
+            reject,
+            clock=FixedClock(),
+        )
+        stream = provider.stream("question", "public evidence", "en")
+        if rejected:
+            with pytest.raises(GenerationFailedError, match=r"^output_language$"):
+                await anext(stream)
+        else:
+            assert [part async for part in stream] == expected
+        assert reject.call_args_list == ([] if rejected is None else [call(checked)])
+        create.assert_awaited_once()
+        events.close.assert_awaited_once_with()
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("failure", ["sdk", "error", "cancel", "close"])
+def test_responses_midstream_failure_closes_without_retry(failure):
+    async def run():
+        waiting = asyncio.Event()
+        cancel = asyncio.CancelledError("request cancelled")
+        api_error = APIError(
+            "private detail", httpx.Request("POST", "https://example.test"), body=None
+        )
+
+        async def items():
+            yield SimpleNamespace(type="response.output_text.delta", delta="first")
+            if failure == "sdk":
+                raise api_error
+            if failure == "error":
+                yield SimpleNamespace(type="error")
+            elif failure == "close":
+                yield SimpleNamespace(
+                    type="response.completed", response=SimpleNamespace(usage=None)
+                )
+            else:
+                waiting.set()
+                try:
+                    await asyncio.Event().wait()
+                except asyncio.CancelledError:
+                    raise cancel from None
+
+        closed = AsyncMock(side_effect=api_error if failure == "close" else None)
+
+        class Events:
+            __aiter__ = staticmethod(items)
+            close = closed
+
+        create = AsyncMock(return_value=Events())
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=SimpleNamespace(create=create)),
+            "fixture-model",
+            clock=FixedClock(),
+        )
+        stream = provider.stream("question", "public evidence", "en")
+        assert await anext(stream) == "first"
+        closed.assert_not_awaited()
+        if failure == "cancel":
+            pull = asyncio.create_task(anext(stream))
+            await waiting.wait()
+            pull.cancel()
+            with pytest.raises(asyncio.CancelledError, match=r"^request cancelled$") as caught:
+                await pull
+            assert caught.value is cancel
+        elif failure == "sdk":
+            with pytest.raises(ProviderUnavailableError, match=r"^provider_unavailable$") as caught:
+                await anext(stream)
+            assert caught.value.__suppress_context__
+        elif failure == "close":
+            with pytest.raises(APIError, match=r"^private detail$") as caught:
+                await anext(stream)
+            assert caught.value is api_error
+        else:
+            with pytest.raises(GenerationFailedError, match=r"^provider_failed$"):
+                await anext(stream)
+        create.assert_awaited_once()
+        closed.assert_awaited_once_with()
+
+    asyncio.run(run())
+
+
+def test_responses_without_evidence_does_not_use_search_or_open_stream():
+    async def run():
+        search = SimpleNamespace(search=AsyncMock())
+        create = AsyncMock()
+        detect = Mock()
+        provider = ResponsesProvider(
+            SimpleNamespace(responses=SimpleNamespace(create=create)),
+            "fixture-model",
+            detect,
+            search,
+            clock=FixedClock(),
+        )
+        assert [part async for part in provider.stream("question", "", "en")] == [
+            "I don't have enough public information to confirm that."
+        ]
+        search.search.assert_not_awaited()
+        create.assert_not_awaited()
+        detect.assert_not_called()
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("error", "changed", "expected"),
+    [
+        (BudgetExhaustedError(), True, RunEvent("run.failed", {"code": "budget_exhausted"})),
+        (
+            ProviderUnavailableError(),
+            True,
+            RunEvent("run.failed", {"code": "provider_unavailable"}),
+        ),
+        (
+            RejectedError("knowledge_updating"),
+            True,
+            RunEvent("run.failed", {"code": "knowledge_updating"}),
+        ),
+        (RuntimeError("private detail"), False, RunEvent("run.cancelled", {})),
+    ],
+)
+def test_run_maps_workflow_failure_after_closing_and_interrupts_after_terminal(
+    error, changed, expected
+):
+    async def run():
+        run_id, conversation_id = UUID(int=1), UUID(int=2)
+        trace = Mock()
+        store = Mock()
+        store.start = AsyncMock(return_value=True)
+        store.history = AsyncMock(return_value=())
+        store.running = AsyncMock(return_value=True)
+        store.fail = AsyncMock(return_value=changed)
+        store.interrupt = AsyncMock()
+        trace.attach_mock(store, "store")
+
+        async def events(command):
+            trace.open_workflow(command)
+            try:
+                yield WorkflowEvent("delta", text="partial")
+                raise error
+            finally:
+                trace.close_workflow()
+
+        service = RunService(
+            store, SimpleNamespace(stream=events), fixture=False, clock=FixedClock()
+        )
+        async for event in service.execute(run_id, conversation_id, "q", "en"):
+            trace.emit(event)
+        assert trace.mock_calls == [
+            call.store.start(run_id),
+            call.emit(RunEvent("run.started", {"state": "running"})),
+            call.store.history(run_id, conversation_id),
+            call.open_workflow(AnswerCommand(str(run_id), "q", "en")),
+            call.store.running(run_id),
+            call.emit(RunEvent("message.delta", {"text": "partial"})),
+            call.close_workflow(),
+            call.store.running(run_id),
+            call.store.fail(run_id, expected.payload.get("code", "generation_failed")),
+            call.emit(expected),
+            call.store.interrupt(run_id),
+        ]
+
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize(
+    ("claimed", "message_id"), [(False, None), (True, None), (True, UUID(int=3))]
+)
+def test_run_claim_completion_and_cleanup_order(claimed, message_id):
+    async def run():
+        run_id, conversation_id = UUID(int=1), UUID(int=2)
+        trace = Mock()
+        store = Mock()
+        store.start = AsyncMock(return_value=claimed)
+        store.history = AsyncMock(return_value=())
+        store.running = AsyncMock(return_value=True)
+        store.complete = AsyncMock(return_value=message_id)
+        store.interrupt = AsyncMock()
+        trace.attach_mock(store, "store")
+
+        async def events(command):
+            trace.open_workflow(command)
+            try:
+                yield WorkflowEvent("answer", text="finished")
+            finally:
+                trace.close_workflow()
+
+        service = RunService(
+            store,
+            SimpleNamespace(stream=events),
+            fixture=True,
+            citation_support=fixture_supports,
+            observer=SimpleNamespace(record=trace.observe),
+            clock=FixedClock(),
+        )
+        async for event in service.execute(run_id, conversation_id, "q", "en"):
+            trace.emit(event)
+        expected = [call.store.start(run_id)]
+        if claimed:
+            expected += [
+                call.emit(RunEvent("run.started", {"state": "running"})),
+                call.store.history(run_id, conversation_id),
+                call.open_workflow(AnswerCommand(str(run_id), "q", "en")),
+                call.store.running(run_id),
+                call.close_workflow(),
+                call.store.running(run_id),
+                call.store.complete(run_id, conversation_id, "finished", []),
+            ]
+        if message_id is None:
+            expected.append(call.emit(RunEvent("run.cancelled", {})))
+        else:
+            expected += [
+                call.emit(
+                    RunEvent(
+                        "message.completed",
+                        {
+                            "message_id": str(message_id),
+                            "content": "finished",
+                            "citations": [],
+                        },
+                    )
+                ),
+                call.emit(RunEvent("run.completed", {"state": "completed"})),
+            ]
+        expected.append(call.store.interrupt(run_id))
+        if claimed:
+            expected.append(call.observe(ANY))
+        assert trace.mock_calls == expected
+        if claimed:
+            observation = trace.observe.call_args.args[0]
+            assert observation.outcome == ("completed" if message_id else "cancelled")
+            assert [stage.name for stage in observation.stages] == ["finalization"]
 
     asyncio.run(run())
