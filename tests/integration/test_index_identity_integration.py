@@ -9,8 +9,8 @@ from uuid import uuid4
 import pytest
 from neo4j import GraphDatabase
 
-from app.adapters.portfolio import indexing
-from app.adapters.portfolio.source_format import facts_for
+from portfolio_assistant.adapters.portfolio import indexing
+from portfolio_assistant.adapters.portfolio.source_format import facts_for
 
 pytestmark = [
     pytest.mark.integration,
@@ -26,8 +26,8 @@ pytestmark = [
 def test_profile_switch_preserves_legacy_and_retired_projections(
     tmp_path, monkeypatch, first, source_root
 ):
-    from app.bootstrap.config import Settings
-    from app.bootstrap.maintenance import connect
+    from portfolio_assistant.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.maintenance import connect
 
     repo = tmp_path / "public-fixture"
     repo.mkdir()

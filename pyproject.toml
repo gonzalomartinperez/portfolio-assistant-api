@@ -23,19 +23,19 @@ dependencies = [
 ]
 
 [project.scripts]
-assistant-api = "app.bootstrap.entrypoints.api:main"
-assistant-migrate = "app.bootstrap.entrypoints.migrate:main"
-assistant-retention = "app.bootstrap.entrypoints.retention:main"
-assistant-knowledge-sync = "app.bootstrap.entrypoints.knowledge_sync:main"
-assistant-knowledge-watch = "app.bootstrap.entrypoints.knowledge_watch:main"
+assistant-api = "portfolio_assistant.bootstrap.entrypoints.api:main"
+assistant-migrate = "portfolio_assistant.bootstrap.entrypoints.migrate:main"
+assistant-retention = "portfolio_assistant.bootstrap.entrypoints.retention:main"
+assistant-knowledge-sync = "portfolio_assistant.bootstrap.entrypoints.knowledge_sync:main"
+assistant-knowledge-watch = "portfolio_assistant.bootstrap.entrypoints.knowledge_watch:main"
 
 [build-system]
 requires = ["uv_build==0.13.1"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "app"
-module-root = ""
+module-name = ["portfolio_assistant", "app"]
+module-root = "src"
 
 [dependency-groups]
 dev = [
@@ -61,15 +61,15 @@ load = [
 ]
 
 [tool.importlinter]
-root_package = "app"
+root_package = "portfolio_assistant"
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "Application layer direction"
 type = "layers"
-containers = ["app"]
+containers = ["portfolio_assistant"]
 layers = [
-    "(main) | (migrate) | (retention) | (knowledge_sync) | (knowledge_watch)",
+    "main",
     "bootstrap",
     "presentation | adapters | ai",
     "application",
@@ -79,7 +79,7 @@ layers = [
 [[tool.importlinter.contracts]]
 name = "Inner layers avoid third-party and platform I/O imports"
 type = "forbidden"
-source_modules = ["app.domain", "app.application"]
+source_modules = ["portfolio_assistant.domain", "portfolio_assistant.application"]
 # External submodules are collapsed to their top-level package. The AST guard
 # handles urllib.request and enforces the open-ended stdlib-only rule.
 forbidden_modules = [
@@ -105,10 +105,10 @@ allow_indirect_imports = true
 [[tool.importlinter.contracts]]
 name = "Application siblings are acyclic"
 type = "acyclic_siblings"
-ancestors = ["app"]
+ancestors = ["portfolio_assistant"]
 
 [tool.vulture]
-paths = ["app", "scripts"]
+paths = ["src", "scripts"]
 min_confidence = 80
 ignore_names = [
     "cls", # Pydantic classmethod validators.
@@ -125,7 +125,7 @@ line-length = 100
 extend-select = ["W", "F", "I", "B", "UP", "PIE", "LOG", "G", "N", "RET", "D200", "D201", "D202", "D205", "D209", "D210", "D300", "D403", "D415", "D417", "C90"]
 
 [tool.ruff.lint.mccabe]
-# M4-2: every function in app/ stays at cyclomatic complexity 10 or less.
+# M4-2: every function in src/portfolio_assistant/ stays at cyclomatic complexity 10 or less.
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
@@ -152,7 +152,7 @@ markers = [
 ]
 
 [tool.mypy]
-files = ["app", "evals", "scripts/database_security_receipt.py"]
+files = ["src", "evals", "scripts/database_security_receipt.py"]
 strict = true
 
 [tool.ruff.format]
@@ -165,22 +165,22 @@ quote-style = "double"
 
 [tool.mutmut]
 paths_to_mutate = [
-    "app/domain/budget.py",
-    "app/domain/privacy.py",
-    "app/domain/evidence.py",
-    "app/domain/analytics_periods.py",
-    "app/domain/web_policy.py",
-    "app/application/answer.py",
-    "app/application/runs.py",
-    "app/application/contracts.py",
-    "app/ai/retrieval/__init__.py",
-    "app/ai/retrieval/candidates.py",
-    "app/ai/retrieval/fusion.py",
-    "app/ai/retrieval/pipeline.py",
-    "app/ai/retrieval/query.py",
-    "app/ai/retrieval/rerank.py",
-    "app/ai/retrieval/select.py",
-    "app/ai/retrieval/source_shape.py",
+    "src/portfolio_assistant/domain/budget.py",
+    "src/portfolio_assistant/domain/privacy.py",
+    "src/portfolio_assistant/domain/evidence.py",
+    "src/portfolio_assistant/domain/analytics_periods.py",
+    "src/portfolio_assistant/domain/web_policy.py",
+    "src/portfolio_assistant/application/answer.py",
+    "src/portfolio_assistant/application/runs.py",
+    "src/portfolio_assistant/application/contracts.py",
+    "src/portfolio_assistant/ai/retrieval/__init__.py",
+    "src/portfolio_assistant/ai/retrieval/candidates.py",
+    "src/portfolio_assistant/ai/retrieval/fusion.py",
+    "src/portfolio_assistant/ai/retrieval/pipeline.py",
+    "src/portfolio_assistant/ai/retrieval/query.py",
+    "src/portfolio_assistant/ai/retrieval/rerank.py",
+    "src/portfolio_assistant/ai/retrieval/select.py",
+    "src/portfolio_assistant/ai/retrieval/source_shape.py",
 ]
 tests_dir = [
     "tests/unit/test_operations.py",
@@ -194,13 +194,13 @@ tests_dir = [
     "tests/unit/test_conversation_context.py",
     "tests/unit/test_presentation_context.py",
 ]
-also_copy = ["app", "contracts"]
+also_copy = ["src/portfolio_assistant", "contracts"]
 process_isolation = "fork"
 pytest_add_cli_args = ["-q", "-p", "no:cacheprovider", "-m", "not integration"]
 
 [tool.coverage.run]
 branch = true
-source = ["app"]
+source = ["src/portfolio_assistant", "src/app"]
 relative_files = true
 
 [tool.coverage.report]

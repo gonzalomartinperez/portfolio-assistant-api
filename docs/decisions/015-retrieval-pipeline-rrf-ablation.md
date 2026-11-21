@@ -33,7 +33,7 @@ This narrower scope and the fusion default below supersede parts of
 [target-state section 5](../master-plan/target-state.md#5-retrieval-and-domain-refactor-paa-d18).
 
 `DEFAULT_RULES` is canonical. Bootstrap loads its packaged
-[rules.toml](../../app/ai/retrieval/rules.toml) mirror in strict mode and injects the immutable
+[rules.toml](../../src/portfolio_assistant/ai/retrieval/rules.toml) mirror in strict mode and injects the immutable
 rules into the pipeline. The equality test parses the file in strict mode and compares it with
 `DEFAULT_RULES`. A non-empty `disabled` list in the shipped file would ablate production
 retrieval and fail that test.
@@ -76,4 +76,4 @@ if both the golden and retrieval gates stay green with the rule removed.
 - [Rule tests](../../tests/unit/test_retrieval_rules.py) pin strict TOML equality and exercise
   each single-rule ablation, including first-match precedence.
 - CI retains `artifacts/retrieval-report-ablation.json` from the database job.
-- `uv run ruff check --select C901 app/ai/retrieval` checks the complexity budget.
+- `uv run ruff check --select C901 src/portfolio_assistant/ai/retrieval` checks the complexity budget.

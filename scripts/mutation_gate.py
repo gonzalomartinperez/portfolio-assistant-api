@@ -40,7 +40,13 @@ def parse_results(output: str) -> dict[str, Counter[str]]:
         seen.add(name)
         if name.startswith("evals.harness.graders."):
             group = "graders"
-        elif name.startswith(("app.domain.", "app.application.", "app.ai.")):
+        elif name.startswith(
+            (
+                "portfolio_assistant.domain.",
+                "portfolio_assistant.application.",
+                "portfolio_assistant.ai.",
+            )
+        ):
             group = name.split(".")[1]
         else:
             raise ValueError(f"Unscoped mutant: {name}")

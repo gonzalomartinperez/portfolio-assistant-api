@@ -10,7 +10,7 @@ public portfolio. Visitor questions, conversation history and the assembled prom
 with retrieved evidence would all leave the service if a hosted tracer were enabled,
 and the privacy decision recorded in the threat model is that visitor text never
 leaves the service except in the single generation call to the configured model
-provider. The settings validator in `app/bootstrap/config.py`
+provider. The settings validator in `src/portfolio_assistant/bootstrap/config.py`
 (`Settings.safe_configuration`) already rejects every LangSmith and LangChain
 tracing switch, and only scalar, allowlisted OpenTelemetry attributes may go to a
 private OTLP endpoint (`docs/explanation/private-observability.md`).

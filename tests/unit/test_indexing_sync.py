@@ -13,7 +13,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.adapters.portfolio import indexing
+from portfolio_assistant.adapters.portfolio import indexing
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

@@ -24,7 +24,7 @@ paid calls or deployment; the current task's scope and authority still decide (A
 
 1. Read AGENTS.md, `docs/master-plan/roadmap.md` (the item and its acceptance criteria) and `docs/master-plan/progress.md`.
 2. `git fetch` and create a worktree under `../wt/<slug>` on `<type>/<milestone>-<slug>` from `origin/develop`. Never work on `develop` or `main` directly.
-3. Write or extend the failing test at the right layer first (`app/domain` pure unit tests, application use cases, adapters, HTTP/SSE contract), then implement. Keep one concern and about 400 changed lines.
+3. Write or extend the failing test at the right layer first (`src/portfolio_assistant/domain` pure unit tests, application use cases, adapters, HTTP/SSE contract), then implement. Keep one concern and about 400 changed lines.
 4. Select checks by risk (see Selecting and reading checks), then run `just check` and `just test` (offline: `uv run pytest -q -m 'not integration'`). Integration needs `TEST_INTEGRATION=1` and isolated Compose projects, ports and databases (`docs/tutorials/local-development.md`). Fix until green. Fixture mode stays the default; no real API key is read or used.
 5. Run the review chain: reviewer agent, Codex second opinion (or the documented fallback), architecture-reviewer for structural changes. Reproduce every finding before acting.
 6. Open the PR into `develop` with `.github/PULL_REQUEST_TEMPLATE.md`. Merge only with current owner authorization, green checks and the required reviews: `gh pr checks <n> --watch`, then `gh pr merge <n> --merge --delete-branch`. Promotion to `main` needs separate explicit approval.
@@ -36,12 +36,12 @@ Start with `git status --short` and inspect the diff without altering unrelated 
 
 | Change | Evidence |
 | --- | --- |
-| Pure policy (`app/domain`, `app/application`) | targeted unit and `tests/architecture` tests, Ruff, strict mypy |
+| Pure policy (`src/portfolio_assistant/domain`, `src/portfolio_assistant/application`) | targeted unit and `tests/architecture` tests, Ruff, strict mypy |
 | HTTP or SSE | `uv run python -m contracts.export` shows no drift, ownership and CSRF tests, incremental delivery and cancellation tests, [frontend handoff](../../../docs/reference/frontend-handoff.md) |
 | Persistence or knowledge | real pgvector and Neo4j in the integration lane, concurrency, migration and failed-index recovery; retrieval numbers through evaluate-assistant |
 | CI, container or Compose | `bash scripts/check_workflows.sh`, `uv run python -m scripts.validate_compose`, then `uv run python -m scripts.container_smoke --image <ref>`; keep pinned actions, minimal permissions and the `Required checks` aggregate |
-| Public contract (`contracts/`, `app/presentation/`) | `uv run pytest -q -m contract`, `uv run python -m scripts.contract_diff --base-sha origin/develop` (needs `oasdiff`), `contract-major` label only for an owner-approved break; see refresh-contract |
-| Prompts, retrieval, `app/ai`, graders | `uv run pytest -q tests/evals`, `uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json --compare`, `just eval-golden` (exit 3 means re-record, owner-only); see evaluate-assistant and change-prompt |
+| Public contract (`contracts/`, `src/portfolio_assistant/presentation/`) | `uv run pytest -q -m contract`, `uv run python -m scripts.contract_diff --base-sha origin/develop` (needs `oasdiff`), `contract-major` label only for an owner-approved break; see refresh-contract |
+| Prompts, retrieval, `src/portfolio_assistant/ai`, graders | `uv run pytest -q tests/evals`, `uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json --compare`, `just eval-golden` (exit 3 means re-record, owner-only); see evaluate-assistant and change-prompt |
 | Invariants, faults, load | `uv run pytest -q tests/property`, `uv run pytest -q tests/resilience`; load is `uv run --group load python -m tests.load.run_load --profile smoke` |
 | Provider HTTP or lifecycle | `uv run pytest -q tests/unit/test_provider_http.py tests/unit/test_provider_lifecycle.py` |
 | Security-sensitive | hand the diff to review-change, which delegates to owasp-security-review |

@@ -7,17 +7,17 @@ import typing
 import pytest
 from pydantic import ValidationError
 
-from app.application.answer import bounded_sources, generate
-from app.application.contracts import AnswerCommand, GenerationFailedError
-from app.application.conversation_context import (
+from evals.harness.adversary import bad_text
+from evals.harness.items import Rail
+from portfolio_assistant.application.answer import bounded_sources, generate
+from portfolio_assistant.application.contracts import AnswerCommand, GenerationFailedError
+from portfolio_assistant.application.conversation_context import (
     Turn,
     bounded_history,
     retrieval_question,
 )
-from app.application.runs import normalize_citation_markers
-from app.presentation.models import SendMessage
-from evals.harness.adversary import bad_text
-from evals.harness.items import Rail
+from portfolio_assistant.application.runs import normalize_citation_markers
+from portfolio_assistant.presentation.models import SendMessage
 from tests.evals.attack_lane import by_rail_ids, load_attacks, run_attack, source
 
 PII = re.compile(r"maria\.lopez|\+54 9 291|sk-proj-AbCd")

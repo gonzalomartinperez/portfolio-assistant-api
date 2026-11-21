@@ -8,19 +8,23 @@ import httpx
 import pytest
 from openai import APIError
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.adapters.providers.fixture_answer import fixture_supports
-from app.ai.workflow import LangGraphWorkflow
-from app.application.answer import generate
-from app.application.contracts import (
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_supports
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.answer import generate
+from portfolio_assistant.application.contracts import (
     AnswerCommand,
     Evidence,
     GenerationFailedError,
     Usage,
     WorkflowEvent,
 )
-from app.application.runs import RunEvent, RunService
-from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError, RejectedError
+from portfolio_assistant.application.runs import RunEvent, RunService
+from portfolio_assistant.domain.errors import (
+    BudgetExhaustedError,
+    ProviderUnavailableError,
+    RejectedError,
+)
 from tests.support import FixedClock
 
 SOURCE = Evidence(
@@ -148,7 +152,7 @@ def test_run_timeout_fires_when_each_event_is_pulled_by_a_new_task():
     """The SSE heartbeat pulls every event from a fresh task; the deadline must still hold."""
     from uuid import uuid4
 
-    from app.presentation.streaming import heartbeat
+    from portfolio_assistant.presentation.streaming import heartbeat
 
     async def run():
         store, provider = Store(), GatedProvider()
@@ -324,7 +328,7 @@ def test_async_responses_translation_usage_prompt_roles_and_stream_close():
 def test_http_send_failure_closes_stream_before_returning():
     from starlette.requests import ClientDisconnect
 
-    from app.presentation.streaming import ClosingStreamingResponse
+    from portfolio_assistant.presentation.streaming import ClosingStreamingResponse
 
     async def run():
         closed = asyncio.Event()
@@ -354,7 +358,7 @@ def test_http_send_failure_closes_stream_before_returning():
 def test_storage_outage_after_partial_output_still_delivers_safe_terminal(caplog):
     from uuid import uuid4
 
-    from app.domain.errors import DependencyUnavailableError
+    from portfolio_assistant.domain.errors import DependencyUnavailableError
 
     class Workflow:
         async def stream(self, command):
@@ -428,7 +432,7 @@ def test_provider_failure_after_delta_is_not_completion(terminal):
 
 
 def test_heartbeat_preserves_events_and_closes_silent_upstream():
-    from app.presentation.streaming import heartbeat
+    from portfolio_assistant.presentation.streaming import heartbeat
 
     async def run():
         release, closed = asyncio.Event(), asyncio.Event()
@@ -451,7 +455,7 @@ def test_heartbeat_preserves_events_and_closes_silent_upstream():
 
 
 def test_provider_rejects_escaped_input_above_reserved_bound_before_io():
-    from app.application.conversation_context import Turn
+    from portfolio_assistant.application.conversation_context import Turn
 
     class Responses:
         async def create(self, **kwargs):

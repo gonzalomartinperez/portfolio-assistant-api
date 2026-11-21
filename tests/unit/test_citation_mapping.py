@@ -6,8 +6,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.application.contracts import WorkflowEvent
-from app.application.runs import RunService, citations, normalize_citation_markers
+from portfolio_assistant.application.contracts import WorkflowEvent
+from portfolio_assistant.application.runs import RunService, citations, normalize_citation_markers
 from tests.support import FixedClock
 from tests.unit.test_workflow import SOURCE, Store
 

@@ -56,42 +56,42 @@ transaction rollback, run transitions, ledger writes and cancellation.
 
 ### Residual inventory
 
-Each row represents one reference under `app/`, including the three callbacks
+Each row represents one reference under `src/portfolio_assistant/`, including the three callbacks
 passed to the lifespan exit stack.
 
 | Module | Function | Blocking operation and reason to keep | Effect of cancelling the awaiter once work starts |
 |---|---|---|---|
-| `app.adapters.portfolio.watch` | `PublishedPortfolio.latest` | Synchronous Git fetch and revision lookup | Git can still finish and update `FETCH_HEAD`. The watcher loses the result. |
-| `app.adapters.portfolio.watch` | `PublicKnowledgePublisher.observe` | Synchronous PostgreSQL observation upsert | The observation can still commit. |
-| `app.adapters.portfolio.watch` | `PublicKnowledgePublisher.publish` | Synchronous projection build and publication, including Git and storage I/O | Publication can keep running. The worker's separate stop event is checked cooperatively. |
-| `app.adapters.postgres.ledger` | `PostgresAccounting.reserve` | Synchronous advisory lock, budget check and inference reservation insert | The reservation can still commit and count against the monthly cap. |
-| `app.adapters.postgres.ledger` | `PostgresAccounting.settle` | Synchronous inference cost and token update | The settlement can still commit. |
-| `app.adapters.postgres.operations` | `OperationalObserver._consume` | Synchronous observation insert via `store.save` | The consumer shields the write and joins it on cancellation before exiting. |
-| `app.adapters.postgres.operations` | `OperationalObserver.close` | Synchronous exporter flush and shutdown | Exporter cleanup can continue after the await is interrupted. |
-| `app.adapters.postgres.runs` | `PostgresRuns.start` | Synchronous transition from pending to running with a lease | The transition can still commit without returning its result. |
-| `app.adapters.postgres.runs` | `PostgresRuns.history` | Synchronous conversation history query | The query can still hold a connection until it finishes. Its result is discarded. |
-| `app.adapters.postgres.runs` | `PostgresRuns.running` | Synchronous run-state read | The query can still hold a connection until it finishes. Its result is discarded. |
-| `app.adapters.postgres.runs` | `PostgresRuns.complete` | Synchronous row lock, assistant message insert and run completion in one transaction | The message and completion can still commit together without returning the message ID. |
-| `app.adapters.postgres.runs` | `PostgresRuns.fail` | Synchronous transition to failed | The transition can still commit without returning its result. |
-| `app.adapters.postgres.runs` | `PostgresRuns.interrupt` | Synchronous transition to interrupted | The transition can still commit. |
-| `app.adapters.postgres.web_ledger` | `WebAccounting.reserve` | Synchronous advisory lock, budget check and web reservation insert | The reservation can still commit without returning its ID. |
-| `app.adapters.postgres.web_ledger` | `WebAccounting.settle` | Synchronous web cost and token update | The settlement can still commit. |
-| `app.adapters.providers.embedding` | `OpenAIEmbeddings.query` | Synchronous embedding budget reservation | The reservation can still commit without returning its ID or starting the provider request. |
-| `app.adapters.providers.embedding` | `OpenAIEmbeddings.query` | Synchronous embedding usage settlement | The settlement can still commit even if the embedding result is discarded. |
-| `app.adapters.retrieval` | `KnowledgeIndex.candidates` | Synchronous PostgreSQL corpus snapshot and lexical search | The reads can continue and occupy a connection. Their results are discarded. |
-| `app.adapters.retrieval` | `KnowledgeIndex.candidates` | Synchronous PostgreSQL vector-neighbor query | The query can continue and occupy a connection. Its result is discarded. |
-| `app.adapters.retrieval` | `KnowledgeIndex.relationships` | Synchronous Neo4j relationship reads | The reads can continue and occupy a graph session. Their results are discarded. |
-| `app.bootstrap.container` | `create_app.lifespan` | Synchronous PostgreSQL pool open with a readiness wait | The open can still run while startup unwinds into cleanup. |
-| `app.bootstrap.container` | `create_app.lifespan` | Synchronous PostgreSQL pool close in the exit stack | The pool close can continue after its cleanup await is interrupted. |
-| `app.bootstrap.container` | `create_app.lifespan` | Synchronous Neo4j driver close in the exit stack | Driver cleanup can continue after its cleanup await is interrupted. |
-| `app.bootstrap.container` | `create_app.lifespan` | Synchronous embedding client close in the exit stack | HTTP client cleanup can continue after its cleanup await is interrupted. |
-| `app.presentation.operations` | `snapshot` | Synchronous PostgreSQL operational snapshot | The reads can outlive the four-second request deadline and occupy a connection. |
-| `app.presentation.operations` | `snapshot` | Synchronous readiness probe using PostgreSQL and Neo4j | The probe can outlive the same request deadline and occupy backend resources. |
+| `portfolio_assistant.adapters.portfolio.watch` | `PublishedPortfolio.latest` | Synchronous Git fetch and revision lookup | Git can still finish and update `FETCH_HEAD`. The watcher loses the result. |
+| `portfolio_assistant.adapters.portfolio.watch` | `PublicKnowledgePublisher.observe` | Synchronous PostgreSQL observation upsert | The observation can still commit. |
+| `portfolio_assistant.adapters.portfolio.watch` | `PublicKnowledgePublisher.publish` | Synchronous projection build and publication, including Git and storage I/O | Publication can keep running. The worker's separate stop event is checked cooperatively. |
+| `portfolio_assistant.adapters.postgres.ledger` | `PostgresAccounting.reserve` | Synchronous advisory lock, budget check and inference reservation insert | The reservation can still commit and count against the monthly cap. |
+| `portfolio_assistant.adapters.postgres.ledger` | `PostgresAccounting.settle` | Synchronous inference cost and token update | The settlement can still commit. |
+| `portfolio_assistant.adapters.postgres.operations` | `OperationalObserver._consume` | Synchronous observation insert via `store.save` | The consumer shields the write and joins it on cancellation before exiting. |
+| `portfolio_assistant.adapters.postgres.operations` | `OperationalObserver.close` | Synchronous exporter flush and shutdown | Exporter cleanup can continue after the await is interrupted. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.start` | Synchronous transition from pending to running with a lease | The transition can still commit without returning its result. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.history` | Synchronous conversation history query | The query can still hold a connection until it finishes. Its result is discarded. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.running` | Synchronous run-state read | The query can still hold a connection until it finishes. Its result is discarded. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.complete` | Synchronous row lock, assistant message insert and run completion in one transaction | The message and completion can still commit together without returning the message ID. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.fail` | Synchronous transition to failed | The transition can still commit without returning its result. |
+| `portfolio_assistant.adapters.postgres.runs` | `PostgresRuns.interrupt` | Synchronous transition to interrupted | The transition can still commit. |
+| `portfolio_assistant.adapters.postgres.web_ledger` | `WebAccounting.reserve` | Synchronous advisory lock, budget check and web reservation insert | The reservation can still commit without returning its ID. |
+| `portfolio_assistant.adapters.postgres.web_ledger` | `WebAccounting.settle` | Synchronous web cost and token update | The settlement can still commit. |
+| `portfolio_assistant.adapters.providers.embedding` | `OpenAIEmbeddings.query` | Synchronous embedding budget reservation | The reservation can still commit without returning its ID or starting the provider request. |
+| `portfolio_assistant.adapters.providers.embedding` | `OpenAIEmbeddings.query` | Synchronous embedding usage settlement | The settlement can still commit even if the embedding result is discarded. |
+| `portfolio_assistant.adapters.retrieval` | `KnowledgeIndex.candidates` | Synchronous PostgreSQL corpus snapshot and lexical search | The reads can continue and occupy a connection. Their results are discarded. |
+| `portfolio_assistant.adapters.retrieval` | `KnowledgeIndex.candidates` | Synchronous PostgreSQL vector-neighbor query | The query can continue and occupy a connection. Its result is discarded. |
+| `portfolio_assistant.adapters.retrieval` | `KnowledgeIndex.relationships` | Synchronous Neo4j relationship reads | The reads can continue and occupy a graph session. Their results are discarded. |
+| `portfolio_assistant.bootstrap.container` | `create_app.lifespan` | Synchronous PostgreSQL pool open with a readiness wait | The open can still run while startup unwinds into cleanup. |
+| `portfolio_assistant.bootstrap.container` | `create_app.lifespan` | Synchronous PostgreSQL pool close in the exit stack | The pool close can continue after its cleanup await is interrupted. |
+| `portfolio_assistant.bootstrap.container` | `create_app.lifespan` | Synchronous Neo4j driver close in the exit stack | Driver cleanup can continue after its cleanup await is interrupted. |
+| `portfolio_assistant.bootstrap.container` | `create_app.lifespan` | Synchronous embedding client close in the exit stack | HTTP client cleanup can continue after its cleanup await is interrupted. |
+| `portfolio_assistant.presentation.operations` | `snapshot` | Synchronous PostgreSQL operational snapshot | The reads can outlive the four-second request deadline and occupy a connection. |
+| `portfolio_assistant.presentation.operations` | `snapshot` | Synchronous readiness probe using PostgreSQL and Neo4j | The probe can outlive the same request deadline and occupy backend resources. |
 
 ### Dependency review
 
 - Keep the exact `langsmith==0.14.9` pin. LangChain Core brings LangSmith in
-  as a transitive dependency, and `app/adapters/observability/evaluation_export.py` imports its
+  as a transitive dependency, and `src/portfolio_assistant/adapters/observability/evaluation_export.py` imports its
   SDK directly for the opt-in operator export. Pin bumps go through the
   [weekly dependency PR](019-weekly-dependency-pr.md). Automatic tracing remains
   disabled by the settings validator under [ADR 021](021-tracing-off-no-hosted-prompt-registry.md).

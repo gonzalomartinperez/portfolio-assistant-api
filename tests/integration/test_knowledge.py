@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.adapters.portfolio.source_format import facts
+from portfolio_assistant.adapters.portfolio.source_format import facts
 
 
 def test_graph_facts_are_explicit_and_keep_supporting_line_spans():
@@ -24,9 +24,9 @@ def test_graph_facts_are_explicit_and_keep_supporting_line_spans():
 def test_hybrid_retrieval_evaluation_and_relationship_provenance():
     from neo4j import GraphDatabase
 
-    from app.bootstrap.config import settings
-    from app.bootstrap.maintenance import connect
-    from app.domain.portfolio_paths import canonical_key
+    from portfolio_assistant.bootstrap.config import settings
+    from portfolio_assistant.bootstrap.maintenance import connect
+    from portfolio_assistant.domain.portfolio_paths import canonical_key
     from tests.support import retrieve
 
     for case in json.loads(Path("evals/retrieval.json").read_text()):
@@ -72,7 +72,7 @@ def test_hybrid_retrieval_evaluation_and_relationship_provenance():
 def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
     import subprocess
 
-    from app.adapters.portfolio.indexing import _sync
+    from portfolio_assistant.adapters.portfolio.indexing import _sync
 
     repo = tmp_path / "source"
     repo.mkdir()
@@ -90,7 +90,7 @@ def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
         check=True,
     )
     with pytest.raises(ValueError, match="only the public"):
-        from app.bootstrap.config import Settings
+        from portfolio_assistant.bootstrap.config import Settings
 
         def forbidden_connection():
             raise AssertionError("unapproved source must fail before database access")
@@ -104,7 +104,7 @@ def test_source_rejects_unapproved_remote_and_option_ref(tmp_path):
 
 
 def test_github_indexing_honors_immutable_revision(monkeypatch, capsys):
-    from app.bootstrap import indexing
+    from portfolio_assistant.bootstrap import indexing
 
     revision = "a" * 40
     commands = []
@@ -118,7 +118,7 @@ def test_github_indexing_honors_immutable_revision(monkeypatch, capsys):
 
 
 def test_github_indexing_rejects_arbitrary_ref(monkeypatch):
-    from app.bootstrap import indexing
+    from portfolio_assistant.bootstrap import indexing
 
     monkeypatch.setattr(
         "sys.argv",

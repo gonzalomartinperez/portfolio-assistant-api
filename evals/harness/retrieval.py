@@ -31,12 +31,12 @@ from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from app.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
-from app.domain.evidence import lexical_score, tokens
-from app.domain.portfolio_paths import canonical_key
+from portfolio_assistant.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
+from portfolio_assistant.domain.evidence import lexical_score, tokens
+from portfolio_assistant.domain.portfolio_paths import canonical_key
 
 if TYPE_CHECKING:
-    from app.ai.retrieval.rules import RetrievalRules
+    from portfolio_assistant.ai.retrieval.rules import RetrievalRules
 
 ROOT = Path(__file__).resolve().parents[2]
 QUERIES = ROOT / "evals" / "retrieval" / "queries.jsonl"
@@ -84,7 +84,7 @@ ABLATIONS: dict[str, dict[str, str]] = {
     "h1": {
         "status": "not implementable without app change",
         "seam": "none: the text search config is the literal simple in the candidates SQL "
-        "(app/adapters/retrieval.py)",
+        "(src/portfolio_assistant/adapters/retrieval.py)",
         "note": "follow-up: make the config a KnowledgeIndex parameter, then compare "
         "english/spanish with unaccent",
     },
@@ -342,7 +342,7 @@ def abstention_sweep(
     harmless = [r for r in rows if r["recall_drop"] <= 0]
     best = min(harmless, key=lambda r: (r["no_answer_with_evidence"], -r["threshold"]))
     return {
-        "metric": "lexical_score proxy (app.domain.evidence.lexical_score) on returned sources",
+        "metric": "lexical_score proxy (portfolio_assistant.domain.evidence.lexical_score) on returned sources",
         "answerable_queries": len(answerable),
         "no_answer_queries": len(no_answer),
         "unsupported_employer_queries": len(employer),
@@ -590,10 +590,10 @@ def real_retriever() -> Iterator[Retriever]:
     """One driver and event loop for the whole run; same composition as tests.support."""
     from neo4j import GraphDatabase
 
-    adapters = importlib.import_module("app.adapters.retrieval")
-    workflow = importlib.import_module("app.ai.retrieval")
-    maintenance = importlib.import_module("app.bootstrap.maintenance")
-    config = importlib.import_module("app.bootstrap.config").settings()
+    adapters = importlib.import_module("portfolio_assistant.adapters.retrieval")
+    workflow = importlib.import_module("portfolio_assistant.ai.retrieval")
+    maintenance = importlib.import_module("portfolio_assistant.bootstrap.maintenance")
+    config = importlib.import_module("portfolio_assistant.bootstrap.config").settings()
     loop = asyncio.new_event_loop()
     try:
         with GraphDatabase.driver(

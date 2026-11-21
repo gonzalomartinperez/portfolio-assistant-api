@@ -7,10 +7,10 @@ from uuid import uuid4
 import pytest
 from neo4j import GraphDatabase, Query
 
-from app.adapters.postgres.ledger import MONTHLY_SPEND_SQL
-from app.adapters.retrieval import DIRECT_RELATIONSHIPS_QUERY
-from app.bootstrap.config import settings
-from app.bootstrap.maintenance import connect
+from portfolio_assistant.adapters.postgres.ledger import MONTHLY_SPEND_SQL
+from portfolio_assistant.adapters.retrieval import DIRECT_RELATIONSHIPS_QUERY
+from portfolio_assistant.bootstrap.config import settings
+from portfolio_assistant.bootstrap.maintenance import connect
 
 pytestmark = [
     pytest.mark.integration,

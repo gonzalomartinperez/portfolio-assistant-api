@@ -94,7 +94,7 @@ The other 36 have no rail at all:
 - `atk-es-ind-001` (LLM08, indirect_injection)
 - `atk-es-ind-002` (LLM08, indirect_injection)
 
-## Gaps this exposes (not fixed here, `app/` is unchanged)
+## Gaps this exposes (not fixed here, `src/portfolio_assistant/` is unchanged)
 
 1. Deltas stream before the finalization rails (citation markers, output bound): nothing blocks the stream.
 2. No output filter for system prompt or canary leakage (LLM07); the prompt has no canary yet (PAA-D7).

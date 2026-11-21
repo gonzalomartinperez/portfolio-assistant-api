@@ -7,12 +7,12 @@
     },
     "h1": {
       "note": "follow-up: make the config a KnowledgeIndex parameter, then compare english/spanish with unaccent",
-      "seam": "none: the text search config is the literal simple in the candidates SQL (app/adapters/retrieval.py)",
+      "seam": "none: the text search config is the literal simple in the candidates SQL (src/portfolio_assistant/adapters/retrieval.py)",
       "status": "not implementable without app change"
     },
     "h2": {
       "note": "follow-up: extract fusion into a function with k as an injected parameter (master plan file-moves: ai/retrieval/fusion.py), then run k in {10, 30, 60}",
-      "seam": "none: PublicRetrieval.search fuses with inline weight/(10+rank) constants (app/ai/retrieval.py); the documented default of k=60 is not what the code uses",
+      "seam": "none: PublicRetrieval.search fuses with inline weight/(10+rank) constants (src/portfolio_assistant/ai/retrieval.py); the documented default of k=60 is not what the code uses",
       "status": "not implementable without app change"
     },
     "h3": {
@@ -36,7 +36,7 @@
       "answerable_queries": 131,
       "baseline_recall@5": 0.8104,
       "best_threshold_without_recall_loss": 0,
-      "metric": "lexical_score proxy (app.domain.evidence.lexical_score) on returned sources",
+      "metric": "lexical_score proxy (portfolio_assistant.domain.evidence.lexical_score) on returned sources",
       "no_answer_queries": 21,
       "spurious_removed_at_best": 0,
       "sweep": [
@@ -135,7 +135,7 @@
       "answerable_queries": 131,
       "baseline_recall@5": 0.5407,
       "best_threshold_without_recall_loss": 4,
-      "metric": "lexical_score proxy (app.domain.evidence.lexical_score) on returned sources",
+      "metric": "lexical_score proxy (portfolio_assistant.domain.evidence.lexical_score) on returned sources",
       "no_answer_queries": 21,
       "spurious_removed_at_best": 0,
       "sweep": [

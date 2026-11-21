@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.web_budget import WebBudget
+from portfolio_assistant.domain.web_budget import WebBudget
 
 
 def budget() -> WebBudget:

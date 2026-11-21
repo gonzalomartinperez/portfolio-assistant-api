@@ -30,17 +30,17 @@ from datetime import UTC, date, datetime
 from decimal import ROUND_UP, Decimal
 from pathlib import Path
 
-from app.adapters.providers.answer import (
+from portfolio_assistant.adapters.providers.answer import (
     REASONING_EFFORT,
     ModelRequest,
     assemble_request,
     visitor_inputs,
 )
-from app.adapters.providers.fixture_answer import fixture_message
-from app.application.contracts import Provider, Usage
-from app.application.conversation_context import Turn
-from app.application.presentation_context import PresentationContext
-from app.domain.budget import MAX_OUTPUT_TOKENS
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
+from portfolio_assistant.application.contracts import Provider, Usage
+from portfolio_assistant.application.conversation_context import Turn
+from portfolio_assistant.application.presentation_context import PresentationContext
+from portfolio_assistant.domain.budget import MAX_OUTPUT_TOKENS
 
 CASSETTE_ROOT = Path("evals/cassettes")
 LEDGER_PATH = CASSETTE_ROOT / "spend-ledger.json"

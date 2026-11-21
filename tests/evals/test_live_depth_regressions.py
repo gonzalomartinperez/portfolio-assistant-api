@@ -7,14 +7,14 @@ from unittest.mock import ANY
 
 import pytest
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.adapters.providers.language import LocalLanguageDetector
-from app.ai.retrieval import PublicRetrieval
-from app.application.contracts import GenerationFailedError
-from app.application.conversation_context import Turn, retrieval_question
-from app.application.knowledge import Chunk, Corpus
-from app.application.language import explicit_locale
-from app.domain.evidence import blocks_private_query, tokens
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.application.contracts import GenerationFailedError
+from portfolio_assistant.application.conversation_context import Turn, retrieval_question
+from portfolio_assistant.application.knowledge import Chunk, Corpus
+from portfolio_assistant.application.language import explicit_locale
+from portfolio_assistant.domain.evidence import blocks_private_query, tokens
 from tests.support import FixedClock
 
 
@@ -251,7 +251,7 @@ def test_supported_buffered_stream_preserves_text_and_usage():
             clock=FixedClock(),
         )
         items = [item async for item in provider.stream("question", "evidence", "en")]
-        from app.application.contracts import Usage
+        from portfolio_assistant.application.contracts import Usage
 
         assert (
             "".join(item for item in items if isinstance(item, str))

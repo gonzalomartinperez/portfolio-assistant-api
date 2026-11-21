@@ -1,0 +1,52 @@
+"""Shared bounded offline language models; no provider routing call."""
+
+import re
+from functools import lru_cache
+
+from lingua import Language, LanguageDetector, LanguageDetectorBuilder
+
+from portfolio_assistant.application.language import Locale
+
+
+@lru_cache(maxsize=1)
+def output_detector() -> LanguageDetector:
+    return LanguageDetectorBuilder.from_languages(
+        Language.ENGLISH,
+        Language.SPANISH,
+        Language.PORTUGUESE,
+        Language.FRENCH,
+        Language.GERMAN,
+        Language.ITALIAN,
+    ).build()
+
+
+class LocalLanguageDetector:
+    def supported(self, text: str) -> Locale | None:
+        cleaned = re.sub(r"https?://\S+|`[^`]*`", "", text)
+        if len(re.findall(r"[^\W\d_]+", cleaned)) < 3:
+            return None
+        confidence = output_detector().compute_language_confidence_values(cleaned)
+        if (
+            len(confidence) < 2
+            or confidence[0].value < 0.75
+            or confidence[0].value - confidence[1].value < 0.15
+        ):
+            return None
+        if confidence[0].language == Language.ENGLISH:
+            return "en"
+        if confidence[0].language == Language.SPANISH:
+            return "es"
+        return None
+
+    def rejects_output(self, text: str) -> bool:
+        """Reject common unsupported prose; ambiguous technical text stays usable."""
+        cleaned = re.sub(r"```[\s\S]*?```|https?://\S+|`[^`]*`", "", text)
+        if len(re.findall(r"[^\W\d_]+", cleaned)) < 8:
+            return False
+        confidence = output_detector().compute_language_confidence_values(cleaned)
+        return bool(
+            len(confidence) >= 2
+            and confidence[0].value >= 0.95
+            and confidence[0].value - confidence[1].value >= 0.30
+            and confidence[0].language not in (Language.ENGLISH, Language.SPANISH)
+        )

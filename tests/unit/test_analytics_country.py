@@ -8,9 +8,9 @@ import pytest
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from app.bootstrap.config import Settings
-from app.domain.analytics_country import COUNTRIES, country_label
-from app.presentation.analytics_country import country_from_edge
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.analytics_country import COUNTRIES, country_label
+from portfolio_assistant.presentation.analytics_country import country_from_edge
 
 
 def request(

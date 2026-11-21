@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.adapters.prompts import default_prompts, load_prompts, prompt_files
-from app.adapters.providers import answer
-from app.domain.prompts import (
+from portfolio_assistant.adapters.prompts import default_prompts, load_prompts, prompt_files
+from portfolio_assistant.adapters.providers import answer
+from portfolio_assistant.domain.prompts import (
     PromptError,
     PromptSpec,
     lock_text,
@@ -175,8 +175,8 @@ def test_escaped_braces_render_literally():
 
 
 def test_startup_fails_fast_on_a_bad_prompt_registry(monkeypatch):
-    from app.bootstrap import container
-    from app.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap import container
+    from portfolio_assistant.bootstrap.config import Settings
 
     def broken():
         raise PromptError("stale lock")
@@ -190,7 +190,7 @@ def test_usage_settled_log_has_prompt_version_and_no_prompt_text(caplog):
     import contextlib
     from decimal import Decimal
 
-    from app.adapters.postgres import ledger
+    from portfolio_assistant.adapters.postgres import ledger
 
     @contextlib.contextmanager
     def connection():

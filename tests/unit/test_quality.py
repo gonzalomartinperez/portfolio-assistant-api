@@ -3,10 +3,10 @@ import os
 
 import pytest
 
-from app.adapters.providers.fixture_answer import fixture_message
-from app.bootstrap.config import Settings
-from app.domain.evidence import requested_affiliation, verified
-from app.domain.portfolio_paths import canonical_key
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.evidence import requested_affiliation, verified
+from portfolio_assistant.domain.portfolio_paths import canonical_key
 from tests.support import retrieve
 
 
@@ -121,7 +121,9 @@ def test_graph_outage_falls_back_to_verified_text(monkeypatch):
     async def unavailable(*args, **kwargs):
         return ()
 
-    monkeypatch.setattr("app.adapters.retrieval.KnowledgeIndex.relationships", unavailable)
+    monkeypatch.setattr(
+        "portfolio_assistant.adapters.retrieval.KnowledgeIndex.relationships", unavailable
+    )
     rows, _ = retrieve("What is Filomena?", "en")
     assert rows and canonical_key(rows[0]["path"]) == "en/projects"
 
@@ -143,7 +145,7 @@ def test_forwarded_addresses_require_a_trusted_immediate_peer(peer, trusted, for
 
     from starlette.requests import Request
 
-    from app.presentation.http import client_ip
+    from portfolio_assistant.presentation.http import client_ip
 
     request = Request(
         {

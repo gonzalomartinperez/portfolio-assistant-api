@@ -7,19 +7,19 @@ from uuid import uuid4
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.adapters.providers.fixture_answer import fixture_supports
-from app.ai.workflow import LangGraphWorkflow
-from app.application.contracts import Evidence
-from app.application.conversations import Conversations
-from app.application.runs import RunService
-from app.bootstrap.config import Settings
-from app.domain.conversations import Conversation, Run, Session
-from app.domain.errors import RejectedError
-from app.presentation.analytics import router as analytics_router
-from app.presentation.feedback import router as feedback_router
-from app.presentation.http import router
-from app.presentation.middleware import BodyLimit, install
-from app.presentation.operations import router as operations_router
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_supports
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.contracts import Evidence
+from portfolio_assistant.application.conversations import Conversations
+from portfolio_assistant.application.runs import RunService
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.conversations import Conversation, Run, Session
+from portfolio_assistant.domain.errors import RejectedError
+from portfolio_assistant.presentation.analytics import router as analytics_router
+from portfolio_assistant.presentation.feedback import router as feedback_router
+from portfolio_assistant.presentation.http import router
+from portfolio_assistant.presentation.middleware import BodyLimit, install
+from portfolio_assistant.presentation.operations import router as operations_router
 from tests.support import FixedClock
 
 ORIGIN = "http://localhost:3000"
@@ -210,7 +210,7 @@ def build_app(
     )()
     app.state.product_analytics = type("Analytics", (), {"record": lambda self, *a: "accepted"})()
     app.add_middleware(BodyLimit)
-    # Same arguments as app.bootstrap.container.create_app.
+    # Same arguments as portfolio_assistant.bootstrap.container.create_app.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.origins,

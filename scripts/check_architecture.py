@@ -8,18 +8,12 @@ from importlib.util import resolve_name
 from pathlib import Path
 
 LAYERS = {"domain", "application", "ai", "adapters", "presentation", "bootstrap"}
-# Deprecated `python -m` shims (removed in the contract phase, after vps-ops runs the
-# console scripts) plus the ASGI module `app.main`. Process entry points live under
-# `app.bootstrap.entrypoints`.
-ENTRY_POINTS = {
-    "app.main",
-    "app.migrate",
-    "app.retention",
-    "app.knowledge_sync",
-    "app.knowledge_watch",
-}
-SHIMS = {module.removeprefix("app.") for module in ENTRY_POINTS}
-CLOCK_MODULE = "app.adapters.clock"
+PACKAGE = "portfolio_assistant"
+COMPATIBILITY_NAMESPACE = "app"
+# Keep the module dispatchers and ASGI target at the top of the application package.
+ENTRY_POINTS = {"portfolio_assistant.main"}
+SHIMS = {module.removeprefix("portfolio_assistant.") for module in ENTRY_POINTS}
+CLOCK_MODULE = "portfolio_assistant.adapters.clock"
 WALL_CLOCK_READS = {
     "datetime.datetime.now",
     "datetime.datetime.utcnow",
@@ -27,7 +21,7 @@ WALL_CLOCK_READS = {
     "datetime.date.today",
     "time.time",
     "time.time_ns",
-    # Without a timestamp argument these read the wall clock; app/ has no use for them.
+    # Without a timestamp argument these read the wall clock; src/portfolio_assistant/ has no use for them.
     "time.gmtime",
     "time.localtime",
     "time.ctime",
@@ -90,15 +84,17 @@ def dependencies(module: str, source: str, *, package: bool = False) -> set[str]
 
 
 def dependency_errors(module: str, source: str, *, package: bool = False) -> list[str]:
-    layer = module.split(".")[1]
-    if layer not in LAYERS and module not in ENTRY_POINTS:
+    layer = module.split(".", 2)[1] if "." in module else ""
+    if module != PACKAGE and layer not in LAYERS and module not in ENTRY_POINTS:
         return [f"unclassified application module: {module}"]
     errors = []
     for dependency in sorted(dependencies(module, source, package=package)):
         root, _, child = dependency.partition(".")
-        if root == "app" and child and child.split(".")[0] not in LAYERS | SHIMS:
+        if root == COMPATIBILITY_NAMESPACE:
+            errors.append(f"{module}: forbidden compatibility dependency {dependency}")
+        elif root == PACKAGE and child and child.split(".")[0] not in LAYERS | SHIMS:
             errors.append(f"{module}: forbidden dependency {dependency}")
-        elif layer in ("domain", "application") and root != "app":
+        elif layer in ("domain", "application") and root != PACKAGE:
             if root not in sys.stdlib_module_names:
                 errors.append(f"{module}: third-party dependency {dependency}")
             if dependency.startswith("urllib.request"):
@@ -145,11 +141,11 @@ def cycle_errors(graph: dict[str, set[str]]) -> list[str]:
     return errors
 
 
-# Modules allowed to keep a `__main__` block outside app/bootstrap/entrypoints, with the reason.
+# Modules allowed to keep a `__main__` block outside src/portfolio_assistant/bootstrap/entrypoints, with the reason.
 MAIN_BLOCK_ALLOWED = {
-    "app.bootstrap.evaluation_export": "documented opt-in operator command (python -m)",
+    "portfolio_assistant.bootstrap.evaluation_export": "documented opt-in operator command (python -m)",
 }
-CONSOLE_SCRIPT = re.compile(r"app\.bootstrap\.entrypoints\.[a-z_]+:main")
+CONSOLE_SCRIPT = re.compile(r"portfolio_assistant\.bootstrap\.entrypoints\.[a-z_]+:main")
 
 
 def _is_main_guard(test: ast.expr) -> bool:
@@ -162,24 +158,26 @@ def _is_main_guard(test: ast.expr) -> bool:
 
 
 def entry_point_errors(module: str, source: str) -> list[str]:
-    """Process entry points (`__main__` blocks) belong under app.bootstrap.entrypoints."""
+    """Process entry points (`__main__` blocks) belong under portfolio_assistant.bootstrap.entrypoints."""
     if (
-        module.startswith("app.bootstrap.entrypoints.")
+        module.startswith("portfolio_assistant.bootstrap.entrypoints.")
         or module in ENTRY_POINTS
         or module in MAIN_BLOCK_ALLOWED
     ):
         return []
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.If) and _is_main_guard(node.test):
-            return [f"{module}: process entry point outside app/bootstrap/entrypoints"]
+            return [
+                f"{module}: process entry point outside src/portfolio_assistant/bootstrap/entrypoints"
+            ]
     return []
 
 
 def console_script_errors(pyproject: str) -> list[str]:
-    """Every console script must target main() of a module under app.bootstrap.entrypoints."""
+    """Every console script must target main() of a module under portfolio_assistant.bootstrap.entrypoints."""
     scripts = tomllib.loads(pyproject).get("project", {}).get("scripts", {})
     return [
-        f"console script {name} -> {target}: must be app.bootstrap.entrypoints.<name>:main"
+        f"console script {name} -> {target}: must be portfolio_assistant.bootstrap.entrypoints.<name>:main"
         for name, target in sorted(scripts.items())
         if not CONSOLE_SCRIPT.fullmatch(target)
     ]
@@ -208,24 +206,17 @@ def architecture_errors(root: Path) -> list[str]:
         module = ".".join(path.relative_to(root.parent).with_suffix("").parts)
         package = path.name == "__init__.py"
         module = module.removesuffix(".__init__")
-        if module == "app":
-            errors.extend(wall_clock_errors(module, path.read_text()))
-            continue
-        if module.split(".")[1] not in LAYERS and module not in ENTRY_POINTS:
-            errors.append(f"unclassified application module: {module}")
-            continue
         source = path.read_text()
         errors.extend(dependency_errors(module, source, package=package))
         errors.extend(entry_point_errors(module, source))
         graph[module] = dependencies(module, source, package=package)
-    pyproject = root.parent / "pyproject.toml"
-    if pyproject.exists():
-        errors.extend(console_script_errors(pyproject.read_text()))
     return errors + cycle_errors(graph)
 
 
 if __name__ == "__main__":
-    failures = architecture_errors(Path(__file__).resolve().parents[1] / "app")
+    repo = Path(__file__).resolve().parents[1]
+    failures = architecture_errors(repo / "src" / PACKAGE)
+    failures += console_script_errors((repo / "pyproject.toml").read_text())
     for failure in failures:
         print(failure)
     raise SystemExit(bool(failures))

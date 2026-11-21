@@ -7,16 +7,16 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.domain.analytics_interactions import REGIONS, SHELL_REGIONS
-from app.presentation.analytics import ProductEventBody
-from app.presentation.analytics_report_models import ProductReportSnapshot
-from app.presentation.interaction_models import ProductInteractionBody
 from contracts.site_experience import (
     COMMERCE_EVENTS,
     SECTION_ROUTES,
     PortfolioExperience,
     SiteExperience,
 )
+from portfolio_assistant.domain.analytics_interactions import REGIONS, SHELL_REGIONS
+from portfolio_assistant.presentation.analytics import ProductEventBody
+from portfolio_assistant.presentation.analytics_report_models import ProductReportSnapshot
+from portfolio_assistant.presentation.interaction_models import ProductInteractionBody
 
 
 def core(**changes):

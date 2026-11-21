@@ -23,5 +23,5 @@
 # Assistant quality data, prompts and decisions (docs/master-plan/docs-and-community.md section 2)
 /evals/golden/                      @gonzalomartinperez
 /evals/full/holdout.sealed.jsonl    @gonzalomartinperez
-/app/prompts/                       @gonzalomartinperez
+/src/portfolio_assistant/prompts/   @gonzalomartinperez
 /docs/decisions/                    @gonzalomartinperez

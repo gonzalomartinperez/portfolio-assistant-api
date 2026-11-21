@@ -38,7 +38,7 @@ not installed. Not available yet: the consumer cross job that regenerates the po
 1. Classify the change. A breaking change (removed or renamed field, narrower type, new required field, removed
    event or path) stops here: write an ADR first with write-adr and wait for the owner. Do not regenerate. The
    owner then adds the `contract-major` label; the CHANGELOG entry and consumer PRs follow.
-2. Change the pydantic model or route (`app/presentation/`, `contracts/site_experience.py`), not the JSON by hand.
+2. Change the pydantic model or route (`src/portfolio_assistant/presentation/`, `contracts/site_experience.py`), not the JSON by hand.
 3. Regenerate: `uv run python -m contracts.export`, then `git diff --stat contracts`. Each changed artifact must
    trace to the edit; `contracts/manifest.json` changes with them.
 4. Update examples when the change is visible on the wire (`contracts/send-message.examples.json`,

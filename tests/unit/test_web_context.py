@@ -6,10 +6,10 @@ from uuid import uuid4
 
 import pytest
 
-from app.adapters.providers.web_search import OpenAIWebSearch
-from app.application.web_context import WebReference, WebSupplement, supplement
-from app.bootstrap.config import Settings
-from app.domain.web_policy import TOPICS, approved_web_url, technical_topic
+from portfolio_assistant.adapters.providers.web_search import OpenAIWebSearch
+from portfolio_assistant.application.web_context import WebReference, WebSupplement, supplement
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.web_policy import TOPICS, approved_web_url, technical_topic
 from tests.support import FixedClock
 
 
@@ -203,7 +203,7 @@ def test_feature_configuration_fails_closed_and_full_window_reservation():
     with pytest.raises(ValidationError):
         Settings(_env_file=None, web_search_enabled=True)
     config = Settings(_env_file=None)
-    from app.domain.web_budget import WebBudget
+    from portfolio_assistant.domain.web_budget import WebBudget
 
     budget = WebBudget(Decimal(9), Decimal("0.10"), Decimal("0.50"), Decimal("0.01"))
     assert budget.maximum == Decimal("0.231536")
@@ -212,7 +212,7 @@ def test_feature_configuration_fails_closed_and_full_window_reservation():
 
 
 def test_source_canonicalization_removes_only_known_attribution():
-    from app.domain.web_policy import canonical_web_url
+    from portfolio_assistant.domain.web_policy import canonical_web_url
 
     topic = TOPICS[0]
     assert (
@@ -232,8 +232,8 @@ def test_source_canonicalization_removes_only_known_attribution():
 def test_named_technology_span_survives_generic_portfolio_document_crowding():
     import hashlib
 
-    from app.ai.retrieval import PublicRetrieval
-    from app.application.knowledge import Chunk, Corpus
+    from portfolio_assistant.ai.retrieval import PublicRetrieval
+    from portfolio_assistant.application.knowledge import Chunk, Corpus
 
     commit = "a" * 40
     path = "src/content/en/experience.ts"
@@ -301,7 +301,7 @@ def test_known_attribution_is_removed_from_summary_and_reference_urls():
 
 
 def test_external_documentation_cannot_acquire_career_source_marker_ids():
-    from app.adapters.providers.answer import ResponsesProvider
+    from portfolio_assistant.adapters.providers.answer import ResponsesProvider
 
     async def run():
         class Search:
@@ -363,14 +363,14 @@ def test_external_documentation_cannot_acquire_career_source_marker_ids():
     ],
 )
 def test_named_places_and_technical_names_do_not_change_output_language(question, expected):
-    from app.adapters.providers.language import LocalLanguageDetector
+    from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
 
     assert LocalLanguageDetector().supported(question) == expected
 
 
 def test_ambiguous_proper_names_preserve_supported_locale_hint():
-    from app.adapters.providers.language import LocalLanguageDetector
-    from app.application.language import select_locale
+    from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
+    from portfolio_assistant.application.language import select_locale
 
     assert (
         select_locale(
@@ -384,7 +384,7 @@ def test_ambiguous_proper_names_preserve_supported_locale_hint():
 
 
 def test_pgvector_plain_readme_parameter_is_canonicalized_only_for_reviewed_file():
-    from app.domain.web_policy import canonical_web_url
+    from portfolio_assistant.domain.web_policy import canonical_web_url
 
     topic = TOPICS[2]
     assert (
@@ -403,7 +403,7 @@ def test_pgvector_plain_readme_parameter_is_canonicalized_only_for_reviewed_file
 
 
 def test_explicit_source_request_receives_verified_canonical_url_without_rewriting_facts():
-    from app.application.answer import context
+    from portfolio_assistant.application.answer import context
     from tests.unit.test_workflow import SOURCE
 
     ordinary = context((SOURCE,))
@@ -414,7 +414,7 @@ def test_explicit_source_request_receives_verified_canonical_url_without_rewriti
 
 
 def test_known_tracking_annotation_is_removed_without_allowing_unknown_parameters():
-    from app.domain.web_policy import canonical_web_url
+    from portfolio_assistant.domain.web_policy import canonical_web_url
 
     topic = TOPICS[4]
     url = "https://fastapi.tiangolo.com/advanced/async-tests/?trk=article-ssr-frontend-pulse_little-text-block&utm_source=openai"
@@ -448,7 +448,7 @@ def test_known_tracking_annotation_is_removed_without_allowing_unknown_parameter
 def test_known_retry_policy_is_explained_without_public_fact_or_model_invention(
     locale, question, expected
 ):
-    from app.adapters.providers.fixture_answer import fixture_message
+    from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
 
     assert expected in fixture_message(question, "", locale)
 
@@ -472,8 +472,8 @@ def test_rejected_lookup_has_short_public_cooldown_without_duplicate_charges():
 def test_design_goal_evidence_survives_measured_metric_crowding():
     import hashlib
 
-    from app.ai.retrieval import PublicRetrieval
-    from app.application.knowledge import Chunk, Corpus
+    from portfolio_assistant.ai.retrieval import PublicRetrieval
+    from portfolio_assistant.application.knowledge import Chunk, Corpus
 
     commit = "a" * 40
     path = "src/content/en/experience.ts"

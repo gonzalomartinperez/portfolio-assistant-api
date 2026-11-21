@@ -13,9 +13,9 @@ from hypothesis.stateful import (
     rule,
 )
 
-from app.application.conversations import Conversations, digest
-from app.domain.conversations import Conversation, Message, Session
-from app.domain.errors import RejectedError
+from portfolio_assistant.application.conversations import Conversations, digest
+from portfolio_assistant.domain.conversations import Conversation, Message, Session
+from portfolio_assistant.domain.errors import RejectedError
 from tests.support import FixedClock
 
 pytestmark = pytest.mark.property

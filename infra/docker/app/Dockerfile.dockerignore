@@ -4,8 +4,8 @@
 !uv.lock
 !LICENSE
 !THIRD_PARTY_NOTICES.md
-!app/
-!app/**
+!src/
+!src/**
 !migrations/
 !migrations/**
 !contracts/

@@ -9,13 +9,13 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j import GraphDatabase
 
-from app.adapters.providers.embedding import embed
-from app.bootstrap.config import settings
-from app.bootstrap.maintenance import connect, reserve, settle
-from app.domain.errors import BudgetExhaustedError
-from app.domain.messages import insufficient_message
-from app.main import app
-from app.migrate import main as migrate
+from portfolio_assistant.adapters.providers.embedding import embed
+from portfolio_assistant.bootstrap.config import settings
+from portfolio_assistant.bootstrap.entrypoints.migrate import main as migrate
+from portfolio_assistant.bootstrap.maintenance import connect, reserve, settle
+from portfolio_assistant.domain.errors import BudgetExhaustedError
+from portfolio_assistant.domain.messages import insufficient_message
+from portfolio_assistant.main import app
 from tests.support import retrieve
 
 pytestmark = [
@@ -42,8 +42,8 @@ def bootstrap(client: TestClient, origin: str):
 
 
 def test_same_origin_embed_contract_needs_no_parent_api_permission(client_factory):
-    from app.bootstrap.config import Settings
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.container import create_app
 
     origin = "https://assistant.gonzalomartinperez.com"
     parent = "https://gonzalomartinperez.com"
@@ -219,7 +219,7 @@ def test_real_vector_and_graph():
 def test_incremental_sync_and_failed_projection_keep_previous_version(tmp_path, monkeypatch):
     import subprocess
 
-    from app.knowledge_sync import sync
+    from portfolio_assistant.bootstrap.indexing import sync
 
     repo = tmp_path / "portfolio"
     repo.mkdir()
@@ -276,7 +276,7 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(tmp_path, 
                 == second["knowledge_version"]
             )
         monkeypatch.setattr(
-            "app.adapters.portfolio.indexing.GraphDatabase.driver",
+            "portfolio_assistant.adapters.portfolio.indexing.GraphDatabase.driver",
             lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("graph unavailable")),
         )
         with pytest.raises(RuntimeError, match="graph unavailable"):
@@ -296,7 +296,7 @@ def test_incremental_sync_and_failed_projection_keep_previous_version(tmp_path, 
 def test_expired_session_prunes_history_and_checkpoints(client_factory):
     from langgraph.checkpoint.postgres import PostgresSaver
 
-    from app.retention import prune
+    from portfolio_assistant.bootstrap.maintenance import prune
 
     client = client_factory(app, client=(str(uuid4()), 50000))
     csrf = bootstrap(client, "http://localhost:3000")
@@ -385,9 +385,9 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
     import json
     from dataclasses import replace
 
-    from app.application.contracts import WorkflowEvent
-    from app.bootstrap.config import Settings
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.application.contracts import WorkflowEvent
+    from portfolio_assistant.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.container import create_app
     from tests.unit.test_workflow import SOURCE
 
     sources = tuple(replace(SOURCE, id=str(index)) for index in range(1, 6))
@@ -429,7 +429,7 @@ def test_canonical_citations_match_stream_final_and_persisted_history(client_fac
 def test_every_owned_mutation_and_stream_wire_contract(client_factory):
     import json
 
-    from app.presentation.events import events
+    from portfolio_assistant.presentation.events import events
 
     first, second = (
         client_factory(app, client=(str(uuid4()), 50000)),
@@ -493,7 +493,7 @@ def test_every_owned_mutation_and_stream_wire_contract(client_factory):
 
 
 def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
-    from app.bootstrap.maintenance import drain_cleanup
+    from portfolio_assistant.bootstrap.maintenance import drain_cleanup
 
     client = client_factory(app, client=(str(uuid4()), 50000))
     csrf = bootstrap(client, "http://localhost:3000")
@@ -510,7 +510,7 @@ def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
         def fail(*args):
             raise RuntimeError("simulated checkpoint outage")
 
-        patch.setattr("app.adapters.postgres.checkpoints.delete_checkpoint", fail)
+        patch.setattr("portfolio_assistant.adapters.postgres.checkpoints.delete_checkpoint", fail)
         assert client.delete("/api/v1/session", headers=auth).status_code == 204
     with connect() as conn:
         assert conn.execute(
@@ -531,9 +531,9 @@ def test_checkpoint_cleanup_survives_failure(client_factory, monkeypatch):
 
 
 def test_atomic_run_slot_and_abuse_limits(client_factory):
-    from app.adapters.postgres.conversations import PostgresConversations
-    from app.application.conversations import digest
-    from app.domain.errors import RejectedError
+    from portfolio_assistant.adapters.postgres.conversations import PostgresConversations
+    from portfolio_assistant.application.conversations import digest
+    from portfolio_assistant.domain.errors import RejectedError
 
     client = client_factory(app, client=(str(uuid4()), 50000))
     csrf = bootstrap(client, "http://localhost:3000")
@@ -602,7 +602,7 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
 
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.bootstrap.container import create_app
     from scripts.evaluation_isolation import validate_targets
 
     validate_targets(settings())
@@ -664,7 +664,7 @@ def test_restricted_runtime_role_serves_grounded_stream_without_corpus_write(
 
 
 def test_generation_receives_only_its_owned_prior_turns(client_factory):
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.bootstrap.container import create_app
 
     class CaptureProvider:
         def __init__(self):
@@ -714,7 +714,7 @@ def test_generation_receives_only_its_owned_prior_turns(client_factory):
 def test_embedding_ledger_shares_atomic_monthly_limit():
     from concurrent.futures import ThreadPoolExecutor
 
-    from app.adapters.postgres.ledger import EmbeddingAccounting
+    from portfolio_assistant.adapters.postgres.ledger import EmbeddingAccounting
 
     with connect() as conn:
         spent = conn.execute(
@@ -752,8 +752,8 @@ def test_embedding_ledger_shares_atomic_monthly_limit():
 
 
 def test_freshness_blocks_known_update_and_expired_check_without_embedding_io():
-    from app.adapters.retrieval import KnowledgeIndex
-    from app.domain.errors import RejectedError
+    from portfolio_assistant.adapters.retrieval import KnowledgeIndex
+    from portfolio_assistant.domain.errors import RejectedError
 
     class ForbiddenEmbeddings:
         provider = "fixture"
@@ -794,7 +794,7 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
     import subprocess
     from types import SimpleNamespace
 
-    from app.adapters.portfolio import indexing
+    from portfolio_assistant.adapters.portfolio import indexing
 
     repo = tmp_path / "public-fixture"
     repo.mkdir()
@@ -888,8 +888,8 @@ def test_successful_embeddings_survive_failed_candidate_without_duplicate_calls(
 
 
 def test_optional_presentation_context_survives_http_graph_and_provider(client_factory):
-    from app.application.presentation_context import PresentationContext
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.application.presentation_context import PresentationContext
+    from portfolio_assistant.bootstrap.container import create_app
 
     class CaptureProvider:
         def __init__(self):
@@ -951,9 +951,9 @@ def test_optional_presentation_context_survives_http_graph_and_provider(client_f
 def test_private_operations_persist_survive_deletion_and_match_contract(client_factory):
     import time
 
-    from app.bootstrap.config import Settings
-    from app.bootstrap.container import create_app
-    from app.presentation.operations import OperationalSnapshot
+    from portfolio_assistant.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.container import create_app
+    from portfolio_assistant.presentation.operations import OperationalSnapshot
 
     token = "isolated-fixture-operations-token-0000"
     application = create_app(
@@ -1005,9 +1005,9 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
 def test_operational_usage_month_is_utc_even_with_non_utc_connection():
     from contextlib import contextmanager
 
-    from app.adapters.clock import SystemClock
-    from app.adapters.postgres.operations import PostgresOperations
-    from app.bootstrap.config import Settings
+    from portfolio_assistant.adapters.clock import SystemClock
+    from portfolio_assistant.adapters.postgres.operations import PostgresOperations
+    from portfolio_assistant.bootstrap.config import Settings
 
     identifier = uuid4()
     with connect() as conn:
@@ -1041,8 +1041,8 @@ def test_operational_usage_month_is_utc_even_with_non_utc_connection():
 
 
 def test_feedback_summary_tracks_rating_replacement_and_owned_deletion(client_factory):
-    from app.bootstrap.config import Settings
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.container import create_app
 
     token = "synthetic-private-feedback-token-0000"
     client = client_factory(
@@ -1099,8 +1099,8 @@ def test_feedback_summary_tracks_rating_replacement_and_owned_deletion(client_fa
 def test_readiness_rejects_an_active_corpus_change_during_its_graph_probe(
     client_factory, monkeypatch, change
 ):
-    from app.bootstrap.container import create_app
-    from app.domain.portfolio_paths import corpus_version
+    from portfolio_assistant.bootstrap.container import create_app
+    from portfolio_assistant.domain.portfolio_paths import corpus_version
 
     application = create_app(settings())
     client = client_factory(application)

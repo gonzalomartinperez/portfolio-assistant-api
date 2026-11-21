@@ -1,12 +1,12 @@
-"""Regenerate app/prompts/prompts.lock deliberately; --check fails on drift."""
+"""Regenerate src/portfolio_assistant/prompts/prompts.lock deliberately; --check fails on drift."""
 
 import sys
 from pathlib import Path
 
-from app.adapters.prompts import LOCK, prompt_files
-from app.domain.prompts import lock_text
+from portfolio_assistant.adapters.prompts import LOCK, prompt_files
+from portfolio_assistant.domain.prompts import lock_text
 
-ROOT = Path(__file__).resolve().parents[1] / "app" / "prompts"
+ROOT = Path(__file__).resolve().parents[1] / "src/portfolio_assistant/prompts"
 
 
 def main(argv: list[str]) -> int:

@@ -9,7 +9,7 @@ that every model answer will comply.
 
 ## Implemented minimization
 
-`app/domain/privacy.py` recognizes common ASCII email, explicit international-phone,
+`src/portfolio_assistant/domain/privacy.py` recognizes common ASCII email, explicit international-phone,
 and OpenAI-key/Bearer-like patterns. Retrieval questions and outbound bounded history
 use the minimized text; the concrete Responses adapter also applies it before provider
 I/O, including direct adapter calls. Public source evidence is intentionally unchanged.

@@ -14,8 +14,8 @@ import httpx
 import psycopg
 
 SLOW_APP = """import asyncio
-from app.bootstrap.container import create_app
-from app.adapters.providers.answer import FixtureProvider
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.adapters.providers.answer import FixtureProvider
 class SlowFixture(FixtureProvider):
     async def stream(self, question, evidence, locale, history=(), context=None):
         async for item in super().stream(question, evidence, locale, history, context):
@@ -98,7 +98,9 @@ def main():
             command += [
                 args.image,
                 "uvicorn",
-                "smoke_app:app" if slow else "app.main:app",
+                "smoke_app:app"
+                if slow
+                else "app.main:app",  # deprecated, still launched by vps-ops
                 "--host",
                 "127.0.0.1",
                 "--port",

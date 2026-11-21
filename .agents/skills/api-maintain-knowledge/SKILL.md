@@ -25,8 +25,8 @@ mutating an index. Evaluation and eval items belong to evaluate-assistant; this 
 ## Procedure
 
 1. Load only the affected path: [retrieval policy](../../../docs/explanation/graph-retrieval.md),
-   [retrieval orchestration](../../../app/ai/retrieval/pipeline.py), [indexing](../../../app/adapters/portfolio/indexing.py),
-   [graph queries](../../../app/adapters/neo4j/projection.py), [knowledge sync](../../../docs/how-to/maintain-knowledge.md).
+   [retrieval orchestration](../../../src/portfolio_assistant/ai/retrieval/pipeline.py), [indexing](../../../src/portfolio_assistant/adapters/portfolio/indexing.py),
+   [graph queries](../../../src/portfolio_assistant/adapters/neo4j/projection.py), [knowledge sync](../../../docs/how-to/maintain-knowledge.md).
 2. Ingestion: enforce allowlisted paths, blob type and size, and corpus bounds before projection. Do not follow
    redirects, execute fetched documents or let source text override instructions. The local demo pins a public
    commit; the frozen in-repo snapshot is `evals/corpus` ([ADR016](../../../docs/decisions/016-frozen-public-corpus-snapshot.md)),
@@ -38,7 +38,7 @@ mutating an index. Evaluation and eval items belong to evaluate-assistant; this 
    activate. Cold-start and readiness rules: [graph readiness](../../../docs/evidence/archive/2026-10/graph-readiness-2026-10-18.md),
    two-second request budget preserved.
 5. Retrieval and grounding changes: preserve abstention and clarification rather than inventing professional claims;
-   keep citations on canonical keys (`app/domain/portfolio_paths.py`). A retrieval rule must be justified by measured
+   keep citations on canonical keys (`src/portfolio_assistant/domain/portfolio_paths.py`). A retrieval rule must be justified by measured
    cases, not by one question: run the retrieval harness (`uv run --group eval python -m evals.harness.retrieval --out
    artifacts/retrieval-report.json --compare`, isolated fixtures, no model call) against `evals/baselines/retrieval.json`
    through evaluate-assistant, which owns reading the report. A significant Recall@5 drop on the golden-relevant

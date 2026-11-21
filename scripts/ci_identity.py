@@ -65,7 +65,7 @@ def clean_build_inputs(root: Path) -> bool:
             "--quiet",
             "HEAD",
             "--",
-            "app",
+            "src",
             "infra",
             "migrations",
             "contracts",

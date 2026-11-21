@@ -10,9 +10,9 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from app.adapters.portfolio.indexing import chunks as portfolio_chunks
-from app.ai.retrieval import PublicRetrieval, rerank
-from app.application.knowledge import Chunk, Corpus
+from portfolio_assistant.adapters.portfolio.indexing import chunks as portfolio_chunks
+from portfolio_assistant.ai.retrieval import PublicRetrieval, rerank
+from portfolio_assistant.application.knowledge import Chunk, Corpus
 from tests.characterization.legacy_retrieval import LegacyRetrieval
 
 ROOT = Path(__file__).resolve().parents[2]

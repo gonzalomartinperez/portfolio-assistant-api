@@ -11,7 +11,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app.presentation import analytics, feedback, http, operations
+from portfolio_assistant.presentation import analytics, feedback, http, operations
 from tests.support import ROOT
 from tests.support_app import ORIGIN, build_app, pin_env
 
@@ -85,7 +85,7 @@ def world(request):
 
 
 def _owner(app, client):
-    from app.application.conversations import digest
+    from portfolio_assistant.application.conversations import digest
 
     raw = client.cookies.get(app.state.config.cookie_name)
     return app.state.store.sessions[digest(raw)].id

@@ -4,9 +4,9 @@ import asyncio
 
 import pytest
 
-from app.ai.workflow import LangGraphWorkflow
-from app.application.contracts import AnswerCommand
-from app.application.conversation_context import (
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.contracts import AnswerCommand
+from portfolio_assistant.application.conversation_context import (
     Turn,
     bounded_history,
     retrieval_question,
@@ -107,7 +107,7 @@ def test_workflow_resolves_retrieval_but_preserves_current_question_and_untruste
 def test_settings_errors_do_not_render_supplied_secret_values():
     import pytest
 
-    from app.bootstrap.config import Settings
+    from portfolio_assistant.bootstrap.config import Settings
 
     with pytest.raises(ValueError) as error:
         Settings(environment="production", openai_api_key="sentinel-private-value")
@@ -151,7 +151,7 @@ def test_referential_refinement_survives_a_further_followup():
 
 
 def test_fixture_does_not_attribute_another_employers_contribution():
-    from app.adapters.providers.fixture_answer import fixture_message
+    from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-5:
 company: "Rampy",
@@ -168,8 +168,11 @@ contributions: ["Built an unrelated infrastructure migration for another employe
 def test_short_qualified_metric_keeps_its_source_citation():
     from dataclasses import replace
 
-    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
-    from app.application.runs import citations
+    from portfolio_assistant.adapters.providers.fixture_answer import (
+        fixture_message,
+        fixture_supports,
+    )
+    from portfolio_assistant.application.runs import citations
 
     source = replace(SOURCE, content='value: "30%", label: "Latency", qualifier: "Estimated"')
     answer = fixture_message(
@@ -182,7 +185,7 @@ def test_short_qualified_metric_keeps_its_source_citation():
 
 
 def test_fixture_excludes_previous_employer_text_in_the_same_source_span():
-    from app.adapters.providers.fixture_answer import fixture_message
+    from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-35:
 qualifier: "An estimated improvement for the previous employer only.",
@@ -198,7 +201,7 @@ contributions: ["Implemented an unrelated advertising platform elsewhere."],
 
 
 def test_explicit_comparison_can_include_both_employers():
-    from app.adapters.providers.fixture_answer import fixture_message
+    from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
 
     evidence = """PUBLIC SOURCE one lines 1-5:
 company: "Rampy",
@@ -264,7 +267,7 @@ def test_generic_possessive_example_preserves_the_topic(question):
 
 
 def test_capitalized_locale_command_is_not_an_employer_switch():
-    from app.domain.evidence import requested_affiliation
+    from portfolio_assistant.domain.evidence import requested_affiliation
 
     history = (Turn("user", "What did Gonzalo build at Rampy?"),)
     assert requested_affiliation("Responde en Español") is None

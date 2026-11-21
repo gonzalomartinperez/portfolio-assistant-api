@@ -76,7 +76,7 @@ jobs:
     - name: Start the isolated non-root PostgreSQL fixture
       run: docker compose -f infra/compose/local.yaml -p assistant-ci up --no-build --pull never -d --wait --wait-timeout 90 postgres
     - name: Apply and verify migrations
-      run: uv run python -m app.migrate
+      run: uv run assistant-migrate
     - name: Verify real dual-application identities and independent recovery
       run: |
         mkdir -p artifacts

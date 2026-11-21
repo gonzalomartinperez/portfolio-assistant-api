@@ -26,9 +26,9 @@ import schemathesis
 from hypothesis import HealthCheck, settings
 from schemathesis.checks import allow_header_conformance, positive_data_acceptance
 
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.errors import RejectedError
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.errors import RejectedError
 from tests.support import ROOT
 
 pytestmark = pytest.mark.contract

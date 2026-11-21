@@ -9,20 +9,20 @@ import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from app.domain.analytics_periods import calendar_window
-from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, Budget
-from app.domain.evidence import ALIASES, lexical_score, tokens
-from app.domain.portfolio_paths import (
+from portfolio_assistant.domain.analytics_periods import calendar_window
+from portfolio_assistant.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, Budget
+from portfolio_assistant.domain.evidence import ALIASES, lexical_score, tokens
+from portfolio_assistant.domain.portfolio_paths import (
     canonical_key,
     key_paths,
     profile_parts,
     profile_paths,
 )
-from app.domain.privacy import SECRET, minimize_visitor_text
-from app.domain.web_budget import WebBudget
+from portfolio_assistant.domain.privacy import SECRET, minimize_visitor_text
+from portfolio_assistant.domain.web_budget import WebBudget
 
 if TYPE_CHECKING:
-    from app.domain.evidence import EvidenceRecord
+    from portfolio_assistant.domain.evidence import EvidenceRecord
 
 pytestmark = pytest.mark.property
 

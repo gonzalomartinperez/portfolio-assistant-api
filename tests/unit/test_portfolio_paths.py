@@ -7,7 +7,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from app.domain.portfolio_paths import (
+from portfolio_assistant.domain.portfolio_paths import (
     canonical_key,
     key_paths,
     profile_parts,

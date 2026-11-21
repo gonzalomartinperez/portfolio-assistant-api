@@ -1,6 +1,6 @@
 # Configuration reference
 
-Settings are validated in `app/bootstrap/config.py`. Environment variables override
+Settings are validated in `src/portfolio_assistant/bootstrap/config.py`. Environment variables override
 `.env.local`; never commit that file. `.env.example` contains public fixture defaults.
 Use `scripts/fixture-env.sh` for isolated test ports. Do not put API credentials in
 frontend builds or command output. Fixture mode performs no paid model calls.

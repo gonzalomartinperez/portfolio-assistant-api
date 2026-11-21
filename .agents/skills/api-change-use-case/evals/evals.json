@@ -6,7 +6,7 @@
       "id": "api-change-use-case-1",
       "prompt": "Add a limit of 20 conversations per anonymous session",
       "assertions": [
-        "keeps the rule in app/application and the policy in app/domain, with no outward imports",
+        "keeps the rule in src/portfolio_assistant/application and the policy in src/portfolio_assistant/domain, with no outward imports",
         "makes the limit check atomic instead of read-then-write",
         "adds a test at the use-case layer first",
         "does not read a real API key or call a paid provider"

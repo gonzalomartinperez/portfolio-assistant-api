@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 from neo4j import READ_ACCESS, GraphDatabase
 
-from app.adapters.neo4j.read_queries import (
+from portfolio_assistant.adapters.neo4j.read_queries import (
     DIRECT_RELATIONSHIPS_QUERY,
     PREPARATION_TIMEOUT,
     READ_TIMEOUT,
@@ -16,8 +16,8 @@ from app.adapters.neo4j.read_queries import (
     prepare_reads,
     probe_reads,
 )
-from app.adapters.portfolio.indexing import graph_driver
-from app.adapters.retrieval import KnowledgeIndex
+from portfolio_assistant.adapters.portfolio.indexing import graph_driver
+from portfolio_assistant.adapters.retrieval import KnowledgeIndex
 
 
 @contextmanager

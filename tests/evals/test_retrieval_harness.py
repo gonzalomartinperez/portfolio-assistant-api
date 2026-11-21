@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from app.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
 from evals.harness import retrieval as harness
 from evals.harness.retrieval import (
     abstention_sweep,
@@ -22,6 +21,7 @@ from evals.harness.retrieval import (
     recall_at,
     runs_from_records,
 )
+from portfolio_assistant.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
 
 
 def query(qid, locale="en", kind="direct", family="answerable_core", **extra):

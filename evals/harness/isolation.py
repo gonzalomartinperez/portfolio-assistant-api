@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from psycopg import ProgrammingError
 from psycopg.conninfo import conninfo_to_dict
 
-from app.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.config import Settings
 from scripts.evaluation_isolation import (
     LOOPBACK_HOSTS,
     EvaluationContainer,

@@ -16,7 +16,7 @@ status text incorrectly calls merged work pending.
 
 ## Decision
 
-Use a modular monolith under `app` with six explicit layer packages. Preserve existing CLI entry points as thin bootstrap adapters. Domain contains pure
+Use a modular monolith under `src/portfolio_assistant` with six explicit layer packages. Preserve existing CLI entry points as thin bootstrap adapters. Domain contains pure
 evidence and security policies. Application owns typed workflow, provider,
 retrieval and persistence contracts and use cases. `ai` implements application workflow and retrieval ports using injected capabilities.
 `infrastructure` implements PostgreSQL, Neo4j, model-provider and source ports.
@@ -62,12 +62,12 @@ The physical `infrastructure` name below is superseded by
 
 | Package | Existing responsibilities moved here |
 | --- | --- |
-| `app/domain` | Pure lexical ranking, citation provenance, fixture excerpt policy from retrieval/provider |
-| `app/application` | Workflow/retrieval/provider/storage ports; answer and conversation/run use cases extracted from main/workflow |
-| `app/ai` | Injected LangGraph orchestration from workflow; retrieval orchestration from retrieval |
-| `app/infrastructure` | psycopg DB/store/ledger/migrations; Neo4j projection; provider adapter; public Git source and indexing |
-| `app/presentation` | FastAPI routes, transport models, SSE encoding and request guards from main/models |
-| `app/bootstrap` | Settings, lifespan composition, CLI assembly |
+| `src/portfolio_assistant/domain` | Pure lexical ranking, citation provenance, fixture excerpt policy from retrieval/provider |
+| `src/portfolio_assistant/application` | Workflow/retrieval/provider/storage ports; answer and conversation/run use cases extracted from main/workflow |
+| `src/portfolio_assistant/ai` | Injected LangGraph orchestration from workflow; retrieval orchestration from retrieval |
+| `src/portfolio_assistant/infrastructure` | psycopg DB/store/ledger/migrations; Neo4j projection; provider adapter; public Git source and indexing |
+| `src/portfolio_assistant/presentation` | FastAPI routes, transport models, SSE encoding and request guards from main/models |
+| `src/portfolio_assistant/bootstrap` | Settings, lifespan composition, CLI assembly |
 
 `domain` imports only standard library. `application` imports standard library and
 `domain`. `ai` imports these inner packages and frameworks, never concrete

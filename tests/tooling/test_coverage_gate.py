@@ -11,7 +11,7 @@ REPORT = """<?xml version="1.0" ?>
 <line number="1" hits="1"/>
 <line number="2" hits="1" branch="true" condition-coverage="50% (1/2)"/>
 </lines></class>
-<class filename="app/adapters/b.py"><lines>
+<class filename="src/portfolio_assistant/adapters/b.py"><lines>
 <line number="2" hits="1" branch="true" condition-coverage="100% (2/2)"/>
 </lines></class>
 <class filename="main.py"><lines>
@@ -66,5 +66,5 @@ def test_an_empty_report_fails_instead_of_passing_every_floor(tmp_path, capsys):
 
 
 def test_normalize_strips_only_a_leading_dot_slash():
-    assert coverage_gate.normalize("./domain/a.py") == "app/domain/a.py"
-    assert coverage_gate.normalize(".hidden/x.py") == "app/.hidden/x.py"
+    assert coverage_gate.normalize("./domain/a.py") == "src/portfolio_assistant/domain/a.py"
+    assert coverage_gate.normalize(".hidden/x.py") == "src/portfolio_assistant/.hidden/x.py"

@@ -23,7 +23,7 @@ def lint_package(tmp_path, monkeypatch):
         child = package / layer
         child.mkdir()
         (child / "__init__.py").touch()
-    for shim in ("main", "migrate", "retention", "knowledge_sync", "knowledge_watch"):
+    for shim in ("main",):
         (package / f"{shim}.py").touch()
     (package / "adapters/postgres").mkdir()
     for leaf in (
@@ -35,11 +35,13 @@ def lint_package(tmp_path, monkeypatch):
     ):
         (package / leaf).touch()
     config = tmp_path / "pyproject.toml"
-    config.write_text(re.sub(r'"app(?=[."])', f'"{name}', (ROOT / "pyproject.toml").read_text()))
+    config.write_text(
+        re.sub(r'"portfolio_assistant(?=[."])', f'"{name}', (ROOT / "pyproject.toml").read_text())
+    )
 
     def run(sources):
         for path, source in sources.items():
-            (package / path).write_text(source.replace("app.", f"{name}."))
+            (package / path).write_text(source.replace("portfolio_assistant.", f"{name}."))
         return invoke_lint_imports(["--no-cache", str(config)])
 
     return run
@@ -48,15 +50,22 @@ def lint_package(tmp_path, monkeypatch):
 @pytest.mark.parametrize(
     ("path", "source", "contract"),
     [
-        ("domain/example.py", "import app.adapters", LAYERS),
-        ("application/example.py", "import app.presentation.http", LAYERS),
-        ("adapters/example.py", "import app.presentation", LAYERS),
+        ("domain/example.py", "import portfolio_assistant.adapters", LAYERS),
+        ("application/example.py", "import portfolio_assistant.presentation.http", LAYERS),
+        ("adapters/example.py", "import portfolio_assistant.presentation", LAYERS),
         ("ai/example.py", "from .. import adapters", LAYERS),
-        ("ai/example.py", "from app.adapters.postgres.db import connect", LAYERS),
-        ("presentation/example.py", "from app.bootstrap.container import create_app", LAYERS),
-        ("adapters/example.py", "from app.bootstrap.config import settings", LAYERS),
-        ("bootstrap/example.py", "import app.main", LAYERS),
-        ("migrate.py", "import app.main", LAYERS),
+        ("ai/example.py", "from portfolio_assistant.adapters.postgres.db import connect", LAYERS),
+        (
+            "presentation/example.py",
+            "from portfolio_assistant.bootstrap.container import create_app",
+            LAYERS,
+        ),
+        (
+            "adapters/example.py",
+            "from portfolio_assistant.bootstrap.config import settings",
+            LAYERS,
+        ),
+        ("bootstrap/example.py", "import portfolio_assistant.main", LAYERS),
         ("application/example.py", "import httpx", EXTERNAL),
         ("application/example.py", "from fastapi import Request", EXTERNAL),
         (
@@ -70,14 +79,14 @@ def lint_package(tmp_path, monkeypatch):
         ("domain/example.py", "import sqlite3", EXTERNAL),
         ("application/example.py", "import subprocess", EXTERNAL),
         # The three middle layers are independent in both directions.
-        ("presentation/example.py", "import app.ai", LAYERS),
-        ("presentation/example.py", "import app.adapters", LAYERS),
-        ("adapters/example.py", "import app.ai", LAYERS),
-        ("ai/example.py", "import app.presentation", LAYERS),
+        ("presentation/example.py", "import portfolio_assistant.ai", LAYERS),
+        ("presentation/example.py", "import portfolio_assistant.adapters", LAYERS),
+        ("adapters/example.py", "import portfolio_assistant.ai", LAYERS),
+        ("ai/example.py", "import portfolio_assistant.presentation", LAYERS),
         # No layer below the shims imports any shim.
         *[
-            ("bootstrap/example.py", f"import app.{shim}", LAYERS)
-            for shim in ("main", "migrate", "retention", "knowledge_sync", "knowledge_watch")
+            ("bootstrap/example.py", f"import portfolio_assistant.{shim}", LAYERS)
+            for shim in ("main",)
         ],
     ],
 )
@@ -104,13 +113,12 @@ def test_allows_owned_ports_and_shims(lint_package):
         {
             "domain/evidence.py": "from urllib.parse import urlsplit",
             "domain/example.py": "from . import evidence",
-            "application/example.py": "from app.domain import evidence",
-            "adapters/example.py": "from app.application import example",
-            "ai/example.py": "from app.application import example\nimport app.domain",
-            "presentation/example.py": "import app.application\nimport app.domain",
-            "bootstrap/example.py": "import app.ai\nimport app.adapters\nimport app.presentation",
-            "main.py": "import app.bootstrap\nimport app.domain",
-            "migrate.py": "import app.adapters",
+            "application/example.py": "from portfolio_assistant.domain import evidence",
+            "adapters/example.py": "from portfolio_assistant.application import example",
+            "ai/example.py": "from portfolio_assistant.application import example\nimport portfolio_assistant.domain",
+            "presentation/example.py": "import portfolio_assistant.application\nimport portfolio_assistant.domain",
+            "bootstrap/example.py": "import portfolio_assistant.ai\nimport portfolio_assistant.adapters\nimport portfolio_assistant.presentation",
+            "main.py": "import portfolio_assistant.bootstrap\nimport portfolio_assistant.domain",
         }
     )
     assert result.exit_code == 0, result.output

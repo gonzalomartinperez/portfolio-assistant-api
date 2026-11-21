@@ -7,7 +7,7 @@ that is provable: every changed Python file under the given paths existed at the
 renamed file, any non-Python file, or any other byte of difference makes it fail, so diff-cover
 runs as usual.
 
-Usage: python -m scripts.format_only_diff --base origin/develop app
+Usage: python -m scripts.format_only_diff --base origin/develop src
 Exit 0: format-only. Exit 1: not format-only (or nothing changed). Exit 2: git or ruff error.
 """
 

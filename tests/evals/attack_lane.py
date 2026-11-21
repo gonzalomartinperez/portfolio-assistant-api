@@ -10,17 +10,17 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from app.adapters.providers.language import LocalLanguageDetector
-from app.ai.workflow import LangGraphWorkflow
-from app.application.contracts import Evidence
-from app.application.runs import RunService
-from app.presentation.models import SendMessage
 from evals.harness.adversary import GRADING, AdversarialProvider
 from evals.harness.graders import grade_item
 from evals.harness.items import Item
 from evals.harness.loader import load_items
 from evals.harness.result import GradeResult, RunResult
 from evals.harness.runner import RecordingProvider, collect, item_context
+from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.contracts import Evidence
+from portfolio_assistant.application.runs import RunService
+from portfolio_assistant.presentation.models import SendMessage
 from tests.support import FixedClock
 from tests.unit.test_workflow import Store
 

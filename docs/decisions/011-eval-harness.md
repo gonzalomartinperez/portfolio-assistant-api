@@ -58,7 +58,7 @@ Option 2.
    The runner refuses to start otherwise.
 5. Reports (`report.py`) hold counts per stratum and locale with Wilson 95% intervals,
    failing ids, quarantined items (outside the gate) and optional pins, never answer text, and are written with mode 0600.
-6. The package is outside the image: the Dockerfile context whitelists only `app/`,
+6. The package is outside the image: the Dockerfile context whitelists only `src/portfolio_assistant/`,
    `migrations/` and `contracts/`. Ruff and strict mypy cover `evals`.
 
 ## Consequences

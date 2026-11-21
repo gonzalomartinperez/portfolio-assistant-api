@@ -101,7 +101,7 @@ def test_unknown_paths_match_no_profile_so_classify_fails_closed():
 @pytest.mark.parametrize(
     "path",
     [
-        "app/main.py",
+        "src/portfolio_assistant/main.py",
         "tests/test_x.py",
         "scripts/tool.py",
         "migrations/001.sql",
@@ -114,7 +114,7 @@ def test_docs_profile_never_matches_code_unless_markdown(path):
     assert "docs" in matching_profiles(path.rsplit(".", 1)[0] + ".md")
 
 
-@pytest.mark.parametrize("directory", ["app", "tests", "scripts", "migrations", "contracts"])
+@pytest.mark.parametrize("directory", ["src", "tests", "scripts", "migrations", "contracts"])
 def test_docs_profile_only_matches_markdown_under_code_directories(directory):
     docs = profile_map()["profiles"]["docs"]["paths"]
     for path in tracked_files():
@@ -221,7 +221,7 @@ def test_policy_cannot_hide_or_privilege_pr_work(mode):
     value = workflow()
     events = value.get("on", value.get(True))
     if mode == "paths":
-        events["pull_request"]["paths"] = ["app/**"]
+        events["pull_request"]["paths"] = ["src/**"]
     elif mode == "permissions":
         value["jobs"]["container"]["permissions"] = {"packages": "write"}
     elif mode == "action":

@@ -32,7 +32,7 @@ files larger than 2,048 bytes are rejected. This declaration does not prove that
 operator used synthetic data: do not derive it from visitor/session records.
 
 ```bash
-uv run python -m app.bootstrap.evaluation_export path/to/summary.json
+uv run python -m portfolio_assistant.bootstrap.evaluation_export path/to/summary.json
 uv run pytest -q tests/evals/test_evaluation_export.py tests/architecture/test_architecture.py
 ```
 
@@ -53,7 +53,7 @@ auto-loading is performed by this command.
 With that approval, a clean `ENVIRONMENT=development` process may invoke:
 
 ```bash
-uv run python -m app.bootstrap.evaluation_export path/to/summary.json --authorize-export
+uv run python -m portfolio_assistant.bootstrap.evaluation_export path/to/summary.json --authorize-export
 ```
 
 The supported endpoint is fixed to `https://api.smith.langchain.com/runs` and project

@@ -5,7 +5,7 @@ Status: accepted (2026-11-14, master plan task M2-6, decision PAA-D7).
 ## Context and problem
 
 The developer prompt (about 4.5 KB) was an inline f-string in
-`app/adapters/providers/answer.py` plus `voice_instructions()`. It had no version and no
+`src/portfolio_assistant/adapters/providers/answer.py` plus `voice_instructions()`. It had no version and no
 hash, so a quality change could not be tied to a prompt change and nothing recorded which
 prompt produced an answer or a cost line. Privacy rules forbid hosted tracing (PAA-D8, [ADR021](021-tracing-off-no-hosted-prompt-registry.md)).
 
@@ -21,7 +21,7 @@ prompt produced an answer or a cost line. Privacy rules forbid hosted tracing (P
 
 Option 2.
 
-- Files live in `app/prompts/`: `answer.md`, `web-context.md`, `voice-recruiter.md`,
+- Files live in `src/portfolio_assistant/prompts/`: `answer.md`, `web-context.md`, `voice-recruiter.md`,
   `voice.en.md`, `voice.es.md`. Front matter holds `id`, `version`, `owner`,
   `last-reviewed`. Body lines are joined with single spaces and each piece is followed
   by one space, so the rendered developer message is byte-identical to the former
@@ -41,12 +41,12 @@ Option 2.
 ## Placement
 
 `PromptSpec`, front matter parsing, lock verification, rendering and `prompt_version` are
-pure stdlib policy in `app/domain/prompts.py` (ADR001). Reading the files through
-`importlib.resources` is I/O and lives in `app/adapters/prompts.py`; assembly of the
-pieces for a locale stays in the provider adapter (`providers/voice.py`). `app/prompts/`
+pure stdlib policy in `src/portfolio_assistant/domain/prompts.py` (ADR001). Reading the files through
+`importlib.resources` is I/O and lives in `src/portfolio_assistant/adapters/prompts.py`; assembly of the
+pieces for a locale stays in the provider adapter (`providers/voice.py`). `src/portfolio_assistant/prompts/`
 holds data only (no Python), so the architecture guard sees no new layer. The project is
 installed editable in the image ([ADR017](017-canonical-api-image.md)) and the Dockerfile
-copies `app/`, so the files ship without packaging changes.
+copies `src/portfolio_assistant/`, so the files ship without packaging changes.
 
 ## Consequences
 

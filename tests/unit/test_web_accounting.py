@@ -8,9 +8,9 @@ from uuid import UUID
 
 import pytest
 
-from app.adapters.postgres.web_ledger import WebAccounting
-from app.domain.errors import BudgetExhaustedError
-from app.domain.web_budget import WebBudget
+from portfolio_assistant.adapters.postgres.web_ledger import WebAccounting
+from portfolio_assistant.domain.errors import BudgetExhaustedError
+from portfolio_assistant.domain.web_budget import WebBudget
 
 
 @pytest.mark.parametrize("spent", [Decimal(0), Decimal("8.9")])

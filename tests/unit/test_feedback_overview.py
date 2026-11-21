@@ -2,9 +2,9 @@
 
 from fastapi.testclient import TestClient
 
-from app.application.feedback import FeedbackSummary
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
+from portfolio_assistant.application.feedback import FeedbackSummary
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
 
 TOKEN = "synthetic-private-feedback-token-0000"
 

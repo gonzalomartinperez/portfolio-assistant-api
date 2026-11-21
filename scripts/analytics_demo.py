@@ -20,9 +20,9 @@ import psycopg
 import uvicorn
 from psycopg.rows import dict_row
 
-from app.adapters.postgres import migrations
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
+from portfolio_assistant.adapters.postgres import migrations
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
 from scripts.project_postgres_fixture import project_fixture
 
 

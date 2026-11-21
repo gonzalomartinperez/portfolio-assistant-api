@@ -12,16 +12,16 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 from pydantic import ValidationError
 
-from app.adapters.portfolio.indexing import chunks, projection_spans
-from app.adapters.portfolio.projection import PublicProjection
-from app.application.contracts import Evidence
-from app.application.language import explicit_locale, select_locale
-from app.application.runs import (
+from portfolio_assistant.adapters.portfolio.indexing import chunks, projection_spans
+from portfolio_assistant.adapters.portfolio.projection import PublicProjection
+from portfolio_assistant.application.contracts import Evidence
+from portfolio_assistant.application.language import explicit_locale, select_locale
+from portfolio_assistant.application.runs import (
     citations,
     normalize_citation_markers,
     referenced_sources,
 )
-from app.presentation.http import execute_run, sse
+from portfolio_assistant.presentation.http import execute_run, sse
 from scripts.scan_secrets import PATTERNS, matches
 from tests.support import FixedClock
 

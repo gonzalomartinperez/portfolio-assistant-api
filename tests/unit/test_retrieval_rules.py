@@ -7,21 +7,21 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from app.ai.retrieval import PublicRetrieval
-from app.ai.retrieval.candidates import Eligible, eligible_chunks
-from app.ai.retrieval.query import build_intent
-from app.ai.retrieval.rerank import ANCHORS, FIRST_MATCH, rerank
-from app.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS, parse_rules
-from app.application.knowledge import Chunk, Corpus
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.ai.retrieval.candidates import Eligible, eligible_chunks
+from portfolio_assistant.ai.retrieval.query import build_intent
+from portfolio_assistant.ai.retrieval.rerank import ANCHORS, FIRST_MATCH, rerank
+from portfolio_assistant.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS, parse_rules
+from portfolio_assistant.application.knowledge import Chunk, Corpus
 
 if TYPE_CHECKING:
-    from app.ai.retrieval.rules import RetrievalRules
+    from portfolio_assistant.ai.retrieval.rules import RetrievalRules
 
 COMMIT = "a" * 40
 
 
 def test_packaged_rules_match_all_enabled_defaults():
-    with files("app.ai.retrieval").joinpath("rules.toml").open("rb") as source:
+    with files("portfolio_assistant.ai.retrieval").joinpath("rules.toml").open("rb") as source:
         assert parse_rules(tomllib.load(source), strict=True) == DEFAULT_RULES
     assert parse_rules({"rules": {"disabled": []}}) == DEFAULT_RULES
     assert all(DEFAULT_RULES.enabled(rule_id) for rule_id in RULE_IDS)
@@ -56,7 +56,7 @@ def test_parse_rules_rejects_bad_input(mapping, message):
 
 
 def test_parse_rules_strict_requires_every_section_and_key():
-    with files("app.ai.retrieval").joinpath("rules.toml").open("rb") as source:
+    with files("portfolio_assistant.ai.retrieval").joinpath("rules.toml").open("rb") as source:
         complete = tomllib.load(source)
 
     for section, table in complete.items():

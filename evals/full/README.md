@@ -75,7 +75,7 @@ request language (language policy items) or used voseo (`contame`).
    `--force`, `--plan` never prints sealed family ids, and the 20 sealed families are pinned in
    `SEALED_FAMILIES` so the file and its hash survive changes to the duplicate screen.
 2. The test module verifies the committed hash, fails if any scanned file (`prompts/` when present,
-   `app/`, `evals/harness/`, `evals/golden/`, `scripts/`, `docs/`, `.claude/`, `.agents/`,
+   `src/portfolio_assistant/`, `evals/harness/`, `evals/golden/`, `scripts/`, `docs/`, `.claude/`, `.agents/`,
    `.codex/`, AGENTS.md, CLAUDE.md, CONTRIBUTING.md) mentions a holdout id or contains a
    normalized sealed question (only the path is printed), and checks that `sealed_aggregate` and
    `build_report(..., sealed=True)` expose counts only (cells under 5 items are suppressed; the

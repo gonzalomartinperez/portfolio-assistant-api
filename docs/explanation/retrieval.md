@@ -7,7 +7,7 @@ and relationship traversal.
 
 ## Rule ablation
 
-[The packaged rules](../../app/ai/retrieval/rules.toml) define the default vocabulary
+[The packaged rules](../../src/portfolio_assistant/ai/retrieval/rules.toml) define the default vocabulary
 and weights. [ADR015](../decisions/015-retrieval-pipeline-rrf-ablation.md) records
 how the pipeline handles disabled rules and when evidence supports removing one.
 

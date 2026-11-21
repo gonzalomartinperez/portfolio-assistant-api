@@ -12,7 +12,7 @@ The application does not install or control shared services.
 2. Build from a clean locked checkout (`uv sync --frozen`; pinned Docker base images).
    The image runs as UID/GID 65532, with no root privileges required. Run with a
    read-only filesystem and writable temporary directory where supported.
-3. Run `python -m app.migrate` as an explicit one-shot operator step. Migration
+3. Run `assistant-migrate` as an explicit one-shot operator step. Migration
    filenames/order/checksums are validated under a transaction lock. Never edit an
    applied file or recreate a database to pass a check. Checkpoint setup follows
    application migrations and is not an HTTP startup operation.
@@ -46,7 +46,7 @@ connect/lock/statement bounds, and graph traversal uses a two-second query timeo
 
 ## Retention, privacy and scheduled work
 
-Run `python -m app.retention` every minute under the same private configuration.
+Run `assistant-retention` every minute under the same private configuration.
 It purges expired anonymous sessions and old rate hashes, and retries at most 100
 checkpoint cleanup records. Deletion responses attempt one bounded cleanup item;
 tombstones remain ten minutes to handle late cancelling checkpoint writes. During a

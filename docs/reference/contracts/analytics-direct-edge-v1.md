@@ -65,16 +65,16 @@ Cookies and Authorization are forbidden on this public ingestion route. Country,
 raw IPs, input text, query strings and arbitrary properties are not browser fields.
 
 See the public collector's committed `src/features/analytics/adapters/http.ts`,
-API [HTTP models](../../../app/presentation/analytics.py),
-[interaction models](../../../app/presentation/interaction_models.py) and
-[body/origin guards](../../../app/presentation/middleware.py). No provider credential,
+API [HTTP models](../../../src/portfolio_assistant/presentation/analytics.py),
+[interaction models](../../../src/portfolio_assistant/presentation/interaction_models.py) and
+[body/origin guards](../../../src/portfolio_assistant/presentation/middleware.py). No provider credential,
 model call, extra database or new service is needed for product measurements.
 
 ## Country provenance boundary
 
-[The API adapter](../../../app/presentation/analytics_country.py) requires all of:
+[The API adapter](../../../src/portfolio_assistant/presentation/analytics_country.py) requires all of:
 country enabled, an actual socket peer matching the configured exact addresses,
-and exactly one `CF-IPCountry` value in the [249-code ISO allowlist](../../../app/domain/analytics_country.py).
+and exactly one `CF-IPCountry` value in the [249-code ISO allowlist](../../../src/portfolio_assistant/domain/analytics_country.py).
 IPv4-mapped IPv6 peers normalize before comparison. Missing/untrusted peers,
 malformed/duplicate headers, `XX`, `T1`, lowercase or unknown codes yield `unknown`.
 Locale, client JSON and forwarded-IP headers never establish country.

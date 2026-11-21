@@ -8,10 +8,10 @@ import pytest
 from openai import AsyncOpenAI
 from pydantic import ValidationError
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.application.contracts import GenerationFailedError
-from app.bootstrap.config import Settings
-from app.domain.errors import ProviderUnavailableError
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.application.contracts import GenerationFailedError
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.errors import ProviderUnavailableError
 from tests.support import FixedClock
 
 

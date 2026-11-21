@@ -58,7 +58,7 @@ Bootstrap pgvector in the assistant database using an approved provisioning iden
 before running the non-superuser API migrator. Do not install it in IAM or hand an
 extension-creation superuser to either application. The existing migration 001's
 `CREATE EXTENSION IF NOT EXISTS` and checkpoint setup must be tested in this order.
-Run `python -m app.migrate` and `node scripts/auth-migrate.ts` as separate one-off
+Run `assistant-migrate` and `node scripts/auth-migrate.ts` as separate one-off
 image tasks, with each task's existing URL variable pointing to its own migration
 identity/database. Do not change runtime credentials to migrate on startup.
 

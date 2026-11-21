@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.config import Settings
 
 PRICING = {
     "input_usd_per_million": "0.10",

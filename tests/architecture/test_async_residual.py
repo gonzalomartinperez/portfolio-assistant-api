@@ -10,15 +10,15 @@ from tests.support import ROOT
 
 ADR = ROOT / "docs/decisions/029-async-io-boundary.md"
 ALLOWED = {
-    "app.adapters.portfolio.watch": 3,
-    "app.adapters.postgres.ledger": 2,
-    "app.adapters.postgres.operations": 2,
-    "app.adapters.postgres.runs": 6,
-    "app.adapters.postgres.web_ledger": 2,
-    "app.adapters.providers.embedding": 2,
-    "app.adapters.retrieval": 3,
-    "app.bootstrap.container": 4,
-    "app.presentation.operations": 2,
+    "portfolio_assistant.adapters.portfolio.watch": 3,
+    "portfolio_assistant.adapters.postgres.ledger": 2,
+    "portfolio_assistant.adapters.postgres.operations": 2,
+    "portfolio_assistant.adapters.postgres.runs": 6,
+    "portfolio_assistant.adapters.postgres.web_ledger": 2,
+    "portfolio_assistant.adapters.providers.embedding": 2,
+    "portfolio_assistant.adapters.retrieval": 3,
+    "portfolio_assistant.bootstrap.container": 4,
+    "portfolio_assistant.presentation.operations": 2,
 }
 
 
@@ -58,16 +58,18 @@ def assert_residual(counts: dict[str, int], allowed: dict[str, int]) -> None:
 
 def test_async_residual_matches_allowances():
     counts = {}
-    for path in sorted((ROOT / "app").rglob("*.py")):
+    for path in sorted((ROOT / "src/portfolio_assistant").rglob("*.py")):
         count = count_references(path.read_text(encoding="utf-8"))
         if count:
-            module = ".".join(path.relative_to(ROOT).with_suffix("").parts)
+            module = ".".join(path.relative_to(ROOT / "src").with_suffix("").parts)
             counts[module] = count
     assert_residual(counts, ALLOWED)
 
 
 def test_async_residual_matches_adr_inventory():
-    modules = re.findall(r"^\| `(app\.[\w.]+)` \|", ADR.read_text(encoding="utf-8"), re.MULTILINE)
+    modules = re.findall(
+        r"^\| `(portfolio_assistant\.[\w.]+)` \|", ADR.read_text(encoding="utf-8"), re.MULTILINE
+    )
     assert_residual(dict(Counter(modules)), ALLOWED)
 
 
@@ -82,13 +84,17 @@ def test_async_residual_matches_adr_inventory():
 )
 def test_rejects_extra_reference(extra):
     baseline = "register(asyncio.to_thread)"
-    allowed = {"app.example": 1}
-    assert_residual({"app.example": count_references(baseline)}, allowed)
+    allowed = {"portfolio_assistant.example": 1}
+    assert_residual({"portfolio_assistant.example": count_references(baseline)}, allowed)
     with pytest.raises(AssertionError, match="Only lower allowances"):
-        assert_residual({"app.example": count_references(f"{baseline}\n{extra}")}, allowed)
+        assert_residual(
+            {"portfolio_assistant.example": count_references(f"{baseline}\n{extra}")}, allowed
+        )
 
 
-@pytest.mark.parametrize("actual", [{}, {"app.example": 1, "app.new_module": 1}])
+@pytest.mark.parametrize(
+    "actual", [{}, {"portfolio_assistant.example": 1, "portfolio_assistant.new_module": 1}]
+)
 def test_rejects_removed_reference_or_new_module(actual):
     with pytest.raises(AssertionError, match="Only lower allowances"):
-        assert_residual(actual, {"app.example": 1})
+        assert_residual(actual, {"portfolio_assistant.example": 1})

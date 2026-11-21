@@ -10,11 +10,11 @@ from typing import get_args
 import pytest
 from pydantic import ValidationError
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.ai.workflow import LangGraphWorkflow
-from app.application.contracts import AnswerCommand
-from app.application.presentation_context import PortfolioPath, PresentationContext
-from app.presentation.models import SendMessage
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.contracts import AnswerCommand
+from portfolio_assistant.application.presentation_context import PortfolioPath, PresentationContext
+from portfolio_assistant.presentation.models import SendMessage
 from tests.support import FixedClock
 from tests.unit.test_workflow import SOURCE
 

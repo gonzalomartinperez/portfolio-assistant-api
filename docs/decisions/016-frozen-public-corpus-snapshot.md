@@ -22,14 +22,14 @@ rather than in reviewable data.
 ## Decision
 
 1. `evals/corpus/` holds exactly the files the indexer reads (`ROOT_PATTERNS` in
-   `app/adapters/portfolio/indexing.py`) at the pinned portfolio commit, in the same
+   `src/portfolio_assistant/adapters/portfolio/indexing.py`) at the pinned portfolio commit, in the same
    relative layout (the legacy `src/content/<locale>/` root at that commit).
 2. `evals/corpus/manifest.json` records the repository, commit, commit date, per-file
    sha256 and byte size, the layout-neutral canonical key
    ([ADR012](012-layout-neutral-evidence-keys.md)), and
    `corpus_snapshot_id = corpus-<first 12 hex of sha256 over the sorted (path, sha256) pairs>`.
    Current value: `corpus-a4e4aa84b466`.
-3. `uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus` indexes the
+3. `uv run assistant-knowledge-sync --source snapshot --repo evals/corpus` indexes the
    directory. Blob ids are Git object ids of the bytes and the commit is the manifest's
    portfolio commit, so chunk identities, versions and citation URLs equal those of the
    Git mode, which keeps working.

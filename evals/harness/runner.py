@@ -1,7 +1,7 @@
 """Run scripted items through the real session, conversation and SSE endpoints.
 
 The provider is injected and required: any object satisfying
-``app.application.contracts.Provider`` (the fixture provider or a test double today; the
+``portfolio_assistant.application.contracts.Provider`` (the fixture provider or a test double today; the
 cassette replayer of M2-7 plugs into the same port). The wire exposes no abstention
 flag, so ``abstained`` means a completed run with no citations and the ``abstains``
 grader adds a text cue check. ``first_delta_ms`` is measured inside ``RecordingProvider``
@@ -19,17 +19,17 @@ from uuid import uuid4
 
 import httpx
 
-from app.application.contracts import Provider, Usage
-from app.application.conversation_context import Turn
-from app.application.presentation_context import PresentationContext
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.portfolio_paths import canonical_key
 from evals.harness.graders import grade_item
 from evals.harness.isolation import require_isolated
 from evals.harness.items import Item
 from evals.harness.report import ItemOutcome
 from evals.harness.result import CitedSource, GradingContext, RunResult
+from portfolio_assistant.application.contracts import Provider, Usage
+from portfolio_assistant.application.conversation_context import Turn
+from portfolio_assistant.application.presentation_context import PresentationContext
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.portfolio_paths import canonical_key
 from scripts.evaluation_isolation import EvaluationContainer, inspect_containers
 
 _CANONICAL_URL = re.compile(r"canonical_url=(\S+?):?(?=\s|$)")

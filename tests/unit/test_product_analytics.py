@@ -6,10 +6,10 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.analytics import ProductEvent
-from app.presentation.analytics import ProductEventBody
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.analytics import ProductEvent
+from portfolio_assistant.presentation.analytics import ProductEventBody
 
 ORIGIN = "http://localhost:3000"
 TOKEN = "synthetic-analytics-ops-token-00000"
@@ -159,7 +159,7 @@ def test_pre_007_image_cannot_pass_schema_readiness_after_upgrade():
     import hashlib
     from pathlib import Path
 
-    from app.adapters.postgres.migrations import validate_history
+    from portfolio_assistant.adapters.postgres.migrations import validate_history
 
     migrations = sorted(Path("migrations").glob("[0-9][0-9][0-9]_*.sql"))
     applied = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in migrations}

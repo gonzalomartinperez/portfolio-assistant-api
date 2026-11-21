@@ -22,15 +22,15 @@ the canonical operating contract; CLAUDE.md explicitly imports it.
 
 ## Architecture and verification
 
-`app/domain` is pure standard-library policy. `app/application` owns use cases and
-ports and may import domain. Neither imports outer layers. `app/ai` implements
+`src/portfolio_assistant/domain` is pure standard-library policy. `src/portfolio_assistant/application` owns use cases and
+ports and may import domain. Neither imports outer layers. `src/portfolio_assistant/ai` implements
 workflow/retrieval with injected capabilities, never concrete I/O. Adapters
 implement persistence/provider/source ports; presentation handles HTTP/SSE;
 bootstrap composes clients and lifespan. Preserve v1 wire artifacts.
 
 Run `just check` (the CI static checks) and `just test` (offline tests), or the
-underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts scripts evals`,
-`uv run ruff format --check app tests contracts scripts evals`, `uv run mypy`, and
+underlying commands: `uv sync --frozen`, `uv run ruff check src tests contracts scripts evals`,
+`uv run ruff format --check src tests contracts scripts evals`, `uv run mypy`, and
 `uv run pytest -q`. Real integration requires migrations and the pinned approved
 public corpus, then `TEST_INTEGRATION=1 uv run pytest -q`. Export contracts with
 `uv run python -m contracts.export`; inspect drift before committing.

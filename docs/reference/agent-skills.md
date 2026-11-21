@@ -22,7 +22,7 @@ Fifteen skills: seven core, three API and five repository-specific
 | `resume-refactor` | core | Resume the master refactor from git and `docs/master-plan/` |
 | `score-repo` | core | Scorecard evidence against ratchet baselines (offline) |
 | `evaluate-assistant` | API | Offline retrieval and fixture evaluations, reports by stratum, schema-valid eval items; never the sealed holdout |
-| `change-prompt` | API | Edit a prompt under `app/prompts`, regenerate `prompts.lock`, list needed re-records (owner-only) |
+| `change-prompt` | API | Edit a prompt under `src/portfolio_assistant/prompts`, regenerate `prompts.lock`, list needed re-records (owner-only) |
 | `refresh-contract` | API | Additive contract change with `contracts.export`, examples and consumer steps; breaking changes need an ADR |
 | `api-change-use-case` | repo | Application policy, conversations, ownership and atomic limits |
 | `api-change-stream` | repo | Provider/LangGraph lifecycle, cancellation and incremental SSE |

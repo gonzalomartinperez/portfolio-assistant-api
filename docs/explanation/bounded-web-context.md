@@ -24,7 +24,7 @@ email addresses and unrelated requests do not activate web search. This conserva
 router is not a universal semantic classifier; the generation prompt also constrains
 scope. Regression tests cover both routing and real response behavior.
 
-Topics and query/domain pairs are canonical in `app/domain/web_policy.py`:
+Topics and query/domain pairs are canonical in `src/portfolio_assistant/domain/web_policy.py`:
 LangGraph, Neo4j, pgvector, PostgreSQL, FastAPI, Next.js and OpenTelemetry. GitHub
 references are additionally restricted to `/pgvector/pgvector`; allowing the GitHub
 search domain does not make other repositories acceptable evidence.

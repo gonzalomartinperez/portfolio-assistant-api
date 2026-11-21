@@ -4,8 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.domain.analytics import Section
-from app.domain.analytics_interactions import REGIONS, SHELL_REGIONS, Region
+from portfolio_assistant.domain.analytics import Section
+from portfolio_assistant.domain.analytics_interactions import REGIONS, SHELL_REGIONS, Region
 
 ExperienceName = Literal[
     "page_view",

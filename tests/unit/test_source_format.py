@@ -1,7 +1,7 @@
 """Pin the conservative TypeScript fact extraction, including line spans and caps."""
 
-from app.adapters.portfolio.source_format import facts, facts_for
-from app.domain.graph import Fact
+from portfolio_assistant.adapters.portfolio.source_format import facts, facts_for
+from portfolio_assistant.domain.graph import Fact
 
 PROJECTS = """export const projects = [
   {

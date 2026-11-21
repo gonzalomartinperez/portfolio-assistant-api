@@ -8,10 +8,10 @@ import pytest
 from fastapi.testclient import TestClient
 from neo4j.exceptions import ServiceUnavailable
 
-from app.adapters.retrieval import KnowledgeIndex
-from app.ai.retrieval import PublicRetrieval
-from app.application.knowledge import Chunk, Corpus
-from app.domain.errors import (
+from portfolio_assistant.adapters.retrieval import KnowledgeIndex
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.application.knowledge import Chunk, Corpus
+from portfolio_assistant.domain.errors import (
     BudgetExhaustedError,
     DependencyUnavailableError,
     ProviderUnavailableError,
@@ -240,8 +240,8 @@ def test_real_translated_adapter_maps_psycopg_outage_to_dependency_unavailable()
 
     import psycopg
 
-    from app.adapters.postgres.conversations import PostgresConversations
-    from app.adapters.postgres.db import translated
+    from portfolio_assistant.adapters.postgres.conversations import PostgresConversations
+    from portfolio_assistant.adapters.postgres.db import translated
 
     @contextmanager
     def down():

@@ -17,10 +17,10 @@ from uuid import uuid4
 import httpx
 import uvicorn
 
-from app.adapters.prompts import default_prompts
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.prompts import prompt_version
+from portfolio_assistant.adapters.prompts import default_prompts
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.prompts import prompt_version
 from scripts.evaluation_isolation import validate_targets
 
 MAX_REPORT_BYTES = 64 * 1024 * 1024

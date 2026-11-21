@@ -20,6 +20,12 @@ fileExistenceTests:
   - name: sync console script exists
     path: /app/.venv/bin/assistant-knowledge-sync
     shouldExist: true
+  - name: application package exists
+    path: /app/src/portfolio_assistant/__init__.py
+    shouldExist: true
+  - name: compatibility namespace exists
+    path: /app/src/app/__init__.py
+    shouldExist: true
   - name: migrations are present
     path: /app/migrations
     shouldExist: true

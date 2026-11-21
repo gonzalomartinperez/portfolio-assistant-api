@@ -57,7 +57,7 @@
     },
     "code": {
       "paths": [
-        "app/**",
+        "src/**",
         "tests/**",
         "scripts/**",
         "contracts/**",

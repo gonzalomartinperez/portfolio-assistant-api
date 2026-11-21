@@ -129,9 +129,9 @@ jobs:
     - name: Validate software licensing and separate content scope
       run: uv run python -m scripts.check_license
     - name: Lint Python
-      run: uv run ruff check app tests contracts scripts evals
+      run: uv run ruff check src tests contracts scripts evals
     - name: Check Python formatting
-      run: uv run ruff format --check app tests contracts scripts evals
+      run: uv run ruff format --check src tests contracts scripts evals
     - name: Type-check application boundaries
       run: uv run mypy
     - name: Verify authored bilingual question bank
@@ -219,9 +219,9 @@ jobs:
         test -n "$postgres_id"
         echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
     - name: Apply and verify migrations
-      run: uv run python -m app.migrate
+      run: uv run assistant-migrate
     - name: Index the frozen approved public corpus snapshot
-      run: uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
+      run: uv run assistant-knowledge-sync --source snapshot --repo evals/corpus
     - name: Run real-service integration tests
       run: |
         mkdir -p artifacts
@@ -283,11 +283,11 @@ jobs:
         COVERAGE_FILE: artifacts/coverage-combined.data
     - name: Require 90 percent coverage on the lines this pull request changes
       if: github.event_name == 'pull_request'
-      # A pull request whose app/ changes are provably `ruff format` output of the base (for example
+      # A pull request whose src/portfolio_assistant/ changes are provably `ruff format` output of the base (for example
       # the mechanical formatting PR) has no changed behavior to cover; anything else runs diff-cover.
       run: |
-        if uv run python -m scripts.format_only_diff --base "origin/${BASE_REF}" app; then
-          echo '::notice title=diff-cover::app/ changes are ruff format output of the base; diff coverage not applicable'
+        if uv run python -m scripts.format_only_diff --base "origin/${BASE_REF}" src; then
+          echo '::notice title=diff-cover::src/ changes are ruff format output of the base; diff coverage not applicable'
         else
           uv run diff-cover artifacts/coverage.xml --compare-branch="origin/${BASE_REF}" --fail-under=90
         fi
@@ -388,9 +388,9 @@ jobs:
         test -n "$postgres_id"
         echo "container_id=$postgres_id" >> "$GITHUB_OUTPUT"
     - name: Apply and verify migrations
-      run: uv run python -m app.migrate
+      run: uv run assistant-migrate
     - name: Index the frozen approved public corpus snapshot
-      run: uv run python -m app.knowledge_sync --source snapshot --repo evals/corpus
+      run: uv run assistant-knowledge-sync --source snapshot --repo evals/corpus
     - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
       with:
         context: .
