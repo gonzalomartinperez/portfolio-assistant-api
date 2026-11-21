@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass, field
 
 from app.domain.evidence import (
     ALIASES,
@@ -49,163 +50,195 @@ def fixture_supports(content: str, answer: str, path: str) -> bool:
     )
 
 
+_REPEAT_REQUEST = re.compile(
+    r"(?i)^\s*(?:repeat\s+generation\s+automatically|repite\s+(?:autom[aá]ticamente\s+)?(?:la\s+)?generaci[oó]n\s+autom[aá]ticamente)"
+)
+_COMPARISON_TERMS = {"compare", "comparison", "versus", "compara", "comparar", "between", "entre"}
+_TECHNOLOGY_TERMS = {"technologies", "technology", "tecnologias", "stack"}
+_METRIC_TERMS = {"performance", "improvements", "metrics", "metricas", "rendimiento"}
+_PROFILE_QUESTION = re.compile(
+    r"(?i)(tell me about|cu[eé]ntame sobre|who is|qui[eé]n es)\s+gonzalo"
+)
+_UNSAFE_PART = re.compile(r"(?i)https?://|ignore .*instructions|reveal .*secret|you are now")
+_UNSAFE_QUOTE = re.compile(
+    r"(?i)ignore (all |previous |prior )?instructions|reveal (the |your )?(system prompt|secret|api key)|you are now"
+)
+
+
+@dataclass
+class _Scan:
+    """Question-derived settings and the excerpts gathered across public source blocks."""
+
+    question: str
+    locale: str
+    terms: set[str]
+    expanded: set[str]
+    concise: bool
+    comparison: bool
+    excerpts: list[str] = field(default_factory=list)
+    subject: str = ""
+
+
 def fixture_message(question: str, evidence: str, locale: str) -> str:
     # A deterministic excerpt viewer, not a model-quality simulation.
     insufficient = insufficient_message(locale)
     if not evidence:
-        if re.search(
-            r"(?i)^\s*(?:repeat\s+generation\s+automatically|repite\s+(?:autom[aá]ticamente\s+)?(?:la\s+)?generaci[oó]n\s+autom[aá]ticamente)",
-            question,
-        ):
-            return (
-                "No reintento generaciones automáticamente. Puedes volver a enviar la consulta de forma explícita; una nueva generación puede tener costo."
-                if locale == "es"
-                else "I don't retry generations automatically. You can explicitly submit the question again; a new generation may incur a cost."
-            )
-        return insufficient
+        return _no_evidence_message(question, locale, insufficient)
     if "PUBLIC SOURCE " in evidence:
-        terms = tokens(question)
-        expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
-        excerpts: list[str] = []
-        subject = ""
-        concise = bool(terms & {"shorter", "brief", "breve"})
-        comparison = bool(
-            terms
-            & {
-                "compare",
-                "comparison",
-                "versus",
-                "compara",
-                "comparar",
-                "between",
-                "entre",
-            }
-        )
-        for block in evidence.split("PUBLIC SOURCE ")[1:3]:
-            content = re.sub(r"/\*.*?\*/", "", block, flags=re.DOTALL)
-            content = re.sub(r"^\s*(?:availability|seniority):.*$", "", content, flags=re.MULTILINE)
-            affiliation = requested_affiliation(question)
-            companies = list(re.finditer(r'company:\s*"([^"\n]+)"', content))
-            if affiliation and not comparison and companies:
-                selected_company = next(
-                    (
-                        index
-                        for index, company in enumerate(companies)
-                        if tokens(affiliation) <= tokens(company[1])
-                    ),
-                    None,
-                )
-                if selected_company is None:
-                    continue
-                # Fixed source spans can begin with the previous employer's metrics.
-                # Quote only the requested record when its company boundary is visible.
-                start = companies[selected_company].start()
-                end = (
-                    companies[selected_company + 1].start()
-                    if selected_company + 1 < len(companies)
-                    else len(content)
-                )
-                content = content[start:end]
-            # Join only literal concatenations; never evaluate source code.
-            content = re.sub(r'"\s*\+\s*"', "", content)
-            if not excerpts:
-                names = re.findall(r'(?:name|company|tagline):\s*"([^"\n]{1,120})"', content)
-                subject = " — ".join(names[:2])
+        return _public_source_message(question, evidence, locale, insufficient)
+    return _quoted_message(question, evidence, locale, insufficient)
 
-            if asks_spoken_languages(terms):
-                languages = language_excerpts(content)
-                if languages:
-                    excerpts.append("; ".join(languages))
-                continue
-            if terms & {"technologies", "technology", "tecnologias", "stack"}:
-                stacks = re.findall(r"technologyNames\(\[([^]]*)", content, re.DOTALL)
-                technologies = [
-                    name for stack in stacks for name in re.findall(r'"([^"\n]+)"', stack)
-                ]
-                if technologies:
-                    excerpts.append(
-                        (
-                            "Tecnologías documentadas: "
-                            if locale == "es"
-                            else "Documented technologies: "
-                        )
-                        + ", ".join(technologies[:20])
-                        + "."
-                    )
-                    continue
-            if block.splitlines()[0].startswith("README.md"):
-                prose = [
-                    line.strip()
-                    for line in content.splitlines()[1:]
-                    if len(line.strip()) > 40 and not line.startswith(("#", "```"))
-                ]
-                ranked_prose = sorted(prose, key=lambda line: -len(tokens(line) & expanded))
-                excerpts.extend(ranked_prose[: 1 if concise else 2])
-                continue
-            candidates = re.findall(r'"([^"\n]{25,})"', content)
-            if (
-                re.search(
-                    r"(?i)(tell me about|cu[eé]ntame sobre|who is|qui[eé]n es)\s+gonzalo",
-                    question,
-                )
-                and "/profile.ts" in block.splitlines()[0]
-            ):
-                candidates = re.findall(r'(?:intro|summary):\s*"([^"\n]+)"', content)
-                excerpts.extend(candidates[:2])
-                break
-            if terms & {
-                "performance",
-                "improvements",
-                "metrics",
-                "metricas",
-                "rendimiento",
-            }:
-                metrics = metric_excerpts(content)
-                if metrics:
-                    excerpts.extend(metrics[:2])
-                    break
-            candidates = [
-                part
-                for part in candidates
-                if not re.search(
-                    r"(?i)https?://|ignore .*instructions|reveal .*secret|you are now",
-                    part,
-                )
-            ]
-            ranked = sorted(
-                enumerate(candidates),
-                key=lambda item: (-len(tokens(item[1]) & expanded), item[0]),
-            )
-            selected = [text for _, text in ranked[: 1 if concise or comparison else 2]]
-            for text in selected:
-                if text not in excerpts:
-                    excerpts.append(text)
-        if not excerpts:
-            return insufficient
-        # Quotes preserve first-person attribution and qualifications from the source.
-        heading = (
-            "El perfil público lo describe así (extractos en modo de prueba):"
-            if locale == "es"
-            else "The public profile describes it this way (fixture excerpts):"
-        )
-        if subject:
-            heading += " " + subject + "."
-        return (
-            heading + "\n\n" + "\n\n".join("> " + text for text in excerpts[: 1 if concise else 2])
-        )
+
+def _no_evidence_message(question: str, locale: str, insufficient: str) -> str:
+    if not _REPEAT_REQUEST.search(question):
+        return insufficient
+    return (
+        "No reintento generaciones automáticamente. Puedes volver a enviar la consulta de forma explícita; una nueva generación puede tener costo."
+        if locale == "es"
+        else "I don't retry generations automatically. You can explicitly submit the question again; a new generation may incur a cost."
+    )
+
+
+def _public_source_message(question: str, evidence: str, locale: str, insufficient: str) -> str:
+    terms = tokens(question)
+    scan = _Scan(
+        question,
+        locale,
+        terms,
+        terms | set().union(*(ALIASES.get(term, set()) for term in terms)),
+        bool(terms & {"shorter", "brief", "breve"}),
+        bool(terms & _COMPARISON_TERMS),
+    )
+    for block in evidence.split("PUBLIC SOURCE ")[1:3]:
+        if _scan_block(scan, block):
+            break
+    if not scan.excerpts:
+        return insufficient
+    # Quotes preserve first-person attribution and qualifications from the source.
+    heading = (
+        "El perfil público lo describe así (extractos en modo de prueba):"
+        if locale == "es"
+        else "The public profile describes it this way (fixture excerpts):"
+    )
+    if scan.subject:
+        heading += " " + scan.subject + "."
+    shown = scan.excerpts[: 1 if scan.concise else 2]
+    return heading + "\n\n" + "\n\n".join("> " + text for text in shown)
+
+
+def _scan_block(scan: _Scan, block: str) -> bool:
+    """Add the block's excerpts to the scan; return True when the scan should stop."""
+    content = re.sub(r"/\*.*?\*/", "", block, flags=re.DOTALL)
+    content = re.sub(r"^\s*(?:availability|seniority):.*$", "", content, flags=re.MULTILINE)
+    selected = _requested_company_record(scan, content)
+    if selected is None:
+        return False
+    # Join only literal concatenations; never evaluate source code.
+    content = re.sub(r'"\s*\+\s*"', "", selected)
+    if not scan.excerpts:
+        names = re.findall(r'(?:name|company|tagline):\s*"([^"\n]{1,120})"', content)
+        scan.subject = " — ".join(names[:2])
+    special = _special_excerpts(scan, block, content)
+    if special is not None:
+        scan.excerpts.extend(special[0])
+        return special[1]
+    for text in _ranked_excerpts(scan, content):
+        if text not in scan.excerpts:
+            scan.excerpts.append(text)
+    return False
+
+
+def _requested_company_record(scan: _Scan, content: str) -> str | None:
+    """Narrow to the requested employer's record, or None when that employer is absent."""
+    affiliation = requested_affiliation(scan.question)
+    companies = list(re.finditer(r'company:\s*"([^"\n]+)"', content))
+    if not affiliation or scan.comparison or not companies:
+        return content
+    selected_company = next(
+        (
+            index
+            for index, company in enumerate(companies)
+            if tokens(affiliation) <= tokens(company[1])
+        ),
+        None,
+    )
+    if selected_company is None:
+        return None
+    # Fixed source spans can begin with the previous employer's metrics.
+    # Quote only the requested record when its company boundary is visible.
+    start = companies[selected_company].start()
+    end = (
+        companies[selected_company + 1].start()
+        if selected_company + 1 < len(companies)
+        else len(content)
+    )
+    return content[start:end]
+
+
+def _special_excerpts(scan: _Scan, block: str, content: str) -> tuple[list[str], bool] | None:
+    """Topic-specific excerpts and whether to stop scanning; None falls back to ranking."""
+    terms = scan.terms
+    if asks_spoken_languages(terms):
+        languages = language_excerpts(content)
+        return (["; ".join(languages)] if languages else []), False
+    technologies = _technology_excerpt(scan, content)
+    if technologies:
+        return [technologies], False
+    first_line = block.splitlines()[0]
+    if first_line.startswith("README.md"):
+        return _readme_excerpts(scan, content), False
+    if _PROFILE_QUESTION.search(scan.question) and "/profile.ts" in first_line:
+        return re.findall(r'(?:intro|summary):\s*"([^"\n]+)"', content)[:2], True
+    if terms & _METRIC_TERMS:
+        metrics = metric_excerpts(content)
+        if metrics:
+            return metrics[:2], True
+    return None
+
+
+def _technology_excerpt(scan: _Scan, content: str) -> str | None:
+    if not scan.terms & _TECHNOLOGY_TERMS:
+        return None
+    stacks = re.findall(r"technologyNames\(\[([^]]*)", content, re.DOTALL)
+    technologies = [name for stack in stacks for name in re.findall(r'"([^"\n]+)"', stack)]
+    if not technologies:
+        return None
+    label = "Tecnologías documentadas: " if scan.locale == "es" else "Documented technologies: "
+    return label + ", ".join(technologies[:20]) + "."
+
+
+def _readme_excerpts(scan: _Scan, content: str) -> list[str]:
+    prose = [
+        line.strip()
+        for line in content.splitlines()[1:]
+        if len(line.strip()) > 40 and not line.startswith(("#", "```"))
+    ]
+    ranked_prose = sorted(prose, key=lambda line: -len(tokens(line) & scan.expanded))
+    return ranked_prose[: 1 if scan.concise else 2]
+
+
+def _ranked_excerpts(scan: _Scan, content: str) -> list[str]:
+    candidates = [
+        part for part in re.findall(r'"([^"\n]{25,})"', content) if not _UNSAFE_PART.search(part)
+    ]
+    ranked = sorted(
+        enumerate(candidates),
+        key=lambda item: (-len(tokens(item[1]) & scan.expanded), item[0]),
+    )
+    return [text for _, text in ranked[: 1 if scan.concise or scan.comparison else 2]]
+
+
+def _quoted_message(question: str, evidence: str, locale: str, insufficient: str) -> str:
     keywords = query_terms(question)
     quoted = [
         part.strip()
         for part in re.findall(r'"([^"\n]{25,})"', evidence)
         if not part.startswith(("http:", "https:"))
         and "github.com/" not in part
-        and not re.search(
-            r"(?i)ignore (all |previous |prior )?instructions|reveal (the |your )?(system prompt|secret|api key)|you are now",
-            part,
-        )
+        and not _UNSAFE_QUOTE.search(part)
     ]
     matching = [part for part in quoted if any(word in part.lower() for word in keywords)]
-    excerpts = (matching if matching else quoted if "filomena" in question.lower() else [])[:3]
+    excerpts = (matching or (quoted if "filomena" in question.lower() else []))[:3]
     if not excerpts:
         return insufficient
     heading = (
