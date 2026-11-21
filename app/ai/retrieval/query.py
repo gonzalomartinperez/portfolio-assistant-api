@@ -2,35 +2,12 @@
 
 import re
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from app.domain.evidence import blocks_private_query, requested_affiliation, tokens
 
-_OVERVIEW = re.compile(
-    r"(?i)(tell me about|cuéntame sobre|cuentame sobre|who is|quién es)\s+gonzalo"
-)
-_OVERVIEW_TERMS = frozenset({"profile", "summary", "intro"})
-_REPOSITORY_TERMS = frozenset({"repository", "repo", "repositorio", "portfolio", "readme"})
-_RELATIONSHIP_TERMS = frozenset(
-    {
-        "compare",
-        "comparison",
-        "versus",
-        "compara",
-        "comparar",
-        "connect",
-        "connected",
-        "shared",
-        "share",
-        "shares",
-        "between",
-        "both",
-        "related",
-        "comparten",
-        "relacion",
-        "entre",
-        "ambos",
-    }
-)
+if TYPE_CHECKING:
+    from app.ai.retrieval.rules import RetrievalRules
 
 
 @dataclass(frozen=True)
@@ -45,21 +22,21 @@ class QueryIntent:
     affiliation: str | None
 
 
-def build_intent(question: str) -> QueryIntent | None:
+def build_intent(question: str, rules: RetrievalRules) -> QueryIntent | None:
     """Return None when the question is private or has no searchable terms."""
     terms = tokens(question)
     if blocks_private_query(question, terms):
         return None
-    overview = bool(_OVERVIEW.search(question))
+    overview = bool(re.search(rules.overview_pattern, question))
     if overview:
-        terms |= _OVERVIEW_TERMS
+        terms |= rules.overview_terms
     if not terms:
         return None
     return QueryIntent(
         question=question,
         terms=frozenset(terms),
         overview=overview,
-        repository_question=bool(terms & _REPOSITORY_TERMS),
-        relationship=bool(terms & _RELATIONSHIP_TERMS),
+        repository_question=bool(terms & rules.repository_terms),
+        relationship=bool(terms & rules.relationship_terms),
         affiliation=requested_affiliation(question),
     )
