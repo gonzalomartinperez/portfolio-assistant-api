@@ -18,6 +18,7 @@ from app.adapters.observability.evaluation_export import (
 from app.application.evaluation_export import EvaluationSummary, export_evaluation
 from app.bootstrap.config import Settings
 from app.bootstrap.evaluation_export import run
+from tests.support import FixedClock
 
 
 @pytest.fixture
@@ -73,7 +74,9 @@ def test_real_sdk_payload_is_closed_sanitized_and_bounded(monkeypatch, summary):
 
     monkeypatch.setattr("requests.Session.request", session_request)
     monkeypatch.setattr(Client, "close", close)
-    assert LangSmithEvaluationExporter("synthetic-credential-not-real").export(summary)
+    assert LangSmithEvaluationExporter("synthetic-credential-not-real", clock=FixedClock()).export(
+        summary
+    )
     assert len(requests) == 1 and closed
     method, url, kwargs = requests[0]
     assert (method, url) == ("POST", ENDPOINT + "/runs")
@@ -95,7 +98,12 @@ def test_sdk_failure_is_safe_and_not_retried(monkeypatch, summary):
         raise ConnectionError("sensitive backend body must not surface")
 
     monkeypatch.setattr("requests.Session.request", fail)
-    assert LangSmithEvaluationExporter("synthetic-credential-not-real").export(summary) is False
+    assert (
+        LangSmithEvaluationExporter("synthetic-credential-not-real", clock=FixedClock()).export(
+            summary
+        )
+        is False
+    )
     assert len(attempts) == 1
 
 
@@ -155,7 +163,12 @@ def test_redirect_is_unavailable_without_following(monkeypatch, summary):
         return response
 
     monkeypatch.setattr("requests.Session.request", redirect)
-    assert LangSmithEvaluationExporter("synthetic-credential-not-real").export(summary) is False
+    assert (
+        LangSmithEvaluationExporter("synthetic-credential-not-real", clock=FixedClock()).export(
+            summary
+        )
+        is False
+    )
     assert attempts == [ENDPOINT + "/runs"]
 
 
@@ -170,7 +183,7 @@ def test_opt_in_uses_only_explicit_evaluation_key(monkeypatch, tmp_path, summary
     received = []
 
     class FakeExporter:
-        def __init__(self, key):
+        def __init__(self, key, *, clock):
             received.append(key)
 
         def export(self, summary):

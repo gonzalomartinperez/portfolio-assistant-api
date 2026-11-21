@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from neo4j import GraphDatabase
@@ -12,6 +13,22 @@ from app.bootstrap.config import settings
 from app.bootstrap.maintenance import connect
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXED_NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
+
+
+class FixedClock:
+    """Deterministic Clock; `advance` moves it forward explicitly."""
+
+    def __init__(self, current: datetime = FIXED_NOW) -> None:
+        if current.tzinfo is None:
+            raise ValueError("FixedClock requires a timezone-aware datetime")
+        self.current = current.astimezone(UTC)
+
+    def now(self) -> datetime:
+        return self.current
+
+    def advance(self, **delta: float) -> None:
+        self.current += timedelta(**delta)
 
 
 def retrieve(question, locale="en", *, strategy="hybrid"):

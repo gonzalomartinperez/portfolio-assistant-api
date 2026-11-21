@@ -15,6 +15,7 @@ from app.application.conversation_context import (
 )
 from app.domain.privacy import minimize_visitor_text
 from app.presentation.models import SendMessage
+from tests.support import FixedClock
 
 
 @pytest.mark.parametrize(
@@ -108,7 +109,7 @@ def test_real_sdk_sends_minimized_context_and_unchanged_public_evidence(locale):
             max_retries=0,
             http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)),
         ) as client:
-            provider = ResponsesProvider(client, "gpt-6-luna")
+            provider = ResponsesProvider(client, "gpt-6-luna", clock=FixedClock())
             output = [
                 item
                 async for item in provider.stream(

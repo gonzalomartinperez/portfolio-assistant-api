@@ -1005,6 +1005,7 @@ def test_private_operations_persist_survive_deletion_and_match_contract(client_f
 def test_operational_usage_month_is_utc_even_with_non_utc_connection():
     from contextlib import contextmanager
 
+    from app.adapters.clock import SystemClock
     from app.adapters.postgres.operations import PostgresOperations
     from app.bootstrap.config import Settings
 
@@ -1029,8 +1030,10 @@ def test_operational_usage_month_is_utc_even_with_non_utc_connection():
         ops_read_token="isolated-fixture-operations-token-0000", ops_api_commit="a" * 40
     )
     try:
-        utc = PostgresOperations(connect, config).snapshot()["usage"]
-        tokyo = PostgresOperations(tokyo_connection, config).snapshot()["usage"]
+        utc = PostgresOperations(connect, config, clock=SystemClock()).snapshot()["usage"]
+        tokyo = PostgresOperations(tokyo_connection, config, clock=SystemClock()).snapshot()[
+            "usage"
+        ]
         assert utc == tokyo
     finally:
         with connect() as conn:

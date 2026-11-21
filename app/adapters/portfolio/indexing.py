@@ -5,9 +5,10 @@ import json
 import os
 import re
 import subprocess
+from dataclasses import dataclass, field
 from decimal import Decimal
 from itertools import pairwise
-from typing import TYPE_CHECKING, Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
 from urllib.parse import quote
 
 from neo4j import READ_ACCESS, Driver, GraphDatabase
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
     from pathlib import Path
     from threading import Event
+
+    from psycopg import Connection
+    from psycopg.rows import DictRow
 
     from app.adapters.postgres.db import Connect
 
@@ -303,6 +307,52 @@ def sync(
             lock.execute("SELECT pg_advisory_unlock(472022)")
 
 
+@dataclass
+class _Source:
+    commit: str
+    files: list[tuple[str, str]]
+    read_blob: Callable[[str], bytes]
+    blob_size: Callable[[str], int]
+
+
+@dataclass
+class _Gathered:
+    manifest: list[dict[str, Any]] = field(default_factory=list)
+    records: list[dict[str, Any]] = field(default_factory=list)
+    documents: dict[str, str] = field(default_factory=dict)
+    structured: PublicProjection | None = None
+    embedded_chunks: int = 0
+    reused_files: int = 0
+
+
+def _git_source(repo: Path, ref: str) -> _Source:
+    remote = git(repo, "remote", "get-url", "origin").decode().strip()
+    if remote not in ALLOWED_REMOTES:
+        raise ValueError("only the public portfolio repository is allowed")
+    commit = (
+        git(repo, "rev-parse", "--verify", "--end-of-options", ref + "^{commit}").decode().strip()
+    )
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("invalid commit")
+    files = manifest_at_commit(repo, commit)
+
+    def read_blob(blob_sha: str) -> bytes:
+        return git(repo, "cat-file", "blob", blob_sha)
+
+    def blob_size(blob_sha: str) -> int:
+        return int(git(repo, "cat-file", "-s", blob_sha))
+
+    return _Source(commit, files, read_blob, blob_size)
+
+
+def _parser_quality(path: str) -> str:
+    return f"{'markdown_sections' if path.endswith('.md') else 'text_fallback'}:{CHUNKER_VERSION}"
+
+
+def _manifest_entry(path: str, blob_sha: str, sha256: str, size: int) -> dict[str, Any]:
+    return {"path": path, "blob_sha": blob_sha, "sha256": sha256, "bytes": size}
+
+
 def _sync(
     repo: Path,
     ref: str,
@@ -314,130 +364,158 @@ def _sync(
     snapshot: bool = False,
 ) -> dict[str, Any]:
     repo = repo.resolve(strict=True)
-    if snapshot:
-        commit, files, read_blob, blob_size = snapshot_source(repo)
-    else:
-        remote = git(repo, "remote", "get-url", "origin").decode().strip()
-        if remote not in ALLOWED_REMOTES:
-            raise ValueError("only the public portfolio repository is allowed")
-        commit = (
-            git(repo, "rev-parse", "--verify", "--end-of-options", ref + "^{commit}")
-            .decode()
-            .strip()
-        )
-        if not re.fullmatch(r"[0-9a-f]{40}", commit):
-            raise ValueError("invalid commit")
-        files = manifest_at_commit(repo, commit)
-
-        def read_blob(blob_sha: str) -> bytes:
-            return git(repo, "cat-file", "blob", blob_sha)
-
-        def blob_size(blob_sha: str) -> int:
-            return int(git(repo, "cat-file", "-s", blob_sha))
-
-    config = configuration
-    version, namespace = corpus_identity(commit, config.embeddings_provider)
+    source = _Source(*snapshot_source(repo)) if snapshot else _git_source(repo, ref)
+    commit = source.commit
+    version, namespace = corpus_identity(commit, configuration.embeddings_provider)
     with connection() as conn:
-        existing = conn.execute(
-            "SELECT status FROM knowledge_versions WHERE id=%s", (version,)
-        ).fetchone()
-        if existing and existing["status"] == "active":
-            document = conn.execute(
-                "SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1", (version,)
-            ).fetchone()
-            if not document:
-                raise ValueError("public graph projection unavailable")
-            driver = graph_driver(config)
-            try:
-                prepare_graph(driver, config, version, document["id"])
-            finally:
-                driver.close()
-            return {"knowledge_version": version, "changed": False, "files": len(files)}
-        previous = conn.execute(
-            "SELECT id FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1"
-        ).fetchone()
-        previous_version = previous["id"] if previous else None
-        old_files = (
-            {
-                row["path"]: row
-                for row in conn.execute(
-                    "SELECT * FROM source_files WHERE knowledge_version=%s",
-                    (previous_version,),
-                ).fetchall()
-            }
-            if previous_version
-            else {}
-        )
-    file_manifest: list[dict[str, Any]] = []
-    records: list[dict[str, Any]] = []
-    documents = {}
-    structured = None
-    embedded_chunks = 0
-    reused_files = 0
-    for path, blob_sha in files:
+        active = _active_result(conn, configuration, version, source)
+        if active is not None:
+            return active
+        previous_version, old_files = _previous_state(conn)
+    gathered = _gather(source, connection, previous_version, old_files, stop)
+    records = gathered.records
+    _validate_records(gathered)
+    for record in records:
+        record["id"] = hashlib.sha256(f"{namespace}:{record['id']}".encode()).hexdigest()
+    encoder = _embed_records(records, configuration, connection, stop)
+    _stage(connection, version, commit, encoder, gathered)
+    facts_count = _project_graph(configuration, version, gathered)
+    with connection() as conn:
+        superseded = _promote(conn, version, commit, len(records), watched, stop)
+    if superseded is not None:
+        return superseded
+    return {
+        "knowledge_version": version,
+        "source_commit": commit,
+        "changed": True,
+        "files": len(gathered.manifest),
+        "chunks": len(records),
+        "embedded_chunks": gathered.embedded_chunks,
+        "reused_files": gathered.reused_files,
+        "manifest": gathered.manifest,
+        "graph_facts": facts_count,
+    }
+
+
+def _active_result(
+    conn: Connection[DictRow], config: IndexConfiguration, version: str, source: _Source
+) -> dict[str, Any] | None:
+    """Re-prepare the graph when this exact version is already active; None otherwise."""
+    existing = conn.execute(
+        "SELECT status FROM knowledge_versions WHERE id=%s", (version,)
+    ).fetchone()
+    if not (existing and existing["status"] == "active"):
+        return None
+    document = conn.execute(
+        "SELECT id FROM chunks WHERE knowledge_version=%s LIMIT 1", (version,)
+    ).fetchone()
+    if not document:
+        raise ValueError("public graph projection unavailable")
+    driver = graph_driver(config)
+    try:
+        prepare_graph(driver, config, version, document["id"])
+    finally:
+        driver.close()
+    return {"knowledge_version": version, "changed": False, "files": len(source.files)}
+
+
+def _previous_state(conn: Connection[DictRow]) -> tuple[str | None, dict[str, Any]]:
+    previous = conn.execute(
+        "SELECT id FROM knowledge_versions WHERE status='active' ORDER BY created_at DESC LIMIT 1"
+    ).fetchone()
+    previous_version = previous["id"] if previous else None
+    old_files = (
+        {
+            row["path"]: row
+            for row in conn.execute(
+                "SELECT * FROM source_files WHERE knowledge_version=%s",
+                (previous_version,),
+            ).fetchall()
+        }
+        if previous_version
+        else {}
+    )
+    return previous_version, old_files
+
+
+def _gather(
+    source: _Source,
+    connection: Connect,
+    previous_version: str | None,
+    old_files: dict[str, Any],
+    stop: Event | None,
+) -> _Gathered:
+    gathered = _Gathered()
+    for path, blob_sha in source.files:
         if stop is not None and stop.is_set():
             raise RuntimeError("sync_cancelled")
-        if blob_size(blob_sha) > (
-            500000 if path == "public/assistant-knowledge.json" else MAX_BYTES
-        ):
-            raise ValueError("source size limit exceeded")
-        data = read_blob(blob_sha)
-        content = data.decode("utf-8")
-        if SECRET_PATTERN.search(content):
-            raise ValueError(f"possible secret in {path}")
-        documents[path] = content
-        if path == "public/assistant-knowledge.json":
-            structured = PublicProjection.model_validate_json(content)
-            file_manifest.append(
-                {
-                    "path": path,
-                    "blob_sha": blob_sha,
-                    "sha256": hashlib.sha256(data).hexdigest(),
-                    "bytes": len(data),
-                }
-            )
-            records.extend(chunks(path, content, commit))
-            continue
-        old_file = old_files.get(path)
-        quality = (
-            f"{'markdown_sections' if path.endswith('.md') else 'text_fallback'}:{CHUNKER_VERSION}"
+        _gather_file(gathered, source, connection, previous_version, old_files, path, blob_sha)
+    return gathered
+
+
+def _gather_file(
+    gathered: _Gathered,
+    source: _Source,
+    connection: Connect,
+    previous_version: str | None,
+    old_files: dict[str, Any],
+    path: str,
+    blob_sha: str,
+) -> None:
+    if source.blob_size(blob_sha) > (
+        500000 if path == "public/assistant-knowledge.json" else MAX_BYTES
+    ):
+        raise ValueError("source size limit exceeded")
+    data = source.read_blob(blob_sha)
+    content = data.decode("utf-8")
+    if SECRET_PATTERN.search(content):
+        raise ValueError(f"possible secret in {path}")
+    gathered.documents[path] = content
+    sha256 = hashlib.sha256(data).hexdigest()
+    if path == "public/assistant-knowledge.json":
+        gathered.structured = PublicProjection.model_validate_json(content)
+        gathered.manifest.append(_manifest_entry(path, blob_sha, sha256, len(data)))
+        gathered.records.extend(chunks(path, content, source.commit))
+        return
+    old_file = old_files.get(path)
+    if (
+        old_file
+        and old_file["blob_sha"] == blob_sha
+        and old_file["parser_quality"] == _parser_quality(path)
+    ):
+        with connection() as conn:
+            old_chunks = conn.execute(
+                "SELECT * FROM chunks WHERE knowledge_version=%s AND path=%s ORDER BY start_line",
+                (previous_version, path),
+            ).fetchall()
+        gathered.records.extend(reused_record(row, source.commit) for row in old_chunks)
+        gathered.manifest.append(
+            _manifest_entry(path, blob_sha, old_file["sha256"], old_file["bytes"])
         )
-        if old_file and old_file["blob_sha"] == blob_sha and old_file["parser_quality"] == quality:
-            with connection() as conn:
-                old_chunks = conn.execute(
-                    "SELECT * FROM chunks WHERE knowledge_version=%s AND path=%s ORDER BY start_line",
-                    (previous_version, path),
-                ).fetchall()
-            records.extend(reused_record(row, commit) for row in old_chunks)
-            file_manifest.append(
-                {
-                    "path": path,
-                    "blob_sha": blob_sha,
-                    "sha256": old_file["sha256"],
-                    "bytes": old_file["bytes"],
-                }
-            )
-            reused_files += 1
-            continue
-        fresh = list(chunks(path, content, commit))
-        records.extend(fresh)
-        embedded_chunks += len(fresh)
-        file_manifest.append(
-            {
-                "path": path,
-                "blob_sha": blob_sha,
-                "sha256": hashlib.sha256(data).hexdigest(),
-                "bytes": len(data),
-            }
-        )
-    if structured is not None:
-        graph_facts(structured, documents)
+        gathered.reused_files += 1
+        return
+    fresh = list(chunks(path, content, source.commit))
+    gathered.records.extend(fresh)
+    gathered.embedded_chunks += len(fresh)
+    gathered.manifest.append(_manifest_entry(path, blob_sha, sha256, len(data)))
+
+
+def _validate_records(gathered: _Gathered) -> None:
+    if gathered.structured is not None:
+        graph_facts(gathered.structured, gathered.documents)
+    records = gathered.records
     if any(len(record["content"].encode("utf-8")) > 8000 for record in records):
         raise ValueError("complete source spans must fit the embedding input bound")
     if not records or len(records) > 500:
         raise ValueError("corpus must contain between 1 and 500 chunks")
-    for record in records:
-        record["id"] = hashlib.sha256(f"{namespace}:{record['id']}".encode()).hexdigest()
+
+
+def _embed_records(
+    records: list[dict[str, Any]],
+    config: IndexConfiguration,
+    connection: Connect,
+    stop: Event | None,
+) -> FixtureEmbeddings | OpenAIEmbeddings:
     embedding_client = None
     encoder: FixtureEmbeddings | OpenAIEmbeddings = FixtureEmbeddings()
     if config.embeddings_provider == "openai":
@@ -455,30 +533,46 @@ def _sync(
             if stop is not None and stop.is_set():
                 raise RuntimeError("sync_cancelled")
             if config.embeddings_provider == "openai":
-                with connection() as conn:
-                    cached = conn.execute(
-                        "SELECT embedding AS semantic_embedding FROM public_embedding_cache WHERE content_hash=%s AND provider=%s AND model=%s",
-                        (record["content_hash"], encoder.provider, encoder.model),
-                    ).fetchone()
-                record["semantic_embedding"] = (
-                    str(cached["semantic_embedding"])
-                    if cached
-                    else vector(encoder.encode(record["content"], "index"))
-                )
-                if not cached:
-                    with connection() as conn:
-                        conn.execute(
-                            "INSERT INTO public_embedding_cache(content_hash,provider,model,embedding) VALUES (%s,%s,%s,%s::vector) ON CONFLICT DO NOTHING",
-                            (
-                                record["content_hash"],
-                                encoder.provider,
-                                encoder.model,
-                                record["semantic_embedding"],
-                            ),
-                        )
+                _semantic_embedding(record, encoder, connection)
     finally:
         if embedding_client:
             embedding_client.close()
+    return encoder
+
+
+def _semantic_embedding(
+    record: dict[str, Any], encoder: FixtureEmbeddings | OpenAIEmbeddings, connection: Connect
+) -> None:
+    with connection() as conn:
+        cached = conn.execute(
+            "SELECT embedding AS semantic_embedding FROM public_embedding_cache WHERE content_hash=%s AND provider=%s AND model=%s",
+            (record["content_hash"], encoder.provider, encoder.model),
+        ).fetchone()
+    record["semantic_embedding"] = (
+        str(cached["semantic_embedding"])
+        if cached
+        else vector(encoder.encode(record["content"], "index"))
+    )
+    if not cached:
+        with connection() as conn:
+            conn.execute(
+                "INSERT INTO public_embedding_cache(content_hash,provider,model,embedding) VALUES (%s,%s,%s,%s::vector) ON CONFLICT DO NOTHING",
+                (
+                    record["content_hash"],
+                    encoder.provider,
+                    encoder.model,
+                    record["semantic_embedding"],
+                ),
+            )
+
+
+def _stage(
+    connection: Connect,
+    version: str,
+    commit: str,
+    encoder: FixtureEmbeddings | OpenAIEmbeddings,
+    gathered: _Gathered,
+) -> None:
     with connection() as conn:
         conn.execute(
             "INSERT INTO knowledge_versions(id,status,source_commit) VALUES (%s,'staging',%s) ON CONFLICT(id) DO UPDATE SET status='staging'",
@@ -490,7 +584,7 @@ def _sync(
         )
         conn.execute("DELETE FROM chunks WHERE knowledge_version=%s", (version,))
         conn.execute("DELETE FROM source_files WHERE knowledge_version=%s", (version,))
-        for item in file_manifest:
+        for item in gathered.manifest:
             conn.execute(
                 "INSERT INTO source_files(knowledge_version,path,blob_sha,sha256,bytes,parser_quality) VALUES (%s,%s,%s,%s,%s,%s)",
                 (
@@ -499,29 +593,44 @@ def _sync(
                     item["blob_sha"],
                     item["sha256"],
                     item["bytes"],
-                    f"{'markdown_sections' if item['path'].endswith('.md') else 'text_fallback'}:{CHUNKER_VERSION}",
+                    _parser_quality(item["path"]),
                 ),
             )
-        for record in records:
-            conn.execute(
-                "INSERT INTO chunks(id,knowledge_version,content,title,url,source_type,path,start_line,end_line,content_hash,embedding_provider,embedding_model,embedding,semantic_embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s::vector)",
-                (
-                    record["id"],
-                    version,
-                    record["content"],
-                    record["title"],
-                    record["url"],
-                    record["source_type"],
-                    record["path"],
-                    record["start_line"],
-                    record["end_line"],
-                    record["content_hash"],
-                    encoder.provider,
-                    encoder.model,
-                    record["embedding"],
-                    record.get("semantic_embedding"),
-                ),
-            )
+        for record in gathered.records:
+            _insert_chunk(conn, version, encoder, record)
+
+
+def _insert_chunk(
+    conn: Connection[DictRow],
+    version: str,
+    encoder: FixtureEmbeddings | OpenAIEmbeddings,
+    record: dict[str, Any],
+) -> None:
+    conn.execute(
+        "INSERT INTO chunks(id,knowledge_version,content,title,url,source_type,path,start_line,end_line,content_hash,embedding_provider,embedding_model,embedding,semantic_embedding) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::vector,%s::vector)",
+        (
+            record["id"],
+            version,
+            record["content"],
+            record["title"],
+            record["url"],
+            record["source_type"],
+            record["path"],
+            record["start_line"],
+            record["end_line"],
+            record["content_hash"],
+            encoder.provider,
+            encoder.model,
+            record["embedding"],
+            record.get("semantic_embedding"),
+        ),
+    )
+
+
+def _project_graph(config: IndexConfiguration, version: str, gathered: _Gathered) -> int:
+    records = gathered.records
+    documents = gathered.documents
+    structured = gathered.structured
     driver = graph_driver(config)
     try:
         driver.verify_connectivity()
@@ -540,34 +649,33 @@ def _sync(
         prepare_graph(driver, config, version, records[0]["id"])
     finally:
         driver.close()
-    with connection() as conn:
-        count = conn.execute(
-            "SELECT count(*) AS n FROM chunks WHERE knowledge_version=%s", (version,)
-        ).fetchone()["n"]
-        if count != len(records):
-            raise RuntimeError("vector projection incomplete")
-        if stop is not None and stop.is_set():
-            raise RuntimeError("sync_cancelled")
-        if watched:
-            observed = conn.execute(
-                "SELECT observed_commit FROM knowledge_watch WHERE singleton FOR UPDATE"
-            ).fetchone()
-            if not observed or observed["observed_commit"] != commit:
-                return {
-                    "knowledge_version": version,
-                    "changed": False,
-                    "superseded": True,
-                }
-        conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
-        conn.execute("UPDATE knowledge_versions SET status='active' WHERE id=%s", (version,))
-    return {
-        "knowledge_version": version,
-        "source_commit": commit,
-        "changed": True,
-        "files": len(file_manifest),
-        "chunks": len(records),
-        "embedded_chunks": embedded_chunks,
-        "reused_files": reused_files,
-        "manifest": file_manifest,
-        "graph_facts": facts_count,
-    }
+    return facts_count
+
+
+def _promote(
+    conn: Connection[DictRow],
+    version: str,
+    commit: str,
+    expected: int,
+    watched: bool,
+    stop: Event | None,
+) -> dict[str, Any] | None:
+    """Activate the staged version; return a superseded result instead when the watch moved."""
+    # An ungrouped COUNT always returns one row.
+    row = conn.execute(
+        "SELECT count(*) AS n FROM chunks WHERE knowledge_version=%s", (version,)
+    ).fetchone()
+    count = cast("DictRow", row)["n"]
+    if count != expected:
+        raise RuntimeError("vector projection incomplete")
+    if stop is not None and stop.is_set():
+        raise RuntimeError("sync_cancelled")
+    if watched:
+        observed = conn.execute(
+            "SELECT observed_commit FROM knowledge_watch WHERE singleton FOR UPDATE"
+        ).fetchone()
+        if not observed or observed["observed_commit"] != commit:
+            return {"knowledge_version": version, "changed": False, "superseded": True}
+    conn.execute("UPDATE knowledge_versions SET status='retired' WHERE status='active'")
+    conn.execute("UPDATE knowledge_versions SET status='active' WHERE id=%s", (version,))
+    return None

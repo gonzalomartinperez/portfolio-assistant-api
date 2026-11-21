@@ -16,6 +16,7 @@ from hypothesis.stateful import (
 from app.application.conversations import Conversations, digest
 from app.domain.conversations import Conversation, Message, Session
 from app.domain.errors import RejectedError
+from tests.support import FixedClock
 
 pytestmark = pytest.mark.property
 
@@ -95,7 +96,7 @@ class LifecycleMachine(RuleBasedStateMachine):
     def __init__(self) -> None:
         super().__init__()
         self.store = MemoryStore()
-        self.service = Conversations(self.store, 30, "key")
+        self.service = Conversations(self.store, 30, "key", clock=FixedClock(EPOCH))
         self.sessions: list[tuple[str, Session]] = []
         self.live: dict[UUID, tuple[int, str]] = {}  # conversation -> (owner index, title)
         self.deleted: set[UUID] = set()

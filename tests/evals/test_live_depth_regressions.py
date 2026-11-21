@@ -15,6 +15,7 @@ from app.application.conversation_context import Turn, retrieval_question
 from app.application.knowledge import Chunk, Corpus
 from app.application.language import explicit_locale
 from app.domain.evidence import blocks_private_query, tokens
+from tests.support import FixedClock
 
 
 @pytest.mark.parametrize(
@@ -157,6 +158,7 @@ def test_foreign_stream_is_rejected_before_emission_and_reader_is_closed():
             SimpleNamespace(responses=Responses()),
             "fixture-model",
             LocalLanguageDetector().rejects_output,
+            clock=FixedClock(),
         )
         emitted = []
         with pytest.raises(GenerationFailedError):
@@ -246,6 +248,7 @@ def test_supported_buffered_stream_preserves_text_and_usage():
             SimpleNamespace(responses=Responses()),
             "fixture",
             LocalLanguageDetector().rejects_output,
+            clock=FixedClock(),
         )
         items = [item async for item in provider.stream("question", "evidence", "en")]
         from app.application.contracts import Usage

@@ -8,37 +8,39 @@ from app.domain.graph import Fact
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+_SLUG_SOURCES = {"/projects.ts": ("Project", "name"), "/experience.ts": ("Role", "company")}
+
 
 def facts(path: str, content: str) -> tuple[Fact, ...]:
+    for suffix, (kind, name_field) in _SLUG_SOURCES.items():
+        if path.endswith(suffix):
+            blocks = list(re.finditer(r'slug:\s*"([^"\n]+)"', content))[:20]
+            return _record_facts(path, content, blocks, kind, name_field)
+    if path.endswith("/education.ts"):
+        return _education_facts(content)
+    return ()
+
+
+def _line(content: str, end: int) -> int:
+    return content[:end].count("\n") + 1
+
+
+def _education_facts(content: str) -> tuple[Fact, ...]:
+    match = re.search(
+        r'qualification:\s*"([^"\n]+)"[\s\S]{0,200}?institution:\s*"([^"\n]+)"',
+        content,
+    )
+    if not match:
+        return ()
+    start = _line(content, match.start())
+    end = _line(content, match.end())
+    return (Fact("Education", match[1], "AT_INSTITUTION", "Institution", match[2], start, end),)
+
+
+def _record_facts(
+    path: str, content: str, blocks: list[re.Match[str]], kind: str, name_field: str
+) -> tuple[Fact, ...]:
     result: list[Fact] = []
-    if path.endswith("/projects.ts"):
-        blocks = list(re.finditer(r'slug:\s*"([^"\n]+)"', content))[:20]
-        kind, name_field = "Project", "name"
-    elif path.endswith("/experience.ts"):
-        blocks = list(re.finditer(r'slug:\s*"([^"\n]+)"', content))[:20]
-        kind, name_field = "Role", "company"
-    elif path.endswith("/education.ts"):
-        match = re.search(
-            r'qualification:\s*"([^"\n]+)"[\s\S]{0,200}?institution:\s*"([^"\n]+)"',
-            content,
-        )
-        if match:
-            start = content[: match.start()].count("\n") + 1
-            end = content[: match.end()].count("\n") + 1
-            return (
-                Fact(
-                    "Education",
-                    match[1],
-                    "AT_INSTITUTION",
-                    "Institution",
-                    match[2],
-                    start,
-                    end,
-                ),
-            )
-        return ()
-    else:
-        return ()
     for index, match in enumerate(blocks):
         offset = match.start()
         block = content[
@@ -48,37 +50,55 @@ def facts(path: str, content: str) -> tuple[Fact, ...]:
         if not name:
             continue
         subject = name[1]
-        stack = re.search(r"stack:\s*technologyNames\(\[([\s\S]*?)\]\)", block)
-        if stack:
-            for technology in re.finditer(r'"([^"\n]+)"', stack[1]):
-                start = content[: offset + name.start()].count("\n") + 1
-                end = content[: offset + stack.start(1) + technology.end()].count("\n") + 1
-                result.append(Fact(kind, subject, "USES", "Technology", technology[1], start, end))
-        contributions = re.search(r"contributions:\s*\[([\s\S]*?)\]", block)
-        if contributions:
-            for contribution in list(re.finditer(r'"([^"\n]+)"', contributions[1]))[:20]:
-                start = content[: offset + name.start()].count("\n") + 1
-                end = (
-                    content[: offset + contributions.start(1) + contribution.end()].count("\n") + 1
-                )
-                result.append(
-                    Fact(
-                        kind,
-                        subject,
-                        "CONTRIBUTED",
-                        "Contribution",
-                        contribution[1],
-                        start,
-                        end,
-                    )
-                )
+        start = _line(content, offset + name.start())
+        result.extend(_stack_facts(content, block, offset, kind, subject, start))
+        result.extend(_contribution_facts(content, block, offset, kind, subject, start))
         if kind == "Project":
             # Identity evidence exists even when a reviewed source has no stack.
-            start = content[: offset + name.start()].count("\n") + 1
             result.append(
                 Fact(kind, subject, "DOCUMENTED_IN", "PublicDocument", path, start, start)
             )
     return tuple(result)
+
+
+def _stack_facts(
+    content: str, block: str, offset: int, kind: str, subject: str, start: int
+) -> list[Fact]:
+    stack = re.search(r"stack:\s*technologyNames\(\[([\s\S]*?)\]\)", block)
+    if not stack:
+        return []
+    return [
+        Fact(
+            kind,
+            subject,
+            "USES",
+            "Technology",
+            technology[1],
+            start,
+            _line(content, offset + stack.start(1) + technology.end()),
+        )
+        for technology in re.finditer(r'"([^"\n]+)"', stack[1])
+    ]
+
+
+def _contribution_facts(
+    content: str, block: str, offset: int, kind: str, subject: str, start: int
+) -> list[Fact]:
+    contributions = re.search(r"contributions:\s*\[([\s\S]*?)\]", block)
+    if not contributions:
+        return []
+    return [
+        Fact(
+            kind,
+            subject,
+            "CONTRIBUTED",
+            "Contribution",
+            contribution[1],
+            start,
+            _line(content, offset + contributions.start(1) + contribution.end()),
+        )
+        for contribution in list(re.finditer(r'"([^"\n]+)"', contributions[1]))[:20]
+    ]
 
 
 def facts_for(documents: Mapping[str, str]) -> dict[str, tuple[Fact, ...]]:

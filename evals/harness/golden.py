@@ -76,6 +76,7 @@ def _record(args: argparse.Namespace, config: Settings) -> int:
             file=sys.stderr,
         )
         return 4
+    from app.adapters.clock import SystemClock
     from app.adapters.providers.answer import ResponsesProvider
     from app.adapters.providers.http import create_async_client
     from app.adapters.providers.language import LocalLanguageDetector
@@ -105,6 +106,7 @@ def _record(args: argparse.Namespace, config: Settings) -> int:
                 LocalLanguageDetector().rejects_output,
                 web_search=None,
                 today=lambda: CASSETTE_DATE,
+                clock=SystemClock(),
             )
             recorder = RecordingCassetteProvider(
                 inner,
