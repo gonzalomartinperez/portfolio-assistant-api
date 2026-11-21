@@ -56,7 +56,9 @@ jobs:
       # and ZPL-2.1 for zope.event/zope.interface (locust load group, docs/decisions/024-load-budgets-baseline.md).
       # MIT-CMU, Apache-2.0 WITH LLVM-exception and the matplotlib licence for pillow, llvmlite and matplotlib (ranx,
       # dev-only `eval` group, never in the image; all three licences are permissive).
-      allow-licenses: MIT, MIT-0, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSD-3-Clause-Clear, ISC, 0BSD, BlueOak-1.0.0, CC0-1.0, CC-BY-4.0, Unlicense, Python-2.0, PSF-2.0, Zlib, MPL-2.0, LGPL-3.0-only, ZPL-2.1, MIT-CMU, Apache-2.0 WITH LLVM-exception, LicenseRef-scancode-matplotlib-1.3.0
+      # BSD-2-Clause-Views for grimp, import-linter's graph library (dev-only, ADR 010; BSD-2-Clause
+      # plus a disclaimer that views are the authors' own, so permissive).
+      allow-licenses: MIT, MIT-0, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSD-3-Clause-Clear, ISC, 0BSD, BlueOak-1.0.0, CC0-1.0, CC-BY-4.0, Unlicense, Python-2.0, PSF-2.0, Zlib, MPL-2.0, LGPL-3.0-only, ZPL-2.1, MIT-CMU, Apache-2.0 WITH LLVM-exception, LicenseRef-scancode-matplotlib-1.3.0, BSD-2-Clause-Views
   workflows:
     name: Workflow validation
     needs: classify
@@ -134,6 +136,10 @@ jobs:
       run: uv run mypy
     - name: Verify authored bilingual question bank
       run: uv run python -m scripts.build_assistant_bank --check
+    - name: Enforce import contracts
+      run: uv run --frozen lint-imports
+    - name: Detect unused Python code
+      run: uv run --frozen vulture
     - name: Enforce architecture and run offline and contract tests
       run: |
         mkdir -p artifacts

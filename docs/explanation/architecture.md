@@ -158,17 +158,13 @@ See [private observability](private-observability.md) for retention and drop sem
 
 ## Enforced architectural contracts
 
-`tests/architecture/test_architecture.py` exercises the real stdlib AST checker in
-`scripts/check_architecture.py`, including negative examples. Run it alone with
-`uv run python -m scripts.check_architecture`; the existing required Quality job
-runs the same guard through the offline test suite. No extra build or service is needed.
-
-The guard resolves absolute, relative and `from package import module` dependencies,
-checks module cycles, rejects unclassified application packages and prevents dynamic
-import/code-loading bypasses. Domain/application reject third-party dependencies and
-selected direct platform I/O imports. This is a regression guard, not a Python sandbox
-or proof that arbitrary standard-library code is side-effect free; review still checks
-behavior and capability ownership.
+`uv run lint-imports` enforces the layer, forbidden-import and acyclic sibling
+contracts from [ADR 010](../decisions/010-import-linter-contracts.md). The residual
+AST guard checks wall-clock reads, dynamic code and imports, unclassified modules and
+import targets, the standard-library-only rule and `urllib.request` ban in domain and
+application, module-level cycles, package initializers, `__main__` blocks and
+console-script targets. Run it with `uv run python -m scripts.check_architecture`
+or through the architecture tests in the offline suite.
 
 Operator defaults now live exclusively in bootstrap. Migration, indexing and
 maintenance commands inject explicit configuration and connection capabilities
