@@ -51,6 +51,7 @@ Background and reasoning behind the design.
 - [Portfolio-first tools and optional web context](explanation/bounded-web-context.md)
 - [Engineering coordination · 2026-10-17](explanation/engineering-coordination.md)
 - [Voluntary context and evidence-based improvement](explanation/feedback-and-improvement.md)
+- [Retrieval pipeline and rule ablation](explanation/retrieval.md)
 - [Public knowledge and GraphRAG](explanation/graph-retrieval.md)
 - [Private observability and backoffice contract](explanation/private-observability.md)
 - [Threat model and privacy](explanation/threat-model.md)

@@ -10,6 +10,8 @@ relevance in ``qrels.candidates.jsonl``, flagged in the report) and writes one J
 baseline and exits non-zero on a significant (p < 0.05) Recall@5 drop on the golden-relevant
 families (answerable_core, graph_multihop, tool_use). Pure functions (breakdown, gap,
 abstention sweep, comparison decision) are separate from the I/O and unit tested offline.
+``--ablate`` adds one run per disabled rule and an RRF offset 60 run, with paired deltas
+against hybrid under ``rule_ablation``.
 
 Usage: ``uv run --group eval python -m evals.harness.retrieval --out artifacts/retrieval-report.json``
 """
@@ -19,16 +21,22 @@ import asyncio
 import importlib
 import json
 import math
+import random
 import sys
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from app.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
 from app.domain.evidence import lexical_score, tokens
 from app.domain.portfolio_paths import canonical_key
+
+if TYPE_CHECKING:
+    from app.ai.retrieval.rules import RetrievalRules
 
 ROOT = Path(__file__).resolve().parents[2]
 QUERIES = ROOT / "evals" / "retrieval" / "queries.jsonl"
@@ -39,6 +47,11 @@ BASELINE = ROOT / "evals" / "baselines" / "retrieval.json"
 SCHEMA_VERSION = "1"
 MODE = "fixture embeddings; real PostgreSQL and Neo4j; no model calls"
 STRATEGIES = ("vector", "lexical", "graph", "hybrid", "hybrid_no_graph")
+WITHOUT_PREFIX = "hybrid_without:"
+ABLATION_STRATEGIES = ("hybrid_rrf60", *(WITHOUT_PREFIX + rule for rule in sorted(RULE_IDS)))
+ABLATION_METRICS = ("recall@5", "ndcg@5")
+BOOTSTRAP_SEED = 42
+BOOTSTRAP_SAMPLES = 2000
 # Report metric name -> ranx metric. Recall@5 is primary: five sources reach the generator.
 METRICS = {
     "recall@5": "recall@5",
@@ -61,9 +74,7 @@ Records = dict[str, Record]
 PerQuery = dict[str, dict[str, float]]
 Retriever = Callable[[str, str, str], Record]
 
-# H1 to H5 (assistant-quality.md section 7): each is one ablation on this harness. Only
-# the graph marginal contribution has an injectable seam today; the rest need an app change
-# and are recorded here as follow-ups instead of being faked.
+# H1 to H5 (assistant-quality.md section 7), including follow-up experiments.
 ABLATIONS: dict[str, dict[str, str]] = {
     "graph": {
         "status": "measured",
@@ -78,11 +89,9 @@ ABLATIONS: dict[str, dict[str, str]] = {
         "english/spanish with unaccent",
     },
     "h2": {
-        "status": "not implementable without app change",
-        "seam": "none: PublicRetrieval.search fuses with inline weight/(10+rank) constants "
-        "(app/ai/retrieval.py); the documented default of k=60 is not what the code uses",
-        "note": "follow-up: extract fusion into a function with k as an injected parameter "
-        "(master plan file-moves: ai/retrieval/fusion.py), then run k in {10, 30, 60}",
+        "status": "available with --ablate",
+        "seam": "RetrievalRules.fusion_offset",
+        "note": "hybrid_rrf60 compares offset 60 with the legacy offset 10 using the same weights",
     },
     "h3": {
         "status": "not implementable without app change",
@@ -97,10 +106,9 @@ ABLATIONS: dict[str, dict[str, str]] = {
         "other locale as not relevant by design (LABELLING.md)",
     },
     "h5": {
-        "status": "not implementable without app change",
-        "seam": "none: boost rules are inline branches of PublicRetrieval.search",
-        "note": "follow-up: declarative rules (rules.toml) make each boost removable; until "
-        "then hybrid minus vector/lexical only bounds their joint effect",
+        "status": "available with --ablate",
+        "seam": "RetrievalRules.disabled",
+        "note": "hybrid_without:<rule_id> measures each rule against hybrid",
     },
 }
 
@@ -361,13 +369,17 @@ def decide_drop(
 
 
 def paired_p_value(
-    qrels: Qrels, base: dict[str, list[str]], current: dict[str, list[str]]
+    qrels: Qrels,
+    base: dict[str, list[str]],
+    current: dict[str, list[str]],
+    *,
+    metric: str = PRIMARY,
 ) -> float:
-    """Paired Student t-test on Recall@5 via ranx.compare; 1.0 when nothing differs."""
+    """Run a paired Student t-test via ranx, defaulting to the Recall@5 gate metric."""
     qids = sorted(qrels)
     if len(qids) < 2:
         return math.nan
-    if all(
+    if metric == PRIMARY and all(
         recall_at(base.get(q, []), list(qrels[q])) == recall_at(current.get(q, []), list(qrels[q]))
         for q in qids
     ):
@@ -378,11 +390,11 @@ def paired_p_value(
         report = ranx.compare(
             ranx.Qrels.from_dict({q: qrels[q] for q in qids}),
             [ranx_run(base, qids, "baseline"), ranx_run(current, qids, "current")],
-            metrics=["recall@5"],
+            metrics=[METRICS[metric]],
             stat_test="student",
             max_p=ALPHA,
         )
-    return float(report.to_dict()["current"]["comparisons"]["baseline"]["recall@5"])
+    return float(report.to_dict()["current"]["comparisons"]["baseline"][METRICS[metric]])
 
 
 def compare_reports(
@@ -481,6 +493,59 @@ def assemble_report(
     return report
 
 
+def _paired_interval(deltas: list[float]) -> tuple[float, float]:
+    if not deltas:
+        return math.nan, math.nan
+    rng = random.Random(BOOTSTRAP_SEED)  # noqa: S311, RUF100 - Seeded statistical resampling.
+    samples = sorted(mean(rng.choices(deltas, k=len(deltas))) for _ in range(BOOTSTRAP_SAMPLES))
+    return samples[BOOTSTRAP_SAMPLES // 40], samples[BOOTSTRAP_SAMPLES * 39 // 40 - 1]
+
+
+def _ablation_delta(
+    qrels: Qrels,
+    runs: dict[str, dict[str, list[str]]],
+    per_query: dict[str, PerQuery],
+    strategy: str,
+    metric: str,
+) -> dict[str, Any]:
+    deltas = [
+        per_query["hybrid"][qid][metric] - per_query[strategy][qid][metric] for qid in sorted(qrels)
+    ]
+    interval = _paired_interval(deltas)
+    p_value = (
+        paired_p_value(qrels, runs["hybrid"], runs[strategy], metric=metric)
+        if any(deltas)
+        else 1.0
+        if len(deltas) >= 2
+        else math.nan
+    )
+    return {
+        "n": len(deltas),
+        "mean_delta": round(mean(deltas), 4),
+        "ci95": [round(bound, 4) for bound in interval],
+        "p_value": round(p_value, 6),
+    }
+
+
+def _ablation_report(report: dict[str, Any], qrels: Qrels) -> dict[str, Any]:
+    return {
+        "reference": "hybrid",
+        "delta_direction": "hybrid minus variant",
+        "bootstrap_seed": BOOTSTRAP_SEED,
+        "bootstrap_samples": BOOTSTRAP_SAMPLES,
+        "strategies": {
+            name: report["strategies"][name] for name in ("hybrid", *ABLATION_STRATEGIES)
+        },
+        "paired_deltas": {
+            name: {
+                metric: _ablation_delta(qrels, report["runs"], report["per_query"], name, metric)
+                for metric in ABLATION_METRICS
+            }
+            for name in ABLATION_STRATEGIES
+        },
+    }
+
+
 def count_by(queries: Sequence[Query], field: str) -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for query in queries:
@@ -504,6 +569,22 @@ class _NoGraph:
         return ()
 
 
+def strategy_rules(strategy: str) -> tuple[str, RetrievalRules]:
+    """Resolve a harness strategy to its pipeline strategy and rules."""
+    if strategy == "hybrid_rrf60":
+        return "hybrid", replace(DEFAULT_RULES, fusion_offset=60)
+    if strategy.startswith(WITHOUT_PREFIX):
+        rule_id = strategy.removeprefix(WITHOUT_PREFIX)
+        if rule_id not in RULE_IDS:
+            raise ValueError(f"unknown retrieval rule: {rule_id}")
+        return "hybrid", replace(DEFAULT_RULES, disabled=frozenset({rule_id}))
+    if strategy not in STRATEGIES:
+        raise ValueError(f"unknown retrieval strategy: {strategy}")
+    if strategy == "hybrid_no_graph":
+        return "hybrid", DEFAULT_RULES
+    return strategy, DEFAULT_RULES
+
+
 @contextmanager
 def real_retriever() -> Iterator[Retriever]:
     """One driver and event loop for the whole run; same composition as tests.support."""
@@ -521,10 +602,9 @@ def real_retriever() -> Iterator[Retriever]:
             index = adapters.KnowledgeIndex(maintenance.connect, graph)
 
             def retrieve(strategy: str, question: str, locale: str) -> Record:
-                if strategy == "hybrid_no_graph":
-                    search = workflow.PublicRetrieval(_NoGraph(index), "hybrid")
-                else:
-                    search = workflow.PublicRetrieval(index, strategy)
+                pipeline_strategy, rules = strategy_rules(strategy)
+                search_index = _NoGraph(index) if strategy == "hybrid_no_graph" else index
+                search = workflow.PublicRetrieval(search_index, pipeline_strategy, rules=rules)
                 evidence = loop.run_until_complete(search.search(question, locale))
                 terms = tokens(question)
                 sources = [
@@ -574,7 +654,12 @@ def run_harness(
     qrels_source: str,
     retrieve: Retriever,
     strategies: Sequence[str] = STRATEGIES,
+    *,
+    ablate: bool = False,
 ) -> dict[str, Any]:
+    """Score selected strategies, optionally adding all paired ablations against hybrid."""
+    if ablate:
+        strategies = tuple(dict.fromkeys((*strategies, "hybrid", *ABLATION_STRATEGIES)))
     records = collect(retrieve, queries, strategies)
     per_query = {name: score_run(runs_from_records(recs), qrels) for name, recs in records.items()}
     commit = next(
@@ -586,7 +671,10 @@ def run_harness(
         ),
         None,
     )
-    return assemble_report(queries, qrels, qrels_source, records, per_query, commit=commit)
+    report = assemble_report(queries, qrels, qrels_source, records, per_query, commit=commit)
+    if ablate:
+        report["rule_ablation"] = _ablation_report(report, qrels)
+    return report
 
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
@@ -616,8 +704,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--qrels", type=Path, default=QRELS)
     parser.add_argument("--candidates", type=Path, default=CANDIDATES)
     parser.add_argument("--out", type=Path, default=Path("artifacts/retrieval-report.json"))
-    parser.add_argument("--strategies", nargs="+", choices=STRATEGIES, default=STRATEGIES)
     parser.add_argument(
+        "--strategies", nargs="+", choices=(*STRATEGIES, *ABLATION_STRATEGIES), default=STRATEGIES
+    )
+    baseline_mode = parser.add_mutually_exclusive_group()
+    baseline_mode.add_argument(
+        "--ablate",
+        action="store_true",
+        help="report paired deltas for every rule and RRF offset 60",
+    )
+    baseline_mode.add_argument(
         "--write-baseline",
         nargs="?",
         const=BASELINE,
@@ -650,7 +746,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
     with real_retriever() as retrieve:
-        report = run_harness(queries, qrels, source, retrieve, args.strategies)
+        report = run_harness(queries, qrels, source, retrieve, args.strategies, ablate=args.ablate)
     print(summary(report))
     for name in args.ablation or ():
         print(f"ablation {name}: {ABLATIONS[name]['status']} ({ABLATIONS[name]['seam']})")

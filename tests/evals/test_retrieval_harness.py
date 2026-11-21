@@ -1,9 +1,11 @@
 import json
 import math
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
+from app.ai.retrieval.rules import DEFAULT_RULES, RULE_IDS
 from evals.harness import retrieval as harness
 from evals.harness.retrieval import (
     abstention_sweep,
@@ -224,7 +226,99 @@ def test_assemble_report_has_the_required_sections():
     assert set(report["abstention"]) == {"hybrid", "vector"}
     assert report["runs"]["vector"]["q2"] == ["es/experience"]
     assert {"h1", "h2", "h3", "h4", "h5", "graph"} <= set(report["ablations"])
+    assert "rule_ablation" not in report
     json.dumps(report)  # the report must be serializable
+
+
+@pytest.mark.parametrize("rule_id", sorted(RULE_IDS))
+def test_strategy_parses_each_rule_ablation(rule_id):
+    strategy, rules = harness.strategy_rules(f"hybrid_without:{rule_id}")
+    assert strategy == "hybrid"
+    assert rules == replace(DEFAULT_RULES, disabled=frozenset({rule_id}))
+
+
+def test_strategy_parses_default_and_rrf60():
+    assert harness.strategy_rules("hybrid_rrf60") == (
+        "hybrid",
+        replace(DEFAULT_RULES, fusion_offset=60),
+    )
+    for strategy in ("hybrid", "vector", "lexical", "graph"):
+        assert harness.strategy_rules(strategy) == (strategy, DEFAULT_RULES)
+    assert harness.strategy_rules("hybrid_no_graph") == ("hybrid", DEFAULT_RULES)
+
+
+@pytest.mark.parametrize(
+    ("strategy", "message"),
+    [
+        ("hybrid_without:", "unknown retrieval rule"),
+        ("hybrid_without:missing", "unknown retrieval rule: missing"),
+        ("hybrid_rrf30", "unknown retrieval strategy: hybrid_rrf30"),
+    ],
+)
+def test_strategy_rejects_invalid_names(strategy, message):
+    with pytest.raises(ValueError, match=message):
+        harness.strategy_rules(strategy)
+
+
+def test_ablate_and_write_baseline_are_mutually_exclusive(capsys):
+    with pytest.raises(SystemExit) as error:
+        harness.main(["--ablate", "--write-baseline"])
+
+    assert error.value.code == 2
+    assert (
+        "argument --write-baseline: not allowed with argument --ablate" in capsys.readouterr().err
+    )
+
+
+def test_ablation_report_pairs_query_deltas_against_hybrid(monkeypatch):
+    changed = "hybrid_without:exact_name"
+    queries = [query("q1"), query("q2", "es")]
+    qrels = {"q1": {"en/projects": 2}, "q2": {"es/projects": 2}}
+    seen = set()
+
+    def retrieve(strategy, question, locale):
+        seen.add(strategy)
+        topic = "profile" if strategy == changed and question == "q1" else "projects"
+        return record(f"{locale}/{topic}")
+
+    def score_run(runs, relevance):
+        return {
+            qid: scores(harness.recall_at(runs[qid], list(keys))) for qid, keys in relevance.items()
+        }
+
+    paired_metrics = []
+
+    def paired_p_value(relevance, base, variant, *, metric):
+        assert relevance == qrels
+        assert base["q1"] == ["en/projects"]
+        assert variant["q1"] == ["en/profile"]
+        paired_metrics.append(metric)
+        return 0.25
+
+    monkeypatch.setattr(harness, "score_run", score_run)
+    monkeypatch.setattr(harness, "paired_p_value", paired_p_value)
+    report = harness.run_harness(queries, qrels, "resolved", retrieve, ("hybrid",), ablate=True)
+    ablation = report["rule_ablation"]
+
+    expected = {"hybrid_rrf60", *(f"hybrid_without:{rule_id}" for rule_id in RULE_IDS)}
+    assert seen == {"hybrid", *expected}
+    assert set(ablation["strategies"]) == seen
+    assert set(ablation["paired_deltas"]) == expected
+    assert ablation["strategies"][changed]["overall"]["recall@5"] == 0.5
+    assert paired_metrics == ["recall@5", "ndcg@5"]
+    for metric in paired_metrics:
+        assert ablation["paired_deltas"][changed][metric] == {
+            "n": 2,
+            "mean_delta": 0.5,
+            "ci95": [0.0, 1.0],
+            "p_value": 0.25,
+        }
+        assert ablation["paired_deltas"]["hybrid_rrf60"][metric] == {
+            "n": 2,
+            "mean_delta": 0.0,
+            "ci95": [0.0, 0.0],
+            "p_value": 1.0,
+        }
 
 
 def test_mean_metrics_of_nothing_is_nan_not_a_crash():
@@ -232,9 +326,11 @@ def test_mean_metrics_of_nothing_is_nan_not_a_crash():
 
 
 def test_ablations_without_a_seam_say_so():
-    for name in ("h1", "h2", "h3", "h4", "h5"):
+    for name in ("h1", "h3", "h4"):
         assert harness.ABLATIONS[name]["status"] == "not implementable without app change"
     assert harness.ABLATIONS["graph"]["status"] == "measured"
+    for name in ("h2", "h5"):
+        assert harness.ABLATIONS[name]["status"] == "available with --ablate"
 
 
 def test_load_qrels_prefers_resolved_and_falls_back_to_proposals(tmp_path: Path):
@@ -273,6 +369,7 @@ def test_ranx_scoring_and_paired_test_when_available():
     assert harness.paired_p_value(qrels, good, good) == 1.0
     p = harness.paired_p_value(qrels, good, {q: ["en/profile"] for q in qrels})
     assert p < 0.05
+    assert harness.paired_p_value(qrels, good, bad, metric="ndcg@5") < 0.05
     result = compare_reports(
         {"runs": {"hybrid": good}},
         {"hybrid": {q: ["en/profile"] for q in qrels}},

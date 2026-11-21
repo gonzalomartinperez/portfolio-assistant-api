@@ -4,6 +4,12 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import app.ai.retrieval.source_shape as shape
+from app.ai.retrieval.rules import (
+    BOOST_COMPANY_CONTRIBUTIONS,
+    BOOST_OVERVIEW_PROFILE_HEAD,
+    BOOST_SPOKEN_LANGUAGES,
+    MULTIPLIER_ENTITY_PATH,
+)
 from app.domain.evidence import (
     EvidenceRecord,
     asks_spoken_languages,
@@ -15,6 +21,7 @@ from app.domain.portfolio_paths import profile_parts, profile_paths
 
 if TYPE_CHECKING:
     from app.ai.retrieval.query import QueryIntent
+    from app.ai.retrieval.rules import RetrievalRules
     from app.application.knowledge import Chunk, Corpus
 
 ASSISTANT_KNOWLEDGE = "public/assistant-knowledge.json"
@@ -72,15 +79,24 @@ def _company_boost(chunk: Chunk, terms: set[str]) -> bool:
 
 
 def _score(
-    chunk: Chunk, row: EvidenceRecord, intent: QueryIntent, terms: set[str], locale: str
+    chunk: Chunk,
+    row: EvidenceRecord,
+    intent: QueryIntent,
+    terms: set[str],
+    locale: str,
+    rules: RetrievalRules,
 ) -> float:
     score: float = lexical_score(row, terms, locale)
-    if _spoken_languages_boost(chunk, terms):
-        score += 100
-    if intent.overview and shape.is_profile_head(chunk):
-        score += 100
-    if _company_boost(chunk, terms):
-        score += 50
+    if rules.enabled(BOOST_SPOKEN_LANGUAGES) and _spoken_languages_boost(chunk, terms):
+        score += rules.spoken_languages_boost
+    if (
+        rules.enabled(BOOST_OVERVIEW_PROFILE_HEAD)
+        and intent.overview
+        and shape.is_profile_head(chunk)
+    ):
+        score += rules.overview_profile_boost
+    if rules.enabled(BOOST_COMPANY_CONTRIBUTIONS) and _company_boost(chunk, terms):
+        score += rules.company_contributions_boost
     return score
 
 
@@ -93,10 +109,13 @@ def _preferred(chunk: Chunk, corpus: Corpus, locale: str) -> bool:
     )
 
 
-def eligible_chunks(corpus: Corpus, intent: QueryIntent, locale: str) -> Eligible:
+def eligible_chunks(
+    corpus: Corpus, intent: QueryIntent, locale: str, rules: RetrievalRules
+) -> Eligible:
     """Collect verified chunks in scope and score their lexical relevance."""
     terms = set(intent.terms)
     entities = entity_paths(corpus, intent.terms)
+    multiply = rules.enabled(MULTIPLIER_ENTITY_PATH)
     chunks: dict[str, Chunk] = {}
     scores: dict[str, float] = {}
     for chunk in corpus.chunks:
@@ -110,9 +129,9 @@ def eligible_chunks(corpus: Corpus, intent: QueryIntent, locale: str) -> Eligibl
             "url": chunk.url,
             "content_hash": chunk.content_hash,
         }
-        score = _score(chunk, row, intent, terms, locale)
-        if chunk.path in entities:
-            score *= 2
+        score = _score(chunk, row, intent, terms, locale, rules)
+        if multiply and chunk.path in entities:
+            score *= rules.entity_path_multiplier
         if _preferred(chunk, corpus, locale) and verified(row, corpus.commit, set(corpus.paths)):
             chunks[chunk.id] = chunk
             scores[chunk.id] = score

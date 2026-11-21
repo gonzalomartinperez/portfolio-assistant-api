@@ -2,8 +2,11 @@
 
 import asyncio
 import logging
+import tomllib
 from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from decimal import Decimal
+from functools import partial
+from importlib import resources
 from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import FastAPI
@@ -35,6 +38,7 @@ from app.adapters.providers.language import LocalLanguageDetector
 from app.adapters.providers.web_search import OpenAIWebSearch
 from app.adapters.retrieval import KnowledgeIndex
 from app.ai.retrieval import PublicRetrieval
+from app.ai.retrieval.rules import parse_rules
 from app.ai.workflow import LangGraphWorkflow
 from app.application.conversations import Conversations
 from app.application.runs import RunService
@@ -52,9 +56,111 @@ from app.presentation.operations import router as operations_router
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 
+    from neo4j import Driver
+    from openai import AsyncOpenAI, OpenAI
     from psycopg import AsyncConnection
+    from psycopg_pool import ConnectionPool
 
+    from app.adapters.observability.telemetry import PrivateTelemetry
+    from app.adapters.postgres.db import Connect
+    from app.ai.retrieval.rules import RetrievalRules
     from app.application.contracts import Provider
+
+
+def _load_retrieval_rules() -> RetrievalRules:
+    """Read the packaged rules.toml once; the ai package itself does no file I/O."""
+    text = resources.files("app.ai.retrieval").joinpath("rules.toml").read_text(encoding="utf-8")
+    return parse_rules(tomllib.loads(text), strict=True)
+
+
+def _ready(
+    connection: Connect,
+    database: ConnectionPool,
+    embeddings: FixtureEmbeddings | OpenAIEmbeddings,
+    index: KnowledgeIndex,
+) -> str | None:
+    check_schema(connection)
+    with database.connection() as conn:
+        latest = (
+            conn.cursor(row_factory=dict_row)
+            .execute("SELECT max(version) AS version FROM schema_migrations")
+            .fetchone()
+        )
+        active = (
+            conn.cursor(row_factory=dict_row)
+            .execute(
+                "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                (embeddings.provider, embeddings.model),
+            )
+            .fetchone()
+        )
+        if not active or active["id"] != corpus_version(
+            active["source_commit"], embeddings.provider
+        ):
+            raise RuntimeError("corpus_unavailable")
+    index.verify_ready(active["id"])
+    with database.connection() as conn:
+        current = (
+            conn.cursor(row_factory=dict_row)
+            .execute(
+                "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
+                (embeddings.provider, embeddings.model),
+            )
+            .fetchone()
+        )
+        if current != active:
+            raise RuntimeError("corpus_changed")
+    version = latest["version"] if latest else None
+    return version[:3] if version else None
+
+
+async def _close_resources(
+    database: ConnectionPool,
+    graph: Driver,
+    checkpoints: AsyncConnectionPool[AsyncConnection[Any]],
+    embedding_client: OpenAI | None,
+    client: AsyncOpenAI | None,
+    observer: OperationalObserver | None,
+    runs: RunService | None,
+) -> None:
+    failures: list[BaseException] = []
+
+    async def close_resource(callback: Callable[..., Awaitable[object]], *args: object) -> None:
+        try:
+            await callback(*args)
+        except BaseException as error:  # noqa: BLE001 - Attempt every owned cleanup, then propagate all failures including cancellation.
+            failures.append(error)
+
+    # LIFO preserves drain-before-close order, including partial startup.
+    async with AsyncExitStack() as stack:
+        stack.push_async_callback(close_resource, asyncio.to_thread, database.close)
+        stack.push_async_callback(close_resource, asyncio.to_thread, graph.close)
+        stack.push_async_callback(close_resource, checkpoints.close)
+        if embedding_client:
+            stack.push_async_callback(close_resource, asyncio.to_thread, embedding_client.close)
+        if client:
+            stack.push_async_callback(close_resource, client.close)
+        if observer:
+            stack.push_async_callback(close_resource, observer.close)
+        if runs:
+            stack.push_async_callback(close_resource, runs.drain_cleanup)
+    if len(failures) == 1:
+        raise failures[0]
+    if failures:
+        raise BaseExceptionGroup("API resource cleanup failed", failures)
+
+
+def _telemetry(config: Settings) -> PrivateTelemetry | None:
+    if config.otel_sdk_disabled:
+        return None
+    from app.adapters.observability.telemetry import PrivateTelemetry
+
+    # Settings rejects a missing endpoint or revision whenever telemetry is on.
+    return PrivateTelemetry(
+        cast("str", config.otel_private_endpoint),
+        cast("str", config.ops_api_commit),
+        config.ops_trace_sample_ratio,
+    )
 
 
 def create_app(
@@ -66,6 +172,8 @@ def create_app(
     default_prompts()  # Fail fast on a stale lock or missing prompt file.
     if provider_override is not None and config.ai_provider != "fixture":
         raise ValueError("provider overrides require fixture mode")
+
+    retrieval_rules = _load_retrieval_rules()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -170,7 +278,7 @@ def create_app(
                 cast("AsyncConnectionPool[AsyncConnection[DictRow]]", checkpoints)
             )
             workflow = LangGraphWorkflow(
-                PublicRetrieval(index),
+                PublicRetrieval(index, rules=retrieval_rules),
                 provider,
                 accounting,
                 saver,
@@ -189,20 +297,10 @@ def create_app(
                         yield conn
 
                 operations = PostgresOperations(operational_connection, config)
-                exporter = None
-                if not config.otel_sdk_disabled:
-                    from app.adapters.observability.telemetry import PrivateTelemetry
-
-                    # Settings rejects a missing endpoint or revision whenever telemetry is on.
-                    exporter = PrivateTelemetry(
-                        cast("str", config.otel_private_endpoint),
-                        cast("str", config.ops_api_commit),
-                        config.ops_trace_sample_ratio,
-                    )
                 observer = OperationalObserver(
                     operations,
                     sample_ratio=config.ops_trace_sample_ratio,
-                    exporter=exporter,
+                    exporter=_telemetry(config),
                 )
                 observer.start()
                 app.state.operations = operations
@@ -218,42 +316,7 @@ def create_app(
             )
             app.state.runs = runs
 
-            def ready() -> str | None:
-                check_schema(connection)
-                with database.connection() as conn:
-                    latest = (
-                        conn.cursor(row_factory=dict_row)
-                        .execute("SELECT max(version) AS version FROM schema_migrations")
-                        .fetchone()
-                    )
-                    active = (
-                        conn.cursor(row_factory=dict_row)
-                        .execute(
-                            "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
-                            (embeddings.provider, embeddings.model),
-                        )
-                        .fetchone()
-                    )
-                    if not active or active["id"] != corpus_version(
-                        active["source_commit"], embeddings.provider
-                    ):
-                        raise RuntimeError("corpus_unavailable")
-                index.verify_ready(active["id"])
-                with database.connection() as conn:
-                    current = (
-                        conn.cursor(row_factory=dict_row)
-                        .execute(
-                            "SELECT id,source_commit FROM knowledge_versions WHERE status='active' AND embedding_provider=%s AND embedding_model=%s LIMIT 1",
-                            (embeddings.provider, embeddings.model),
-                        )
-                        .fetchone()
-                    )
-                    if current != active:
-                        raise RuntimeError("corpus_changed")
-                version = latest["version"] if latest else None
-                return version[:3] if version else None
-
-            app.state.ready = ready
+            app.state.ready = partial(_ready, connection, database, embeddings, index)
 
             def cleanup() -> None:
                 try:
@@ -266,35 +329,9 @@ def create_app(
             app.state.cleanup = cleanup
             yield
         finally:
-            failures: list[BaseException] = []
-
-            async def close_resource(
-                callback: Callable[..., Awaitable[object]], *args: object
-            ) -> None:
-                try:
-                    await callback(*args)
-                except BaseException as error:  # noqa: BLE001 - Attempt every owned cleanup, then propagate all failures including cancellation.
-                    failures.append(error)
-
-            # LIFO preserves drain-before-close order, including partial startup.
-            async with AsyncExitStack() as stack:
-                stack.push_async_callback(close_resource, asyncio.to_thread, database.close)
-                stack.push_async_callback(close_resource, asyncio.to_thread, graph.close)
-                stack.push_async_callback(close_resource, checkpoints.close)
-                if embedding_client:
-                    stack.push_async_callback(
-                        close_resource, asyncio.to_thread, embedding_client.close
-                    )
-                if client:
-                    stack.push_async_callback(close_resource, client.close)
-                if observer:
-                    stack.push_async_callback(close_resource, observer.close)
-                if runs:
-                    stack.push_async_callback(close_resource, runs.drain_cleanup)
-            if len(failures) == 1:
-                raise failures[0]
-            if failures:
-                raise BaseExceptionGroup("API resource cleanup failed", failures)
+            await _close_resources(
+                database, graph, checkpoints, embedding_client, client, observer, runs
+            )
 
     app = FastAPI(
         title="Portfolio Assistant API",
