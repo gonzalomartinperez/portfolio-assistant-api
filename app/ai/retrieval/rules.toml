@@ -1,0 +1,71 @@
+# Retrieval rules. Mirrors app.ai.retrieval.rules.DEFAULT_RULES (a test pins the equality).
+# Loaded once by app/bootstrap/container.py; the ai package does no file I/O.
+# Ablation: list rule ids under [rules] disabled to switch them off (default none).
+
+[vocabulary]
+# Question analysis: "tell me about Gonzalo" style overview questions (case-insensitive regex).
+overview_pattern = '(?i)(tell me about|cuéntame sobre|cuentame sobre|who is|quién es)\s+gonzalo'
+# Terms added to an overview question so profile chunks match lexically.
+overview_terms = ["intro", "profile", "summary"]
+# Terms that put repository files in scope for a question.
+repository_terms = ["portfolio", "readme", "repo", "repositorio", "repository"]
+# Terms that mark a relationship/comparison question (graph lane, relationship anchors).
+relationship_terms = [
+  "ambos", "between", "both", "compara", "comparar", "compare", "comparison", "comparten",
+  "connect", "connected", "entre", "relacion", "related", "share", "shared", "shares", "versus",
+]
+# Trigger of the performance_metrics step.
+performance_terms = ["improvements", "metricas", "metrics", "performance", "rendimiento"]
+# Questions with these terms skip the exact_name step.
+technology_terms = ["stack", "technologies", "technology", "tecnologias"]
+# Trigger of the qualification_anchor step.
+qualification_terms = [
+  "degree", "education", "estudio", "estudios", "estudou", "formacion", "formation", "graduated",
+  "graduation", "qualification", "studied", "study", "titulo", "universidad",
+]
+# Role-listing terms for the relationship_anchors step (most recent role per company).
+role_terms = ["empleos", "puestos", "roles", "trabajos"]
+# Trigger terms (goal and measurement together) of the goals_metrics_anchor step.
+goal_terms = ["goals", "metas", "objetivos", "targets"]
+measurement_terms = [
+  "estimaciones", "estimated", "measured", "measurements", "mediciones", "medidas", "metrics",
+  "rendimiento",
+]
+# Text that marks a documented design goal chunk (case-insensitive regex).
+goal_pattern = '(?i)\b(?:design goal|design target|objetivo de|meta de)\b'
+
+[weights]
+# boost_spoken_languages: profile chunks with language entries when the question asks spoken languages.
+spoken_languages = 100
+# boost_overview_profile_head: first chunk of the profile file for overview questions.
+overview_profile_head = 100
+# boost_company_contributions: experience chunks with contributions for a company named in the question.
+company_contributions = 50
+# multiplier_entity_path: scales the whole score of chunks in a document that declares a named entity.
+entity_path_multiplier = 2
+
+[fusion]
+# Weighted reciprocal-rank fusion: weight / (offset + rank). Lanes: lexical, vector, graph.
+offset = 10
+# Weights when the corpus has real semantic embeddings.
+semantic = [1.0, 1.0, 0.5]
+# Weights when embeddings are the fixture hash (vector lane is weak).
+lexical = [3.0, 0.1, 0.5]
+# Relationship questions with graph hits rank graph, then lexical, then vector, without fusion.
+relationship_graph_first = true
+
+[rules]
+# Rule ids (ablation switches), one line each:
+#   boost_spoken_languages       boost: +spoken_languages for language entries on language questions
+#   boost_overview_profile_head  boost: +overview_profile_head for the profile head on overview questions
+#   boost_company_contributions  boost: +company_contributions for named-company contribution chunks
+#   multiplier_entity_path       boost: x entity_path_multiplier for documents declaring a matched entity
+#   overview_first               reorder (first match): profile head first on overview questions
+#   affiliation_filter           filter (first match): keep chunks mentioning the asked affiliation, company chunks first
+#   performance_metrics          reorder (first match): chunks with a metric entry first
+#   exact_name                   reorder (first match): chunks declaring a name fully contained in the question first
+#   qualification_anchor         anchor: education head chunks first
+#   relationship_anchors         anchor: best chunk per compared subject, or latest role per company
+#   technical_topic_anchors      anchor: best chunk per named technical topic
+#   goals_metrics_anchor         anchor: best documented design goal chunk first
+disabled = []

@@ -4,7 +4,7 @@ Architecture decision records (ADRs) for the portfolio assistant API, one file p
 Paths are stable: new ADRs are added here and existing files do not move. New records follow MADR 4 (see the
 `write-adr` repository skill). Superseding records link both ways.
 
-Numbers are never reused. Gaps: ADR 007 was never written, and numbers 010, 015, 018 and 020 are not present in
+Numbers are never reused. Gaps: ADR 007 was never written, and numbers 010, 018 and 020 are not present in
 this tree. The dated decision log that preceded the ADRs is archived at
 [decisions-log-2026-09.md](../evidence/archive/2026-10/decisions-log-2026-09.md).
 
@@ -22,6 +22,7 @@ this tree. The dated decision log that preceded the ADRs is archived at
 | 012 | [Compare evidence by layout-neutral canonical keys](012-layout-neutral-evidence-keys.md) | Accepted |
 | 013 | [Provider-port cassettes for the golden lane](013-provider-port-cassettes.md) | Accepted |
 | 014 | [Prompt registry in git with a lock file](014-prompt-registry.md) | Accepted |
+| 015 | [Staged retrieval with declarative rules and paired ablation](015-retrieval-pipeline-rrf-ablation.md) | Accepted |
 | 016 | [Frozen in-repo snapshot of the approved public corpus](016-frozen-public-corpus-snapshot.md) | Accepted |
 | 017 | [Canonical API image with `api` and `worker` targets](017-canonical-api-image.md) | Accepted |
 | 019 | [One grouped dependency PR per week, merged manually](019-weekly-dependency-pr.md) | Accepted |

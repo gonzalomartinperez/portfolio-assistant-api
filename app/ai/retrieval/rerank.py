@@ -1,63 +1,30 @@
 """Hybrid re-ranking: one first-match group, then ordered anchor steps."""
 
 import re
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import app.ai.retrieval.source_shape as shape
-from app.ai.retrieval.candidates import Eligible
-from app.ai.retrieval.query import QueryIntent
+from app.ai.retrieval.rules import (
+    AFFILIATION_FILTER,
+    EXACT_NAME,
+    GOALS_METRICS_ANCHOR,
+    OVERVIEW_FIRST,
+    PERFORMANCE_METRICS,
+    QUALIFICATION_ANCHOR,
+    RELATIONSHIP_ANCHORS,
+    TECHNICAL_TOPIC_ANCHORS,
+)
 from app.domain.evidence import comparison_subjects, tokens
 from app.domain.portfolio_paths import profile_parts
 from app.domain.web_policy import TOPICS
 
-OVERVIEW_FIRST = "overview_first"
-AFFILIATION_FILTER = "affiliation_filter"
-PERFORMANCE_METRICS = "performance_metrics"
-EXACT_NAME = "exact_name"
-QUALIFICATION_ANCHOR = "qualification_anchor"
-RELATIONSHIP_ANCHORS = "relationship_anchors"
-TECHNICAL_TOPIC_ANCHORS = "technical_topic_anchors"
-GOALS_METRICS_ANCHOR = "goals_metrics_anchor"
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-_PERFORMANCE_TERMS = frozenset(
-    {"performance", "improvements", "metrics", "metricas", "rendimiento"}
-)
-_TECHNOLOGY_TERMS = frozenset({"technologies", "technology", "tecnologias", "stack"})
-_QUALIFICATION_TERMS = frozenset(
-    {
-        "degree",
-        "graduated",
-        "graduation",
-        "qualification",
-        "education",
-        "formacion",
-        "formation",
-        "estudou",
-        "titulo",
-        "universidad",
-        "study",
-        "studied",
-        "estudio",
-        "estudios",
-    }
-)
-_ROLE_TERMS = frozenset({"roles", "empleos", "puestos", "trabajos"})
-_GOAL_TERMS = frozenset({"goals", "targets", "metas", "objetivos"})
-_MEASUREMENT_TERMS = frozenset(
-    {
-        "metrics",
-        "measurements",
-        "measured",
-        "estimated",
-        "mediciones",
-        "medidas",
-        "estimaciones",
-        "rendimiento",
-    }
-)
-_GOAL_TEXT = re.compile(r"(?i)\b(?:design goal|design target|objetivo de|meta de)\b")
+    from app.ai.retrieval.candidates import Eligible
+    from app.ai.retrieval.query import QueryIntent
+    from app.ai.retrieval.rules import RetrievalRules
 
 
 @dataclass(frozen=True)
@@ -66,6 +33,7 @@ class RerankContext:
 
     intent: QueryIntent
     eligible: Eligible
+    rules: RetrievalRules
 
 
 Ranked = list[str]
@@ -138,10 +106,10 @@ FIRST_MATCH: tuple[Step, ...] = (
     ),
     Step(
         PERFORMANCE_METRICS,
-        lambda ctx: bool(ctx.intent.terms & _PERFORMANCE_TERMS),
+        lambda ctx: bool(ctx.intent.terms & ctx.rules.performance_terms),
         performance_metrics,
     ),
-    Step(EXACT_NAME, lambda ctx: not ctx.intent.terms & _TECHNOLOGY_TERMS, exact_name),
+    Step(EXACT_NAME, lambda ctx: not ctx.intent.terms & ctx.rules.technology_terms, exact_name),
 )
 
 
@@ -212,7 +180,7 @@ def relationship_anchors(ranked: Ranked, ctx: RerankContext) -> Ranked:
     chunks = ctx.eligible.chunks
     subjects = comparison_subjects(ctx.intent.question, tuple(c.content for c in chunks.values()))
     anchors = _subject_anchors(ranked, subjects, ctx)
-    if not subjects and ctx.intent.terms & _ROLE_TERMS:
+    if not subjects and ctx.intent.terms & ctx.rules.role_terms:
         anchors += _role_anchors(ctx)
     return list(dict.fromkeys(anchors + ranked))
 
@@ -247,7 +215,8 @@ def goals_metrics_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
     goals = [
         key
         for key in chunks
-        if profile_parts(chunks[key].path) is not None and _GOAL_TEXT.search(chunks[key].content)
+        if profile_parts(chunks[key].path) is not None
+        and re.search(ctx.rules.goal_pattern, chunks[key].content)
     ]
     goals = _mentioning_affiliation(goals, ctx)
     if not goals:
@@ -259,27 +228,39 @@ def goals_metrics_anchor(ranked: Ranked, ctx: RerankContext) -> Ranked:
 ANCHORS: tuple[Step, ...] = (
     Step(
         QUALIFICATION_ANCHOR,
-        lambda ctx: bool(ctx.intent.terms & _QUALIFICATION_TERMS),
+        lambda ctx: bool(ctx.intent.terms & ctx.rules.qualification_terms),
         qualification_anchor,
     ),
     Step(RELATIONSHIP_ANCHORS, lambda ctx: ctx.intent.relationship, relationship_anchors),
     Step(TECHNICAL_TOPIC_ANCHORS, lambda ctx: not ctx.intent.overview, technical_topic_anchors),
     Step(
         GOALS_METRICS_ANCHOR,
-        lambda ctx: bool(ctx.intent.terms & _GOAL_TERMS and ctx.intent.terms & _MEASUREMENT_TERMS),
+        lambda ctx: bool(
+            ctx.intent.terms & ctx.rules.goal_terms
+            and ctx.intent.terms & ctx.rules.measurement_terms
+        ),
         goals_metrics_anchor,
     ),
 )
 
 
-def rerank(ranked: Ranked, intent: QueryIntent, eligible: Eligible) -> Ranked:
-    """Apply the first matching ranking step followed by all applicable anchors."""
-    ctx = RerankContext(intent, eligible)
+def _run(step: Step, ranked: Ranked, ctx: RerankContext) -> Ranked:
+    return step.apply(ranked, ctx) if ctx.rules.enabled(step.id) else ranked
+
+
+def rerank(
+    ranked: Ranked, intent: QueryIntent, eligible: Eligible, rules: RetrievalRules
+) -> Ranked:
+    """Apply the first matching step followed by all applicable anchors.
+
+    A disabled first-match step still consumes its position.
+    """
+    ctx = RerankContext(intent, eligible, rules)
     for step in FIRST_MATCH:
         if step.applies(ctx):
-            ranked = step.apply(ranked, ctx)
+            ranked = _run(step, ranked, ctx)
             break
     for step in ANCHORS:
         if step.applies(ctx):
-            ranked = step.apply(ranked, ctx)
+            ranked = _run(step, ranked, ctx)
     return ranked
