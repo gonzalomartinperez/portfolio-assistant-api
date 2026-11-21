@@ -7,7 +7,7 @@ package also contained five settings-aware operator conveniences. A blind rename
 would preserve adapter→bootstrap coupling, break SQL discovery after nesting and
 silently miss monkeypatches attached to reexporting modules.
 
-Concrete modules now live in capability packages beneath app/adapters. Bootstrap
+Concrete modules now live in capability packages beneath src/portfolio_assistant/adapters. Bootstrap
 owns settings/default composition for migration, indexing and maintenance. Existing
 root ASGI/CLI paths remain. The old infrastructure package is removed after an
 in-repository consumer inventory found no remaining runtime callers.

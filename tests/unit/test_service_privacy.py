@@ -7,7 +7,7 @@ import pytest
 import yaml
 from neo4j import GraphDatabase
 
-from app.bootstrap.config import settings
+from portfolio_assistant.bootstrap.config import settings
 
 
 @pytest.mark.parametrize("scope", ["local", "database", "container"])

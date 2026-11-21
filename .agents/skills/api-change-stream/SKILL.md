@@ -14,9 +14,9 @@ requested event sequence, locale and run outcome. An investigation stays read-on
 unless the user also requests a fix. Load [API/SSE behavior](../../../docs/reference/api-contract.md)
 and inspect [stream tests](../../../tests/unit/test_workflow.py) before designing changes.
 
-Trace [run policy](../../../app/application/runs.py) → [injected workflow](../../../app/ai/workflow.py)
-→ [provider translation](../../../app/adapters/providers/answer.py) →
-[stream closure](../../../app/presentation/streaming.py) and [HTTP](../../../app/presentation/http.py).
+Trace [run policy](../../../src/portfolio_assistant/application/runs.py) → [injected workflow](../../../src/portfolio_assistant/ai/workflow.py)
+→ [provider translation](../../../src/portfolio_assistant/adapters/providers/answer.py) →
+[stream closure](../../../src/portfolio_assistant/presentation/streaming.py) and [HTTP](../../../src/portfolio_assistant/presentation/http.py).
 Do not pass LangGraph state, SDK objects or HTTP requests into application contracts.
 
 - Preserve `/api/v1/...`, named events, payloads, sequence/terminal semantics,

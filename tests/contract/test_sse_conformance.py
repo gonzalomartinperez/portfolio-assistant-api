@@ -11,8 +11,8 @@ import jsonschema
 import pytest
 from pydantic import ValidationError
 
-from app.presentation.http import execute_run
-from app.presentation.streaming import heartbeat
+from portfolio_assistant.presentation.http import execute_run
+from portfolio_assistant.presentation.streaming import heartbeat
 from tests.support import ROOT, FixedClock
 
 pytestmark = pytest.mark.contract

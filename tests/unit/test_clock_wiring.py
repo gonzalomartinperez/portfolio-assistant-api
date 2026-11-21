@@ -4,9 +4,9 @@ import json
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.application.conversations import Conversations
-from app.presentation.http import sse
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.application.conversations import Conversations
+from portfolio_assistant.presentation.http import sse
 from tests.support import FIXED_NOW, FixedClock
 from tests.support_app import FakeStore
 

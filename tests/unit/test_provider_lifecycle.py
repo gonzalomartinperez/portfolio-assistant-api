@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from app.bootstrap import container
-from app.bootstrap.config import Settings
+from portfolio_assistant.bootstrap import container
+from portfolio_assistant.bootstrap.config import Settings
 
 
 @pytest.mark.parametrize(

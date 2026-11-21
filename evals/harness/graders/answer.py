@@ -2,10 +2,10 @@
 
 import re
 
-from app.adapters.providers.language import LocalLanguageDetector
 from evals.harness.graders._text import MARKER, contains_phrase, fold
 from evals.harness.items import Item
 from evals.harness.result import GradeResult, GradingContext, RunResult
+from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
 
 _DETECTOR = LocalLanguageDetector()
 _MARKERS = re.compile(MARKER)

@@ -17,16 +17,17 @@ Publication is not yet authorized; plan private package visibility unless separa
 authorized and provision pull access through vps-ops. Consume
 tested prebuilt digests, not source builds on the VPS.
 
-The image runs as UID/GID 65532 in `/app`, binding `0.0.0.0:8000` internally:
+The image runs `assistant-api` as UID/GID 65532 in `/app` and binds
+`0.0.0.0:8000` internally. During the transition, vps-ops can still use:
 
 ```sh
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log --no-proxy-headers --timeout-graceful-shutdown 15
 ```
 
-Use the explicit `--no-proxy-headers` runtime option: application trust checks,
-not Uvicorn rewriting, own client-IP accounting. No public API host-port binding
-is needed. Only the vps-ops proxy exposes traffic. Startup opens bounded PostgreSQL
-and checkpoint pools; dependencies must already exist. It does not run migrations
+The console script applies the same options, including `--no-proxy-headers`, so
+application trust checks own client-IP accounting. Only the vps-ops proxy exposes
+traffic, so the API needs no public host-port binding. Startup opens bounded
+PostgreSQL and checkpoint pools. Dependencies must already exist. Startup does not run migrations
 or ingest a corpus. Shutdown closes provider, pools and graph clients. Allow at
 least 25 seconds before SIGKILL; active runs can be interrupted after 15 seconds.
 
@@ -109,16 +110,17 @@ target (the `api` target has no Git). Run `python -m app.retention` every minute
 under appropriate private configuration; scheduling belongs to vps-ops.
 
 Console scripts are the canonical commands. Each is the `main()` of one module under
-`app/bootstrap/entrypoints/`:
-`assistant-api` (uvicorn on 0.0.0.0:8000, the image command; serves `app.main:app`),
+`src/portfolio_assistant/bootstrap/entrypoints/`:
+`assistant-api` (uvicorn on 0.0.0.0:8000, the image command; serves `portfolio_assistant.main:app`),
 `assistant-migrate`, `assistant-retention`, `assistant-knowledge-sync` and
 `assistant-knowledge-watch` (the worker image command). They exist wherever the project is
 installed: a checkout after `uv sync` and both image targets (the image installs the project
-editable, so `app` and `/app/migrations` resolve from `/app`). The `python -m app.migrate`,
-`app.retention`, `app.knowledge_sync` and `app.knowledge_watch` forms used above are
-deprecated compatibility shims with identical behaviour. They are removed in the contract
-phase, only after vps-ops schedules the console scripts (a `releases/production.lock` change
-owned and merged by vps-ops). Until then both forms are supported.
+editable, so both packages resolve from `/app/src`, and migrations remain in
+`/app/migrations`). The deprecated compatibility shims support `uvicorn app.main:app`
+and the `python -m` targets `app.migrate`, `app.retention`, `app.knowledge_sync` and
+`app.knowledge_watch`. Both forms are supported until vps-ops switches the API launch
+and worker and operator commands to the console scripts and confirms the
+`releases/production.lock` change. See [ADR028](../decisions/028-src-layout-package-rename.md).
 
 `/healthz` and `/readyz` are the canonical health names; `/health/live` and
 `/health/ready` remain until vps-ops confirms the switch (contract phase later,

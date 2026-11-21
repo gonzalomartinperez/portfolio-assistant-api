@@ -10,14 +10,14 @@ from pydantic import ValidationError
 from requests import Response
 from requests.exceptions import ConnectionError
 
-from app.adapters.observability.evaluation_export import (
+from portfolio_assistant.adapters.observability.evaluation_export import (
     ENDPOINT,
     EvaluationSession,
     LangSmithEvaluationExporter,
 )
-from app.application.evaluation_export import EvaluationSummary, export_evaluation
-from app.bootstrap.config import Settings
-from app.bootstrap.evaluation_export import run
+from portfolio_assistant.application.evaluation_export import EvaluationSummary, export_evaluation
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.evaluation_export import run
 from tests.support import FixedClock
 
 
@@ -120,7 +120,7 @@ def test_cli_default_has_no_client_even_with_unrelated_key(monkeypatch, tmp_path
     path.write_text(json.dumps(asdict(summary)))
     monkeypatch.setenv("LANGSMITH_API_KEY", "unrelated-key-never-used")
     monkeypatch.setattr(
-        "app.bootstrap.evaluation_export.LangSmithEvaluationExporter",
+        "portfolio_assistant.bootstrap.evaluation_export.LangSmithEvaluationExporter",
         lambda *args: pytest.fail("client created"),
     )
     assert run(path) == "disabled"
@@ -189,7 +189,9 @@ def test_opt_in_uses_only_explicit_evaluation_key(monkeypatch, tmp_path, summary
         def export(self, summary):
             return True
 
-    monkeypatch.setattr("app.bootstrap.evaluation_export.LangSmithEvaluationExporter", FakeExporter)
+    monkeypatch.setattr(
+        "portfolio_assistant.bootstrap.evaluation_export.LangSmithEvaluationExporter", FakeExporter
+    )
     assert run(path, authorize_export=True) == "exported"
     assert received == ["synthetic-credential-not-real"]
     monkeypatch.setenv("ENVIRONMENT", "production")

@@ -11,12 +11,12 @@ import pytest
 from fastapi.testclient import TestClient
 from psycopg.rows import dict_row
 
-from app.adapters.postgres import migrations
-from app.adapters.postgres.analytics import PostgresProductAnalytics
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.analytics import ProductEvent
-from app.domain.analytics_periods import calendar_window
+from portfolio_assistant.adapters.postgres import migrations
+from portfolio_assistant.adapters.postgres.analytics import PostgresProductAnalytics
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.analytics import ProductEvent
+from portfolio_assistant.domain.analytics_periods import calendar_window
 from scripts.project_postgres_fixture import project_fixture
 
 pytestmark = [

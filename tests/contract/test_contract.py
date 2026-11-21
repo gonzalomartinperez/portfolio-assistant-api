@@ -3,8 +3,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.adapters.providers.fixture_answer import fixture_message
-from app.main import app
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
+from portfolio_assistant.main import app
 from tests.support import ROOT
 
 
@@ -42,7 +42,7 @@ def test_stream_schema_rejects_internal_payloads():
     import pytest
     from pydantic import ValidationError
 
-    from app.presentation.events import events
+    from portfolio_assistant.presentation.events import events
 
     base = {
         "type": "message.delta",
@@ -58,7 +58,7 @@ def test_stream_schema_rejects_internal_payloads():
 
 
 def test_committed_stream_examples_validate():
-    from app.presentation.events import events
+    from portfolio_assistant.presentation.events import events
 
     examples = json.loads(Path("contracts/sse.examples.json").read_text())
     for event in [
@@ -72,7 +72,7 @@ def test_committed_stream_examples_validate():
 def health_client(ready, revision="unknown"):
     from fastapi import FastAPI
 
-    from app.presentation.http import router
+    from portfolio_assistant.presentation.http import router
 
     probe = FastAPI()
     probe.include_router(router)

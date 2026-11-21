@@ -37,7 +37,7 @@ Use mutmut 3.8.1 with explicit file paths in `[tool.mutmut]`, unit test selectio
 `also_copy` for application imports and contract fixtures, and two workers.
 The scoped domain files are budget, privacy, evidence, analytics periods and web
 policy; application files are answer, runs, conversations and contracts. Retrieval
-fusion/rules currently live in the `app/ai/retrieval/` package (formerly one module), so that
+fusion/rules currently live in the `src/portfolio_assistant/ai/retrieval/` package (formerly one module), so that
 package is included. No standalone prompt loader or `evals/harness/graders` exists
 on this branch; both are skipped until present. Tests are never mutation targets.
 
@@ -45,14 +45,14 @@ on this branch; both are skipped until present. Tests are never mutation targets
 
 Works on Python 3.14: **yes**, with the existing Python **3.14.8**, mutmut
 **3.8.1**, and `fork` isolation. The successful campaign temporarily narrowed
-`paths_to_mutate` to `app/domain/budget.py`, `tests_dir` to
+`paths_to_mutate` to `src/portfolio_assistant/domain/budget.py`, `tests_dir` to
 `tests/unit/test_operations.py`, and pytest's `-k` selection to
 `reservation_covers_bounded_request_and_cutoff`. These restrictions belong to the
 spike; the committed configuration restores the complete source scope and the unit tests that exercise
 it, excluding integration tests.
 
 ```sh
-uv run mutmut run --max-children 2 'app.domain.budget.*'
+uv run mutmut run --max-children 2 'portfolio_assistant.domain.budget.*'
 uv run mutmut results
 uv run mutmut results --all true
 uv run mutmut export-cicd-stats
@@ -134,7 +134,7 @@ stopped after it stalled following seven tests; only the narrow mutation spike
 is verified, not the full campaign or full mutation unit selection. The committed
 PR and weekly configuration is therefore unverified end to end: the first hosted run
 is the second half of the spike, and a red advisory run is read as "evidence
-invalid" (the gate prints that label) rather than as a score. `app/application/
+invalid" (the gate prints that label) rather than as a score. `src/portfolio_assistant/application/
 conversations.py` is left out of scope until it has unit-lane tests (it is only
 exercised by the integration lane, so every mutant would count as untested). In PR
 mode one changed file stands in for its group, so the PR score is an approximation of

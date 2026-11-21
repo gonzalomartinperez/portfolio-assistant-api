@@ -50,7 +50,7 @@ TARGET = [
 ]
 IGNORE = ("E501", "TRY003", "D203", "D213")
 TEST_IGNORES = ("S101", "ANN", "D", "ARG")
-PATHS = ("app", "tests", "contracts", "scripts", "evals", "scorecard")
+PATHS = ("src", "tests", "contracts", "scripts", "evals", "scorecard")
 
 
 def family(code: str, families: Iterable[str] = TARGET) -> str:

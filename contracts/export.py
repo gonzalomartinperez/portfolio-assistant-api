@@ -4,15 +4,15 @@ import hashlib
 import json
 from pathlib import Path
 
-from app.adapters.portfolio.projection import PublicProjection
-from app.main import app
-from app.presentation.analytics import ProductEventBody, ProductSnapshot
-from app.presentation.analytics_report_models import ProductReportSnapshot
-from app.presentation.events import events
-from app.presentation.feedback import FeedbackView
-from app.presentation.interaction_models import ProductInteractionBody
-from app.presentation.operations import OperationalSnapshot
 from contracts.site_experience import PortfolioExperience, SiteExperience
+from portfolio_assistant.adapters.portfolio.projection import PublicProjection
+from portfolio_assistant.main import app
+from portfolio_assistant.presentation.analytics import ProductEventBody, ProductSnapshot
+from portfolio_assistant.presentation.analytics_report_models import ProductReportSnapshot
+from portfolio_assistant.presentation.events import events
+from portfolio_assistant.presentation.feedback import FeedbackView
+from portfolio_assistant.presentation.interaction_models import ProductInteractionBody
+from portfolio_assistant.presentation.operations import OperationalSnapshot
 
 
 def artifacts():

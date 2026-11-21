@@ -16,8 +16,8 @@ sync:
 check:
     uv run python -m scripts.validate_skills
     uv run python -m scripts.check_license
-    uv run ruff check app tests contracts scripts evals
-    uv run ruff format --check app tests contracts scripts evals
+    uv run ruff check src tests contracts scripts evals
+    uv run ruff format --check src tests contracts scripts evals
     uv run mypy
     uv run python -m scripts.build_assistant_bank --check
     uv run lint-imports
@@ -48,9 +48,9 @@ eval-golden:
 # Local scorecard: collect artifacts and check ratchets (docs/reference/scorecard.md). Slow: runs the offline suite.
 score:
     mkdir -p artifacts
-    uv run ruff check app tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]
+    uv run ruff check src tests contracts scripts --output-format json > artifacts/ruff.json || [ $? -eq 1 ]
     uv run mypy > artifacts/mypy.txt 2>&1 || [ $? -eq 1 ]
-    uv run mypy --strict app > artifacts/mypy-strict-app.txt 2>&1 || [ $? -eq 1 ]
+    uv run mypy --strict src > artifacts/mypy-strict-app.txt 2>&1 || [ $? -eq 1 ]
     uv run python -m scripts.ruff_backlog --out artifacts/ruff-backlog.json
     uv run pytest -q -m 'not integration' --junitxml=artifacts/unit.xml
     uv run python -m scorecard collect --artifacts artifacts --out artifacts/scorecard.json

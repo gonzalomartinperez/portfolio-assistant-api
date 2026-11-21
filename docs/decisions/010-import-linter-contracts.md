@@ -30,19 +30,19 @@ access to Python syntax. The quality gate needs a separate check for unused code
 ## Decision outcome
 
 This decision amends the enforcement mechanism in [ADR 001](001-dependency-direction.md).
-Import Linter 2.17 checks `app` with external packages included and no ignored imports.
+Import Linter 2.17 checks `portfolio_assistant` with external packages included and no ignored imports.
 
 | Contract | Enforcement |
 |---|---|
-| Application layer direction | `layers` uses `app` as the container, with bootstrap above the independent presentation, adapters and AI siblings, then application and domain. `app.ai` may not import `app.adapters`. The five existing shims form an independent top tier. Each can import the six layers, and imports into or between shims are forbidden. |
+| Application layer direction | `layers` uses `portfolio_assistant` as the container, with bootstrap above the independent presentation, adapters and AI siblings, then application and domain. `portfolio_assistant.ai` may not import `portfolio_assistant.adapters`. The ASGI module and four module dispatchers form an independent top tier. Each can import the six layers. The AST guard rejects imports of the separate compatibility namespace described in [ADR028](028-src-layout-package-rename.md). |
 | Inner layers avoid third-party and platform I/O imports | `forbidden` rejects direct imports by domain or application of the declared third-party packages and the top-level platform modules `os`, `socket`, `subprocess`, `sqlite3` and `http`. |
-| Application siblings are acyclic | `acyclic_siblings` checks for dependency cycles among siblings below `app`. |
+| Application siblings are acyclic | `acyclic_siblings` checks for dependency cycles among siblings below `portfolio_assistant`. |
 
 `scripts/check_architecture.py` enforces the full standard-library-only rule using
 `sys.stdlib_module_names`. It checks `urllib.request` because Import Linter's graph
 represents the external package as `urllib`, and domain may use `urllib.parse`. The
 guard also checks imports of unclassified modules and requires `__init__.py` in
-directories containing Python source and their parent packages under `app`.
+directories containing Python source and their parent packages under `src/portfolio_assistant`.
 Import Linter skips namespace packages and their descendants, and paths that are not
 importable module names (`batch-jobs/`, `a.b.py`), so the guard rejects both. The module-level cycle
 check covers self-imports and cycles between a package initializer and its descendants.
@@ -53,7 +53,7 @@ existing shims and documented evaluation export retain their respective exceptio
 The existing architecture test also checks for SQL text outside the database adapters
 in the same four layers as before.
 
-Vulture 2.16 scans `app` and `scripts` at 80% confidence. This catches unused imports
+Vulture 2.16 scans `src` and `scripts` at 80% confidence. This catches unused imports
 and unreachable code while avoiding the 60% name-based findings on framework callbacks,
 Pydantic model fields and dynamically assigned adapter attributes. The exact
 `ignore_names` entries cover `cls` in Pydantic classmethod validators and three type

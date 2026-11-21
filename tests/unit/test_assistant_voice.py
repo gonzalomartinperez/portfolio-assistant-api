@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
 from tests.support import FixedClock
 
 
@@ -62,9 +62,12 @@ def test_provider_applies_voice_without_weakening_grounding_or_generation_policy
 
 
 def test_conversational_abstention_has_no_fabricated_citation():
-    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
-    from app.application.runs import citations
-    from app.domain.messages import insufficient_message
+    from portfolio_assistant.adapters.providers.fixture_answer import (
+        fixture_message,
+        fixture_supports,
+    )
+    from portfolio_assistant.application.runs import citations
+    from portfolio_assistant.domain.messages import insufficient_message
     from tests.unit.test_workflow import SOURCE
 
     for locale in ("en", "es"):
@@ -74,7 +77,7 @@ def test_conversational_abstention_has_no_fabricated_citation():
 
 
 def test_followup_keeps_a_named_topic_when_initial_question_also_requests_explanation():
-    from app.application.conversation_context import Turn, retrieval_question
+    from portfolio_assistant.application.conversation_context import Turn, retrieval_question
 
     history = (Turn("user", "¿Qué construyó en Teamcubation? Explicalo sin jerga."),)
     question = "Ahora explicá técnicamente ese ejemplo, con suficiente profundidad."

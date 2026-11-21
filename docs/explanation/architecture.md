@@ -26,7 +26,7 @@ packages are `adapters/postgres`, `providers`, `portfolio`, `neo4j` and
 operator orchestration live in bootstrap; adapters receive explicit settings values
 and connection/publish capabilities. No adapter may import bootstrap or a legacy facade.
 
-The obsolete `app.infrastructure` package is removed. AST checks reject its
+The obsolete `portfolio_assistant.infrastructure` package is removed. AST checks reject its
 reintroduction and all adapter→bootstrap backedges. Root ASGI/CLI paths remain
 stable; see [ADR006](../decisions/006-canonical-adapters.md) and the
 [pre-move consumer map](../evidence/archive/2026-10/common-layout-preflight-2026-10-18.md).

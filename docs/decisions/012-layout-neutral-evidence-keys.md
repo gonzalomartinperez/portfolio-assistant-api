@@ -19,7 +19,7 @@ the expected data, not from retrieval.
 ## Decision
 
 1. One domain function, `canonical_key(path, entity=None)` in
-   `app/domain/portfolio_paths.py`, maps every approved profile path to
+   `src/portfolio_assistant/domain/portfolio_paths.py`, maps every approved profile path to
    `<locale>/<topic>`, optionally followed by `#<entity>` (a lowercase kebab-case
    slug, for example `en/projects#filomena`). Both layouts give the same key.
    Approved non-profile paths are already layout-stable and come back unchanged.

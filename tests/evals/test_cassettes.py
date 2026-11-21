@@ -9,8 +9,6 @@ from pathlib import Path
 
 import pytest
 
-from app.adapters.providers.answer import assemble_request
-from app.application.contracts import Usage
 from evals.harness import cassettes
 from evals.harness.cassettes import (
     RE_RECORD_MESSAGE,
@@ -26,6 +24,8 @@ from evals.harness.cassettes import (
     cassette_path,
     prompt_slug,
 )
+from portfolio_assistant.adapters.providers.answer import assemble_request
+from portfolio_assistant.application.contracts import Usage
 
 EVIDENCE = "PUBLIC SOURCE [1] content/en/education.ts lines 1-5:\nUniversidad Nacional del Sur"
 VERSION = "answer@1+abc"
@@ -114,7 +114,7 @@ def test_key_changes_with_the_prompt_version_and_pinned_date(config):
 
 
 def test_request_is_the_one_the_real_provider_assembles(config):
-    from app.adapters.providers.answer import visitor_inputs
+    from portfolio_assistant.adapters.providers.answer import visitor_inputs
 
     question, history = visitor_inputs("Where did he study?", ())
     expected = assemble_request(question, EVIDENCE, "en", history, None, None, config.today)

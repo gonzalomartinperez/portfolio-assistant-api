@@ -7,14 +7,14 @@ import httpx
 import pytest
 from openai import AsyncOpenAI
 
-from app.adapters.providers.answer import ResponsesProvider
-from app.application.conversation_context import (
+from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+from portfolio_assistant.application.conversation_context import (
     Turn,
     bounded_history,
     retrieval_question,
 )
-from app.domain.privacy import minimize_visitor_text
-from app.presentation.models import SendMessage
+from portfolio_assistant.domain.privacy import minimize_visitor_text
+from portfolio_assistant.presentation.models import SendMessage
 from tests.support import FixedClock
 
 

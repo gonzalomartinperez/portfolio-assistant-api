@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.adapters.providers.fixture_answer import fixture_message
+from portfolio_assistant.adapters.providers.fixture_answer import fixture_message
 
 README = "PUBLIC SOURCE README.md lines 1-9:\n# Portfolio\nThis portfolio is built with Next.js and TypeScript for public projects.\nShort line\n```code block that is definitely longer than forty characters in total```\nThe assistant answers only from approved public content in the repository.\nA third descriptive line that mentions deployment and the build pipeline details.\n"
 LANG = 'PUBLIC SOURCE en/profile lines 1-4:\nlanguage: "English", level: "Professional",\nlanguage: "Spanish", level: "Native",\n'

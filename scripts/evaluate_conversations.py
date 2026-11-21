@@ -12,8 +12,8 @@ from uuid import uuid4
 import httpx
 import uvicorn
 
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
 from scripts.evaluation_isolation import validate_targets
 
 SCENARIOS = {

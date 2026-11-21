@@ -78,7 +78,7 @@
       "split": "validation"
     },
     {
-      "query": "Does changing app/prompts/answer.md require updating anything else?",
+      "query": "Does changing src/portfolio_assistant/prompts/answer.md require updating anything else?",
       "should_trigger": true,
       "split": "validation"
     },

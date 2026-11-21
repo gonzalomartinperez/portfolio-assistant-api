@@ -6,10 +6,10 @@ from uuid import uuid4
 
 import pytest
 
-from app.adapters.postgres.conversations import PostgresConversations
-from app.application.conversations import digest
-from app.bootstrap.maintenance import connect
-from app.domain.errors import RejectedError
+from portfolio_assistant.adapters.postgres.conversations import PostgresConversations
+from portfolio_assistant.application.conversations import digest
+from portfolio_assistant.bootstrap.maintenance import connect
+from portfolio_assistant.domain.errors import RejectedError
 
 pytestmark = [
     pytest.mark.integration,

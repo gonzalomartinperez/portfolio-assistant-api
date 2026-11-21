@@ -7,9 +7,9 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.domain.analytics_interactions import REGIONS, SHELL_REGIONS, Region
-from app.presentation.analytics import ProductEventBody
-from app.presentation.interaction_models import ProductInteractionBody
+from portfolio_assistant.domain.analytics_interactions import REGIONS, SHELL_REGIONS, Region
+from portfolio_assistant.presentation.analytics import ProductEventBody
+from portfolio_assistant.presentation.interaction_models import ProductInteractionBody
 
 
 def click(**changes):

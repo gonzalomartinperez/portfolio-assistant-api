@@ -11,7 +11,7 @@ source scripts/fixture-env.sh
 docker compose -f infra/compose/local.yaml up --build -d --wait
 uv run assistant-migrate
 uv run assistant-knowledge-sync --source snapshot --repo evals/corpus
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
+uv run uvicorn portfolio_assistant.main:app --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
 `evals/corpus` is the frozen public corpus snapshot ([ADR016](../decisions/016-frozen-public-corpus-snapshot.md));
@@ -43,8 +43,8 @@ answer text and deletes its session. It does not print credentials.
 ## Verification
 
 ```sh
-uv run ruff check app tests contracts scripts evals
-uv run ruff format --check app tests contracts scripts evals
+uv run ruff check src tests contracts scripts evals
+uv run ruff format --check src tests contracts scripts evals
 uv run mypy
 uv run pytest -q                         # Pure/contract tests; real-service tests skip.
 TEST_INTEGRATION=1 uv run pytest -q      # Uses the isolated fixture databases above.

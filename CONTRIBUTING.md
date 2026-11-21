@@ -51,8 +51,8 @@ reason; whole-rule/file blanket suppressions are not an accepted shortcut.
 
 ```sh
 uv sync --frozen
-uv run ruff check app tests contracts scripts evals
-uv run ruff format --check app tests contracts scripts evals
+uv run ruff check src tests contracts scripts evals
+uv run ruff format --check src tests contracts scripts evals
 uv run mypy
 uv run pytest -q
 uv run python -m contracts.export
@@ -121,8 +121,8 @@ not only mock exporter calls; never add automatic SDK input/output capture.
 
 ## Prompts
 
-Assistant prompts are Markdown files in `app/prompts/` with front matter, locked by
-`app/prompts/prompts.lock` ([ADR014](docs/decisions/014-prompt-registry.md)). After a deliberate
+Assistant prompts are Markdown files in `src/portfolio_assistant/prompts/` with front matter, locked by
+`src/portfolio_assistant/prompts/prompts.lock` ([ADR014](docs/decisions/014-prompt-registry.md)). After a deliberate
 prompt edit, bump its `version` for semantic changes (not enforced; the sha256 prefix in
 `prompt_version` changes on any edit), run `uv run python -m scripts.update_prompts_lock --write` and
 review the lock diff; `--check` (and `tests/unit/test_prompt_registry.py`) fails on drift.

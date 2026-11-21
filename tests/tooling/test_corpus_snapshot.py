@@ -8,8 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from app.adapters.portfolio.indexing import chunks, manifest_at_commit, snapshot_source
-from app.bootstrap import indexing as indexing_cli
+from portfolio_assistant.adapters.portfolio.indexing import (
+    chunks,
+    manifest_at_commit,
+    snapshot_source,
+)
+from portfolio_assistant.bootstrap import indexing as indexing_cli
 from scripts import refresh_corpus
 
 ROOT = Path("evals/corpus")

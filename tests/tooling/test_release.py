@@ -21,7 +21,7 @@ def test_manifest_rejects_tags_and_shell_input():
 def test_deployment_probe_cannot_retrieve_or_invoke_provider():
     import asyncio
 
-    from app.ai.retrieval import PublicRetrieval
+    from portfolio_assistant.ai.retrieval import PublicRetrieval
     from scripts.deployment_smoke import NO_EVIDENCE_QUESTION
 
     class ForbiddenIndex:

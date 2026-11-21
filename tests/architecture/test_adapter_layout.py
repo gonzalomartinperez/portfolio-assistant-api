@@ -22,7 +22,7 @@ EXPECTED_MIGRATIONS = {
 
 
 def test_nested_adapter_discovers_the_existing_nonempty_sql_inventory():
-    migrations = importlib.import_module("app.adapters.postgres.migrations")
+    migrations = importlib.import_module("portfolio_assistant.adapters.postgres.migrations")
     paths = migrations.migration_paths()
     assert {
         path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in paths
@@ -30,22 +30,30 @@ def test_nested_adapter_discovers_the_existing_nonempty_sql_inventory():
 
 
 def test_missing_migration_resources_never_validate_an_empty_history(tmp_path, monkeypatch):
-    migrations = importlib.import_module("app.adapters.postgres.migrations")
+    migrations = importlib.import_module("portfolio_assistant.adapters.postgres.migrations")
     monkeypatch.setattr(
-        migrations, "__file__", str(tmp_path / "app/adapters/postgres/migrations.py")
+        migrations,
+        "__file__",
+        str(tmp_path / "src/portfolio_assistant/adapters/postgres/migrations.py"),
     )
     with pytest.raises(RuntimeError, match="migration resources"):
         migrations.migration_paths()
 
 
-@pytest.mark.parametrize("module", ["app.adapters.postgres.db", "app.adapters.providers.answer"])
+@pytest.mark.parametrize(
+    "module",
+    ["portfolio_assistant.adapters.postgres.db", "portfolio_assistant.adapters.providers.answer"],
+)
 def test_adapters_consume_owned_ports_without_legacy_backedges(module):
-    assert dependency_errors(module, "from app.application.contracts import Usage") == []
-    assert dependency_errors(module, "from app.infrastructure.db import connect")
+    assert (
+        dependency_errors(module, "from portfolio_assistant.application.contracts import Usage")
+        == []
+    )
+    assert dependency_errors(module, "from portfolio_assistant.infrastructure.db import connect")
 
 
 def test_obsolete_infrastructure_namespace_is_absent():
-    root = REPO_ROOT / "app"
+    root = REPO_ROOT / "src/portfolio_assistant"
     assert not (root / "infrastructure").exists()
 
 
@@ -55,30 +63,33 @@ def test_obsolete_infrastructure_namespace_is_absent():
         "def hidden_policy():\n    return 1",
         "class HiddenAdapter:\n    pass",
         "import psycopg",
-        "from app.bootstrap.maintenance import settings",
-        "from app.adapters.postgres.db import connect\nconnect()",
+        "from portfolio_assistant.bootstrap.maintenance import settings",
+        "from portfolio_assistant.adapters.postgres.db import connect\nconnect()",
     ],
 )
 def test_obsolete_namespace_rejects_implementation_without_sql_text(source):
-    assert dependency_errors("app.infrastructure.db", source)
+    assert dependency_errors("portfolio_assistant.infrastructure.db", source)
 
 
 def test_nested_legacy_modules_are_unclassified_even_without_imports(tmp_path):
     from scripts.check_architecture import architecture_errors
 
-    root = tmp_path / "app"
+    root = tmp_path / "portfolio_assistant"
     target = root / "infrastructure/hidden/policy.py"
     target.parent.mkdir(parents=True)
     target.write_text("value = 1")
     errors = architecture_errors(root)
-    assert "unclassified application module: app.infrastructure.hidden.policy" in errors
+    assert (
+        "unclassified application module: portfolio_assistant.infrastructure.hidden.policy"
+        in errors
+    )
 
 
 def test_stable_public_command_dispatch_is_supported(monkeypatch):
     import runpy
     import sys
 
-    from app.bootstrap import indexing, migrations
+    from portfolio_assistant.bootstrap import indexing, migrations
 
     calls = []
     monkeypatch.setattr(migrations, "main", lambda: calls.append("migrate"))

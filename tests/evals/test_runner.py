@@ -14,8 +14,6 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from app.application.contracts import Usage
-from app.bootstrap.config import Settings
 from evals.harness.graders.citations import citation_urls_allowlisted
 from evals.harness.isolation import IsolationError
 from evals.harness.items import Item
@@ -28,6 +26,8 @@ from evals.harness.runner import (
     run_item,
     run_items,
 )
+from portfolio_assistant.application.contracts import Usage
+from portfolio_assistant.bootstrap.config import Settings
 from tests.evals.support import PINNED, make_item
 
 EVIDENCE = (
@@ -270,7 +270,7 @@ def test_run_items_refuses_remote_targets_before_building_the_app():
 @pytest.mark.integration
 @pytest.mark.skipif(os.getenv("TEST_INTEGRATION") != "1", reason="isolated stores required")
 def test_real_app_run_through_the_sse_path():
-    from app.bootstrap.config import settings
+    from portfolio_assistant.bootstrap.config import settings
 
     class Provider:
         async def stream(self, question, evidence, locale, history=(), context=None):

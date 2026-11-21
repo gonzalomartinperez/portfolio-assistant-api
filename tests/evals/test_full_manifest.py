@@ -43,7 +43,7 @@ HOLDOUT_PARTS = {
 }
 SEALED_SCAN_ROOTS = (
     "prompts",
-    "app",
+    "src",
     "evals/harness",
     "evals/golden",
     "scripts",
@@ -389,7 +389,9 @@ def test_scan_roots_cover_the_prompt_and_rule_locations():
     names = {p.name for p in _scannable(ROOT)}
     assert {"AGENTS.md", "CLAUDE.md", "workflow.py", "distill_full.py"} <= names
     assert "golden.jsonl" in names and "file-moves.md" in names
-    assert (ROOT / "app" / "ai").is_dir() and (ROOT / "app" / "domain").is_dir()
+    assert (ROOT / "src/portfolio_assistant" / "ai").is_dir() and (
+        ROOT / "src/portfolio_assistant" / "domain"
+    ).is_dir()
 
 
 def test_the_scan_detects_a_planted_id():

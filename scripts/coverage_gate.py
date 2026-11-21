@@ -13,24 +13,27 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 FLOORS_PATH = Path("tests/coverage-floors.json")
-# Deprecated `python -m` shims (removed in the contract phase) plus the ASGI module.
+# The ASGI module plus the deprecated `app` compatibility namespace (ADR 028; removed in the
+# contract phase).
 ENTRY_POINTS = (
-    "app/main.py",
-    "app/migrate.py",
-    "app/knowledge_sync.py",
-    "app/knowledge_watch.py",
-    "app/retention.py",
+    "src/portfolio_assistant/main.py",
+    "src/app/__init__.py",
+    "src/app/main.py",
+    "src/app/migrate.py",
+    "src/app/knowledge_sync.py",
+    "src/app/knowledge_watch.py",
+    "src/app/retention.py",
 )
 GROUPS = {
     "whole": lambda path: True,
-    "domain": lambda path: path.startswith("app/domain/"),
-    "application": lambda path: path.startswith("app/application/"),
-    "ai": lambda path: path.startswith("app/ai/"),
-    "adapters": lambda path: path.startswith("app/adapters/"),
-    "presentation": lambda path: path.startswith("app/presentation/"),
-    "bootstrap": lambda path: path.startswith("app/bootstrap/"),
+    "domain": lambda path: path.startswith("src/portfolio_assistant/domain/"),
+    "application": lambda path: path.startswith("src/portfolio_assistant/application/"),
+    "ai": lambda path: path.startswith("src/portfolio_assistant/ai/"),
+    "adapters": lambda path: path.startswith("src/portfolio_assistant/adapters/"),
+    "presentation": lambda path: path.startswith("src/portfolio_assistant/presentation/"),
+    "bootstrap": lambda path: path.startswith("src/portfolio_assistant/bootstrap/"),
     "entrypoints": lambda path: (
-        path.startswith("app/bootstrap/entrypoints/") or path in ENTRY_POINTS
+        path.startswith("src/portfolio_assistant/bootstrap/entrypoints/") or path in ENTRY_POINTS
     ),
 }
 CONDITION = re.compile(r"\((\d+)/(\d+)\)")
@@ -38,7 +41,9 @@ CONDITION = re.compile(r"\((\d+)/(\d+)\)")
 
 def normalize(filename: str) -> str:
     path = filename.replace("\\", "/").removeprefix("./")
-    return path if path.startswith("app/") else f"app/{path}"
+    return (
+        path if path.startswith("src/portfolio_assistant/") else f"src/portfolio_assistant/{path}"
+    )
 
 
 def branch_counts(report: Path) -> dict[str, tuple[int, int]]:

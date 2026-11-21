@@ -15,8 +15,6 @@ import sys
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from app.application.contracts import Provider
-from app.bootstrap.config import Settings
 from evals.harness.cassettes import (
     CASSETTE_DATE,
     CASSETTE_ROOT,
@@ -35,6 +33,8 @@ from evals.harness.loader import load_items
 from evals.harness.report import ItemOutcome, build_report
 from evals.harness.result import GradingContext
 from evals.harness.runner import run_items
+from portfolio_assistant.application.contracts import Provider
+from portfolio_assistant.bootstrap.config import Settings
 
 GOLDEN_PATH = Path("evals/golden/golden.jsonl")
 
@@ -76,10 +76,10 @@ def _record(args: argparse.Namespace, config: Settings) -> int:
             file=sys.stderr,
         )
         return 4
-    from app.adapters.clock import SystemClock
-    from app.adapters.providers.answer import ResponsesProvider
-    from app.adapters.providers.http import create_async_client
-    from app.adapters.providers.language import LocalLanguageDetector
+    from portfolio_assistant.adapters.clock import SystemClock
+    from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+    from portfolio_assistant.adapters.providers.http import create_async_client
+    from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
 
     if args.scope != "golden":
         print(

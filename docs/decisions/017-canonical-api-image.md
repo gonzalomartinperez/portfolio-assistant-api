@@ -18,7 +18,7 @@ script existed, and reused a BuildKit cache id copied from vps-ops
    security packages and removes pip; Git and its pinned dependencies are installed
    only in `worker`.
 2. The project is installed editable (`uv sync --locked --no-dev`) after the
-   dependency layer. Console scripts exist and `app` resolves from `/app`; a wheel
+   dependency layer. Console scripts exist and both packages resolve from `/app/src`; a wheel
    would break `migration_paths()`, which reads `/app/migrations`.
 3. The cache id is `portfolio-assistant-api-uv-py314`.
 4. OCI labels (title, source, version, revision, created, licenses, description,

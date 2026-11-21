@@ -7,10 +7,10 @@ from pathlib import Path
 
 from neo4j import GraphDatabase
 
-from app.adapters.retrieval import KnowledgeIndex
-from app.ai.retrieval import PublicRetrieval
-from app.bootstrap.config import settings
-from app.bootstrap.maintenance import connect
+from portfolio_assistant.adapters.retrieval import KnowledgeIndex
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.bootstrap.config import settings
+from portfolio_assistant.bootstrap.maintenance import connect
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXED_NOW = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)

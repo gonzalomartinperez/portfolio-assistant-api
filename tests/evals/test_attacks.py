@@ -8,10 +8,10 @@ from collections import Counter
 
 import pytest
 
-from app.bootstrap.config import settings
 from evals.harness.adversary import GRADING, AdversarialProvider, bad_text
 from evals.harness.items import Item
 from evals.harness.runner import run_items
+from portfolio_assistant.bootstrap.config import settings
 from tests.evals.attack_lane import ATTACKS, Lane, load_attacks, run_attack
 
 ITEMS = load_attacks()

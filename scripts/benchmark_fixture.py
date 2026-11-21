@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from portfolio_assistant.main import app
 
 
 def main():

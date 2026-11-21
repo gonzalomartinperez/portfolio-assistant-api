@@ -7,10 +7,10 @@ import re
 import time
 from dataclasses import asdict
 
-from app.application.contracts import Evidence
-from app.application.knowledge import KnowledgeIndex
-from app.application.observability import phase
-from app.domain.evidence import (
+from portfolio_assistant.application.contracts import Evidence
+from portfolio_assistant.application.knowledge import KnowledgeIndex
+from portfolio_assistant.application.observability import phase
+from portfolio_assistant.domain.evidence import (
     EvidenceRecord,
     asks_spoken_languages,
     blocks_private_query,
@@ -20,8 +20,8 @@ from app.domain.evidence import (
     tokens,
     verified,
 )
-from app.domain.portfolio_paths import profile_parts, profile_paths
-from app.domain.web_policy import TOPICS
+from portfolio_assistant.domain.portfolio_paths import profile_parts, profile_paths
+from portfolio_assistant.domain.web_policy import TOPICS
 
 
 class LegacyRetrieval:

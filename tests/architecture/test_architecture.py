@@ -12,11 +12,24 @@ from scripts.check_architecture import (
 )
 from tests.support import ROOT as REPO_ROOT
 
-ROOT = REPO_ROOT / "app"
+ROOT = REPO_ROOT / "src/portfolio_assistant"
 
 
 def test_architecture():
     assert architecture_errors(ROOT) == []
+    assert console_script_errors((REPO_ROOT / "pyproject.toml").read_text()) == []
+
+
+@pytest.mark.parametrize("relative", ["__init__.py", "bootstrap/example.py"])
+@pytest.mark.parametrize("source", ["import app", "from app.main import app"])
+def test_application_cannot_import_compatibility_namespace(tmp_path, relative, source):
+    root = tmp_path / "portfolio_assistant"
+    path = root / relative
+    path.parent.mkdir(parents=True)
+    (root / "__init__.py").touch()
+    (path.parent / "__init__.py").touch()
+    path.write_text(source)
+    assert any("forbidden compatibility dependency" in error for error in architecture_errors(root))
 
 
 def test_shipped_import_contracts_hold_for_the_live_tree():
@@ -31,7 +44,7 @@ def test_shipped_import_contracts_hold_for_the_live_tree():
     "relative", ["domain/batch-jobs/probe.py", "domain/a.b.py", ".hidden/x.py"]
 )
 def test_rejects_paths_the_import_graph_cannot_see(tmp_path, relative):
-    root = tmp_path / "app"
+    root = tmp_path / "portfolio_assistant"
     path = root / relative
     path.parent.mkdir(parents=True)
     for parent in [root, *path.parents]:
@@ -44,19 +57,25 @@ def test_rejects_paths_the_import_graph_cannot_see(tmp_path, relative):
 @pytest.mark.parametrize(
     ("module", "source"),
     [
-        ("app.domain.example", "from app import infrastructure"),
-        ("app.domain.example", "from ..infrastructure import db"),
-        ("app.infrastructure.example", "from app.bootstrap.config import Settings"),
-        ("app.domain.example", "import urllib.request"),
-        ("app.application.example", "import future_framework"),
-        ("app.domain.example", "from urllib import request"),
-        ("app.application.example", '__import__("app.adapters.postgres.db")'),
-        ("app.application.example", "import importlib as i; i.import_module(name)"),
+        ("portfolio_assistant.domain.example", "from portfolio_assistant import infrastructure"),
+        ("portfolio_assistant.domain.example", "from ..infrastructure import db"),
         (
-            "app.application.example",
+            "portfolio_assistant.infrastructure.example",
+            "from portfolio_assistant.bootstrap.config import Settings",
+        ),
+        ("portfolio_assistant.domain.example", "import urllib.request"),
+        ("portfolio_assistant.application.example", "import future_framework"),
+        ("portfolio_assistant.domain.example", "from urllib import request"),
+        (
+            "portfolio_assistant.application.example",
+            '__import__("portfolio_assistant.adapters.postgres.db")',
+        ),
+        ("portfolio_assistant.application.example", "import importlib as i; i.import_module(name)"),
+        (
+            "portfolio_assistant.application.example",
             "from importlib import import_module as load; load(name)",
         ),
-        ("app.domain.example", "exec(source)"),
+        ("portfolio_assistant.domain.example", "exec(source)"),
     ],
 )
 def test_rejects_dependency_bypasses(module, source):
@@ -66,12 +85,15 @@ def test_rejects_dependency_bypasses(module, source):
 @pytest.mark.parametrize(
     ("module", "source"),
     [
-        ("app.domain.example", "from .evidence import tokens"),
-        ("app.domain.example", "from urllib.parse import urlsplit"),
-        ("app.application.example", "from app.domain import budget"),
+        ("portfolio_assistant.domain.example", "from .evidence import tokens"),
+        ("portfolio_assistant.domain.example", "from urllib.parse import urlsplit"),
         (
-            "app.adapters.example",
-            "from app.application.web_context import SearchAccounting",
+            "portfolio_assistant.application.example",
+            "from portfolio_assistant.domain import budget",
+        ),
+        (
+            "portfolio_assistant.adapters.example",
+            "from portfolio_assistant.application.web_context import SearchAccounting",
         ),
     ],
 )
@@ -106,27 +128,44 @@ def test_allows_owned_ports(module, source):
     ],
 )
 def test_rejects_wall_clock_reads(source):
-    for module in ("app.application.example", "app.adapters.example", "app.presentation.example"):
+    for module in (
+        "portfolio_assistant.application.example",
+        "portfolio_assistant.adapters.example",
+        "portfolio_assistant.presentation.example",
+    ):
         assert any("wall-clock" in e for e in dependency_errors(module, source)), source
 
 
 def test_allows_clock_adapter_and_monotonic_timers():
     adapter = "from datetime import UTC, datetime\nx = datetime.now(UTC)"
-    assert dependency_errors("app.adapters.clock", adapter) == []
+    assert dependency_errors("portfolio_assistant.adapters.clock", adapter) == []
     monotonic = "import time\nfrom time import perf_counter, monotonic\nx = time.perf_counter()"
-    assert dependency_errors("app.application.example", monotonic) == []
-    assert dependency_errors("app.adapters.example", "from datetime import datetime\n") == []
-    assert dependency_errors("app.adapters.example", "x = clock.now()") == []
+    assert dependency_errors("portfolio_assistant.application.example", monotonic) == []
+    assert (
+        dependency_errors("portfolio_assistant.adapters.example", "from datetime import datetime\n")
+        == []
+    )
+    assert dependency_errors("portfolio_assistant.adapters.example", "x = clock.now()") == []
 
 
 def test_cycles_include_relative_imports_and_from_package_imports():
-    assert dependencies("app.domain", "from . import b", package=True) == {"app.domain.b"}
-    assert "app.domain.b" in dependencies("app.domain.a", "from . import b")
-    assert "app.domain.a" in dependencies("app.domain.b", "import app.domain.a")
+    assert dependencies("portfolio_assistant.domain", "from . import b", package=True) == {
+        "portfolio_assistant.domain.b"
+    }
+    assert "portfolio_assistant.domain.b" in dependencies(
+        "portfolio_assistant.domain.a", "from . import b"
+    )
+    assert "portfolio_assistant.domain.a" in dependencies(
+        "portfolio_assistant.domain.b", "import portfolio_assistant.domain.a"
+    )
     assert cycle_errors(
         {
-            "app.domain.a": dependencies("app.domain.a", "from . import b"),
-            "app.domain.b": dependencies("app.domain.b", "import app.domain.a"),
+            "portfolio_assistant.domain.a": dependencies(
+                "portfolio_assistant.domain.a", "from . import b"
+            ),
+            "portfolio_assistant.domain.b": dependencies(
+                "portfolio_assistant.domain.b", "import portfolio_assistant.domain.a"
+            ),
         }
     )
     assert cycle_errors({"a": {"b"}, "b": {"c"}, "c": set()}) == []
@@ -149,27 +188,33 @@ def test_inner_and_http_layers_do_not_execute_queries():
     ],
 )
 def test_rejects_entry_points_outside_bootstrap_entrypoints(source):
-    assert entry_point_errors("app.bootstrap.indexing", source)
-    assert entry_point_errors("app.adapters.example", source)
+    assert entry_point_errors("portfolio_assistant.bootstrap.indexing", source)
+    assert entry_point_errors("portfolio_assistant.adapters.example", source)
 
 
 def test_allows_entry_points_under_bootstrap_entrypoints_and_shims():
     source = 'if __name__ == "__main__":\n    main()'
-    assert entry_point_errors("app.bootstrap.entrypoints.migrate", source) == []
-    assert entry_point_errors("app.migrate", source) == []
-    assert entry_point_errors("app.bootstrap.evaluation_export", source) == []
+    assert entry_point_errors("portfolio_assistant.bootstrap.entrypoints.migrate", source) == []
+    assert entry_point_errors("portfolio_assistant.main", source) == []
+    assert entry_point_errors("portfolio_assistant.bootstrap.evaluation_export", source) == []
 
 
 def test_console_scripts_must_target_bootstrap_entrypoints():
-    good = '[project.scripts]\nassistant-api = "app.bootstrap.entrypoints.api:main"\n'
+    good = (
+        '[project.scripts]\nassistant-api = "portfolio_assistant.bootstrap.entrypoints.api:main"\n'
+    )
     assert console_script_errors(good) == []
-    for target in ("app.main:run", "app.bootstrap.entrypoints.api:serve", "app.bootstrap:api"):
+    for target in (
+        "portfolio_assistant.main:run",
+        "portfolio_assistant.bootstrap.entrypoints.api:serve",
+        "portfolio_assistant.bootstrap:api",
+    ):
         bad = f'[project.scripts]\nx = "{target}"\n'
         assert console_script_errors(bad), target
 
 
 def test_root_package_is_scanned_for_wall_clock_reads(tmp_path):
-    root = tmp_path / "app"
+    root = tmp_path / "portfolio_assistant"
     root.mkdir()
     (root / "__init__.py").write_text("import time\nSTARTED = time.time()\n")
     assert any("wall-clock" in error for error in architecture_errors(root))
@@ -177,7 +222,7 @@ def test_root_package_is_scanned_for_wall_clock_reads(tmp_path):
 
 @pytest.mark.parametrize("file", ["policy.py", "nested/__init__.py"])
 def test_python_packages_require_initializers(tmp_path, file):
-    root = tmp_path / "app"
+    root = tmp_path / "portfolio_assistant"
     package = root / "domain" / "unscanned"
     target = package / file
     target.parent.mkdir(parents=True)
@@ -185,7 +230,9 @@ def test_python_packages_require_initializers(tmp_path, file):
     (package.parent / "__init__.py").touch()
     target.touch()
 
-    assert architecture_errors(root) == ["app/domain/unscanned: missing __init__.py"]
+    assert architecture_errors(root) == [
+        "portfolio_assistant/domain/unscanned: missing __init__.py"
+    ]
 
     (package / "__init__.py").touch()
     assert architecture_errors(root) == []
@@ -194,11 +241,11 @@ def test_python_packages_require_initializers(tmp_path, file):
 @pytest.mark.parametrize(
     ("module", "source"),
     [
-        ("app.domain.policy", "import app.domain.policy"),
-        ("app.domain", "from . import policy"),
+        ("portfolio_assistant.domain.policy", "import portfolio_assistant.domain.policy"),
+        ("portfolio_assistant.domain", "from . import policy"),
     ],
 )
 def test_cycles_include_self_imports_and_package_initializers(module, source):
-    graph = {"app.domain.policy": {"app.domain"}}
-    graph[module] = dependencies(module, source, package=module == "app.domain")
+    graph = {"portfolio_assistant.domain.policy": {"portfolio_assistant.domain"}}
+    graph[module] = dependencies(module, source, package=module == "portfolio_assistant.domain")
     assert cycle_errors(graph)

@@ -25,7 +25,7 @@
     "python": "3.14.8",
     "mutmut": "3.8.1",
     "scope": [
-      "app/domain/budget.py"
+      "src/portfolio_assistant/domain/budget.py"
     ],
     "tests": "tests/unit/test_operations.py -k reservation_covers_bounded_request_and_cutoff",
     "wall_seconds": 92.37,
@@ -37,6 +37,6 @@
     "note": "Domain ratchet seeded by the budget sample only; other groups await the full weekly run."
   },
   "module_targets": {
-    "app/domain/budget.py": 85
+    "src/portfolio_assistant/domain/budget.py": 85
   }
 }

@@ -41,7 +41,7 @@ def test_table_renders_measured_values_and_marks_the_rest_unmeasured(tmp_path):
     lines = table.splitlines()
     assert "| Check | Result | Source |" in lines
     assert f"| Lint (ruff) | 0 findings | [`static.ruff_findings`]({SNAPSHOT}) |" in lines
-    assert any("| Types (mypy --strict app) | 89 errors |" in line for line in lines)
+    assert any("| Types (mypy --strict src) | 89 errors |" in line for line in lines)
     assert any("1,234 tests, 0 failed, 7 skipped" in line for line in lines)
     assert any("Branch coverage (offline lane) | 87.5%" in line for line in lines)
     for check in ("Integration tests", "Golden replay pass rate", "Mutation score"):

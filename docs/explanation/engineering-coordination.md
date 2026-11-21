@@ -57,7 +57,7 @@ validation. Current work uses deterministic fixtures; no new paid evaluation is 
 
 PR93 merged develop280b803a023fdc6d1b5631ca12c60ff12af4608b with full CI.
 Concrete PostgreSQL/provider/public-source/Neo4j/observability code lives beneath
-app/adapters; bootstrap owns defaults. No obsolete infrastructure facade remains.
+src/portfolio_assistant/adapters; bootstrap owns defaults. No obsolete infrastructure facade remains.
 Root ASGI/CLI commands are stable, and all nine SQL checksum resources are unchanged.
 See [the accepted ADR](../decisions/006-canonical-adapters.md) for actual guard behavior.
 

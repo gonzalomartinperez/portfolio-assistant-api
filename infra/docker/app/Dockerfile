@@ -18,11 +18,11 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
 COPY pyproject.toml uv.lock LICENSE THIRD_PARTY_NOTICES.md ./
 RUN --mount=type=cache,id=portfolio-assistant-api-uv-py314,target=/root/.cache/uv,sharing=locked \
     uv sync --locked --no-dev --no-install-project
-COPY app ./app
+COPY src ./src
 COPY migrations ./migrations
 COPY contracts ./contracts
-# Editable project install: console scripts exist and `app` resolves from /app,
-# where migration_paths() reads /app/migrations.
+# Editable project install: console scripts and both packages resolve from /app/src,
+# and migration_paths() reads /app/migrations.
 RUN --mount=type=cache,id=portfolio-assistant-api-uv-py314,target=/root/.cache/uv,sharing=locked \
     uv sync --locked --no-dev
 

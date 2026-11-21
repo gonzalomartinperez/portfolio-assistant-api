@@ -9,10 +9,10 @@ import httpx
 import pytest
 from openai import APIError
 
-from app.adapters.providers.web_search import CacheEntry, OpenAIWebSearch
-from app.application.web_context import WebReference, WebSupplement
-from app.domain.errors import BudgetExhaustedError, ProviderUnavailableError
-from app.domain.web_policy import TOPICS, WebTopic
+from portfolio_assistant.adapters.providers.web_search import CacheEntry, OpenAIWebSearch
+from portfolio_assistant.application.web_context import WebReference, WebSupplement
+from portfolio_assistant.domain.errors import BudgetExhaustedError, ProviderUnavailableError
+from portfolio_assistant.domain.web_policy import TOPICS, WebTopic
 
 TOPIC = TOPICS[0]
 BASE = "https://docs.langchain.com/oss/"

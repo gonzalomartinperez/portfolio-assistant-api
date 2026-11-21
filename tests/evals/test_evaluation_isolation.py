@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pytest
 
-from app.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.config import Settings
 from scripts.evaluation_isolation import EvaluationContainer, validate_targets
 
 

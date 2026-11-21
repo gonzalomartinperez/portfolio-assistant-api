@@ -14,17 +14,17 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.adapters.observability.telemetry import (
+from portfolio_assistant.adapters.observability.telemetry import (
     PrivateSession,
     PrivateTelemetry,
     SafeTelemetryLog,
 )
-from app.adapters.postgres.operations import OperationalObserver
-from app.ai.workflow import LangGraphWorkflow
-from app.application.observability import Execution, Stage, measurements
-from app.application.runs import RunService
-from app.bootstrap.config import Settings
-from app.presentation.operations import OperationalSnapshot, router
+from portfolio_assistant.adapters.postgres.operations import OperationalObserver
+from portfolio_assistant.ai.workflow import LangGraphWorkflow
+from portfolio_assistant.application.observability import Execution, Stage, measurements
+from portfolio_assistant.application.runs import RunService
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.presentation.operations import OperationalSnapshot, router
 from tests.support import FixedClock
 from tests.unit.test_workflow import GatedProvider, Retrieval, Store
 
@@ -362,7 +362,7 @@ def test_framework_does_not_inherit_global_request_exporter(monkeypatch):
         InMemorySpanExporter,
     )
 
-    from app.bootstrap.container import create_app
+    from portfolio_assistant.bootstrap.container import create_app
 
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
@@ -413,11 +413,11 @@ def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypat
     import ast
     from pathlib import Path
 
-    from app.adapters.providers.http import create_async_client, create_sync_client
+    from portfolio_assistant.adapters.providers.http import create_async_client, create_sync_client
 
     monkeypatch.setenv("OPENAI_BASE_URL", "https://untrusted.invalid/v1")
     calls = []
-    for file in Path("app").rglob("*.py"):
+    for file in Path("src/portfolio_assistant").rglob("*.py"):
         tree = ast.parse(file.read_text())
         calls.extend(
             (file, node)
@@ -428,7 +428,7 @@ def test_all_production_openai_clients_ignore_vendor_endpoint_override(monkeypat
         )
     assert len(calls) == 2
     for file, call in calls:
-        assert file == Path("app/adapters/providers/http.py")
+        assert file == Path("src/portfolio_assistant/adapters/providers/http.py")
         kwargs = {
             arg.arg: ast.literal_eval(arg.value)
             for arg in call.keywords
@@ -453,10 +453,10 @@ def test_real_sdk_http_stream_mapping_and_no_generation_retry(available):
     import httpx
     from openai import AsyncOpenAI
 
-    from app.adapters.providers.answer import ResponsesProvider
-    from app.application.contracts import Usage
-    from app.domain.budget import MAX_OUTPUT_TOKENS
-    from app.domain.errors import ProviderUnavailableError
+    from portfolio_assistant.adapters.providers.answer import ResponsesProvider
+    from portfolio_assistant.application.contracts import Usage
+    from portfolio_assistant.domain.budget import MAX_OUTPUT_TOKENS
+    from portfolio_assistant.domain.errors import ProviderUnavailableError
 
     requests = []
 

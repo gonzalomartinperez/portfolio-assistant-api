@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from app.domain.analytics_periods import calendar_window
+from portfolio_assistant.domain.analytics_periods import calendar_window
 
 
 @pytest.mark.parametrize(

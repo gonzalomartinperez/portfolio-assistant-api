@@ -19,7 +19,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from app.domain.portfolio_paths import EVIDENCE_KEY_PATTERN
+from portfolio_assistant.domain.portfolio_paths import EVIDENCE_KEY_PATTERN
 
 LEVELS = (0, 1, 2)
 _KEY = re.compile(EVIDENCE_KEY_PATTERN)

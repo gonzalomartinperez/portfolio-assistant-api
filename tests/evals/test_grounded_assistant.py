@@ -9,18 +9,18 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.adapters.portfolio.projection import PublicProjection, graph_facts
-from app.adapters.providers.embedding import OpenAIEmbeddings
-from app.adapters.providers.language import LocalLanguageDetector
-from app.application.conversation_context import Turn
-from app.application.knowledge_watch import watch
-from app.application.language import select_locale
-from app.application.runs import citations
-from app.bootstrap.config import Settings
-from app.bootstrap.container import create_app
-from app.domain.errors import DependencyUnavailableError
-from app.domain.knowledge import suggestions
-from app.presentation.middleware import BodyLimit
+from portfolio_assistant.adapters.portfolio.projection import PublicProjection, graph_facts
+from portfolio_assistant.adapters.providers.embedding import OpenAIEmbeddings
+from portfolio_assistant.adapters.providers.language import LocalLanguageDetector
+from portfolio_assistant.application.conversation_context import Turn
+from portfolio_assistant.application.knowledge_watch import watch
+from portfolio_assistant.application.language import select_locale
+from portfolio_assistant.application.runs import citations
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.container import create_app
+from portfolio_assistant.domain.errors import DependencyUnavailableError
+from portfolio_assistant.domain.knowledge import suggestions
+from portfolio_assistant.presentation.middleware import BodyLimit
 from tests.unit.test_workflow import SOURCE
 
 
@@ -247,8 +247,8 @@ def test_watcher_coalesces_changes_and_never_marks_failed_checks_fresh():
 def test_semantic_neighbors_are_not_discarded_for_lack_of_shared_words():
     import hashlib
 
-    from app.ai.retrieval import PublicRetrieval
-    from app.application.knowledge import Chunk, Corpus
+    from portfolio_assistant.ai.retrieval import PublicRetrieval
+    from portfolio_assistant.application.knowledge import Chunk, Corpus
 
     content = "Reduced processing latency through service optimization."
     path = "src/content/en/experience.ts"
@@ -319,7 +319,7 @@ def test_query_embedding_cancellation_preserves_unknown_reservation():
 
 
 def test_context_preserves_complete_qualifiers_without_truncating_a_span():
-    from app.application.answer import bounded_sources, context
+    from portfolio_assistant.application.answer import bounded_sources, context
 
     long = replace(SOURCE, content="evidence " * 1500 + "Estimated; original baseline retained.")
     second = replace(SOURCE, id="other", content="more evidence " * 1500)
@@ -397,7 +397,7 @@ def test_achievement_starter_requires_public_support_and_uses_supported_locale()
 def test_graph_driver_outage_is_recoverable_for_knowledge_worker(monkeypatch, tmp_path):
     from neo4j.exceptions import ServiceUnavailable
 
-    from app.adapters.portfolio import watch as knowledge_watch
+    from portfolio_assistant.adapters.portfolio import watch as knowledge_watch
 
     def unavailable(*args, **kwargs):
         raise ServiceUnavailable("synthetic unavailable graph")
@@ -467,7 +467,7 @@ def test_small_evaluation_sample_spans_topics_and_locale_hints_without_replaceme
 def test_spoken_language_queries_do_not_capture_programming_or_response_preferences(
     question, expected
 ):
-    from app.domain.evidence import asks_spoken_languages, tokens
+    from portfolio_assistant.domain.evidence import asks_spoken_languages, tokens
 
     assert asks_spoken_languages(tokens(question)) is expected
 
@@ -479,10 +479,13 @@ def test_spoken_language_queries_do_not_capture_programming_or_response_preferen
 def test_language_retrieval_and_fixture_preserve_the_source_levels(locale, question):
     import hashlib
 
-    from app.adapters.providers.fixture_answer import fixture_message, fixture_supports
-    from app.ai.retrieval import PublicRetrieval
-    from app.application.answer import context
-    from app.application.knowledge import Chunk, Corpus
+    from portfolio_assistant.adapters.providers.fixture_answer import (
+        fixture_message,
+        fixture_supports,
+    )
+    from portfolio_assistant.ai.retrieval import PublicRetrieval
+    from portfolio_assistant.application.answer import context
+    from portfolio_assistant.application.knowledge import Chunk, Corpus
 
     content = 'languages: [{ language: "English", level: "B2" }, { language: "Spanish", level: "Native" }],'
     path = f"src/content/{locale}/profile.ts"

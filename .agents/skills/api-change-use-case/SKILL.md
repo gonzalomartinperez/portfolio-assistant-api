@@ -1,6 +1,6 @@
 ---
 name: api-change-use-case
-description: "Implements or reviews API application rules: conversation and session ownership, rate limits and cost limits within the six-layer architecture. Use when a business-policy change belongs in app/domain or app/application. Not for streaming (use api-change-stream), corpus ingestion or retrieval (use api-maintain-knowledge) or schema migrations (use api-change-storage)."
+description: "Implements or reviews API application rules: conversation and session ownership, rate limits and cost limits within the six-layer architecture. Use when a business-policy change belongs in src/portfolio_assistant/domain or src/portfolio_assistant/application. Not for streaming (use api-change-stream), corpus ingestion or retrieval (use api-maintain-knowledge) or schema migrations (use api-change-storage)."
 metadata:
   owner: gonzalomartinperez
   last-reviewed: "2026-11-14"
@@ -15,8 +15,8 @@ not edits or GitHub mutations. Inputs: desired observable behavior, affected
 operation and compatibility expectations; inspect existing tests before asking
 for information the repository already supplies.
 
-1. Trace the operation from [HTTP](../../../app/presentation/http.py) through
-   [application](../../../app/application) to its injected persistence/provider port.
+1. Trace the operation from [HTTP](../../../src/portfolio_assistant/presentation/http.py) through
+   [application](../../../src/portfolio_assistant/application) to its injected persistence/provider port.
    Use [architecture](../../../docs/explanation/architecture.md) for transaction/lifespan rules;
    read [coding conventions](../../../CONTRIBUTING.md) when changing code.
 2. Put invariants in domain and orchestration/consumed ports in application.
@@ -24,8 +24,8 @@ for information the repository already supplies.
    injected capabilities. Configuration/default wiring belongs to bootstrap; concrete adapters receive inputs
    explicitly. The obsolete infrastructure namespace is rejected. Run `uv run python -m scripts.check_architecture`
    for fast feedback; its negative probes run in the normal offline suite.
-3. For session or abuse-limit changes, inspect [conversation policy](../../../app/application/conversations.py),
-   [atomic storage](../../../app/adapters/postgres/conversations.py) and the relevant
+3. For session or abuse-limit changes, inspect [conversation policy](../../../src/portfolio_assistant/application/conversations.py),
+   [atomic storage](../../../src/portfolio_assistant/adapters/postgres/conversations.py) and the relevant
    [threat-model](../../../docs/explanation/threat-model.md) section. Ownership is checked on
    every operation; a model or prompt never authorizes access. Concurrent limits
    and usage reservations belong in database transactions, not in-memory counters.

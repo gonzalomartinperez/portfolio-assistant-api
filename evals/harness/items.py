@@ -17,7 +17,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.domain.portfolio_paths import EVIDENCE_KEY_PATTERN
+from portfolio_assistant.domain.portfolio_paths import EVIDENCE_KEY_PATTERN
 
 SCHEMA_PATH = Path(__file__).resolve().parents[1] / "schema" / "item.schema.json"
 GRADER_NAMES = (

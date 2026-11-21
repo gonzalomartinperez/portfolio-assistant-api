@@ -13,8 +13,8 @@ from urllib.parse import quote
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from app.ai.retrieval import PublicRetrieval
-from app.application.knowledge import Chunk, Corpus
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.application.knowledge import Chunk, Corpus
 from tests.characterization.legacy_retrieval import LegacyRetrieval
 from tests.characterization.test_retrieval_identity import run
 

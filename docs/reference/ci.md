@@ -43,7 +43,7 @@ profiles add to the base (`secrets` and `security`, always).
 | docs | Markdown, `docs/**`, LICENSE, issue and PR templates | secrets, security, static (offline tests validate docs and skills); no database or container job |
 | harness | `.agents/**`, `.claude/**`, `.codex/**`, `.worktreeinclude`, `justfile` | secrets, security, static |
 | workflow | `.github/**` | secrets, security, workflows, static, database, container, contract |
-| code | `app/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container, contract |
+| code | `src/portfolio_assistant/`, `tests/`, `scripts/`, `contracts/`, `migrations/`, `evals/`, `infra/`, `deploy/`, lock and tool files | secrets, security, static, database, container, contract |
 | deps-weekly | branch `dependabot/**` or label `deps-weekly` | every job |
 | release | develop -> main promotion | every job |
 
@@ -475,7 +475,7 @@ The static job collects branch coverage from the offline suite and the database 
 integration suite; a later step combines both and runs `scripts/coverage_gate.py`, which compares
 branch coverage per group (`whole`, `domain`, `application`, `ai`, `adapters`, `presentation`,
 `bootstrap`, `entrypoints`) with `tests/coverage-floors.json`. On pull requests `diff-cover`
-additionally requires 90% coverage of the changed lines. The only exception is a pull request whose `app/` changes are all
+additionally requires 90% coverage of the changed lines. The only exception is a pull request whose `src/portfolio_assistant/` changes are all
 plain modifications that equal `ruff format` of the base file (`scripts/format_only_diff.py`, the
 mechanical formatting PR): no behavior changed, so the step logs a notice instead of running
 diff-cover. Any added, deleted or otherwise edited file runs diff-cover as usual.
@@ -493,7 +493,7 @@ was under half a point. Measure locally with
 ## Contract job and breaking-change policy
 
 The `contract` job (selected by the `workflow` and `code` profiles, so every change under
-`contracts/**` or `app/presentation/**`) runs `pytest -m contract` and then
+`contracts/**` or `src/portfolio_assistant/presentation/**`) runs `pytest -m contract` and then
 `python -m scripts.contract_diff --base-sha <PR base>`. oasdiff v1.37.0 (linux_amd64 tarball,
 SHA-256 `eac87307d31d08c36800c58a409c247f1c5db37fbb72e2544402f22a87cbca3c`, from the release
 `checksums.txt`) is downloaded as a pinned binary and verified before use. The job sets

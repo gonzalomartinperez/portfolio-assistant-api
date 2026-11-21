@@ -2,13 +2,13 @@
 
 import pytest
 
-from app.bootstrap.config import Settings
 from evals.harness.isolation import (
     IsolationError,
     check_neo4j_uri,
     check_postgres_dsn,
     require_isolated,
 )
+from portfolio_assistant.bootstrap.config import Settings
 
 
 @pytest.mark.parametrize(

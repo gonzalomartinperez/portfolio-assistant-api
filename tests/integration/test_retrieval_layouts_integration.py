@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 from neo4j import GraphDatabase
 
-from app.adapters.portfolio import indexing
-from app.adapters.retrieval import KnowledgeIndex
-from app.ai.retrieval import PublicRetrieval
-from app.bootstrap.config import Settings
-from app.bootstrap.maintenance import connect
-from app.domain.portfolio_paths import canonical_key
+from portfolio_assistant.adapters.portfolio import indexing
+from portfolio_assistant.adapters.retrieval import KnowledgeIndex
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.bootstrap.maintenance import connect
+from portfolio_assistant.domain.portfolio_paths import canonical_key
 
 pytestmark = [
     pytest.mark.integration,

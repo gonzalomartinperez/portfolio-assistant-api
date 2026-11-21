@@ -1,7 +1,7 @@
 # Assistant voice
 
-Canonical voice instructions live in `app/prompts/voice-*.md` (see
-[ADR014](../decisions/014-prompt-registry.md)), composed by `app/adapters/providers/voice.py` into
+Canonical voice instructions live in `src/portfolio_assistant/prompts/voice-*.md` (see
+[ADR014](../decisions/014-prompt-registry.md)), composed by `src/portfolio_assistant/adapters/providers/voice.py` into
 ResponsesProvider's developer instructions. They shape presentation, never source
 authority, session policy, the resolved locale or provider behavior. Keep GPT-6 Luna,
 medium effort, the existing output allowance, citation validation and no-fallback policy.

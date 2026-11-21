@@ -1,15 +1,34 @@
 import importlib
+import subprocess
+import sys
 import tomllib
 
 import pytest
 
-from app.bootstrap.entrypoints import api, knowledge_sync, knowledge_watch, migrate, retention
+from portfolio_assistant.bootstrap.entrypoints import (
+    api,
+    knowledge_sync,
+    knowledge_watch,
+    migrate,
+    retention,
+)
 from tests.support import ROOT
 
 
 def scripts():
     data = tomllib.loads((ROOT / "pyproject.toml").read_text())
     return data["project"]["scripts"]
+
+
+def test_legacy_entry_points_import_in_a_fresh_process(tmp_path):
+    code = (
+        "import app.main, app.migrate, app.retention, app.knowledge_sync, app.knowledge_watch\n"
+        "from fastapi import FastAPI\n"
+        "from portfolio_assistant.main import app as canonical_app\n"
+        "assert isinstance(app.main.app, FastAPI) and app.main.app is canonical_app"
+    )
+    # The interpreter and program are fixed by the test.
+    subprocess.run([sys.executable, "-c", code], cwd=tmp_path, check=True)  # noqa: S603, RUF100
 
 
 @pytest.mark.parametrize("name", sorted(scripts()))
@@ -21,7 +40,7 @@ def test_script_target_resolves(name):
 def test_console_scripts_live_under_bootstrap_entrypoints():
     for target in scripts().values():
         module, function = target.split(":")
-        assert module.startswith("app.bootstrap.entrypoints.")
+        assert module.startswith("portfolio_assistant.bootstrap.entrypoints.")
         assert function == "main"
 
 
@@ -31,7 +50,7 @@ def test_api_matches_container_command(monkeypatch):
     api.main()
     assert calls == [
         (
-            ("app.main:app",),
+            ("portfolio_assistant.main:app",),
             {
                 "host": "0.0.0.0",
                 "port": 8000,
@@ -45,20 +64,20 @@ def test_api_matches_container_command(monkeypatch):
 
 def test_migrate_delegates(monkeypatch):
     calls = []
-    monkeypatch.setattr("app.bootstrap.migrations.main", lambda: calls.append("m"))
+    monkeypatch.setattr("portfolio_assistant.bootstrap.migrations.main", lambda: calls.append("m"))
     migrate.main()
     assert calls == ["m"]
 
 
 def test_retention_prints_prune_result(monkeypatch, capsys):
-    monkeypatch.setattr("app.bootstrap.maintenance.prune", lambda: {"pruned": 3})
+    monkeypatch.setattr("portfolio_assistant.bootstrap.maintenance.prune", lambda: {"pruned": 3})
     retention.main()
     assert capsys.readouterr().out == "{'pruned': 3}\n"
 
 
 def test_knowledge_sync_delegates(monkeypatch):
     calls = []
-    monkeypatch.setattr("app.bootstrap.indexing.main", lambda: calls.append("s"))
+    monkeypatch.setattr("portfolio_assistant.bootstrap.indexing.main", lambda: calls.append("s"))
     knowledge_sync.main()
     assert calls == ["s"]
 
@@ -69,7 +88,7 @@ def test_knowledge_watch_runs_worker(monkeypatch):
     async def run():
         calls.append("w")
 
-    monkeypatch.setattr("app.bootstrap.knowledge_watch.run", run)
+    monkeypatch.setattr("portfolio_assistant.bootstrap.knowledge_watch.run", run)
     knowledge_watch.main()
     assert calls == ["w"]
 
@@ -83,7 +102,7 @@ def test_python_m_knowledge_watch_shim_runs_the_bootstrap_worker(monkeypatch):
     async def run():
         calls.append("w")
 
-    monkeypatch.setattr("app.bootstrap.knowledge_watch.run", run)
+    monkeypatch.setattr("portfolio_assistant.bootstrap.knowledge_watch.run", run)
     monkeypatch.delitem(sys.modules, "app.knowledge_watch", raising=False)
     runpy.run_module("app.knowledge_watch", run_name="__main__")
     assert calls == ["w"]

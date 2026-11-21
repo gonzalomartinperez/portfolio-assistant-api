@@ -14,8 +14,8 @@ affected invariants, and whether the request permits writes. A schema review mus
 not apply migrations, prune data or perform a restore. Require an explicitly
 isolated fixture database before destructive failure-path testing.
 
-Inspect [migration history](../../../migrations), [migration runner](../../../app/adapters/postgres/migrations.py),
-[storage contracts](../../../app/application), and only the affected concrete
+Inspect [migration history](../../../migrations), [migration runner](../../../src/portfolio_assistant/adapters/postgres/migrations.py),
+[storage contracts](../../../src/portfolio_assistant/application), and only the affected concrete
 adapter. Read [transaction/lifecycle ownership](../../../docs/explanation/architecture.md) and
 [backup/upgrade procedures](../../../docs/how-to/deploy-with-vps-ops.md) for data-bearing changes.
 

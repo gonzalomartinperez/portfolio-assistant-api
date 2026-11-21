@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
-from app.adapters.postgres.analytics import PostgresProductAnalytics
-from app.bootstrap.maintenance import connect
-from app.domain.analytics import ProductEvent
+from portfolio_assistant.adapters.postgres.analytics import PostgresProductAnalytics
+from portfolio_assistant.bootstrap.maintenance import connect
+from portfolio_assistant.domain.analytics import ProductEvent
 
 pytestmark = [
     pytest.mark.integration,
@@ -30,8 +30,8 @@ def test_product_counts_atomic_duplicate_replay_and_no_raw_payload():
         assert outcomes.count("duplicate") == 11
         from fastapi.testclient import TestClient
 
-        from app.bootstrap.config import Settings
-        from app.bootstrap.container import create_app
+        from portfolio_assistant.bootstrap.config import Settings
+        from portfolio_assistant.bootstrap.container import create_app
 
         token = "synthetic-private-product-token-0000"
         application = create_app(

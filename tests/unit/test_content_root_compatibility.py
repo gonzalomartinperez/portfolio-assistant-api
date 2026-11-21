@@ -9,14 +9,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.adapters.portfolio import indexing
-from app.adapters.portfolio.indexing import corpus_identity, manifest_at_commit
-from app.adapters.portfolio.projection import PublicFact
-from app.adapters.retrieval import KnowledgeIndex
-from app.ai.retrieval import PublicRetrieval
-from app.application.knowledge import Chunk, Corpus
-from app.domain.errors import RejectedError
-from app.domain.knowledge import suggestions
+from portfolio_assistant.adapters.portfolio import indexing
+from portfolio_assistant.adapters.portfolio.indexing import corpus_identity, manifest_at_commit
+from portfolio_assistant.adapters.portfolio.projection import PublicFact
+from portfolio_assistant.adapters.retrieval import KnowledgeIndex
+from portfolio_assistant.ai.retrieval import PublicRetrieval
+from portfolio_assistant.application.knowledge import Chunk, Corpus
+from portfolio_assistant.domain.errors import RejectedError
+from portfolio_assistant.domain.knowledge import suggestions
 
 
 def test_the_new_source_profile_cannot_reuse_an_incomplete_legacy_index():

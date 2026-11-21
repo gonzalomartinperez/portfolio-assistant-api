@@ -85,7 +85,7 @@ def metric_rows(scorecard: dict) -> list[tuple[str, str | None, str]]:
             "static.mypy_errors",
         ),
         (
-            "Types (mypy --strict app)",
+            "Types (mypy --strict src)",
             fmt("static.mypy_strict_app_errors", "{:g} errors"),
             "static.mypy_strict_app_errors",
         ),

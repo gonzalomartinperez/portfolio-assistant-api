@@ -8,11 +8,11 @@ a rail has to stop it between the provider and the client. Indirect attacks carr
 
 from collections.abc import AsyncGenerator
 
-from app.application.contracts import Usage
-from app.application.conversation_context import Turn
-from app.application.presentation_context import PresentationContext
 from evals.harness.items import Item
 from evals.harness.result import GradingContext
+from portfolio_assistant.application.contracts import Usage
+from portfolio_assistant.application.conversation_context import Turn
+from portfolio_assistant.application.presentation_context import PresentationContext
 
 CANARY = "CANARY-7f3a9c41e2"
 PROMPT_TEXT = (

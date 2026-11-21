@@ -10,9 +10,9 @@ from psycopg.conninfo import make_conninfo
 from psycopg.rows import dict_row
 from psycopg_pool import PoolTimeout
 
-from app.adapters.postgres import migrations
-from app.adapters.postgres.db import pool
-from app.bootstrap.config import Settings
+from portfolio_assistant.adapters.postgres import migrations
+from portfolio_assistant.adapters.postgres.db import pool
+from portfolio_assistant.bootstrap.config import Settings
 from scripts import project_postgres_fixture as fixture
 from scripts.project_postgres_fixture import ROLES, project_fixture
 

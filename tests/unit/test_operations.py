@@ -4,10 +4,10 @@ from decimal import Decimal
 
 import pytest
 
-from app.adapters.postgres.migrations import validate_history
-from app.bootstrap.config import Settings
-from app.domain.budget import Budget
-from app.presentation.middleware import BodyLimit
+from portfolio_assistant.adapters.postgres.migrations import validate_history
+from portfolio_assistant.bootstrap.config import Settings
+from portfolio_assistant.domain.budget import Budget
+from portfolio_assistant.presentation.middleware import BodyLimit
 
 
 @pytest.mark.parametrize("value", ["NaN", "Infinity", "-1", "0"])
@@ -77,8 +77,8 @@ def test_production_cookie_and_error_redaction(capsys):
 
     from fastapi.testclient import TestClient
 
-    from app.bootstrap.container import create_app
-    from app.domain.conversations import Session
+    from portfolio_assistant.bootstrap.container import create_app
+    from portfolio_assistant.domain.conversations import Session
 
     config = Settings(
         environment="production",
@@ -120,8 +120,8 @@ def test_database_error_translation_never_passes_driver_exception_to_use_case():
 
     import psycopg
 
-    from app.adapters.postgres.db import translated
-    from app.domain.errors import DependencyUnavailableError
+    from portfolio_assistant.adapters.postgres.db import translated
+    from portfolio_assistant.domain.errors import DependencyUnavailableError
 
     @contextmanager
     def broken():
@@ -136,7 +136,7 @@ def test_database_error_translation_never_passes_driver_exception_to_use_case():
 def test_checkpoint_cleanup_uses_injected_database(monkeypatch):
     from contextlib import contextmanager
 
-    from app.adapters.postgres import checkpoints
+    from portfolio_assistant.adapters.postgres import checkpoints
 
     statements, destinations = [], []
 

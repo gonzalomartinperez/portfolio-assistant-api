@@ -16,7 +16,7 @@ GitHub or regenerates contracts unless the task says so.
 
 - [ ] Diff and PR description read; the author's reasoning ignored
 - [ ] Correctness, security, data loss, concurrency and contract risks checked
-- [ ] Layer rules from AGENTS.md checked (`app/domain` pure; no outward imports)
+- [ ] Layer rules from AGENTS.md checked (`src/portfolio_assistant/domain` pure; no outward imports)
 - [ ] Every finding reproduced or marked unverified
 - [ ] Output delivered in the template below
 

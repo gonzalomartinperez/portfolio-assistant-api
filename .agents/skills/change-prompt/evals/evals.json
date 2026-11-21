@@ -6,7 +6,7 @@
       "id": "change-prompt-1",
       "prompt": "Make the answer prompt shorter",
       "assertions": [
-        "edits the file under app/prompts and regenerates prompts.lock with scripts.update_prompts_lock --write",
+        "edits the file under src/portfolio_assistant/prompts and regenerates prompts.lock with scripts.update_prompts_lock --write",
         "runs the prompt registry tests and the offline checks",
         "does not run a live or paid evaluation"
       ]
@@ -22,7 +22,7 @@
     },
     {
       "id": "change-prompt-3",
-      "prompt": "I edited app/prompts/answer.md and a test fails",
+      "prompt": "I edited src/portfolio_assistant/prompts/answer.md and a test fails",
       "assertions": [
         "recognizes the stale prompts.lock as the likely cause and runs scripts.update_prompts_lock --check",
         "does not hand-edit the sha256 values",

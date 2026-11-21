@@ -25,7 +25,7 @@ Option 2, in `evals/harness/cassettes.py`.
   and one optional `usage` row. No headers, credentials or request bodies.
 - **Key:** sha256 of the canonical JSON of (prompt_version, model, reasoning effort,
   max output tokens, assembled messages including evidence). Messages come from
-  `assemble_request` in `app/adapters/providers/answer.py`, the function the real provider
+  `assemble_request` in `src/portfolio_assistant/adapters/providers/answer.py`, the function the real provider
   uses; the prompt date is pinned (`CASSETTE_DATE`). Web search is outside the lane.
 - **Replay (record mode `none`, the default):** a missing key raises
   `CassetteMissingError`; the lane exits 3 ("re-record required"). The pytest lane skips

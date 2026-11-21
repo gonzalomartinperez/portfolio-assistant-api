@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.adapters.portfolio import indexing
+from portfolio_assistant.adapters.portfolio import indexing
 
 
 @pytest.fixture

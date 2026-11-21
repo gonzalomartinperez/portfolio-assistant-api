@@ -9,8 +9,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from app.adapters.portfolio.indexing import ALLOWED_REMOTES, ROOT_PATTERNS, git
-from app.domain.portfolio_paths import canonical_key
+from portfolio_assistant.adapters.portfolio.indexing import ALLOWED_REMOTES, ROOT_PATTERNS, git
+from portfolio_assistant.domain.portfolio_paths import canonical_key
 
 CORPUS = Path("evals/corpus")
 MANIFEST = "manifest.json"
