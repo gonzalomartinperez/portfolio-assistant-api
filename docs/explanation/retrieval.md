@@ -33,6 +33,31 @@ paired difference (hybrid minus variant), a 95% paired bootstrap interval, and a
 paired p-value for each metric. The fixture hash embeddings measure retrieval on
 the frozen test corpus.
 
-| Variant | Recall@5 delta (95% CI, p-value) | nDCG@5 delta (95% CI, p-value) |
+First measurement: CI run 44947190508 (PR #210, commit `624e625`, 2026-11-21), 131 paired
+queries, fixture hash embeddings (`corpus.semantic` false, so only the lexical lane weights are
+exercised). A positive delta means the rule helps.
+
+| Variant | Recall@5 delta (95% CI, p) | nDCG@5 delta (95% CI, p) |
 |---|---|---|
-| All rule variants and `hybrid_rrf60` | pending first CI ablation run | pending first CI ablation run |
+| `hybrid_rrf60` | -0.0025 (-0.0140 to +0.0089, p=0.671) | +0.0021 (-0.0048 to +0.0106, p=0.597) |
+| `hybrid_without:affiliation_filter` | -0.0115 (-0.0305 to +0.0038, p=0.181) | -0.0100 (-0.0236 to +0.0007, p=0.107) |
+| `hybrid_without:boost_company_contributions` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:boost_overview_profile_head` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:boost_spoken_languages` | +0.0038 (+0.0000 to +0.0115, p=0.319) | +0.0058 (+0.0000 to +0.0174, p=0.319) |
+| `hybrid_without:exact_name` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0056 (+0.0000 to +0.0141, p=0.158) |
+| `hybrid_without:goals_metrics_anchor` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:multiplier_entity_path` | -0.0140 (-0.0267 to -0.0025, p=0.027) | +0.0021 (-0.0080 to +0.0141, p=0.708) |
+| `hybrid_without:overview_first` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:performance_metrics` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:qualification_anchor` | -0.0025 (-0.0076 to +0.0000, p=0.319) | +0.0068 (-0.0007 to +0.0177, p=0.190) |
+| `hybrid_without:relationship_anchors` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+| `hybrid_without:technical_topic_anchors` | +0.0000 (+0.0000 to +0.0000, p=1.000) | +0.0000 (+0.0000 to +0.0000, p=1.000) |
+
+Reading (ADR 015 deletion criterion): seven rules show no measurable effect on this query set
+(delta exactly 0 on both metrics); that is absence of evidence, so none is deleted until the
+golden and retrieval gates confirm with each removed. `multiplier_entity_path` has a negative
+Recall@5 contribution (-0.0140, CI excludes 0, p 0.027) and is the first deletion candidate.
+`affiliation_filter` also leans negative and `boost_spoken_languages` and `exact_name` lean
+positive, but their intervals include 0; `qualification_anchor` is mixed. `hybrid_rrf60` is
+indistinguishable from offset 10, so the default stays. Deleting or changing a rule is a
+separate PR with the golden and retrieval gates as evidence.

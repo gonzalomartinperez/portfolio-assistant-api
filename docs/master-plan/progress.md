@@ -6,15 +6,15 @@ Milestone log updated at milestones (ecosystem 3A); the In-flight table is updat
 
 | Field | Value |
 |---|---|
-| Current milestone | M3 (Phase A polish) complete on `develop` (2026-11-15): all seven M3 tasks merged; M2 merged except the parked paid items (M2-16, the M2-7 recording campaign). Awaiting the orchestrator's verification and tag `checkpoint/M3` (`checkpoint/M1` and `checkpoint/M2` are the orchestrator's too; not tagged by the repo lead) |
-| Date | 2026-11-15 |
-| `develop` SHA at M3 end | `f282add` (PR #196) before this docs PR; M2 start was `1be2848` |
+| Current milestone | M4 (architecture and typing) complete on `develop` (2026-11-21) except the parked items below: M4-1, M4-3, M4-4 and M4-6 done; M4-2 and M4-5 partial; PAA-M4-X and PAA-M2-X parked. Awaiting the orchestrator's verification and tag `checkpoint/M4` (`checkpoint/M1` to `checkpoint/M3` are the orchestrator's too) |
+| Date | 2026-11-21 |
+| `develop` SHA at M4 end | `087aba5` (PR #214) before this docs PR; M4 start was `f282add` |
 | Last tag | `checkpoint/M0` |
-| **Next item** | **M4-1 (mypy 89 to 0, scope widening to all of the app) and M4-2 (retrieval pipeline), once the orchestrator opens M4** |
+| **Next item** | **M5 once the orchestrator opens it; M4 follow-ups: rule deletions from the ablation table (first candidate `multiplier_entity_path`), `evidence_sufficient` with PAA-M4-X, the M4-5 contract phase after vps-ops runs the console scripts** |
 | `engineering-standards` (E1) | Consumed at **v1.0.0** (`1f33be4`); pins are bumped by the weekly dependency PR (#193 open, owner merges) |
-| Known issues | P0-2 closed with evidence (issue #152; `evals/baselines/retrieval.json` abstention sweep: `unsupported_employer_with_evidence` 0); the general no-answer rate (10 of 21 no-answer queries return evidence) moves to M4-2. P0-6 closed (sealed holdout, PR #181). Golden replay is not 80/80 yet because no cassettes are committed (recording is paid, owner). Scheduled workflows (nightly load, mutation weekly, vuln-daily, cross-repo, OpenSSF Scorecard) landed on 2026-11-14 and have no runs yet. Local WSL only: `test_sigterm_replay_unwinds_external_fixture_cleanup` times out (green in CI) |
+| Known issues | Golden replay is not 80/80 yet because no cassettes are committed (recording is paid, owner). The package lives in `src/portfolio_assistant`; the deprecated `src/app` namespace keeps `python -m app.*` and `uvicorn app.main:app` working until vps-ops switches to the `assistant-*` console scripts (ADR 028). The first CI rule ablation (fixture regime, 131 queries) is recorded in `docs/explanation/retrieval.md`. Local WSL only: `test_sigterm_replay_unwinds_external_fixture_cleanup` times out (green in CI). Dependency review now allows `BSD-2-Clause-Views` for grimp (dev-only, import-linter) |
 | Owner toggles pending (input 2, `docs/reference/repo-settings.md`) | Secret scanning and push protection; CodeQL default setup; require full-SHA pinning; immutable releases before M7 (the required check is already `ci-gate` and merges are merge-commit only) |
-| Pending owner decisions | (1) PAA-D5 20% spot check of bootstrapped judge labels (DR-05); (2) release approvals: M7 promotion and the repo-settings checklist; (3) MV VPS purchase; plus spend for the parked paid items (M2-16 embeddings snapshot, M2-7 cassette recording campaign) if a spend-authorized run is not delegated |
+| Pending owner decisions | (1) PAA-D5 20% spot check of bootstrapped judge labels (DR-05); (2) release approvals: M7 promotion and the repo-settings checklist; (3) MV VPS purchase; (4) spend for the parked paid items (M2-16 embeddings snapshot, M2-7 cassette recording campaign), which also unblocks golden 100% (M4-2) and PAA-M4-X; (5) scheduling of PAA-M2-X and PAA-M4-X (52 h of flag-gated assistant-experience work); (6) vps-ops: schedule the console scripts in `releases/production.lock` (M4-5 contract phase) |
 
 ## Scorecard snapshot at M0 (baseline, rubrics v2; judged axes are planner estimates until the M3 independent evaluator)
 
@@ -98,15 +98,24 @@ Milestone acceptance rule: M3 is not "reached" by score; this gap list (task IDs
 | M3-5 | `chore/m3-mypy-scope` | #187 | done (`2e07bbc`) | strict app 202 to 89 |
 | M3-6 | `chore/m3-skills-catalog` | #189 | done (`ef205be`) | 15 skills, accuracy 1.00 |
 | M3-7 | `docs/m3-progress` | this PR | done | independent evaluator scores |
+| M4-1 | `chore/m4-mypy-presentation`, `chore/m4-mypy-bootstrap`, `chore/m4-mypy-scope` | #198, #199, #201 | done | strict mypy over all of `src`, 0 errors |
+| M4-2 | `refactor/m4-retrieval-pipeline`, `refactor/m4-complexity-config-web`, `refactor/m4-complexity-indexing-b`, `feat/m4-retrieval-rules`, `refactor/m4-complexity-runs` | #202, #203, #208, #210, #211 | partial | staged pipeline, `rules.toml` and ablation (ADR 015), C901 <= 10 gate over the app; golden 100% (cassettes, owner spend), rule deletions and `evidence_sufficient` open |
+| M4-3 | `refactor/m4-source-format`, `refactor/m4-clock-port` | #200, #207 | done | TypeScript parsing in adapters, `Clock` port and wall-clock guard (ADR 022) |
+| M4-4 | `chore/m4-import-linter`, `refactor/m4-src-layout` | #212, #214 | done | import-linter contracts, vulture, residual AST guard (ADR 010); `src/portfolio_assistant` rename with `app` shims (ADR 028) |
+| M4-5 | `refactor/m4-entrypoints` | #204 | partial | expand phase done; vps-ops lock PR and contract phase parked (vps-ops is outside this repository) |
+| M4-6 | `docs/m4-async-boundary` | #213 | done | `to_thread` residual and ratchet, langsmith and prometheus reviews (ADR 029) |
+| M4 fixes | `refactor/ruff-backlog-ratchet`, `fix/m4-postgres-libxml2` | #205, #209 | done | ruff backlog back under its ratchets; libxml2 CVE-2026-86144 in the PostgreSQL fixture |
+| PAA-M2-X, PAA-M4-X | | | parked | acceptance needs golden 100% on cassettes (owner spend); scheduling needs the owner |
+| M4 docs | `docs/m4-progress` | this PR | done | progress, roadmap statuses, first ablation table |
 
-Resume: `git log --oneline --grep 'M3-'`, `gh pr list --state all --search 'M3-'`, then the first `todo` row of roadmap.md.
+Resume: `git log --oneline --grep 'M4-'`, `gh pr list --state all --search 'M4-'`, then the first `todo` row of roadmap.md.
 
 ## Ecosystem status table (nine rows, copy; updated only at milestones; a drift check compares copies)
 
 | Repo | Plan v2 | Milestone reached | Default/integration branch SHA (`develop`; `main` for main-only repos) | Note |
 |---|---|---|---|---|
 | portfolio | written 2026-11-09 | none | `0a1ff56` (`origin/develop`) |  |
-| portfolio-assistant-api | written 2026-11-09 | M3 complete (M2 paid items parked), awaiting checkpoints | `f282add` (`origin/develop`) | this repo |
+| portfolio-assistant-api | written 2026-11-09 | M4 complete except parked items, awaiting checkpoints | `087aba5` (`origin/develop`) | this repo |
 | portfolio-backoffice | written 2026-11-09 | none | `e356b13` (`origin/develop`) |  |
 | pequeverso | written 2026-11-09 | none | `cbf519c` (`origin/develop`) |  |
 | pequeverso-assistant-api | written 2026-11-09 | none | `6912579` (`origin/develop`) |  |
@@ -123,3 +132,4 @@ Resume: `git log --oneline --grep 'M3-'`, `gh pr list --state all --search 'M3-'
 | M1 | 2026-11-14 | `1be2848` (tag pending, orchestrator) | not re-scored (scorecard.json arrives with M2-14) | CI profiles and ci-gate, canonical image targets with gates, weekly Dependabot rule, security workflows, harness and skills, health aliases, P0-1/P0-4/P0-5 fixed | M2-16 | P0-2 (#152), P0-6, image budget | owner toggles in repo-settings.md |
 | M2 | 2026-11-15 | merged through `0ed17bb` (PR #184) and `b008399` (PR #174) | see the M3 evaluation | test lanes, frozen corpus, eval harness and runner, golden 80 and full 384 + sealed 100, retrieval harness, prompt registry, cassette replayer, attack pack, coverage, property, mutation, contract, load and resilience lanes, scorecard | M3-1 | M2-16 and the M2-7 recording parked (paid) | owner spend for parked items |
 | M3 | 2026-11-15 | `f282add` (tag pending, orchestrator) | [scores/2026-11-15.md](../evidence/scores/2026-11-15.md) | README template and results table, Diataxis docs, community files and release automation, ruff 100/double plus family ratchet, strict mypy widened, 15-skill catalog, independent re-score | M4-1 | gap list above | owner toggles and spend |
+| M4 | 2026-11-21 | `087aba5` (tag pending, orchestrator) | not re-scored (orchestrator) | strict mypy over all of the app, staged retrieval with declarative rules and ablation, C901 gate, Clock port, import-linter and vulture, `src/portfolio_assistant` layout, async boundary ratchet | M5 | golden waits for cassettes; `src/app` shims until vps-ops switches | owner spend, PAA-M4-X scheduling, vps-ops console scripts |
