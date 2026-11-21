@@ -19,23 +19,40 @@ def test_architecture():
     assert architecture_errors(ROOT) == []
 
 
+def test_shipped_import_contracts_hold_for_the_live_tree():
+    """`just test` and the nightly enforce the import-linter contracts too, not only CI."""
+    from click.testing import CliRunner
+    from importlinter.cli import lint_imports_command
+
+    result = CliRunner().invoke(
+        lint_imports_command, ["--no-cache", str(REPO_ROOT / "pyproject.toml")]
+    )
+    assert result.exit_code == 0, result.output
+
+
+@pytest.mark.parametrize(
+    "relative", ["domain/batch-jobs/probe.py", "domain/a.b.py", ".hidden/x.py"]
+)
+def test_rejects_paths_the_import_graph_cannot_see(tmp_path, relative):
+    root = tmp_path / "app"
+    path = root / relative
+    path.parent.mkdir(parents=True)
+    for parent in [root, *path.parents]:
+        if parent.is_relative_to(root):
+            (parent / "__init__.py").touch()
+    path.write_text("import os\n")
+    assert any("not an importable module path" in e for e in architecture_errors(root))
+
+
 @pytest.mark.parametrize(
     ("module", "source"),
     [
         ("app.domain.example", "from app import infrastructure"),
         ("app.domain.example", "from ..infrastructure import db"),
-        ("app.application.example", "import app.presentation.http"),
-        ("app.application.example", "from fastapi import Request"),
-        (
-            "app.application.example",
-            "if TYPE_CHECKING:\n    from fastapi import Request",
-        ),
-        ("app.ai.example", "from app.adapters.postgres.db import connect"),
-        ("app.presentation.example", "from app.bootstrap.container import create_app"),
         ("app.infrastructure.example", "from app.bootstrap.config import Settings"),
-        ("app.adapters.postgres.db", "from app.bootstrap.container import create_app"),
-        ("app.domain.example", "import os"),
         ("app.domain.example", "import urllib.request"),
+        ("app.application.example", "import future_framework"),
+        ("app.domain.example", "from urllib import request"),
         ("app.application.example", '__import__("app.adapters.postgres.db")'),
         ("app.application.example", "import importlib as i; i.import_module(name)"),
         (
@@ -159,3 +176,32 @@ def test_root_package_is_scanned_for_wall_clock_reads(tmp_path):
     root.mkdir()
     (root / "__init__.py").write_text("import time\nSTARTED = time.time()\n")
     assert any("wall-clock" in error for error in architecture_errors(root))
+
+
+@pytest.mark.parametrize("file", ["policy.py", "nested/__init__.py"])
+def test_python_packages_require_initializers(tmp_path, file):
+    root = tmp_path / "app"
+    package = root / "domain" / "unscanned"
+    target = package / file
+    target.parent.mkdir(parents=True)
+    (root / "__init__.py").touch()
+    (package.parent / "__init__.py").touch()
+    target.touch()
+
+    assert architecture_errors(root) == ["app/domain/unscanned: missing __init__.py"]
+
+    (package / "__init__.py").touch()
+    assert architecture_errors(root) == []
+
+
+@pytest.mark.parametrize(
+    ("module", "source"),
+    [
+        ("app.domain.policy", "import app.domain.policy"),
+        ("app.domain", "from . import policy"),
+    ],
+)
+def test_cycles_include_self_imports_and_package_initializers(module, source):
+    graph = {"app.domain.policy": {"app.domain"}}
+    graph[module] = dependencies(module, source, package=module == "app.domain")
+    assert cycle_errors(graph)

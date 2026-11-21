@@ -35,7 +35,8 @@ def static_job_commands() -> list[str]:
             continue
         for line in step["run"].strip().splitlines():
             if not line.startswith(CI_ONLY):
-                commands.append(line.strip())
+                # CI uses --frozen for tools whose dependencies are already synced.
+                commands.append(line.strip().replace("uv run --frozen ", "uv run ", 1))
     return commands
 
 

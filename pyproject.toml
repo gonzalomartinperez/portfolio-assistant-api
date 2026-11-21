@@ -42,6 +42,7 @@ dev = [
     "diff-cover>=11.0.2",
     "httpx>=0.28.1",
     "hypothesis>=6",
+    "import-linter>=2.17",
     "jsonschema>=4.26.0",
     "mutmut>=3",
     "mypy>=2.4.0",
@@ -50,12 +51,71 @@ dev = [
     "pyyaml==6.0.3",
     "ruff>=0.17.1",
     "schemathesis>=4.33.4",
+    "vulture>=2.16",
 ]
 eval = [
     "ranx>=0.3.21",
 ]
 load = [
     "locust>=2.47.0",
+]
+
+[tool.importlinter]
+root_package = "app"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Application layer direction"
+type = "layers"
+containers = ["app"]
+layers = [
+    "(main) | (migrate) | (retention) | (knowledge_sync) | (knowledge_watch)",
+    "bootstrap",
+    "presentation | adapters | ai",
+    "application",
+    "domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Inner layers avoid third-party and platform I/O imports"
+type = "forbidden"
+source_modules = ["app.domain", "app.application"]
+# External submodules are collapsed to their top-level package. The AST guard
+# handles urllib.request and enforces the open-ended stdlib-only rule.
+forbidden_modules = [
+    "fastapi",
+    "http",
+    "httpx",
+    "langchain_core",
+    "langgraph",
+    "neo4j",
+    "openai",
+    "os",
+    "psycopg",
+    "psycopg_pool",
+    "pydantic",
+    "socket",
+    "sqlite3",
+    "starlette",
+    "subprocess",
+    "uvicorn",
+]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Application siblings are acyclic"
+type = "acyclic_siblings"
+ancestors = ["app"]
+
+[tool.vulture]
+paths = ["app", "scripts"]
+min_confidence = 80
+ignore_names = [
+    "cls", # Pydantic classmethod validators.
+    # Type imports used only in string arguments to cast().
+    "AsyncConnection",
+    "DictRow",
+    "ResponseInputParam",
 ]
 
 [tool.ruff]

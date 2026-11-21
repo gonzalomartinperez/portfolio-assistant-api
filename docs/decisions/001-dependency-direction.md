@@ -2,6 +2,8 @@
 
 Accepted 2026-09-27. Baseline: `492e976` (merged PR #6).
 
+Amended by [ADR 010](010-import-linter-contracts.md): enforcement moved to import-linter plus a residual AST guard.
+
 ## Evidence
 
 The API has working v1 sessions, ownership, CSRF, seven SSE events, atomic budget

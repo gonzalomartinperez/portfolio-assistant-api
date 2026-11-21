@@ -20,6 +20,8 @@ check:
     uv run ruff format --check app tests contracts scripts evals
     uv run mypy
     uv run python -m scripts.build_assistant_bank --check
+    uv run lint-imports
+    uv run vulture
     uv run python -m contracts.export && git diff --exit-code contracts
 
 # Offline unit, contract and architecture tests (the CI static job's test step).

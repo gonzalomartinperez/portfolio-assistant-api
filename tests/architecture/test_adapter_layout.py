@@ -39,9 +39,8 @@ def test_missing_migration_resources_never_validate_an_empty_history(tmp_path, m
 
 
 @pytest.mark.parametrize("module", ["app.adapters.postgres.db", "app.adapters.providers.answer"])
-def test_adapters_consume_owned_ports_without_bootstrap_or_legacy_backedges(module):
+def test_adapters_consume_owned_ports_without_legacy_backedges(module):
     assert dependency_errors(module, "from app.application.contracts import Usage") == []
-    assert dependency_errors(module, "from app.bootstrap.config import settings")
     assert dependency_errors(module, "from app.infrastructure.db import connect")
 
 
@@ -71,9 +70,8 @@ def test_nested_legacy_modules_are_unclassified_even_without_imports(tmp_path):
     target = root / "infrastructure/hidden/policy.py"
     target.parent.mkdir(parents=True)
     target.write_text("value = 1")
-    assert architecture_errors(root) == [
-        "unclassified application module: app.infrastructure.hidden.policy"
-    ]
+    errors = architecture_errors(root)
+    assert "unclassified application module: app.infrastructure.hidden.policy" in errors
 
 
 def test_stable_public_command_dispatch_is_supported(monkeypatch):

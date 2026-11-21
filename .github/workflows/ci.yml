@@ -134,6 +134,10 @@ jobs:
       run: uv run mypy
     - name: Verify authored bilingual question bank
       run: uv run python -m scripts.build_assistant_bank --check
+    - name: Enforce import contracts
+      run: uv run --frozen lint-imports
+    - name: Detect unused Python code
+      run: uv run --frozen vulture
     - name: Enforce architecture and run offline and contract tests
       run: |
         mkdir -p artifacts

@@ -4,7 +4,7 @@ Architecture decision records (ADRs) for the portfolio assistant API, one file p
 Paths are stable: new ADRs are added here and existing files do not move. New records follow MADR 4 (see the
 `write-adr` repository skill). Superseding records link both ways.
 
-Numbers are never reused. Gaps: ADR 007 was never written, and numbers 010, 018 and 020 are not present in
+Numbers are never reused. Gaps: ADR 007 was never written, and numbers 018 and 020 are not present in
 this tree. The dated decision log that preceded the ADRs is archived at
 [decisions-log-2026-09.md](../evidence/archive/2026-10/decisions-log-2026-09.md).
 
@@ -18,6 +18,7 @@ this tree. The dated decision log that preceded the ADRs is archived at
 | 006 | [Canonical adapters and explicit operator composition](006-canonical-adapters.md) | Accepted (merged through PR93) |
 | 008 | [Evaluate a maintained PostgreSQL base without the Debian libxml2 blocker](008-supported-postgres-base.md) | Candidate; exact-image verification and independent review required |
 | 009 | [Accept psycopg (LGPL-3.0-only) as a licence exception](009-psycopg-lgpl-exception.md) | Accepted |
+| 010 | [Import Linter contracts plus a residual AST guard](010-import-linter-contracts.md) | Accepted |
 | 011 | [In-repo eval harness package with deterministic graders](011-eval-harness.md) | Accepted |
 | 012 | [Compare evidence by layout-neutral canonical keys](012-layout-neutral-evidence-keys.md) | Accepted |
 | 013 | [Provider-port cassettes for the golden lane](013-provider-port-cassettes.md) | Accepted |
