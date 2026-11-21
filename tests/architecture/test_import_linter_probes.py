@@ -3,9 +3,8 @@
 import re
 
 import pytest
-from click.testing import CliRunner
-from importlinter.cli import lint_imports_command
 
+from tests.lint_imports_runner import invoke_lint_imports
 from tests.support import ROOT
 
 LAYERS = "Application layer direction"
@@ -41,7 +40,7 @@ def lint_package(tmp_path, monkeypatch):
     def run(sources):
         for path, source in sources.items():
             (package / path).write_text(source.replace("app.", f"{name}."))
-        return CliRunner().invoke(lint_imports_command, ["--no-cache", str(config)])
+        return invoke_lint_imports(["--no-cache", str(config)])
 
     return run
 

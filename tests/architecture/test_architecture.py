@@ -21,12 +21,9 @@ def test_architecture():
 
 def test_shipped_import_contracts_hold_for_the_live_tree():
     """`just test` and the nightly enforce the import-linter contracts too, not only CI."""
-    from click.testing import CliRunner
-    from importlinter.cli import lint_imports_command
+    from tests.lint_imports_runner import invoke_lint_imports
 
-    result = CliRunner().invoke(
-        lint_imports_command, ["--no-cache", str(REPO_ROOT / "pyproject.toml")]
-    )
+    result = invoke_lint_imports(["--no-cache", str(REPO_ROOT / "pyproject.toml")])
     assert result.exit_code == 0, result.output
 
 

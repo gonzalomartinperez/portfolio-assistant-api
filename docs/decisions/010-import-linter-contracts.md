@@ -59,7 +59,8 @@ Pydantic model fields and dynamically assigned adapter attributes. The exact
 `ignore_names` entries cover `cls` in Pydantic classmethod validators and three type
 imports referenced only in string arguments to `cast()`.
 
-Import Linter (BSD-2-Clause) and Vulture (MIT) are dev-group dependencies only and add
+Import Linter (BSD-2-Clause; its graph library grimp is BSD-2-Clause AND BSD-2-Clause-Views AND
+BSD-3-Clause, allowed in dependency review) and Vulture (MIT) are dev-group dependencies only and add
 no runtime or image cost. See the [dependency plan](../master-plan/dependencies.md).
 
 ## Consequences
