@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -10,6 +11,7 @@ from hypothesis import strategies as st
 
 from app.domain.analytics_periods import calendar_window
 from app.domain.budget import MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, Budget
+from app.domain.evidence import ALIASES, lexical_score, tokens
 from app.domain.portfolio_paths import (
     canonical_key,
     key_paths,
@@ -18,6 +20,9 @@ from app.domain.portfolio_paths import (
 )
 from app.domain.privacy import SECRET, minimize_visitor_text
 from app.domain.web_budget import WebBudget
+
+if TYPE_CHECKING:
+    from app.domain.evidence import EvidenceRecord
 
 pytestmark = pytest.mark.property
 
@@ -232,3 +237,120 @@ def test_invalid_offsets_and_naive_instants_are_rejected(naive, period, offset):
         calendar_window(naive, period, 0)
     with pytest.raises(ValueError):
         calendar_window(naive.replace(tzinfo=UTC), period, offset)
+
+
+# Evidence scoring -----------------------------------------------------------
+
+
+def _legacy_lexical_score(row: EvidenceRecord, terms: set[str], locale: str) -> float:
+    """Freeze the operation order and multipliers before the complexity refactor."""
+    content = tokens(row["content"])
+    path = tokens(row["path"])
+    if row["path"] == "README.md":
+        path.add("portfolio")
+    expanded = terms | set().union(*(ALIASES.get(term, set()) for term in terms))
+    anchors = expanded & (content | path)
+    if not anchors:
+        return 0
+    score = 3.0 * len(terms & (content | path)) + len(anchors) + 2 * len(expanded & path)
+    if "portfolio" in terms and row["path"] == "README.md":
+        score *= 2
+        if "Engineering at a glance" in row["content"]:
+            score *= 5
+    if (
+        terms & {"study", "studied", "estudio", "estudios"}
+        and row["path"].endswith("/education.ts")
+        and row["start_line"] == 1
+    ):
+        score *= 5
+    if (
+        row["path"].endswith("/experience.ts")
+        and "contributions:" in row["content"]
+        and terms & content
+    ):
+        score *= 3
+    if row["path"].endswith("/projects.ts") and terms & content:
+        tech = bool(terms & {"technologies", "technology", "tecnologias", "stack"})
+        if (tech and "stack: technologyNames" in row["content"]) or (
+            not tech and "summary:" in row["content"]
+        ):
+            score *= 3
+    profile = profile_parts(row["path"])
+    if profile is not None and profile[0] == locale:
+        score *= 1.35
+    elif profile is not None:
+        score *= 0.45
+    return score
+
+
+def _evidence_row(path: str, content: str, start_line: int) -> EvidenceRecord:
+    return {
+        "path": path,
+        "content": content,
+        "start_line": start_line,
+        "end_line": start_line,
+        "url": "",
+        "content_hash": "",
+    }
+
+
+@pytest.mark.parametrize(
+    ("path", "content", "start_line", "terms", "locale", "expected"),
+    [
+        ("README.md", "", 1, set(), "en", 0),
+        ("README.md", "", 1, {"portfolio"}, "en", 12.0),
+        ("README.md", "Engineering at a glance", 1, {"portfolio"}, "en", 60.0),
+        ("src/content/en/education.ts", "University", 1, {"study"}, "en", 27.0),
+        ("content/en/education.ts", "University", 2, {"study"}, "es", 1.8),
+        ("other/experience.ts", "contributions: agents", 1, {"agents"}, "en", 12.0),
+        ("other/experience.ts", "contributions: agents", 1, {"ai"}, "en", 1.0),
+        ("other/projects.ts", "stack: technologyNames", 1, {"stack"}, "en", 12.0),
+        ("other/projects.ts", "summary: stack", 1, {"stack"}, "en", 4.0),
+        ("other/projects.ts", "summary: agents", 1, {"agents"}, "en", 12.0),
+        ("other/projects.ts", "stack: technologyNames, agents", 1, {"agents"}, "en", 4.0),
+        ("other/projects.ts", "summary: agents", 1, {"ai"}, "en", 1.0),
+    ],
+)
+def test_lexical_score_applies_only_the_matching_boosts(
+    path, content, start_line, terms, locale, expected
+):
+    assert lexical_score(_evidence_row(path, content, start_line), terms, locale) == expected
+
+
+@given(
+    st.one_of(
+        st.sampled_from(("README.md", "docs/README.md")),
+        st.builds(
+            lambda locale, topic, legacy: profile_paths(locale, topic)[legacy],
+            LOCALES,
+            TOPICS,
+            st.integers(0, 1),
+        ),
+    ),
+    st.lists(
+        st.sampled_from(
+            (
+                "Engineering at a glance",
+                "contributions:",
+                "stack: technologyNames",
+                "summary:",
+                "Tecnologías",
+                "English",
+                "university",
+                "agents",
+                "portfolio",
+            )
+        )
+        | st.text(max_size=60),
+        max_size=9,
+    ).map(" ".join),
+    st.integers(1, 3),
+    st.sets(st.sampled_from((*ALIASES, "portfolio", "agents", "technology", "stack", "english"))),
+    LOCALES,
+)
+def test_lexical_score_matches_the_frozen_implementation(path, content, start_line, terms, locale):
+    row = _evidence_row(path, content, start_line)
+    actual = lexical_score(row, terms, locale)
+    expected = _legacy_lexical_score(row, terms, locale)
+    assert type(actual) is type(expected)
+    assert float(actual).hex() == float(expected).hex()

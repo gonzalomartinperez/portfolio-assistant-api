@@ -1,4 +1,4 @@
-"""Static import contracts without loading application modules or their clients."""
+"""Check architecture rules that an import graph cannot express."""
 
 import ast
 import re
@@ -8,14 +8,6 @@ from importlib.util import resolve_name
 from pathlib import Path
 
 LAYERS = {"domain", "application", "ai", "adapters", "presentation", "bootstrap"}
-ALLOWED = {
-    "domain": {"domain"},
-    "application": {"application", "domain"},
-    "ai": {"ai", "application", "domain"},
-    "adapters": {"adapters", "application", "domain"},
-    "presentation": {"presentation", "application", "domain"},
-    "bootstrap": LAYERS,
-}
 # Deprecated `python -m` shims (removed in the contract phase, after vps-ops runs the
 # console scripts) plus the ASGI module `app.main`. Process entry points live under
 # `app.bootstrap.entrypoints`.
@@ -26,6 +18,7 @@ ENTRY_POINTS = {
     "app.knowledge_sync",
     "app.knowledge_watch",
 }
+SHIMS = {module.removeprefix("app.") for module in ENTRY_POINTS}
 CLOCK_MODULE = "app.adapters.clock"
 WALL_CLOCK_READS = {
     "datetime.datetime.now",
@@ -97,29 +90,18 @@ def dependencies(module: str, source: str, *, package: bool = False) -> set[str]
 
 
 def dependency_errors(module: str, source: str, *, package: bool = False) -> list[str]:
-    layer = "bootstrap" if module in ENTRY_POINTS else module.split(".")[1]
-    if layer not in ALLOWED:
+    layer = module.split(".")[1]
+    if layer not in LAYERS and module not in ENTRY_POINTS:
         return [f"unclassified application module: {module}"]
     errors = []
     for dependency in sorted(dependencies(module, source, package=package)):
-        parts = dependency.split(".")
-        if parts[0] == "app":
-            if len(parts) > 1 and parts[1] in ALLOWED[layer]:
-                continue
-            # The parent package alone adds no dependency; imported children are checked separately.
-            if dependency == "app":
-                continue
+        root, _, child = dependency.partition(".")
+        if root == "app" and child and child.split(".")[0] not in LAYERS | SHIMS:
             errors.append(f"{module}: forbidden dependency {dependency}")
-        elif layer in ("domain", "application"):
-            if parts[0] not in sys.stdlib_module_names:
+        elif layer in ("domain", "application") and root != "app":
+            if root not in sys.stdlib_module_names:
                 errors.append(f"{module}: third-party dependency {dependency}")
-            if parts[0] in {
-                "os",
-                "socket",
-                "subprocess",
-                "sqlite3",
-                "http",
-            } or dependency.startswith("urllib.request"):
+            if dependency.startswith("urllib.request"):
                 errors.append(f"{module}: platform I/O dependency {dependency}")
     tree = ast.parse(source)
     loaders = {"__import__", "eval", "exec"}
@@ -140,6 +122,7 @@ def dependency_errors(module: str, source: str, *, package: bool = False) -> lis
 
 
 def cycle_errors(graph: dict[str, set[str]]) -> list[str]:
+    """Catch module cycles, including self-imports and package-to-descendant cycles."""
     visited: set[str] = set()
     active: set[str] = set()
     errors = []
@@ -203,9 +186,25 @@ def console_script_errors(pyproject: str) -> list[str]:
 
 
 def architecture_errors(root: Path) -> list[str]:
-    errors = []
+    paths = sorted(root.rglob("*.py"))
+    # Import Linter skips namespace package directories and their descendants.
+    packages = {parent for path in paths for parent in path.parents if parent.is_relative_to(root)}
+    errors = [
+        f"{package.relative_to(root.parent)}: missing __init__.py"
+        for package in sorted(packages)
+        if not (package / "__init__.py").is_file()
+    ]
+    # Import Linter's graph also skips paths that are not importable module names (for example
+    # `batch-jobs/` or `a.b.py`), so a module there would escape every contract.
+    errors.extend(
+        f"{path.relative_to(root.parent)}: not an importable module path"
+        for path in paths
+        if not all(
+            part.isidentifier() for part in path.relative_to(root.parent).with_suffix("").parts
+        )
+    )
     graph = {}
-    for path in sorted(root.rglob("*.py")):
+    for path in paths:
         module = ".".join(path.relative_to(root.parent).with_suffix("").parts)
         package = path.name == "__init__.py"
         module = module.removesuffix(".__init__")

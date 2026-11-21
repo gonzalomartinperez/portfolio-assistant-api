@@ -34,6 +34,7 @@ underlying commands: `uv sync --frozen`, `uv run ruff check app tests contracts 
 `uv run pytest -q`. Real integration requires migrations and the pinned approved
 public corpus, then `TEST_INTEGRATION=1 uv run pytest -q`. Export contracts with
 `uv run python -m contracts.export`; inspect drift before committing.
+Run `uv run lint-imports` and `uv run vulture` with the other static checks.
 Use isolated Compose projects, ports and databases. Do not stop shared services
 or delete volumes. Document fixture versus live verification separately.
 
