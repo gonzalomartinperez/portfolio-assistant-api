@@ -1,0 +1,450 @@
+[
+  {
+    "code": "invalid_request",
+    "detail": "The request is not valid. Check the fields and try again.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The request is not valid. Check the fields and try again.",
+    "messages": {
+      "en": "The request is not valid. Check the fields and try again.",
+      "es": "La solicitud no es v\u00e1lida. Revisa los campos e int\u00e9ntalo de nuevo."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 422,
+    "title": "Invalid request",
+    "type": "urn:portfolio-assistant:error:invalid_request"
+  },
+  {
+    "code": "malformed_body",
+    "detail": "The request body is not valid JSON.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The request body is not valid JSON.",
+    "messages": {
+      "en": "The request body is not valid JSON.",
+      "es": "El cuerpo de la solicitud no es un JSON v\u00e1lido."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 400,
+    "title": "Malformed request body",
+    "type": "urn:portfolio-assistant:error:malformed_body"
+  },
+  {
+    "code": "invalid_limit",
+    "detail": "The page size is outside the allowed range.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The page size is outside the allowed range.",
+    "messages": {
+      "en": "The page size is outside the allowed range.",
+      "es": "El tama\u00f1o de p\u00e1gina est\u00e1 fuera del rango permitido."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 400,
+    "title": "Invalid page size",
+    "type": "urn:portfolio-assistant:error:invalid_limit"
+  },
+  {
+    "code": "invalid_content_type",
+    "detail": "Send the request body as application/json.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Send the request body as application/json.",
+    "messages": {
+      "en": "Send the request body as application/json.",
+      "es": "Env\u00eda el cuerpo de la solicitud como application/json."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 415,
+    "title": "Unsupported content type",
+    "type": "urn:portfolio-assistant:error:invalid_content_type"
+  },
+  {
+    "code": "invalid_analytics_selection",
+    "detail": "The selected period or filter is not supported.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The selected period or filter is not supported.",
+    "messages": {
+      "en": "The selected period or filter is not supported.",
+      "es": "El per\u00edodo o el filtro seleccionado no es compatible."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 422,
+    "title": "Invalid analytics selection",
+    "type": "urn:portfolio-assistant:error:invalid_analytics_selection"
+  },
+  {
+    "code": "analytics_credentials_forbidden",
+    "detail": "Analytics events must be sent without credentials.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Analytics events must be sent without credentials.",
+    "messages": {
+      "en": "Analytics events must be sent without credentials.",
+      "es": "Los eventos de anal\u00edtica deben enviarse sin credenciales."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 400,
+    "title": "Credentials not allowed",
+    "type": "urn:portfolio-assistant:error:analytics_credentials_forbidden"
+  },
+  {
+    "code": "request_timeout",
+    "detail": "The request body took too long to arrive. Try again.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The request body took too long to arrive. Try again.",
+    "messages": {
+      "en": "The request body took too long to arrive. Try again.",
+      "es": "El cuerpo de la solicitud tard\u00f3 demasiado en llegar. Int\u00e9ntalo de nuevo."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": true,
+    "status": 408,
+    "title": "Request timed out",
+    "type": "urn:portfolio-assistant:error:request_timeout"
+  },
+  {
+    "code": "session_required",
+    "detail": "Your session is missing or expired. Start a new session.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Your session is missing or expired. Start a new session.",
+    "messages": {
+      "en": "Your session is missing or expired. Start a new session.",
+      "es": "Tu sesi\u00f3n no existe o venci\u00f3. Inicia una sesi\u00f3n nueva."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 401,
+    "title": "Session required",
+    "type": "urn:portfolio-assistant:error:session_required"
+  },
+  {
+    "code": "operations_unauthorized",
+    "detail": "Valid operator credentials are required.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Valid operator credentials are required.",
+    "messages": {
+      "en": "Valid operator credentials are required.",
+      "es": "Se requieren credenciales de operador v\u00e1lidas."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 401,
+    "title": "Unauthorized",
+    "type": "urn:portfolio-assistant:error:operations_unauthorized"
+  },
+  {
+    "code": "csrf_denied",
+    "detail": "The request token is missing or invalid. Reload and try again.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The request token is missing or invalid. Reload and try again.",
+    "messages": {
+      "en": "The request token is missing or invalid. Reload and try again.",
+      "es": "El token de la solicitud falta o no es v\u00e1lido. Recarga e int\u00e9ntalo de nuevo."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 403,
+    "title": "CSRF check failed",
+    "type": "urn:portfolio-assistant:error:csrf_denied"
+  },
+  {
+    "code": "origin_denied",
+    "detail": "Requests from this origin are not allowed.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Requests from this origin are not allowed.",
+    "messages": {
+      "en": "Requests from this origin are not allowed.",
+      "es": "No se permiten solicitudes desde este origen."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 403,
+    "title": "Origin denied",
+    "type": "urn:portfolio-assistant:error:origin_denied"
+  },
+  {
+    "code": "bootstrap_denied",
+    "detail": "The session request is missing its required headers.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The session request is missing its required headers.",
+    "messages": {
+      "en": "The session request is missing its required headers.",
+      "es": "A la solicitud de sesi\u00f3n le faltan los encabezados requeridos."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 403,
+    "title": "Session bootstrap denied",
+    "type": "urn:portfolio-assistant:error:bootstrap_denied"
+  },
+  {
+    "code": "not_found",
+    "detail": "The requested resource does not exist or is not yours.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The requested resource does not exist or is not yours.",
+    "messages": {
+      "en": "The requested resource does not exist or is not yours.",
+      "es": "El recurso solicitado no existe o no te pertenece."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 404,
+    "title": "Not found",
+    "type": "urn:portfolio-assistant:error:not_found"
+  },
+  {
+    "code": "analytics_disabled",
+    "detail": "Product analytics is turned off on this server.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Product analytics is turned off on this server.",
+    "messages": {
+      "en": "Product analytics is turned off on this server.",
+      "es": "La anal\u00edtica de producto est\u00e1 desactivada en este servidor."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 404,
+    "title": "Analytics disabled",
+    "type": "urn:portfolio-assistant:error:analytics_disabled"
+  },
+  {
+    "code": "feedback_overview_disabled",
+    "detail": "The feedback overview is turned off on this server.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The feedback overview is turned off on this server.",
+    "messages": {
+      "en": "The feedback overview is turned off on this server.",
+      "es": "El resumen de comentarios est\u00e1 desactivado en este servidor."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 404,
+    "title": "Feedback overview disabled",
+    "type": "urn:portfolio-assistant:error:feedback_overview_disabled"
+  },
+  {
+    "code": "method_not_allowed",
+    "detail": "This method is not supported for this resource.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "This method is not supported for this resource.",
+    "messages": {
+      "en": "This method is not supported for this resource.",
+      "es": "Este m\u00e9todo no es compatible con este recurso."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 405,
+    "title": "Method not allowed",
+    "type": "urn:portfolio-assistant:error:method_not_allowed"
+  },
+  {
+    "code": "run_already_exists",
+    "detail": "A run with this idempotency key already exists. Read its state instead.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "A run with this idempotency key already exists. Read its state instead.",
+    "messages": {
+      "en": "A run with this idempotency key already exists. Read its state instead.",
+      "es": "Ya existe una ejecuci\u00f3n con esta clave de idempotencia. Consulta su estado."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 409,
+    "title": "Run already exists",
+    "type": "urn:portfolio-assistant:error:run_already_exists"
+  },
+  {
+    "code": "idempotency_conflict",
+    "detail": "This idempotency key was already used with a different message.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "This idempotency key was already used with a different message.",
+    "messages": {
+      "en": "This idempotency key was already used with a different message.",
+      "es": "Esta clave de idempotencia ya se us\u00f3 con un mensaje distinto."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 409,
+    "title": "Idempotency conflict",
+    "type": "urn:portfolio-assistant:error:idempotency_conflict"
+  },
+  {
+    "code": "run_in_progress",
+    "detail": "This conversation already has an answer in progress.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "This conversation already has an answer in progress.",
+    "messages": {
+      "en": "This conversation already has an answer in progress.",
+      "es": "Esta conversaci\u00f3n ya tiene una respuesta en curso."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": 5,
+    "retryable": true,
+    "status": 409,
+    "title": "Run in progress",
+    "type": "urn:portfolio-assistant:error:run_in_progress"
+  },
+  {
+    "code": "rate_limited",
+    "detail": "You reached the hourly limit. Try again later.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "You reached the hourly limit. Try again later.",
+    "messages": {
+      "en": "You reached the hourly limit. Try again later.",
+      "es": "Alcanzaste el l\u00edmite por hora. Int\u00e9ntalo m\u00e1s tarde."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": 3600,
+    "retryable": true,
+    "status": 429,
+    "title": "Too many requests",
+    "type": "urn:portfolio-assistant:error:rate_limited"
+  },
+  {
+    "code": "analytics_rate_limited",
+    "detail": "Too many analytics events were sent. Try again later.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Too many analytics events were sent. Try again later.",
+    "messages": {
+      "en": "Too many analytics events were sent. Try again later.",
+      "es": "Se enviaron demasiados eventos de anal\u00edtica. Int\u00e9ntalo m\u00e1s tarde."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": 60,
+    "retryable": true,
+    "status": 429,
+    "title": "Too many analytics events",
+    "type": "urn:portfolio-assistant:error:analytics_rate_limited"
+  },
+  {
+    "code": "conversation_limit",
+    "detail": "You reached the maximum number of conversations. Delete one to continue.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "You reached the maximum number of conversations. Delete one to continue.",
+    "messages": {
+      "en": "You reached the maximum number of conversations. Delete one to continue.",
+      "es": "Alcanzaste el m\u00e1ximo de conversaciones. Elimina una para continuar."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 429,
+    "title": "Conversation limit reached",
+    "type": "urn:portfolio-assistant:error:conversation_limit"
+  },
+  {
+    "code": "history_limit",
+    "detail": "This conversation reached its message limit. Start a new conversation.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "This conversation reached its message limit. Start a new conversation.",
+    "messages": {
+      "en": "This conversation reached its message limit. Start a new conversation.",
+      "es": "Esta conversaci\u00f3n alcanz\u00f3 su l\u00edmite de mensajes. Inicia una conversaci\u00f3n nueva."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 429,
+    "title": "Conversation is full",
+    "type": "urn:portfolio-assistant:error:history_limit"
+  },
+  {
+    "code": "busy",
+    "detail": "The assistant is answering other questions. Try again in a few seconds.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The assistant is answering other questions. Try again in a few seconds.",
+    "messages": {
+      "en": "The assistant is answering other questions. Try again in a few seconds.",
+      "es": "El asistente est\u00e1 respondiendo otras preguntas. Int\u00e9ntalo de nuevo en unos segundos."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": 5,
+    "retryable": true,
+    "status": 429,
+    "title": "Assistant busy",
+    "type": "urn:portfolio-assistant:error:busy"
+  },
+  {
+    "code": "knowledge_updating",
+    "detail": "The portfolio knowledge is being updated. Try again shortly.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The portfolio knowledge is being updated. Try again shortly.",
+    "messages": {
+      "en": "The portfolio knowledge is being updated. Try again shortly.",
+      "es": "El conocimiento del portafolio se est\u00e1 actualizando. Int\u00e9ntalo de nuevo en breve."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": 30,
+    "retryable": true,
+    "status": 503,
+    "title": "Knowledge updating",
+    "type": "urn:portfolio-assistant:error:knowledge_updating"
+  },
+  {
+    "code": "dependency_unavailable",
+    "detail": "The service is temporarily unavailable. Try again shortly.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The service is temporarily unavailable. Try again shortly.",
+    "messages": {
+      "en": "The service is temporarily unavailable. Try again shortly.",
+      "es": "El servicio no est\u00e1 disponible por el momento. Int\u00e9ntalo de nuevo en breve."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": true,
+    "status": 503,
+    "title": "Service unavailable",
+    "type": "urn:portfolio-assistant:error:dependency_unavailable"
+  },
+  {
+    "code": "operations_unconfigured",
+    "detail": "The operations interface is not configured on this server.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "The operations interface is not configured on this server.",
+    "messages": {
+      "en": "The operations interface is not configured on this server.",
+      "es": "La interfaz de operaciones no est\u00e1 configurada en este servidor."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": false,
+    "status": 503,
+    "title": "Operations not configured",
+    "type": "urn:portfolio-assistant:error:operations_unconfigured"
+  },
+  {
+    "code": "operations_unavailable",
+    "detail": "Operational data is temporarily unavailable. Try again shortly.",
+    "instance": "urn:request:00000000000000000000000000000000",
+    "message": "Operational data is temporarily unavailable. Try again shortly.",
+    "messages": {
+      "en": "Operational data is temporarily unavailable. Try again shortly.",
+      "es": "Los datos operativos no est\u00e1n disponibles por el momento. Int\u00e9ntalo de nuevo en breve."
+    },
+    "request_id": "00000000000000000000000000000000",
+    "retry_after_s": null,
+    "retryable": true,
+    "status": 503,
+    "title": "Operations unavailable",
+    "type": "urn:portfolio-assistant:error:operations_unavailable"
+  }
+]

@@ -12,8 +12,6 @@ Known gaps (tracked by name, narrow on purpose; every other check still runs):
   can get 422; only positive-data acceptance is skipped there.
 - Starlette answers an unsupported method with a partial `Allow` header on paths that declare several
   routes, so the `allow_header_conformance` check is skipped everywhere.
-- Malformed JSON bodies are answered by the framework parser with `400 {"detail": ...}`, which the
-  contract does not document; that single known response is accepted (see MALFORMED_BODY).
 """
 
 import json
@@ -34,7 +32,6 @@ from tests.support import ROOT
 pytestmark = pytest.mark.contract
 
 ORIGIN = "http://localhost:3000"
-MALFORMED_BODY = {"detail": "There was an error parsing the body"}
 EXAMPLES = int(os.environ.get("SCHEMATHESIS_EXAMPLES", "50"))
 
 
@@ -90,6 +87,4 @@ def test_operations_conform_to_the_committed_contract(case):
     if case.operation.path == "/api/v1/analytics/events":
         excluded.append(positive_data_acceptance)
     response = case.call(headers={"Origin": ORIGIN})
-    if response.status_code == 400 and response.json() == MALFORMED_BODY:
-        return
     case.validate_response(response, excluded_checks=excluded)

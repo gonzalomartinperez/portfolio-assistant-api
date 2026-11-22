@@ -16,6 +16,7 @@ from portfolio_assistant.presentation.analytics_country import country_from_edge
 from portfolio_assistant.presentation.analytics_report_models import ProductReportSnapshot
 from portfolio_assistant.presentation.interaction_models import ProductInteractionBody
 from portfolio_assistant.presentation.operations import authorize
+from portfolio_assistant.presentation.problems import ErrorBody
 
 router = APIRouter()
 
@@ -83,6 +84,7 @@ def enabled(request: Request) -> None:
     "/api/v1/analytics/events",
     status_code=204,
     operation_id="recordProductEvent",
+    responses={status: {"model": ErrorBody} for status in (400, 404, 415, 429)},
     dependencies=[Depends(enabled)],
 )
 def record(request: Request, body: ProductEventBody | ProductInteractionBody) -> Response:

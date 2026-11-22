@@ -13,6 +13,7 @@ from portfolio_assistant.presentation.events import events
 from portfolio_assistant.presentation.feedback import FeedbackView
 from portfolio_assistant.presentation.interaction_models import ProductInteractionBody
 from portfolio_assistant.presentation.operations import OperationalSnapshot
+from portfolio_assistant.presentation.problems import CATALOG, document
 
 
 def artifacts():
@@ -39,6 +40,8 @@ def artifacts():
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             **PublicProjection.model_json_schema(),
         },
+        # One executable problem document per closed error code (fixed request id, deterministic).
+        "problem.examples.json": [document(code, "0" * 32) for code in CATALOG],
         "sse.schema.json": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "Portfolio assistant SSE v1",

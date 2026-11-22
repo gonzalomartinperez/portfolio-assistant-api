@@ -5,14 +5,11 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from portfolio_assistant.application.presentation_context import PortfolioPath, Presentation, Theme
+from portfolio_assistant.presentation.problems import ErrorBody
+
+__all__ = ["ErrorBody"]
 
 Locale = Literal["en", "es"]
-
-
-class ErrorBody(BaseModel):
-    code: str
-    message: str
-    request_id: str
 
 
 class HealthView(BaseModel):

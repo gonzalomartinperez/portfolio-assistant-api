@@ -16,6 +16,8 @@ All notable changes to this project are documented here. The format follows
   daily vulnerability scan.
 - One weekly grouped dependency pull request, enforced by a guard workflow.
 - Community files (support, code of conduct, issue forms), standards drift check and release automation.
+- Contract v1.1: every error is an RFC 9457 problem document (`application/problem+json`) with a closed
+  `code`, `retryable`, `retry_after_s` and English and Spanish `messages`; the v1 members stay.
 
 ### Deprecated
 

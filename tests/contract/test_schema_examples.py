@@ -27,6 +27,11 @@ def send_message_schema():
     }
 
 
+def problem_schema():
+    openapi = load("openapi.json")
+    return {**openapi["components"]["schemas"]["ErrorBody"], "components": openapi["components"]}
+
+
 # (examples file, instances, schema). analytics-semantics.examples.json is period/country behavior
 # fixtures with no schema; the unit lane asserts its semantics.
 CASES = {
@@ -43,6 +48,7 @@ CASES = {
         lambda: load("product-interaction.examples.json"),
         lambda: load("product-interaction.schema.json"),
     ),
+    "problem.examples.json": (lambda: load("problem.examples.json"), problem_schema),
     "send-message.examples.json": (
         lambda: load("send-message.examples.json"),
         send_message_schema,
