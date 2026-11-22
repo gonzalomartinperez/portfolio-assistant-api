@@ -6,13 +6,13 @@ Milestone log updated at milestones (ecosystem 3A); the In-flight table is updat
 
 | Field | Value |
 |---|---|
-| Current milestone | M4 (architecture and typing) complete on `develop` (2026-11-21) except the parked items below: M4-1, M4-3, M4-4 and M4-6 done; M4-2 and M4-5 partial; PAA-M4-X and PAA-M2-X parked. Awaiting the orchestrator's verification and tag `checkpoint/M4` (`checkpoint/M1` to `checkpoint/M3` are the orchestrator's too) |
-| Date | 2026-11-21 |
-| `develop` SHA at M4 end | `087aba5` (PR #214) before this docs PR; M4 start was `f282add` |
+| Current milestone | M5 (design and experience: API contract and conversational UX) complete on `develop` (2026-11-22) except parked and handed-off items: M5-1, M5-2, M5-3 and M5-4 done (M5-4 is a gap list, no P axis at 95); M5-5 handed off to the portfolio and backoffice leads; PAA-M5-X parked. Awaiting the orchestrator's verification and tag `checkpoint/M5` (`checkpoint/M1` to `checkpoint/M4` are the orchestrator's too) |
+| Date | 2026-11-22 |
+| `develop` SHA at M5 end | `5c6d711` (PR #220) before this docs PR; M5 start was `151b110` (M4 end `087aba5`) |
 | Last tag | `checkpoint/M0` |
-| **Next item** | **M5 once the orchestrator opens it; M4 follow-ups: rule deletions from the ablation table (first candidate `multiplier_entity_path`), `evidence_sufficient` with PAA-M4-X, the M4-5 contract phase after vps-ops runs the console scripts** |
+| **Next item** | **M6 once the orchestrator opens it. M5 follow-ups: consumer adoption of v1.1 (portfolio lead: snapshot `5c6d711`, `sse.ts` tolerating `run.progress`, `messages[locale]`; then re-pin `cross-repo.yml` `site-stream`), the analytics 422 stale `HTTPValidationError` entry and the duplicate `application/json` error media type (contract phase, labelled major), composite pagination cursor `(timestamp, id)` (Codex M5-3 finding, cursor contract change). M4 follow-ups unchanged** |
 | `engineering-standards` (E1) | Consumed at **v1.0.0** (`1f33be4`); pins are bumped by the weekly dependency PR (#193 open, owner merges) |
-| Known issues | Golden replay is not 80/80 yet because no cassettes are committed (recording is paid, owner). The package lives in `src/portfolio_assistant`; the deprecated `src/app` namespace keeps `python -m app.*` and `uvicorn app.main:app` working until vps-ops switches to the `assistant-*` console scripts (ADR 028). The first CI rule ablation (fixture regime, 131 queries) is recorded in `docs/explanation/retrieval.md`. Local WSL only: `test_sigterm_replay_unwinds_external_fixture_cleanup` times out (green in CI). Dependency review now allows `BSD-2-Clause-Views` for grimp (dev-only, import-linter) |
+| Known issues | Golden replay is not 80/80 yet because no cassettes are committed (recording is paid, owner). The package lives in `src/portfolio_assistant`; the deprecated `src/app` namespace keeps `python -m app.*` and `uvicorn app.main:app` working until vps-ops switches to the `assistant-*` console scripts (ADR 028). The first CI rule ablation (fixture regime, 131 queries) is recorded in `docs/explanation/retrieval.md`. Local WSL only: `test_sigterm_replay_unwinds_external_fixture_cleanup` times out (green in CI). M5: the nightly scorecard was red from `92e83a6` until PR #219 (`efd1685`) because of the ruff PT and RUF ratchets (fixed by PR #219, which also gates every ruff family on PRs). The portfolio site parser at `3785df8` rejects unknown SSE types, so `run.progress` stays opt-in until the site adopts it. Dependency review now allows `BSD-2-Clause-Views` for grimp (dev-only, import-linter) |
 | Owner toggles pending (input 2, `docs/reference/repo-settings.md`) | Secret scanning and push protection; CodeQL default setup; require full-SHA pinning; immutable releases before M7 (the required check is already `ci-gate` and merges are merge-commit only) |
 | Pending owner decisions | (1) PAA-D5 20% spot check of bootstrapped judge labels (DR-05); (2) release approvals: M7 promotion and the repo-settings checklist; (3) MV VPS purchase; (4) spend for the parked paid items (M2-16 embeddings snapshot, M2-7 cassette recording campaign), which also unblocks golden 100% (M4-2) and PAA-M4-X; (5) scheduling of PAA-M2-X and PAA-M4-X (52 h of flag-gated assistant-experience work); (6) vps-ops: schedule the console scripts in `releases/production.lock` (M4-5 contract phase) |
 
@@ -106,7 +106,14 @@ Milestone acceptance rule: M3 is not "reached" by score; this gap list (task IDs
 | M4-6 | `docs/m4-async-boundary` | #213 | done | `to_thread` residual and ratchet, langsmith and prometheus reviews (ADR 029) |
 | M4 fixes | `refactor/ruff-backlog-ratchet`, `fix/m4-postgres-libxml2` | #205, #209 | done | ruff backlog back under its ratchets; libxml2 CVE-2026-86144 in the PostgreSQL fixture |
 | PAA-M2-X, PAA-M4-X | | | parked | acceptance needs golden 100% on cassettes (owner spend); scheduling needs the owner |
-| M4 docs | `docs/m4-progress` | this PR | done | progress, roadmap statuses, first ablation table |
+| M4 docs | `docs/m4-progress` | #215 | done (`151b110`) | progress, roadmap statuses, first ablation table |
+| M5-1 | `feat/m5-problem-documents`, `feat/m5-stream-failure-messages` | #216, #220 | done (`92e83a6`, `5c6d711`) | RFC 9457 problem documents, Accept negotiation, closed code enum, EN and ES messages; `run.failed` retry advice and messages; ADR 030 |
+| M5-2 | `feat/m5-run-progress` | #217 | done (`f52ea90`) | opt-in `run.progress` via `X-Assistant-Progress: 1`; cross-repo `site-stream` job; ADR 020 |
+| M5-3 | `docs/m5-contract-docs` | #218 | done (`493563b`) | operation descriptions, validated schema examples, v1.1 frontend handoff |
+| M5 fix | `fix/m5-ruff-backlog` | #219 | done (`efd1685`) | ruff PT and RUF back under ratchets; PR-time family ratchet test |
+| M5-4 | `docs/m5-progress` | this PR | done (gap list) | independent evaluator: P1 90, P2 72, P3 50, P4 90, P5 55, P6 68 (`docs/evidence/scores/2026-11-22.md`) |
+| M5-5 | | | handoff | consumer refresh PRs are the portfolio and backoffice leads'; this repo's handoff and snapshot `5c6d711` are done |
+| PAA-M5-X | | | parked | needs PAA-M2-X and PAA-M4-X (owner scheduling); `run.progress` part delivered by M5-2 |
 
 Resume: `git log --oneline --grep 'M4-'`, `gh pr list --state all --search 'M4-'`, then the first `todo` row of roadmap.md.
 
@@ -115,7 +122,7 @@ Resume: `git log --oneline --grep 'M4-'`, `gh pr list --state all --search 'M4-'
 | Repo | Plan v2 | Milestone reached | Default/integration branch SHA (`develop`; `main` for main-only repos) | Note |
 |---|---|---|---|---|
 | portfolio | written 2026-11-09 | none | `0a1ff56` (`origin/develop`) |  |
-| portfolio-assistant-api | written 2026-11-09 | M4 complete except parked items, awaiting checkpoints | `087aba5` (`origin/develop`) | this repo |
+| portfolio-assistant-api | written 2026-11-09 | M5 complete except parked and handed-off items, awaiting checkpoints | `5c6d711` (`origin/develop`) | this repo |
 | portfolio-backoffice | written 2026-11-09 | none | `e356b13` (`origin/develop`) |  |
 | pequeverso | written 2026-11-09 | none | `cbf519c` (`origin/develop`) |  |
 | pequeverso-assistant-api | written 2026-11-09 | none | `6912579` (`origin/develop`) |  |
@@ -133,3 +140,4 @@ Resume: `git log --oneline --grep 'M4-'`, `gh pr list --state all --search 'M4-'
 | M2 | 2026-11-15 | merged through `0ed17bb` (PR #184) and `b008399` (PR #174) | see the M3 evaluation | test lanes, frozen corpus, eval harness and runner, golden 80 and full 384 + sealed 100, retrieval harness, prompt registry, cassette replayer, attack pack, coverage, property, mutation, contract, load and resilience lanes, scorecard | M3-1 | M2-16 and the M2-7 recording parked (paid) | owner spend for parked items |
 | M3 | 2026-11-15 | `f282add` (tag pending, orchestrator) | [scores/2026-11-15.md](../evidence/scores/2026-11-15.md) | README template and results table, Diataxis docs, community files and release automation, ruff 100/double plus family ratchet, strict mypy widened, 15-skill catalog, independent re-score | M4-1 | gap list above | owner toggles and spend |
 | M4 | 2026-11-21 | `087aba5` (tag pending, orchestrator) | not re-scored (orchestrator) | strict mypy over all of the app, staged retrieval with declarative rules and ablation, C901 gate, Clock port, import-linter and vulture, `src/portfolio_assistant` layout, async boundary ratchet | M5 | golden waits for cassettes; `src/app` shims until vps-ops switches | owner spend, PAA-M4-X scheduling, vps-ops console scripts |
+| M5 | 2026-11-22 | `5c6d711` (tag pending, orchestrator) | [scores/2026-11-22.md](../evidence/scores/2026-11-22.md) (P axes only) | contract v1.1: RFC 9457 problem documents (EN and ES, closed codes, Accept negotiation), `run.failed` retry advice, opt-in `run.progress`, operation descriptions and validated examples, v1.1 frontend handoff, cross-repo site parser job, PR-time ruff ratchet | M6 | consumer adoption pending (site parser rejects `run.progress`); P3 waits for cassettes | owner spend, PAA-X scheduling, vps-ops console scripts |

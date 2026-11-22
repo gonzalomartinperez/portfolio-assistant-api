@@ -1,9 +1,11 @@
 # Frontend integration handoff
 
-Current API snapshot: the `develop` merge commit of the M5-3 contract-docs PR (contract v1.1, API
-version **1.1.0**; the exact SHA is recorded in [progress.md](../master-plan/progress.md) and the M5
-report). The previous snapshot was **`61da393520014ed2c8b1f8a0635b3b4e615f9e53`** (contract 1, API
-1.0.0). Import from the committed revision:
+Current immutable API snapshot: **`5c6d711a293be5dd1e5d28ac75bdf3ce6e73ce98`** (contract v1.1, API version **1.1.0**,
+`develop` after PR #220). SHA-256 at that commit: `contracts/openapi.json`
+`2f6da0747bc88225a56a6a6d03954bd7fd6fa79877f61aeeeedb437ad386be8c`, `contracts/sse.schema.json`
+`efe2834031cdf3075536bebfa65c271602b9c4c274b337f4ea7c1194aa3b0f2e` (all artifacts in
+`contracts/manifest.json`). The previous snapshot was **`61da393520014ed2c8b1f8a0635b3b4e615f9e53`**
+(contract 1, API 1.0.0). Import from the committed revision:
 
 - `contracts/openapi.json`: compatible v1 HTTP surface, operation descriptions, schema examples, the
   public starter catalog and the RFC 9457 `ErrorBody`.
@@ -20,6 +22,7 @@ Additive; nothing in v1 is removed or renamed, and a v1 client keeps working wit
 | Change | What a consumer may do | Reference |
 | --- | --- | --- |
 | Problem documents | Send `Accept: application/problem+json` (or keep `application/json`; same body). Switch on `code`, show `messages[locale]`, honour `retryable` and `retry_after_s` / `Retry-After`. `code` is a closed enum that now lists every code | [API contract, Errors](api-contract.md#errors-contract-v11-rfc-9457), ADR 030 |
+| Stream failures | `run.failed` also carries `retryable` and `messages` (`en`, `es`); show the message and offer an explicit retry only when `retryable` is true | [API contract, Stream order](api-contract.md#stream-order), ADR 030 amendment |
 | Opt-in progress | First make the SSE parser accept `run.progress` (the site parser at `3785df8` rejects unknown event types), then send `X-Assistant-Progress: 1` and render the phase (`retrieving`, `reading`, `writing`) in an `aria-live="polite"` region with approved copy | [API contract, Opt-in progress](api-contract.md#opt-in-progress-contract-v11), ADR 020 |
 | Docs and examples | Generated types gain descriptions; examples can seed fixtures and mocks | `contracts/openapi.json` |
 
