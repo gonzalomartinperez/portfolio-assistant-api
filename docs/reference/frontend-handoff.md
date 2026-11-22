@@ -26,9 +26,11 @@ Additive; nothing in v1 is removed or renamed, and a v1 client keeps working wit
 Consumer steps (each repository's own lead opens the PR): refresh the snapshot and its revision and
 SHA-256, regenerate types, update error-shape mocks to the full `ErrorBody` (its new members are
 required), and run the consumer contract tests. The backoffice reads only the private operations,
-analytics and feedback schemas, which did not change in v1.1. The cross-repo `site-stream` job
-(`cross-repo.yml`) proves that the pinned site parses every v1 stream and never receives
-`run.progress`; it must be re-pinned when the site adopts the event.
+analytics and feedback schemas, which did not change in v1.1. This repository's conformance and
+integration tests guarantee that a stream without the header never carries `run.progress`. The
+nightly and manual cross-repo `site-stream` job (`cross-repo.yml`) also runs the pinned site's own
+parser on v1 and opted-in streams and searches the site source for the header; re-pin it when the site
+adopts the event.
 
 Earlier snapshot `5742961` remains historical compatibility evidence, not the
 snapshot for importing the new catalog. The 2026-10-04 audit observed frontend

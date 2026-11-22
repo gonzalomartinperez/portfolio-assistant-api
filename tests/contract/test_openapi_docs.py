@@ -50,6 +50,27 @@ def test_every_public_schema_has_examples():
 def test_schema_examples_validate(name):
     schema = {**SCHEMAS[name], "components": OPENAPI["components"]}
     jsonschema.Draft202012Validator.check_schema(schema)
-    validator = jsonschema.Draft202012Validator(schema)
+    validator = jsonschema.Draft202012Validator(
+        schema, format_checker=jsonschema.Draft202012Validator.FORMAT_CHECKER
+    )
     for example in SCHEMAS[name]["examples"]:
         validator.validate(example)
+
+
+def test_examples_round_trip_through_the_pydantic_models():
+    """Strict model validation catches what JSON Schema cannot (formats, cross-field rules)."""
+    from portfolio_assistant.presentation import events, models, problems
+
+    found = 0
+    for name, schema in SCHEMAS.items():
+        model = (
+            getattr(models, name, None)
+            or getattr(problems, name, None)
+            or getattr(events, name, None)
+        )
+        if model is None or not schema.get("examples"):
+            continue
+        for example in schema["examples"]:
+            model.model_validate_json(json.dumps(example))
+            found += 1
+    assert found >= len(SCHEMAS) - len(WITHOUT_EXAMPLES)

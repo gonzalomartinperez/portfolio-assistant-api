@@ -123,7 +123,7 @@ class MessageView(BaseModel):
                     "citations": [
                         {
                             "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-                            "label": "Projects",
+                            "label": "src/content/en/projects.ts",
                             "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12",
                             "source_type": "code",
                             "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
@@ -158,7 +158,7 @@ class MessagePage(BaseModel):
                             "citations": [
                                 {
                                     "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-                                    "label": "Projects",
+                                    "label": "src/content/en/projects.ts",
                                     "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12",
                                     "source_type": "code",
                                     "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
@@ -186,7 +186,7 @@ class Citation(BaseModel):
             "examples": [
                 {
                     "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-                    "label": "Projects",
+                    "label": "src/content/en/projects.ts",
                     "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12",
                     "source_type": "code",
                     "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
@@ -281,7 +281,11 @@ class StarterPrompt(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
-                {"id": "projects-filomena", "topic": "projects", "question": "What is Filomena?"}
+                {
+                    "id": "projects",
+                    "topic": "projects",
+                    "question": "Which projects best illustrate Gonzalo’s work?",
+                }
             ]
         }
     )
@@ -300,9 +304,9 @@ class SuggestionsView(BaseModel):
                     "source_commit": "1acbe54906c88398652aebb8eae0c217fd0d8821",
                     "items": [
                         {
-                            "id": "projects-filomena",
+                            "id": "projects",
                             "topic": "projects",
-                            "question": "What is Filomena?",
+                            "question": "Which projects best illustrate Gonzalo’s work?",
                         }
                     ],
                 }

@@ -55,7 +55,7 @@
           "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
           "end_line": 12,
           "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-          "label": "Projects",
+          "label": "src/content/en/projects.ts",
           "path": "src/content/en/projects.ts",
           "source_type": "code",
           "start_line": 1,

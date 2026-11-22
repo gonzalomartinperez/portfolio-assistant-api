@@ -7,7 +7,7 @@
             "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
             "end_line": 12,
             "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-            "label": "Projects",
+            "label": "src/content/en/projects.ts",
             "path": "src/content/en/projects.ts",
             "source_type": "code",
             "start_line": 1,
@@ -462,7 +462,7 @@
                     "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
                     "end_line": 12,
                     "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-                    "label": "Projects",
+                    "label": "src/content/en/projects.ts",
                     "path": "src/content/en/projects.ts",
                     "source_type": "code",
                     "start_line": 1,
@@ -512,7 +512,7 @@
                 "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
                 "end_line": 12,
                 "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
-                "label": "Projects",
+                "label": "src/content/en/projects.ts",
                 "path": "src/content/en/projects.ts",
                 "source_type": "code",
                 "start_line": 1,
@@ -1057,8 +1057,8 @@
       "StarterPrompt": {
         "examples": [
           {
-            "id": "projects-filomena",
-            "question": "What is Filomena?",
+            "id": "projects",
+            "question": "Which projects best illustrate Gonzalo\u2019s work?",
             "topic": "projects"
           }
         ],
@@ -1100,8 +1100,8 @@
             "corpus_version": "corpus-a4e4aa84b466",
             "items": [
               {
-                "id": "projects-filomena",
-                "question": "What is Filomena?",
+                "id": "projects",
+                "question": "Which projects best illustrate Gonzalo\u2019s work?",
                 "topic": "projects"
               }
             ],
@@ -1322,7 +1322,7 @@
     },
     "/api/v1/conversations": {
       "get": {
-        "description": "List owned conversations, most recently updated first. Pass `next_cursor` back as `cursor`.",
+        "description": "List owned conversations, most recently updated first. Pass `next_cursor` back, URL-encoded, as `cursor`.",
         "operationId": "listConversations",
         "parameters": [
           {
@@ -2000,7 +2000,7 @@
     },
     "/api/v1/conversations/{conversation_id}/messages": {
       "get": {
-        "description": "List messages newest first, with citations on assistant messages. Pass `next_cursor` back as `cursor`.",
+        "description": "List messages newest first, with citations on assistant messages. Pass `next_cursor` back, URL-encoded, as `cursor`.",
         "operationId": "listMessages",
         "parameters": [
           {
@@ -2401,7 +2401,7 @@
     },
     "/api/v1/knowledge/suggestions": {
       "get": {
-        "description": "Starter questions from the active public corpus for the requested locale (at most six).",
+        "description": "Starter questions from the active public corpus for the requested locale (up to five).",
         "operationId": "getKnowledgeSuggestions",
         "parameters": [
           {
@@ -3369,7 +3369,7 @@
         "summary": "Get Session"
       },
       "post": {
-        "description": "Bootstrap an anonymous session. Requires JSON `{}`, a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations.",
+        "description": "Bootstrap an anonymous session. Requires `Content-Type: application/json` (send `{}`), a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations.",
         "operationId": "createSession",
         "parameters": [
           {

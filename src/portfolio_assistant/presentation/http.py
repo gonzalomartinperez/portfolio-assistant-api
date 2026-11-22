@@ -140,7 +140,7 @@ def create_session(
     response: Response,
     x_session_bootstrap: Annotated[str | None, Header()] = None,
 ) -> SessionView:
-    """Bootstrap an anonymous session. Requires JSON `{}`, a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations."""
+    """Bootstrap an anonymous session. Requires `Content-Type: application/json` (send `{}`), a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations."""
     if (
         x_session_bootstrap != "1"
         or request.headers.get("content-type", "").split(";")[0] != "application/json"
@@ -207,7 +207,7 @@ def list_conversations(
     cursor: datetime | None = None,
     session: Session = Depends(current_session),
 ) -> Page:
-    """List owned conversations, most recently updated first. Pass `next_cursor` back as `cursor`."""
+    """List owned conversations, most recently updated first. Pass `next_cursor` back, URL-encoded, as `cursor`."""
     rows = request.app.state.conversations.list_conversations(session, limit, cursor)
     return Page(
         items=[ConversationView.model_validate(asdict(row)) for row in rows[:limit]],
@@ -255,7 +255,7 @@ def list_messages(
     cursor: datetime | None = None,
     session: Session = Depends(current_session),
 ) -> MessagePage:
-    """List messages newest first, with citations on assistant messages. Pass `next_cursor` back as `cursor`."""
+    """List messages newest first, with citations on assistant messages. Pass `next_cursor` back, URL-encoded, as `cursor`."""
     rows = request.app.state.conversations.messages(session, conversation_id, limit, cursor)
     return MessagePage(
         items=[MessageView.model_validate(asdict(row)) for row in rows[:limit]],
@@ -431,7 +431,7 @@ def record_feedback(
     operation_id="getKnowledgeSuggestions",
 )
 def get_knowledge_suggestions(request: Request, locale: Locale = "en") -> SuggestionsView:
-    """Starter questions from the active public corpus for the requested locale (at most six)."""
+    """Starter questions from the active public corpus for the requested locale (up to five)."""
     version, commit, prompts = request.app.state.knowledge.starter_prompts(locale)
     return SuggestionsView(
         corpus_version=version,
