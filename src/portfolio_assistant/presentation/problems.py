@@ -276,6 +276,14 @@ class ErrorBody(BaseModel):
     The component keeps its v1 name so generated consumer types stay stable.
     """
 
+    model_config = ConfigDict(
+        json_schema_extra=lambda schema, _cls: schema.update(
+            # FastAPI drops nulls from OpenAPI examples, so inline ones carry a retry hint;
+            # contracts/problem.examples.json has every code, including `retry_after_s: null`.
+            examples=[document("busy", "0" * 32), document("knowledge_updating", "0" * 32)]
+        )
+    )
+
     type: str = Field(pattern=r"^urn:portfolio-assistant:error:[a-z_]+$")
     title: str
     status: int = Field(ge=400, le=599)

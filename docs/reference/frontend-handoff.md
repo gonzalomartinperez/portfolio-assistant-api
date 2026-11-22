@@ -1,12 +1,36 @@
 # Frontend integration handoff
 
-Current immutable API snapshot: **`61da393520014ed2c8b1f8a0635b3b4e615f9e53`**.
-Contract version **1**, API version **1.0.0**. Import from this committed revision:
+Current API snapshot: the `develop` merge commit of the M5-3 contract-docs PR (contract v1.1, API
+version **1.1.0**; the exact SHA is recorded in [progress.md](../master-plan/progress.md) and the M5
+report). The previous snapshot was **`61da393520014ed2c8b1f8a0635b3b4e615f9e53`** (contract 1, API
+1.0.0). Import from the committed revision:
 
-- `contracts/openapi.json` — compatible v1 HTTP surface plus the public starter catalog.
-- `contracts/sse.schema.json` — discriminated event payloads for the existing seven events.
-- `contracts/sse.examples.json` — success/abstention, failure and cancellation.
-- `contracts/manifest.json` — deterministic artifact hashes.
+- `contracts/openapi.json`: compatible v1 HTTP surface, operation descriptions, schema examples, the
+  public starter catalog and the RFC 9457 `ErrorBody`.
+- `contracts/sse.schema.json`: discriminated event payloads for the seven v1 events plus opt-in
+  `run.progress`.
+- `contracts/sse.examples.json`: success/abstention, failure, cancellation and `opt_in_progress`.
+- `contracts/problem.examples.json`: one problem document per error code.
+- `contracts/manifest.json`: deterministic artifact hashes.
+
+## Contract v1.1 increment · 2026-11-22
+
+Additive; nothing in v1 is removed or renamed, and a v1 client keeps working without a change.
+
+| Change | What a consumer may do | Reference |
+| --- | --- | --- |
+| Problem documents | Send `Accept: application/problem+json` (or keep `application/json`; same body). Switch on `code`, show `messages[locale]`, honour `retryable` and `retry_after_s` / `Retry-After`. `code` is a closed enum that now lists every code | [API contract, Errors](api-contract.md#errors-contract-v11-rfc-9457), ADR 030 |
+| Opt-in progress | First make the SSE parser accept `run.progress` (the site parser at `3785df8` rejects unknown event types), then send `X-Assistant-Progress: 1` and render the phase (`retrieving`, `reading`, `writing`) in an `aria-live="polite"` region with approved copy | [API contract, Opt-in progress](api-contract.md#opt-in-progress-contract-v11), ADR 020 |
+| Docs and examples | Generated types gain descriptions; examples can seed fixtures and mocks | `contracts/openapi.json` |
+
+Consumer steps (each repository's own lead opens the PR): refresh the snapshot and its revision and
+SHA-256, regenerate types, update error-shape mocks to the full `ErrorBody` (its new members are
+required), and run the consumer contract tests. The backoffice reads only the private operations,
+analytics and feedback schemas, which did not change in v1.1. This repository's conformance and
+integration tests guarantee that a stream without the header never carries `run.progress`. The
+nightly and manual cross-repo `site-stream` job (`cross-repo.yml`) also runs the pinned site's own
+parser on v1 and opted-in streams and searches the site source for the header; re-pin it when the site
+adopts the event.
 
 Earlier snapshot `5742961` remains historical compatibility evidence, not the
 snapshot for importing the new catalog. The 2026-10-04 audit observed frontend

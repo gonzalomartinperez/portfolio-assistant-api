@@ -2,6 +2,18 @@
   "components": {
     "schemas": {
       "Citation": {
+        "examples": [
+          {
+            "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+            "end_line": 12,
+            "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
+            "label": "src/content/en/projects.ts",
+            "path": "src/content/en/projects.ts",
+            "source_type": "code",
+            "start_line": 1,
+            "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12"
+          }
+        ],
         "properties": {
           "commit_sha": {
             "anyOf": [
@@ -78,6 +90,12 @@
         "type": "object"
       },
       "ConversationCreate": {
+        "examples": [
+          {
+            "title": "New conversation"
+          },
+          {}
+        ],
         "properties": {
           "title": {
             "default": "New conversation",
@@ -90,6 +108,11 @@
         "type": "object"
       },
       "ConversationUpdate": {
+        "examples": [
+          {
+            "title": "Filomena questions"
+          }
+        ],
         "properties": {
           "title": {
             "maxLength": 80,
@@ -105,6 +128,14 @@
         "type": "object"
       },
       "ConversationView": {
+        "examples": [
+          {
+            "created_at": "2026-11-22T12:00:00Z",
+            "id": "00000000-0000-0000-0000-000000000002",
+            "title": "New conversation",
+            "updated_at": "2026-11-22T12:00:05Z"
+          }
+        ],
         "properties": {
           "created_at": {
             "format": "date-time",
@@ -137,6 +168,40 @@
       },
       "ErrorBody": {
         "description": "RFC 9457 problem details plus the v1 error members (`code`, `message`, `request_id`).\n\nThe component keeps its v1 name so generated consumer types stay stable.",
+        "examples": [
+          {
+            "code": "busy",
+            "detail": "The assistant is answering other questions. Try again in a few seconds.",
+            "instance": "urn:request:00000000000000000000000000000000",
+            "message": "The assistant is answering other questions. Try again in a few seconds.",
+            "messages": {
+              "en": "The assistant is answering other questions. Try again in a few seconds.",
+              "es": "El asistente est\u00e1 respondiendo otras preguntas. Int\u00e9ntalo de nuevo en unos segundos."
+            },
+            "request_id": "00000000000000000000000000000000",
+            "retry_after_s": 5,
+            "retryable": true,
+            "status": 429,
+            "title": "Assistant busy",
+            "type": "urn:portfolio-assistant:error:busy"
+          },
+          {
+            "code": "knowledge_updating",
+            "detail": "The portfolio knowledge is being updated. Try again shortly.",
+            "instance": "urn:request:00000000000000000000000000000000",
+            "message": "The portfolio knowledge is being updated. Try again shortly.",
+            "messages": {
+              "en": "The portfolio knowledge is being updated. Try again shortly.",
+              "es": "El conocimiento del portafolio se est\u00e1 actualizando. Int\u00e9ntalo de nuevo en breve."
+            },
+            "request_id": "00000000000000000000000000000000",
+            "retry_after_s": 30,
+            "retryable": true,
+            "status": 503,
+            "title": "Knowledge updating",
+            "type": "urn:portfolio-assistant:error:knowledge_updating"
+          }
+        ],
         "properties": {
           "code": {
             "enum": [
@@ -242,6 +307,11 @@
         "type": "object"
       },
       "FeedbackCreate": {
+        "examples": [
+          {
+            "rating": "up"
+          }
+        ],
         "properties": {
           "rating": {
             "enum": [
@@ -272,6 +342,12 @@
         "type": "object"
       },
       "HealthView": {
+        "examples": [
+          {
+            "status": "ok",
+            "version": "0123456789abcdef0123456789abcdef01234567"
+          }
+        ],
         "properties": {
           "status": {
             "const": "ok",
@@ -292,6 +368,14 @@
       },
       "MessageContext": {
         "additionalProperties": false,
+        "examples": [
+          {
+            "current_path": "/about",
+            "opened_path": "/work",
+            "presentation": "compact",
+            "theme": "dark"
+          }
+        ],
         "properties": {
           "current_path": {
             "enum": [
@@ -369,6 +453,31 @@
         "type": "object"
       },
       "MessagePage": {
+        "examples": [
+          {
+            "items": [
+              {
+                "citations": [
+                  {
+                    "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+                    "end_line": 12,
+                    "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
+                    "label": "src/content/en/projects.ts",
+                    "path": "src/content/en/projects.ts",
+                    "source_type": "code",
+                    "start_line": 1,
+                    "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12"
+                  }
+                ],
+                "content": "Filomena is one of the projects described in the portfolio [1].",
+                "created_at": "2026-11-22T12:00:05Z",
+                "id": "00000000-0000-0000-0000-000000000003",
+                "role": "assistant"
+              }
+            ],
+            "next_cursor": "2026-11-22T12:00:05+00:00"
+          }
+        ],
         "properties": {
           "items": {
             "items": {
@@ -396,6 +505,26 @@
         "type": "object"
       },
       "MessageView": {
+        "examples": [
+          {
+            "citations": [
+              {
+                "commit_sha": "1acbe54906c88398652aebb8eae0c217fd0d8821",
+                "end_line": 12,
+                "id": "3f2a000000000000000000000000000000000000000000000000000000000000",
+                "label": "src/content/en/projects.ts",
+                "path": "src/content/en/projects.ts",
+                "source_type": "code",
+                "start_line": 1,
+                "url": "https://github.com/gonzalomartinperez/portfolio/blob/1acbe54906c88398652aebb8eae0c217fd0d8821/src/content/en/projects.ts#L1-L12"
+              }
+            ],
+            "content": "Filomena is one of the projects described in the portfolio [1].",
+            "created_at": "2026-11-22T12:00:05Z",
+            "id": "00000000-0000-0000-0000-000000000003",
+            "role": "assistant"
+          }
+        ],
         "properties": {
           "citations": {
             "default": [],
@@ -438,6 +567,18 @@
         "type": "object"
       },
       "Page": {
+        "examples": [
+          {
+            "items": [
+              {
+                "created_at": "2026-11-22T12:00:00Z",
+                "id": "00000000-0000-0000-0000-000000000002",
+                "title": "New conversation",
+                "updated_at": "2026-11-22T12:00:05Z"
+              }
+            ]
+          }
+        ],
         "properties": {
           "items": {
             "items": {
@@ -723,6 +864,13 @@
         "type": "object"
       },
       "ReadinessView": {
+        "examples": [
+          {
+            "schema_version": "009",
+            "status": "ok",
+            "version": "0123456789abcdef0123456789abcdef01234567"
+          }
+        ],
         "properties": {
           "schema_version": {
             "anyOf": [
@@ -754,6 +902,16 @@
         "type": "object"
       },
       "RunView": {
+        "examples": [
+          {
+            "conversation_id": "00000000-0000-0000-0000-000000000002",
+            "created_at": "2026-11-22T12:00:00Z",
+            "id": "00000000-0000-0000-0000-000000000001",
+            "message_id": "00000000-0000-0000-0000-000000000003",
+            "state": "completed",
+            "updated_at": "2026-11-22T12:00:05Z"
+          }
+        ],
         "properties": {
           "conversation_id": {
             "format": "uuid",
@@ -822,6 +980,16 @@
         "type": "object"
       },
       "SendMessage": {
+        "examples": [
+          {
+            "content": "What is Filomena?",
+            "locale": "en"
+          },
+          {
+            "content": "\u00bfQu\u00e9 experiencia tiene Gonzalo?",
+            "locale": "es"
+          }
+        ],
         "properties": {
           "content": {
             "maxLength": 4000,
@@ -856,6 +1024,13 @@
         "type": "object"
       },
       "SessionView": {
+        "examples": [
+          {
+            "csrf_token": "opaque-csrf-token",
+            "expires_at": "2026-11-29T12:00:00Z",
+            "retention_days": 7
+          }
+        ],
         "properties": {
           "csrf_token": {
             "title": "Csrf Token",
@@ -880,6 +1055,13 @@
         "type": "object"
       },
       "StarterPrompt": {
+        "examples": [
+          {
+            "id": "projects",
+            "question": "Which projects best illustrate Gonzalo\u2019s work?",
+            "topic": "projects"
+          }
+        ],
         "properties": {
           "id": {
             "pattern": "^[a-z0-9-]{1,80}$",
@@ -913,6 +1095,19 @@
         "type": "object"
       },
       "SuggestionsView": {
+        "examples": [
+          {
+            "corpus_version": "corpus-a4e4aa84b466",
+            "items": [
+              {
+                "id": "projects",
+                "question": "Which projects best illustrate Gonzalo\u2019s work?",
+                "topic": "projects"
+              }
+            ],
+            "source_commit": "1acbe54906c88398652aebb8eae0c217fd0d8821"
+          }
+        ],
         "properties": {
           "corpus_version": {
             "maxLength": 100,
@@ -992,6 +1187,7 @@
   "paths": {
     "/api/v1/analytics/events": {
       "post": {
+        "description": "Record one anonymous product event from the site. Disabled unless product analytics is on; send without credentials.",
         "operationId": "recordProductEvent",
         "requestBody": {
           "content": {
@@ -1126,6 +1322,7 @@
     },
     "/api/v1/conversations": {
       "get": {
+        "description": "List owned conversations, most recently updated first. Pass `next_cursor` back, URL-encoded, as `cursor`.",
         "operationId": "listConversations",
         "parameters": [
           {
@@ -1306,6 +1503,7 @@
         "summary": "List Conversations"
       },
       "post": {
+        "description": "Create an owned conversation (at most 100 per session).",
         "operationId": "createConversation",
         "requestBody": {
           "content": {
@@ -1469,6 +1667,7 @@
     },
     "/api/v1/conversations/{conversation_id}": {
       "delete": {
+        "description": "Delete an owned conversation with its messages and runs.",
         "operationId": "deleteConversation",
         "parameters": [
           {
@@ -1625,6 +1824,7 @@
         "summary": "Delete Conversation"
       },
       "patch": {
+        "description": "Rename an owned conversation. Foreign conversations answer 404.",
         "operationId": "renameConversation",
         "parameters": [
           {
@@ -1800,6 +2000,7 @@
     },
     "/api/v1/conversations/{conversation_id}/messages": {
       "get": {
+        "description": "List messages newest first, with citations on assistant messages. Pass `next_cursor` back, URL-encoded, as `cursor`.",
         "operationId": "listMessages",
         "parameters": [
           {
@@ -1992,6 +2193,7 @@
     },
     "/api/v1/conversations/{conversation_id}/messages/stream": {
       "post": {
+        "description": "Ask a question and stream the answer as Server-Sent Events (`contracts/sse.schema.json`). Requires an `Idempotency-Key`; a repeated key returns 409 and is never replayed. Keep `X-Run-ID` to read or cancel the run. Send `X-Assistant-Progress: 1` for opt-in `run.progress` events.",
         "operationId": "streamMessage",
         "parameters": [
           {
@@ -2199,6 +2401,7 @@
     },
     "/api/v1/knowledge/suggestions": {
       "get": {
+        "description": "Starter questions from the active public corpus for the requested locale (up to five).",
         "operationId": "getKnowledgeSuggestions",
         "parameters": [
           {
@@ -2368,6 +2571,7 @@
     },
     "/api/v1/messages/{message_id}/feedback": {
       "post": {
+        "description": "Record up or down feedback on an owned assistant message.",
         "operationId": "recordFeedback",
         "parameters": [
           {
@@ -2536,6 +2740,7 @@
     },
     "/api/v1/runs/{run_id}": {
       "get": {
+        "description": "Read the state of an owned run, for example after a disconnect.",
         "operationId": "getRun",
         "parameters": [
           {
@@ -2701,6 +2906,7 @@
     },
     "/api/v1/runs/{run_id}/cancel": {
       "post": {
+        "description": "Cancel a live owned run; idempotent, and a finished run is returned unchanged.",
         "operationId": "cancelRun",
         "parameters": [
           {
@@ -2866,6 +3072,7 @@
     },
     "/api/v1/session": {
       "delete": {
+        "description": "Delete the session with its conversations, messages and runs, and clear the cookie.",
         "operationId": "deleteSession",
         "responses": {
           "204": {
@@ -3010,6 +3217,7 @@
         "summary": "Delete Session"
       },
       "get": {
+        "description": "Restore the CSRF token and expiry of the current cookie session after a reload.",
         "operationId": "getSession",
         "responses": {
           "200": {
@@ -3161,6 +3369,7 @@
         "summary": "Get Session"
       },
       "post": {
+        "description": "Bootstrap an anonymous session. Requires `Content-Type: application/json` (send `{}`), a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations.",
         "operationId": "createSession",
         "parameters": [
           {
@@ -3332,6 +3541,7 @@
     },
     "/health/live": {
       "get": {
+        "description": "Liveness probe kept from v1; it performs no dependency I/O. Prefer `/healthz`.",
         "operationId": "healthLive",
         "responses": {
           "200": {
@@ -3483,6 +3693,7 @@
     },
     "/health/ready": {
       "get": {
+        "description": "Readiness probe kept from v1: database schema, active corpus and graph. Prefer `/readyz`.",
         "operationId": "healthReady",
         "responses": {
           "200": {
@@ -3634,6 +3845,7 @@
     },
     "/healthz": {
       "get": {
+        "description": "Liveness: the process answers, with the deployed source revision.",
         "operationId": "healthz",
         "responses": {
           "200": {
@@ -3787,6 +3999,7 @@
     },
     "/readyz": {
       "get": {
+        "description": "Readiness: dependencies answer; `schema_version` is the newest applied migration prefix.",
         "operationId": "readyz",
         "responses": {
           "200": {

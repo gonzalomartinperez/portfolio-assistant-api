@@ -88,6 +88,7 @@ def enabled(request: Request) -> None:
     dependencies=[Depends(enabled)],
 )
 def record(request: Request, body: ProductEventBody | ProductInteractionBody) -> Response:
+    """Record one anonymous product event from the site. Disabled unless product analytics is on; send without credentials."""
     if request.headers.get("content-type", "").split(";")[0] != "application/json":
         raise HTTPException(415, "invalid_content_type")
     # Do not attach anonymous events to an authenticated session by accident.

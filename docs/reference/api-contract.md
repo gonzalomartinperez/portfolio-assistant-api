@@ -3,7 +3,9 @@
 Authority: this repository. Machine artifacts: [OpenAPI](../../contracts/openapi.json),
 [SSE JSON Schema](../../contracts/sse.schema.json), and [stream examples](../../contracts/sse.examples.json).
 Regenerate deterministically with `uv run python -m contracts.export`. CI rejects
-drift. Schema version remains `1`; the SSE schema now documents existing payloads
+drift. Every operation has a description and every public request and response schema carries examples
+(framework validation shapes excepted); the contract lane
+validates each example against its schema (`tests/contract/test_openapi_docs.py`). Schema version remains `1`; the SSE schema now documents existing payloads
 more precisely. Frontend consumers import a committed snapshot themselves.
 
 ## Health endpoints
