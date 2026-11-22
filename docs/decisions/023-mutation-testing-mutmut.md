@@ -160,3 +160,17 @@ and `scripts` because some of those tests read them. The first full local campai
 The ratchets in `tests/mutation-baseline.json` are these scores truncated to whole
 points. Application and graders are below target; surviving mutants are killed with
 tests, never by narrowing the scope or lowering a target.
+
+After the M6-1 test PRs (#229 application and budget, #230 graders) the full campaign measured:
+
+| Group | Mutants | Killed | Score | Target |
+|---:|---:|---:|---:|---:|
+| domain | 913 | 701 | 76.78% | 75 |
+| application | 695 | 573 | 82.45% | 75 |
+| ai | 840 | 686 | 81.67% | 75 |
+| graders | 758 | 746 | 98.42% | 85 |
+
+`domain/budget.py` is at 100% (target 85). Every group meets its target, and the ratchets moved to
+76, 82, 81 and 98. From this point both workflows run the gate with `--enforce`: the weekly run against
+the ratchets, the PR run against the 60% break floor (`--changed`). The `also_copy` list names the eval
+directories explicitly, so the sealed holdout is never copied into the mutants sandbox.
