@@ -79,5 +79,98 @@
     "type": "run.cancelled",
     "sequence": 3,
     "payload": {}
-  }
+  },
+  "opt_in_progress": [
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.started",
+      "sequence": 0,
+      "payload": {
+        "state": "running"
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.progress",
+      "sequence": 1,
+      "payload": {
+        "phase": "retrieving"
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.status",
+      "sequence": 2,
+      "payload": {
+        "phase": "evidence_found",
+        "sources": 0
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.progress",
+      "sequence": 3,
+      "payload": {
+        "phase": "reading"
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.progress",
+      "sequence": 4,
+      "payload": {
+        "phase": "writing"
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "message.delta",
+      "sequence": 5,
+      "payload": {
+        "text": "I could not find enough public evidence to answer confidently."
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "message.completed",
+      "sequence": 6,
+      "payload": {
+        "message_id": "00000000-0000-0000-0000-000000000003",
+        "content": "I could not find enough public evidence to answer confidently.",
+        "citations": []
+      }
+    },
+    {
+      "schema_version": "1",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "conversation_id": "00000000-0000-0000-0000-000000000002",
+      "timestamp": "2026-09-27T12:00:00Z",
+      "type": "run.completed",
+      "sequence": 7,
+      "payload": {
+        "state": "completed"
+      }
+    }
+  ]
 }

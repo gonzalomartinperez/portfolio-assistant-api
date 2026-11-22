@@ -110,7 +110,7 @@ Effort L (41 h = 25 h rows + 16 h PAA-M5-X). Cross-repo: portfolio site and back
 | # | Item | Acceptance | Effort | Status |
 |---|---|---|---|---|
 | M5-1 | RFC 9457 problem documents with `code`, `retryable`, `retry_after_s`, EN and ES messages (neutral Latin American Spanish), documented and tested | every documented error validates; Schemathesis negative cases green | M, 8 h | done (ADR 030) |
-| M5-2 | `run.progress` events behind opt-in; cross job proves current consumers ignore them | consumers compile and pass; ADR 0020 | M, 8 h | todo |
+| M5-2 | `run.progress` events behind opt-in; cross job proves current consumers ignore them | consumers compile and pass; ADR 0020 | M, 8 h | done (ADR 020) |
 | M5-3 | Contract docs: executable examples, frontend handoff refreshed | schema example tests green | S, 4 h | todo |
 | M5-4 | Evaluator scoring of P1 to P6 | each at least 95 or a gap list | S, 3 h | todo |
 | M5-5 | Consumer refresh PRs (opened in portfolio and backoffice by their agents) | consumer contract tests green against the new snapshot | S, 2 h here | todo |

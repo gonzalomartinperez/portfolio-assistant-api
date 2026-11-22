@@ -2014,6 +2014,24 @@
               "title": "Idempotency-Key",
               "type": "string"
             }
+          },
+          {
+            "description": "`1` opts in to `run.progress` events (contract v1.1, ADR 020); any other value is ignored.",
+            "in": "header",
+            "name": "x-assistant-progress",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`1` opts in to `run.progress` events (contract v1.1, ADR 020); any other value is ignored.",
+              "title": "X-Assistant-Progress"
+            }
           }
         ],
         "requestBody": {

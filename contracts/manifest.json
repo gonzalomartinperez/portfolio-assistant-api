@@ -2,7 +2,7 @@
   "artifacts": {
     "feedback.schema.json": "efe765fd1aec41abf608b0d4f2963dbf83a7cbaa8b8f281aa8cf320cb4943de0",
     "knowledge.schema.json": "7d5cd7ed2ea1e2ace8f8b2d744d2ae8528d3d4e64ac8291b1079b8ab01800c89",
-    "openapi.json": "cb378952ec06d2637cd604b839562f293ea80c27b63920c2d1f119be78024ece",
+    "openapi.json": "9b9048595d844895c6e1fae78bcf2ed6c79ad9a5db6224dde295a473b2a1bae9",
     "operations.schema.json": "6fbf28e2900dfbd6afe59f8fadcb56de2c223efcbcfc8bfccf43c2116e20d834",
     "problem.examples.json": "707d1f57a9bf6b7126b6a6e9e69bf11f5e47268dd8317e6e377056735b2ad4ca",
     "product-analytics-v2.schema.json": "856afd5790079fbf14b1d61731bbb27ee72ff838871672144c7b21b73a290f2c",
@@ -11,7 +11,7 @@
     "product-interaction.schema.json": "1397c486b1160e80be92ecce269888cd2eb3cfbce8f3aec3c367de58487363b9",
     "site-experience-portfolio-v1.schema.json": "f5905c368e668cfd833dd102253ed2b04e7350b7938164e5259bada94ad2ad32",
     "site-experience-v1.schema.json": "355341ceb79621bcb6d0ac79fb211b78958436b1e89f8bee8a3a78953ece5f59",
-    "sse.schema.json": "6cc2a2eb99eb86532d455eeb9022142f969ff4b2365c21c11bd9139edf409aff"
+    "sse.schema.json": "cd2d0267e94162bbc274eee7636b1047a4b018be248b0c7eeade3deffaa55e22"
   },
   "contract_version": "1"
 }

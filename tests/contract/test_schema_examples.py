@@ -16,7 +16,12 @@ def load(name):
 
 def sse_events():
     examples = load("sse.examples.json")
-    return [*examples["success_abstention"], examples["failure"], examples["cancelled"]]
+    return [
+        *examples["success_abstention"],
+        *examples["opt_in_progress"],
+        examples["failure"],
+        examples["cancelled"],
+    ]
 
 
 def send_message_schema():

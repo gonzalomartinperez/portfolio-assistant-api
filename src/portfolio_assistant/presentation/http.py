@@ -33,6 +33,7 @@ from portfolio_assistant.presentation.models import (
     StarterPrompt,
     SuggestionsView,
 )
+from portfolio_assistant.presentation.progress import ProgressPhases
 from portfolio_assistant.presentation.streaming import ClosingStreamingResponse, heartbeat
 
 log = logging.getLogger("portfolio_assistant")
@@ -279,8 +280,11 @@ async def execute_run(
     question: str,
     locale: str,
     context: PresentationContext | None = None,
+    *,
+    progress: bool = False,
 ) -> AsyncGenerator[str]:
     sequence = 0
+    phases = ProgressPhases() if progress else None
     started = time.perf_counter()
     terminal = "interrupted"
     first_delta_ms = None
@@ -293,15 +297,21 @@ async def execute_run(
                     first_delta_ms = round((time.perf_counter() - started) * 1000, 1)
                 if event.name in ("run.completed", "run.failed", "run.cancelled"):
                     terminal = event.name
-                yield sse(
-                    event.name,
-                    run_id,
-                    conversation_id,
-                    sequence,
-                    event.payload,
-                    clock=request.app.state.clock,
+                frames = (
+                    phases.expand(event.name, event.payload)
+                    if phases
+                    else iter(((event.name, event.payload),))
                 )
-                sequence += 1
+                for name, payload in frames:
+                    yield sse(
+                        name,
+                        run_id,
+                        conversation_id,
+                        sequence,
+                        payload,
+                        clock=request.app.state.clock,
+                    )
+                    sequence += 1
     finally:
         log.info(
             json.dumps(
@@ -328,6 +338,13 @@ def stream_message(
     body: SendMessage,
     idempotency_key: Annotated[str, Header(min_length=8, max_length=128)],
     session: Annotated[Session, Depends(mutation_session)],
+    x_assistant_progress: Annotated[
+        str | None,
+        Header(
+            description="`1` opts in to `run.progress` events (contract v1.1, ADR 020); "
+            "any other value is ignored.",
+        ),
+    ] = None,
 ) -> ClosingStreamingResponse:
     run_id = request.app.state.conversations.prepare_run(
         session,
@@ -352,6 +369,7 @@ def stream_message(
                 )
                 if body.context
                 else None,
+                progress=(x_assistant_progress or "").strip() == "1",
             )
         ),
         media_type="text/event-stream",

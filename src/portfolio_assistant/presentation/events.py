@@ -22,6 +22,10 @@ class StatusPayload(Payload):
     sources: int = Field(ge=0, le=5)
 
 
+class ProgressPayload(Payload):
+    phase: Literal["retrieving", "reading", "writing"]
+
+
 class DeltaPayload(Payload):
     text: str
 
@@ -59,6 +63,13 @@ class Status(Envelope):
     payload: StatusPayload
 
 
+class Progress(Envelope):
+    """Opt-in (`X-Assistant-Progress: 1`); never sent to v1 clients (ADR 020)."""
+
+    type: Literal["run.progress"]
+    payload: ProgressPayload
+
+
 class Delta(Envelope):
     type: Literal["message.delta"]
     payload: DeltaPayload
@@ -85,7 +96,7 @@ class Cancelled(Envelope):
 
 
 StreamEvent = Annotated[
-    Started | Status | Delta | MessageCompleted | Completed | Failed | Cancelled,
+    Started | Status | Progress | Delta | MessageCompleted | Completed | Failed | Cancelled,
     Field(discriminator="type"),
 ]
 events = TypeAdapter(StreamEvent)

@@ -221,6 +221,7 @@ def build_app(
             "X-CSRF-Token",
             "X-Session-Bootstrap",
             "Idempotency-Key",
+            "X-Assistant-Progress",
         ],
         expose_headers=["X-Run-ID", "X-Request-ID"],
     )
