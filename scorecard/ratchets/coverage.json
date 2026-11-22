@@ -3,17 +3,17 @@
   "metrics": {
     "coverage.line_rate": {
       "direction": "higher",
-      "value": null,
+      "value": 0.8873,
       "source": "not measurable yet: pytest-cov and coverage.xml are not wired (audit baseline 0.776)"
     },
     "coverage.branch_rate": {
       "direction": "higher",
-      "value": null,
+      "value": 0.8422,
       "source": "not measurable yet: no coverage.xml (audit baseline 0.687; floor 0.85)"
     },
     "mutation.score": {
       "direction": "higher",
-      "value": null,
+      "value": 84.43,
       "source": "placeholder: mutation testing lands later in M2"
     },
     "eval.golden_pass_rate": {

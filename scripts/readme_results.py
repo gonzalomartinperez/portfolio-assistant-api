@@ -105,7 +105,7 @@ def metric_rows(scorecard: dict) -> list[tuple[str, str | None, str]]:
             fmt("eval.golden_pass_rate", "{:.1%}"),
             "eval.golden_pass_rate",
         ),
-        ("Mutation score", fmt("mutation.score", "{:g}"), "mutation.score"),
+        ("Mutation score", fmt("mutation.score", "{:g}%"), "mutation.score"),
         ("Image size", image_result(scorecard), "image.api_bytes"),
     ]
 
