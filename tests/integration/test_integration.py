@@ -115,8 +115,12 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     )
     assert duplicate.status_code == 409
     assert second.get(f"/api/v1/runs/{sent.headers['x-run-id']}").status_code == 404
+    # A separate conversation, so the history assertions below still see one exchange.
+    progress_cid = first.post(
+        "/api/v1/conversations", headers=headers("http://localhost:3000", a), json={}
+    ).json()["id"]
     opted_in = first.post(
-        f"/api/v1/conversations/{cid}/messages/stream",
+        f"/api/v1/conversations/{progress_cid}/messages/stream",
         headers={
             **headers("http://localhost:3000", a),
             "Idempotency-Key": str(uuid4()),
