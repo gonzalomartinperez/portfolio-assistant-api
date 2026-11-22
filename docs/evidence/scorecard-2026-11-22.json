@@ -1,0 +1,562 @@
+{
+  "criteria": {
+    "D1.guard_violations": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D1.import_linter": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D1.negative_fixtures_pass": {
+      "axis": "D1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.dead_code": {
+      "axis": "D2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.max_cc": {
+      "axis": "D2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D2.mypy_errors": {
+      "axis": "D2",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D2.ruff_findings": {
+      "axis": "D2",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D3.branch_coverage": {
+      "axis": "D3",
+      "rule": ">= 0.85",
+      "status": "fail",
+      "value": 0.8422
+    },
+    "D3.diff_coverage": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.flaky_30d": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.mutation_score": {
+      "axis": "D3",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D3.tests_failing": {
+      "axis": "D3",
+      "rule": "== 0",
+      "status": "pass",
+      "value": 0
+    },
+    "D4.build_once_digest": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.pr_p50": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.pr_p95": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D4.single_dependabot_pr": {
+      "axis": "D4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.codeql_open_high": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.pinned_actions": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.sbom_attested": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D5.zizmor_high": {
+      "axis": "D5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.answer_cost_p95": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.error_rate": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.image_within_ratchet": {
+      "axis": "D6",
+      "rule": "bytes <= infra/docker/app/image.json",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.rss_growth": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D6.ttfe_p95_stubbed": {
+      "axis": "D6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.health_contract": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.log_redaction_test": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D7.request_id_propagation_test": {
+      "axis": "D7",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.adr_index": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.changelog_current": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.links_ok": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "D8.readme_headings": {
+      "axis": "D8",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P1.problem_schema_valid": {
+      "axis": "P1",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P2.ttft_budget": {
+      "axis": "P2",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P3.golden_pass": {
+      "axis": "P3",
+      "rule": "== 1.0",
+      "status": "unmet",
+      "value": null
+    },
+    "P4.oasdiff_clean": {
+      "axis": "P4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P4.schemathesis": {
+      "axis": "P4",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P5.consumer_compile": {
+      "axis": "P5",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    },
+    "P6.standards_drift": {
+      "axis": "P6",
+      "rule": "no collector yet",
+      "status": "unmet",
+      "value": null
+    }
+  },
+  "generated": "2026-11-22T23:44:39+00:00",
+  "judged": {
+    "scores": {
+      "D1": 94,
+      "D2": 88,
+      "D3": 89,
+      "D4": 84,
+      "D5": 88,
+      "D6": 85,
+      "D7": 90,
+      "D8": 88,
+      "P1": 94,
+      "P2": 90,
+      "P3": 72,
+      "P4": 93,
+      "P5": 80,
+      "P6": 84
+    },
+    "source": "2026-11-22_m6.md",
+    "status": "present"
+  },
+  "metrics": {
+    "coverage.branch_rate": {
+      "source": "coverage.xml",
+      "status": "ok",
+      "value": 0.8422
+    },
+    "coverage.line_rate": {
+      "source": "coverage.xml",
+      "status": "ok",
+      "value": 0.8873
+    },
+    "eval.golden_pass_rate": {
+      "source": "artifacts/golden.json",
+      "status": "missing",
+      "value": null
+    },
+    "image.api_bytes": {
+      "source": "artifacts/image-sizes.json",
+      "status": "missing",
+      "value": null
+    },
+    "image.worker_bytes": {
+      "source": "artifacts/image-sizes.json",
+      "status": "missing",
+      "value": null
+    },
+    "judged.D1": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 94
+    },
+    "judged.D2": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 88
+    },
+    "judged.D3": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 89
+    },
+    "judged.D4": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 84
+    },
+    "judged.D5": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 88
+    },
+    "judged.D6": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 85
+    },
+    "judged.D7": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 90
+    },
+    "judged.D8": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 88
+    },
+    "judged.P1": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 94
+    },
+    "judged.P2": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 90
+    },
+    "judged.P3": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 72
+    },
+    "judged.P4": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 93
+    },
+    "judged.P5": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 80
+    },
+    "judged.P6": {
+      "source": "docs/evidence/scores/2026-11-22_m6.md",
+      "status": "ok",
+      "value": 84
+    },
+    "mutation.score": {
+      "source": "artifacts/mutation.json (placeholder)",
+      "status": "ok",
+      "value": 84.43
+    },
+    "static.mypy_errors": {
+      "source": "artifacts/mypy.txt",
+      "status": "ok",
+      "value": 0
+    },
+    "static.mypy_strict_app_errors": {
+      "source": "artifacts/mypy-strict-app.txt",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.ANN": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 95
+    },
+    "static.ruff_backlog.ARG": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 27
+    },
+    "static.ruff_backlog.ASYNC": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 1
+    },
+    "static.ruff_backlog.B": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.C4": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 4
+    },
+    "static.ruff_backlog.D": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 628
+    },
+    "static.ruff_backlog.DTZ": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 6
+    },
+    "static.ruff_backlog.E": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 3
+    },
+    "static.ruff_backlog.ERA": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 1
+    },
+    "static.ruff_backlog.F": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.FAST": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 2
+    },
+    "static.ruff_backlog.FURB": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.G": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.I": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.LOG": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.N": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.PERF": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 19
+    },
+    "static.ruff_backlog.PIE": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.PT": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 202
+    },
+    "static.ruff_backlog.PTH": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 9
+    },
+    "static.ruff_backlog.RET": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.RUF": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 30
+    },
+    "static.ruff_backlog.S": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 187
+    },
+    "static.ruff_backlog.SIM": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 2
+    },
+    "static.ruff_backlog.T20": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 79
+    },
+    "static.ruff_backlog.TC": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 160
+    },
+    "static.ruff_backlog.TRY": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 13
+    },
+    "static.ruff_backlog.UP": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog.W": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 0
+    },
+    "static.ruff_backlog_total": {
+      "source": "artifacts/ruff-backlog.json",
+      "status": "ok",
+      "value": 1468
+    },
+    "static.ruff_findings": {
+      "source": "artifacts/ruff.json",
+      "status": "ok",
+      "value": 0
+    },
+    "tests.integration.failures": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration.skipped": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration.total": {
+      "source": "artifacts/integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.integration_share": {
+      "source": "unit.xml and integration.xml",
+      "status": "missing",
+      "value": null
+    },
+    "tests.unit.failures": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 0
+    },
+    "tests.unit.skipped": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 8
+    },
+    "tests.unit.total": {
+      "source": "artifacts/unit.xml",
+      "status": "ok",
+      "value": 2522
+    }
+  },
+  "schema": 1
+}

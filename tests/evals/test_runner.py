@@ -236,7 +236,8 @@ def test_item_context_approves_allowlisted_hosts_and_canonical_urls():
     flag = make_item(tools={"host_allowed": True})
     assert item_context(flag, only_docs).approved_urls == frozenset({PINNED})
     base = GradingContext(approved_urls=frozenset({"https://x.example"}))
-    assert "https://x.example" in item_context(plain, only_docs, base).approved_urls
+    # A set comparison, not a substring check (CodeQL py/incomplete-url-substring-sanitization).
+    assert item_context(plain, only_docs, base).approved_urls >= {"https://x.example"}
 
 
 def test_recording_provider_passes_text_and_usage_through():
