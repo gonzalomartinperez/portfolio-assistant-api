@@ -68,7 +68,12 @@
     "type": "run.failed",
     "sequence": 3,
     "payload": {
-      "code": "generation_failed"
+      "code": "generation_failed",
+      "retryable": true,
+      "messages": {
+        "en": "The answer could not be completed. You can ask again.",
+        "es": "No se pudo completar la respuesta. Puedes volver a preguntar."
+      }
     }
   },
   "cancelled": {

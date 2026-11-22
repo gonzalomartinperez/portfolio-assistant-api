@@ -216,3 +216,26 @@ def test_sse_sample_renders_v1_and_opted_in_streams(tmp_path):
     sample = json.loads(out.read_text())
     assert all("run.progress" not in text for text in sample["v1"].values())
     assert all("event: run.progress" in text for text in sample["opt_in"].values())
+
+
+@pytest.mark.parametrize(
+    ("code", "retryable"),
+    [
+        ("generation_failed", True),
+        ("provider_unavailable", True),
+        ("budget_exhausted", False),
+        ("knowledge_updating", True),
+        ("unlisted_internal_code", True),
+    ],
+)
+def test_run_failed_carries_retry_advice_and_bilingual_messages(code, retryable):
+    events = decoded(
+        collect([("run.started", {"state": "running"}), ("run.failed", {"code": code})])
+    )
+    payload = events[-1]["payload"]
+    jsonschema.Draft202012Validator(SCHEMA).validate(events[-1])
+    assert payload["code"] == code
+    assert payload["retryable"] is retryable
+    assert payload["messages"]["en"]
+    assert payload["messages"]["es"]
+    assert payload["messages"]["en"] != payload["messages"]["es"]

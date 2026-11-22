@@ -323,6 +323,29 @@
         "code": {
           "title": "Code",
           "type": "string"
+        },
+        "messages": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProblemMessages"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "retryable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retryable"
         }
       },
       "required": [
@@ -412,6 +435,27 @@
       "additionalProperties": false,
       "properties": {},
       "title": "Payload",
+      "type": "object"
+    },
+    "ProblemMessages": {
+      "additionalProperties": false,
+      "properties": {
+        "en": {
+          "minLength": 1,
+          "title": "En",
+          "type": "string"
+        },
+        "es": {
+          "minLength": 1,
+          "title": "Es",
+          "type": "string"
+        }
+      },
+      "required": [
+        "en",
+        "es"
+      ],
+      "title": "ProblemMessages",
       "type": "object"
     },
     "Progress": {

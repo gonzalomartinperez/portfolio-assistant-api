@@ -33,6 +33,7 @@ from portfolio_assistant.presentation.models import (
     StarterPrompt,
     SuggestionsView,
 )
+from portfolio_assistant.presentation.problems import stream_failure
 from portfolio_assistant.presentation.progress import ProgressPhases
 from portfolio_assistant.presentation.streaming import ClosingStreamingResponse, heartbeat
 
@@ -272,6 +273,8 @@ def sse(
     *,
     clock: Clock,
 ) -> str:
+    if event_type == "run.failed":
+        payload = {**payload, **stream_failure(str(payload.get("code", "")))}
     body = events.validate_python(
         {
             "type": event_type,
