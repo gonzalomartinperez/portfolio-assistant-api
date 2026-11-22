@@ -23,7 +23,7 @@ SBOM_PREDICATE = "https://spdx.dev/Document"
 PROVENANCE_PREDICATES = ("https://slsa.dev/provenance/v0.2", "https://slsa.dev/provenance/v1")
 ATTESTATION_KIND = "vnd.docker.reference.type"
 ATTESTED_DIGEST = "vnd.docker.reference.digest"
-JSON_LIMIT = 64 * 1024 * 1024
+JSON_LIMIT = 4 * 1024 * 1024
 
 
 class CandidateError(ValueError):
@@ -50,16 +50,16 @@ def _read_archive(path: Path) -> tuple[dict, dict[str, bytes], set[str]]:
             if not match:
                 continue
             digest = hashlib.sha256()
-            head = b""
+            chunks: list[bytes] | None = [] if member.size <= JSON_LIMIT else None
             while chunk := handle.read(1024 * 1024):
                 digest.update(chunk)
-                if member.size <= JSON_LIMIT:
-                    head += chunk
+                if chunks is not None:
+                    chunks.append(chunk)
             if digest.hexdigest() != match.group(1):
                 raise CandidateError(f"blob {name} does not match its digest")
             blobs.add("sha256:" + match.group(1))
-            if member.size <= JSON_LIMIT:
-                documents["sha256:" + match.group(1)] = head
+            if chunks and chunks[0][:1] == b"{":
+                documents["sha256:" + match.group(1)] = b"".join(chunks)
     if index is None:
         raise CandidateError("archive has no index.json")
     return index, documents, blobs
@@ -82,8 +82,36 @@ def _statement(manifest: dict, predicate_types: tuple[str, ...], documents: dict
     raise CandidateError(f"attestation missing: {' or '.join(predicate_types)}")
 
 
-def verify(path: Path, expected_digest: str, revision: str, platform: str = "linux/amd64") -> dict:
+def _reachable(manifest: dict, blobs: set[str]) -> None:
+    """Every config and layer a manifest names must be a hash-verified blob of the archive."""
+    for descriptor in [manifest["config"], *manifest.get("layers", [])]:
+        if descriptor["digest"] not in blobs:
+            raise CandidateError(f"descriptor {descriptor['digest']} is missing from the archive")
+
+
+def verify(
+    path: Path,
+    expected_digest: str,
+    revision: str,
+    tested_layers: list[str] | None = None,
+    platform: str = "linux/amd64",
+) -> dict:
     """Return the verified identity of the archive or raise CandidateError."""
+    try:
+        return _verify(path, expected_digest, revision, tested_layers, platform)
+    except (KeyError, TypeError, AttributeError, ValueError) as error:
+        if isinstance(error, CandidateError):
+            raise
+        raise CandidateError(f"malformed release candidate: {error!r}") from error
+
+
+def _verify(
+    path: Path,
+    expected_digest: str,
+    revision: str,
+    tested_layers: list[str] | None,
+    platform: str,
+) -> dict:
     if not DIGEST.fullmatch(expected_digest):
         raise CandidateError("expected digest must be sha256:<64 hex>")
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
@@ -114,10 +142,11 @@ def verify(path: Path, expected_digest: str, revision: str, platform: str = "lin
         raise CandidateError(f"expected exactly one {platform} image, found {len(images)}")
     image_digest = images[0]["digest"]
     image = _document(image_digest, documents)
-    for layer in image.get("layers", []):
-        if layer["digest"] not in blobs:
-            raise CandidateError(f"layer {layer['digest']} is missing from the archive")
+    _reachable(image, blobs)
     config = _document(image["config"]["digest"], documents)
+    diff_ids = config.get("rootfs", {}).get("diff_ids", [])
+    if tested_layers is not None and diff_ids != tested_layers:
+        raise CandidateError("release-candidate layers differ from the tested image's layers")
     labels = config.get("config", {}).get("Labels") or {}
     if labels.get("org.opencontainers.image.revision") != revision:
         raise CandidateError("image revision label does not match the tested commit")
@@ -125,6 +154,7 @@ def verify(path: Path, expected_digest: str, revision: str, platform: str = "lin
     if len(bound) != 1:
         raise CandidateError("expected exactly one attestation manifest for the image")
     attestation = _document(bound[0]["digest"], documents)
+    _reachable(attestation, blobs)
     sbom = _statement(attestation, (SBOM_PREDICATE,), documents)
     provenance = _statement(attestation, PROVENANCE_PREDICATES, documents)
     for statement in (sbom, provenance):
@@ -142,6 +172,7 @@ def verify(path: Path, expected_digest: str, revision: str, platform: str = "lin
         "revision": revision,
         "version": labels.get("org.opencontainers.image.version"),
         "layers": len(image.get("layers", [])),
+        "layers_match_tested_image": tested_layers is not None,
         "sbom": {"predicate_type": SBOM_PREDICATE, "packages": len(packages)},
         "provenance": {"predicate_type": provenance["predicateType"]},
         "registry_push": False,
@@ -155,8 +186,16 @@ def main() -> None:
     parser.add_argument("--revision", required=True)
     parser.add_argument("--name", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--tested-layers",
+        required=True,
+        help="JSON list of the tested image's layer diff IDs (docker image inspect .RootFS.Layers)",
+    )
     args = parser.parse_args()
-    result = {"name": args.name, **verify(args.archive, args.digest, args.revision)}
+    tested = json.loads(args.tested_layers)
+    if not isinstance(tested, list) or not tested or not all(DIGEST.fullmatch(d) for d in tested):
+        raise CandidateError("--tested-layers must be a non-empty JSON list of sha256 digests")
+    result = {"name": args.name, **verify(args.archive, args.digest, args.revision, tested)}
     existing = json.loads(args.output.read_text()) if args.output.exists() else {"images": []}
     existing["images"] = [i for i in existing["images"] if i["name"] != args.name] + [result]
     args.output.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n")

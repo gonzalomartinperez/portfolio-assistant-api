@@ -89,7 +89,8 @@ them on day one (OD-64).
 
 | Name | Consumer | Required in production | Notes |
 |---|---|---|---|
-| `DATABASE_URL` | api, worker, migrations | yes | Contains the `assistant_app` password; never the default `assistant` |
+| `DATABASE_URL` (runtime) | api, worker | yes | Runtime role password; never the default `assistant` |
+| `DATABASE_URL` (migration) | `assistant-migrate` only | yes | Schema-owner role, in the file named by `MIGRATION_ENV_FILE`; mounted only for operator migration commands, never in the API |
 | `POSTGRES_PASSWORD` | PostgreSQL container (first initialization) | yes | Or `POSTGRES_PASSWORD_FILE`, readable by UID 70 |
 | `NEO4J_PASSWORD` | api, worker, indexer | yes, until ADR 018 retires Neo4j | The Neo4j container receives the same value through `NEO4J_AUTH` |
 | `RATE_HASH_KEY` | api | yes | Random, at least 32 characters |
@@ -112,13 +113,16 @@ Artifacts per run: `release-candidate-identity` (`release-candidate.json` with i
 digests and SBOM package counts, plus `SHA256SUMS`; 90 days) on every run, and `release-candidate-images`
 (the two `*.oci.tar` archives; 30 days) on pushes to `develop` or `main` and on manual dispatch. The archives
 are rebuilt from the same Dockerfile, commit, build arguments and BuildKit cache as the `:ci` images that the
-structure, Dockle, Trivy, size, streaming and proxy checks tested in that job. The digest to pin is the one in
-`release-candidate.json`; the local `:ci` tags have no registry digest.
+structure, Dockle, Trivy, size, streaming and proxy checks tested in that job, and the verifier fails unless
+each archive's layer list (`rootfs.diff_ids`) equals the tested image's layers: the filesystem that ships is the
+filesystem that was tested. Only the image config (timestamps, attestations) differs. The digest to pin is the
+one in `release-candidate.json`; the local `:ci` tags have no registry digest.
 
 On day one vps-ops downloads the archives of the approved `develop` or `main` run, checks `SHA256SUMS`,
 re-runs `python -m scripts.release_candidate` with the recorded digest and commit, and only then copies the
-archive to the registry with its digest preserved (for example `skopeo copy --preserve-digests
-oci-archive:api.oci.tar docker://...`). It pins
+archive to the registry with its digest preserved (for example `skopeo copy --all --preserve-digests
+oci-archive:api.oci.tar docker://...`, so the index and its attestations travel with the image) and checks that
+the registry reports the same index digest. It pins
 the index digest from `release-candidate.json` in `releases/production.lock`.
 
 ## Services and migrations

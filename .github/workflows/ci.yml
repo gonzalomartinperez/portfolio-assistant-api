@@ -522,6 +522,8 @@ jobs:
     # Release candidate (M6-6, OD-64 MV-R): the same targets exported as OCI archives with an SPDX SBOM
     # and SLSA provenance, never pushed to a registry (DR-13). The verifier binds each archive to the
     # digest BuildKit reported and to this commit; push builds on develop and main keep the archives.
+    - name: Prepare the release-candidate directory
+      run: mkdir -p artifacts/release-candidate
     - name: Build the API release candidate with SBOM and provenance
       id: rc-api
       uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
@@ -532,6 +534,8 @@ jobs:
         platforms: linux/amd64
         push: false
         outputs: type=oci,dest=artifacts/release-candidate/api.oci.tar
+        # The exporter derives the attestation subjects from the image name.
+        tags: portfolio-assistant-api:rc
         sbom: generator=docker/buildkit-syft-scanner:1.9.0@sha256:e930c2697be77cb7271d316ecfa78768b5eac73de3b16018ed38eb0ea0b5a7cb
         provenance: mode=max
         cache-from: type=gha,scope=api-linux-amd64
@@ -550,6 +554,7 @@ jobs:
         platforms: linux/amd64
         push: false
         outputs: type=oci,dest=artifacts/release-candidate/worker.oci.tar
+        tags: portfolio-assistant-api-worker:rc
         sbom: generator=docker/buildkit-syft-scanner:1.9.0@sha256:e930c2697be77cb7271d316ecfa78768b5eac73de3b16018ed38eb0ea0b5a7cb
         provenance: mode=max
         labels: org.opencontainers.image.revision=${{ github.sha }}
@@ -559,10 +564,14 @@ jobs:
           CREATED=${{ env.IMAGE_CREATED }}
     - name: Verify release-candidate digests, SBOM and provenance
       run: |
+        api_layers=$(docker image inspect portfolio-assistant-api:ci --format '{{json .RootFS.Layers}}')
+        worker_layers=$(docker image inspect portfolio-assistant-api-worker:ci --format '{{json .RootFS.Layers}}')
         uv run python -m scripts.release_candidate --name api --archive artifacts/release-candidate/api.oci.tar \
-          --digest "$API_DIGEST" --revision "$REVISION" --output artifacts/release-candidate/release-candidate.json
+          --digest "$API_DIGEST" --revision "$REVISION" --tested-layers "$api_layers" \
+          --output artifacts/release-candidate/release-candidate.json
         uv run python -m scripts.release_candidate --name worker --archive artifacts/release-candidate/worker.oci.tar \
-          --digest "$WORKER_DIGEST" --revision "$REVISION" --output artifacts/release-candidate/release-candidate.json
+          --digest "$WORKER_DIGEST" --revision "$REVISION" --tested-layers "$worker_layers" \
+          --output artifacts/release-candidate/release-candidate.json
         (cd artifacts/release-candidate && sha256sum api.oci.tar worker.oci.tar > SHA256SUMS)
       env:
         API_DIGEST: ${{ steps.rc-api.outputs.digest }}
