@@ -135,6 +135,16 @@ increasing `sequence` starting at zero, UTC `timestamp` and a typed `payload`.
 | `run.failed` | `{"code":"generation_failed"}` or budget code | Failure terminal |
 | `run.cancelled` | `{}` | Cancellation terminal; may be first if claim was cancelled |
 
+### Opt-in progress (contract v1.1)
+
+Send `X-Assistant-Progress: 1` on the stream request to also receive `run.progress` events
+([ADR 020](../decisions/020-opt-in-run-progress.md)); without the header the stream is exactly v1.
+The payload is `{"phase":"retrieving"|"reading"|"writing"}`: `retrieving` follows `run.started`,
+`reading` follows `run.status`, and `writing` comes before the first `message.delta` (or before
+`message.completed` when there are no deltas). Progress events take sequence numbers like any other
+event, never follow the terminal and carry no internal state. Example:
+`opt_in_progress` in [`contracts/sse.examples.json`](../../contracts/sse.examples.json).
+
 Exactly one terminal is sent when delivery is possible. Disconnects cannot receive
 a terminal frame. Partial text is transient, not a saved assistant message. Storage
 failure may delay persisted interruption until lease recovery. Cancel is checked

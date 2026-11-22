@@ -402,6 +402,75 @@
       "title": "Payload",
       "type": "object"
     },
+    "Progress": {
+      "additionalProperties": false,
+      "description": "Opt-in (`X-Assistant-Progress: 1`); never sent to v1 clients (ADR 020).",
+      "properties": {
+        "conversation_id": {
+          "format": "uuid",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ProgressPayload"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "run.progress",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "conversation_id",
+        "sequence",
+        "timestamp",
+        "type",
+        "payload"
+      ],
+      "title": "Progress",
+      "type": "object"
+    },
+    "ProgressPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "enum": [
+            "retrieving",
+            "reading",
+            "writing"
+          ],
+          "title": "Phase",
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase"
+      ],
+      "title": "ProgressPayload",
+      "type": "object"
+    },
     "Started": {
       "additionalProperties": false,
       "properties": {
@@ -546,6 +615,7 @@
       "run.cancelled": "#/$defs/Cancelled",
       "run.completed": "#/$defs/Completed",
       "run.failed": "#/$defs/Failed",
+      "run.progress": "#/$defs/Progress",
       "run.started": "#/$defs/Started",
       "run.status": "#/$defs/Status"
     },
@@ -557,6 +627,9 @@
     },
     {
       "$ref": "#/$defs/Status"
+    },
+    {
+      "$ref": "#/$defs/Progress"
     },
     {
       "$ref": "#/$defs/Delta"

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
@@ -106,6 +107,7 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     assert sent.status_code == 200
     assert "event: run.completed" in sent.text
     assert "event: message.completed" in sent.text
+    assert "run.progress" not in sent.text  # v1 clients never see the opt-in event (ADR 020)
     duplicate = first.post(
         f"/api/v1/conversations/{cid}/messages/stream",
         headers={**headers("http://localhost:3000", a), "Idempotency-Key": key},
@@ -113,6 +115,31 @@ def test_sessions_stream_idempotency_and_ownership(client_factory):
     )
     assert duplicate.status_code == 409
     assert second.get(f"/api/v1/runs/{sent.headers['x-run-id']}").status_code == 404
+    opted_in = first.post(
+        f"/api/v1/conversations/{cid}/messages/stream",
+        headers={
+            **headers("http://localhost:3000", a),
+            "Idempotency-Key": str(uuid4()),
+            "X-Assistant-Progress": "1",
+        },
+        json=payload,
+    )
+    assert opted_in.status_code == 200
+    phases = [
+        json.loads(line[6:])["payload"]["phase"]
+        for line in opted_in.text.splitlines()
+        if line.startswith("data: ") and '"run.progress"' in line
+    ]
+    assert phases == ["retrieving", "reading", "writing"]
+    progress_preflight = first.options(
+        "/api/v1/conversations/x/messages/stream",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "x-assistant-progress,idempotency-key",
+        },
+    )
+    assert progress_preflight.status_code == 200
     allowed_preflight = first.options(
         "/api/v1/conversations",
         headers={

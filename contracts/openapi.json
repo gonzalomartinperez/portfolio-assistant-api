@@ -2014,6 +2014,28 @@
               "title": "Idempotency-Key",
               "type": "string"
             }
+          },
+          {
+            "description": "Send `1` to receive `run.progress` events (contract v1.1, ADR 020).",
+            "in": "header",
+            "name": "x-assistant-progress",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "0",
+                    "1"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Send `1` to receive `run.progress` events (contract v1.1, ADR 020).",
+              "title": "X-Assistant-Progress"
+            }
           }
         ],
         "requestBody": {

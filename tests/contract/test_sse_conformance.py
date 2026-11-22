@@ -52,24 +52,45 @@ def request_for(script):
     )
 
 
-def collect(script):
+def collect(script, *, progress=False):
     async def run():
-        stream = execute_run(request_for(script), uuid4(), uuid4(), "q", "en")
+        stream = execute_run(request_for(script), uuid4(), uuid4(), "q", "en", progress=progress)
         return [frame async for frame in stream]
 
     return asyncio.run(run())
 
 
-def test_event_set_is_the_closed_v1_vocabulary():
-    assert EVENT_NAMES == {
-        "run.started",
-        "run.status",
-        "message.delta",
-        "message.completed",
-        "run.completed",
-        "run.failed",
-        "run.cancelled",
-    }
+OPTED_IN_ORDER = [
+    "run.started",
+    "run.progress",
+    "run.status",
+    "run.progress",
+    "run.progress",
+    "message.delta",
+    "message.delta",
+    "message.completed",
+    "run.completed",
+]
+
+
+def decoded(frames):
+    return [json.loads(FRAME.fullmatch(frame)["data"]) for frame in frames]
+
+
+V1_EVENTS = {
+    "run.started",
+    "run.status",
+    "message.delta",
+    "message.completed",
+    "run.completed",
+    "run.failed",
+    "run.cancelled",
+}
+OPT_IN = {"run.progress"}
+
+
+def test_event_set_is_the_closed_v1_vocabulary_plus_opt_in_progress():
+    assert EVENT_NAMES == V1_EVENTS | OPT_IN
 
 
 @pytest.mark.parametrize("name", SCRIPTS)
@@ -87,6 +108,61 @@ def test_frames_are_well_formed_schema_valid_and_ordered(name):
         types.append(data["type"])
     assert types[0] == "run.started"
     assert [t for t in types if t in TERMINAL] == [types[-1]]
+
+
+@pytest.mark.parametrize("name", SCRIPTS)
+def test_v1_streams_never_carry_progress(name):
+    events = decoded(collect(SCRIPTS[name]))
+    assert [event["type"] for event in events] == [step for step, _ in SCRIPTS[name]]
+    assert {event["type"] for event in events} <= V1_EVENTS
+
+
+def test_opted_in_stream_carries_ordered_schema_valid_progress():
+    validator = jsonschema.Draft202012Validator(SCHEMA)
+    events = decoded(collect(SCRIPTS["success"], progress=True))
+    for event in events:
+        validator.validate(event)
+    assert [event["type"] for event in events] == OPTED_IN_ORDER
+    assert [event["sequence"] for event in events] == list(range(len(events)))
+    phases = [event["payload"]["phase"] for event in events if event["type"] == "run.progress"]
+    assert phases == ["retrieving", "reading", "writing"]
+
+
+@pytest.mark.parametrize("name", ["failure", "cancelled"])
+def test_opted_in_terminal_stays_last_and_unique(name):
+    types = [event["type"] for event in decoded(collect(SCRIPTS[name], progress=True))]
+    assert types == ["run.started", "run.progress", SCRIPTS[name][-1][0]]
+
+
+def test_writing_precedes_a_completed_message_without_deltas():
+    script = [
+        ("run.started", {"state": "running"}),
+        ("message.completed", MESSAGE),
+        ("run.completed", {"state": "completed"}),
+    ]
+    types = [event["type"] for event in decoded(collect(script, progress=True))]
+    assert types == [
+        "run.started",
+        "run.progress",
+        "run.progress",
+        "message.completed",
+        "run.completed",
+    ]
+
+
+def test_progress_payload_is_closed():
+    from portfolio_assistant.presentation.events import events
+
+    base = {
+        "type": "run.progress",
+        "run_id": str(uuid4()),
+        "conversation_id": str(uuid4()),
+        "sequence": 0,
+        "timestamp": "2026-11-22T00:00:00Z",
+    }
+    for payload in ({"phase": "thinking"}, {"phase": "reading", "tool": "x"}):
+        with pytest.raises(ValidationError):
+            events.validate_python({**base, "payload": payload})
 
 
 def test_unknown_event_name_cannot_reach_the_wire():
