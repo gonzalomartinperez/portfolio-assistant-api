@@ -84,7 +84,9 @@ need no change.
 - Show `messages[locale]` to visitors. The text never contains request input.
 - `retryable` says whether repeating the same request can succeed; `retry_after_s` (also sent as
   `Retry-After`) is advice in seconds, `null` when unknown. For `rate_limited` it is the hourly window.
-- `X-Request-ID` equals `request_id`; quote it when reporting a problem.
+- `X-Request-ID` equals `request_id`; quote it when reporting a problem. When the immediate peer is in
+  `TRUSTED_PROXY_IPS` and sends an `X-Request-ID` of 32 hex digits or a canonical UUID, the API reuses it
+  (lowercased, hyphens removed), so proxy and API logs share one ID; any other value or peer gets a fresh ID.
 - In-stream failures stay the `run.failed` SSE event; since v1.1 its payload also carries `retryable`
   and `messages` (`en`, `es`). `retryable` invites an explicit visitor retry, never an automatic resubmit;
   an unlisted code is not retryable.
