@@ -111,7 +111,27 @@ def test_unknown_codes_never_reach_the_body():
 
 @pytest.fixture
 def client():
-    return TestClient(build_app())
+    return TestClient(build_app(), headers={"Accept": PROBLEM_MEDIA_TYPE})
+
+
+def test_v1_clients_keep_application_json_with_the_same_body():
+    legacy = TestClient(build_app()).get("/api/v1/session")
+    assert legacy.status_code == 401
+    assert legacy.headers["content-type"] == "application/json"
+    assert "Accept" in legacy.headers["vary"] and "Origin" in legacy.headers["vary"]
+    body = legacy.json()
+    error_body_validator().validate(body)
+    assert body["code"] == "session_required" and set(body) >= V1_MEMBERS
+
+
+def test_raised_status_is_preserved_and_unknown_text_dropped():
+    from portfolio_assistant.presentation.problems import response
+
+    rendered = response("I'm a teapot: internal detail", 418, "b" * 32, PROBLEM_MEDIA_TYPE)
+    body = json.loads(rendered.body)
+    assert rendered.status_code == body["status"] == 418
+    assert body["code"] == "invalid_request"
+    assert "teapot" not in rendered.body.decode()
 
 
 def assert_problem(response, code, status):
@@ -179,5 +199,78 @@ def test_every_documented_error_offers_problem_json():
         for method, operation in operations.items()
         for status, response in operation["responses"].items()
         if int(status) >= 400 and PROBLEM_MEDIA_TYPE not in response.get("content", {})
+    ]
+    assert not missing
+
+
+def body_limit_call(receive, accept=PROBLEM_MEDIA_TYPE, maximum=32, timeout=10.0):
+    import asyncio
+
+    from portfolio_assistant.presentation.middleware import BodyLimit
+
+    sent = []
+
+    async def app(scope, receive, send):  # pragma: no cover - must not be reached
+        raise AssertionError("the guarded app was invoked")
+
+    async def send(message):
+        sent.append(message)
+
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/x",
+        "headers": [(b"accept", accept.encode())],
+    }
+    asyncio.run(BodyLimit(app, maximum=maximum, timeout=timeout)(scope, receive, send))
+    headers = {name.decode(): value.decode() for name, value in sent[0]["headers"]}
+    return sent[0]["status"], headers, json.loads(sent[1]["body"])
+
+
+def test_body_limit_oversize_is_a_problem_document():
+    async def receive():
+        return {"type": "http.request", "body": b"a" * 64, "more_body": False}
+
+    status, headers, body = body_limit_call(receive)
+    assert status == 422 and body["code"] == "invalid_request"
+    assert headers["content-type"] == PROBLEM_MEDIA_TYPE
+    assert headers["x-request-id"] == body["request_id"]
+    error_body_validator().validate(body)
+    assert "aaaa" not in json.dumps(body)
+
+
+def test_body_limit_timeout_is_a_retryable_problem_document():
+    import asyncio
+
+    async def receive():
+        await asyncio.sleep(1)
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    status, headers, body = body_limit_call(receive, accept="application/json", timeout=0.01)
+    assert status == 408 and body["code"] == "request_timeout" and body["retryable"] is True
+    assert headers["content-type"] == "application/json"
+    assert headers["cache-control"] == "no-store"
+    assert headers["x-request-id"] == body["request_id"]
+    error_body_validator().validate(body)
+
+
+def test_openapi_override_is_idempotent():
+    app = build_app()
+    first = app.openapi()
+    assert app.openapi() is first
+    responses = first["paths"]["/healthz"]["get"]["responses"]
+    assert PROBLEM_MEDIA_TYPE in responses["422"]["content"]
+
+
+def test_middleware_statuses_are_documented_on_body_routes():
+    """The origin guard (403) and the body guard (408) can answer every POST, PATCH and DELETE."""
+    openapi = json.loads((ROOT / "contracts/openapi.json").read_text())
+    missing = [
+        f"{method.upper()} {path} {status}"
+        for path, operations in openapi["paths"].items()
+        for method, operation in operations.items()
+        if method in ("post", "patch", "delete")
+        for status in ("403", "408")
+        if status not in operation["responses"]
     ]
     assert not missing

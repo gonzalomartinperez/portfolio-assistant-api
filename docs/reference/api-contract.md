@@ -53,9 +53,11 @@ bounds use 429; dependency availability uses 503. See OpenAPI for exact shapes.
 
 ## Errors (contract v1.1, RFC 9457)
 
-Every error response is an RFC 9457 problem document served as `application/problem+json`
-([ADR 030](../decisions/030-rfc-9457-problem-documents.md)). The v1 members `code`, `message` and
-`request_id` are unchanged, so v1 clients keep working; clients that ignore unknown members need no change.
+Every error response is an RFC 9457 problem document
+([ADR 030](../decisions/030-rfc-9457-problem-documents.md)). Send `Accept: application/problem+json` to
+receive it with that content type; other clients get the same body as `application/json` (`Vary: Accept`).
+The v1 members `code`, `message` and `request_id` are unchanged, so clients that ignore unknown members
+need no change.
 
 ```json
 {

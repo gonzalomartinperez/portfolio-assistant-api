@@ -22,7 +22,9 @@ log = logging.getLogger("portfolio_assistant")
 
 
 def error(request: Request, code: str, status: int) -> JSONResponse:
-    return problems.response(code, status, request.state.request_id)
+    return problems.response(
+        code, status, request.state.request_id, request.headers.get("accept", "")
+    )
 
 
 def install(app: FastAPI, origins: Collection[str]) -> None:
@@ -34,7 +36,7 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         response = error(request, str(exc.detail), exc.status_code)
-        for name, value in (exc.headers or {}).items():  # keeps Allow and WWW-Authenticate
+        for name, value in (exc.headers or {}).items():  # keeps Allow on 405
             response.headers.setdefault(name, value)
         return response
 
@@ -78,6 +80,13 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
         return response
 
 
+def accept(scope: Scope) -> str:
+    return next(
+        (value.decode("latin-1") for name, value in scope.get("headers", []) if name == b"accept"),
+        "",
+    )
+
+
 class BodyLimit:
     def __init__(self, app: ASGIApp, maximum: int = 32768, timeout: float = 10) -> None:
         self.app = app
@@ -107,7 +116,7 @@ class BodyLimit:
                     message = await receive()
             except TimeoutError:
                 identifier = uuid4().hex
-                response = problems.response("request_timeout", 408, identifier)
+                response = problems.response("request_timeout", 408, identifier, accept(scope))
                 response.headers["X-Request-ID"] = identifier
                 response.headers["Cache-Control"] = "no-store"
                 await response(scope, receive, send)
@@ -117,7 +126,7 @@ class BodyLimit:
             size += len(message.get("body", b""))
             if size > maximum:
                 request_id = uuid4().hex
-                response = problems.response("invalid_request", 422, request_id)
+                response = problems.response("invalid_request", 422, request_id, accept(scope))
                 response.headers["X-Request-ID"] = request_id
                 await response(scope, receive, send)
                 return

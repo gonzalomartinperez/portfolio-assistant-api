@@ -84,7 +84,7 @@ def enabled(request: Request) -> None:
     "/api/v1/analytics/events",
     status_code=204,
     operation_id="recordProductEvent",
-    responses={status: {"model": ErrorBody} for status in (400, 404, 415, 429)},
+    responses={status: {"model": ErrorBody} for status in (400, 403, 404, 408, 415, 429)},
     dependencies=[Depends(enabled)],
 )
 def record(request: Request, body: ProductEventBody | ProductInteractionBody) -> Response:

@@ -379,9 +379,8 @@ def create_app(
     generate = app.openapi
 
     def openapi() -> dict[str, Any]:
-        cached = app.openapi_schema is not None
-        schema = generate()
-        return schema if cached else document_problem_media(schema)
+        # Idempotent, so it also covers a schema FastAPI regenerates after a late route.
+        return document_problem_media(generate())
 
     app.openapi = openapi  # type: ignore[method-assign]  # FastAPI documents this override
     return app

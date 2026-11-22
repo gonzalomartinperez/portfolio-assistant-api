@@ -10,6 +10,9 @@ SCHEMATHESIS_EXAMPLES=500.
 Known gaps (tracked by name, narrow on purpose; every other check still runs):
 - `recordProductEvent` enforces cross-field rules that OpenAPI cannot express, so schema-valid bodies
   can get 422; only positive-data acceptance is skipped there.
+- Calls send `Accept: application/problem+json` (contract v1.1, ADR 030). The legacy
+  `application/json` 422 entry of `recordProductEvent` is the stale FastAPI `HTTPValidationError` schema
+  kept until a contract phase; test_problem_documents.py pins the `application/json` body instead.
 - Starlette answers an unsupported method with a partial `Allow` header on paths that declare several
   routes, so the `allow_header_conformance` check is skipped everywhere.
 """
@@ -86,5 +89,5 @@ def test_operations_conform_to_the_committed_contract(case):
     excluded = [allow_header_conformance]
     if case.operation.path == "/api/v1/analytics/events":
         excluded.append(positive_data_acceptance)
-    response = case.call(headers={"Origin": ORIGIN})
+    response = case.call(headers={"Origin": ORIGIN, "Accept": "application/problem+json"})
     case.validate_response(response, excluded_checks=excluded)

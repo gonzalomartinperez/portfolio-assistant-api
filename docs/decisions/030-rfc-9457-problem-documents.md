@@ -22,7 +22,7 @@ The portfolio site reads `response.json().code` and ignores the content type and
 
 1. **A. Additive problem document.** Keep `code`, `message`, `request_id`; add `type`, `title`, `status`,
    `detail`, `instance`, `retryable`, `retry_after_s` and `messages` (`en`, `es`); serve
-   `application/problem+json`; document both media types.
+   `application/problem+json` to clients that ask for it; document both media types.
 2. **B. Problem documents only under a new `/v2`.** No v1 change, but two error shapes to maintain and
    the site keeps localizing codes itself.
 3. **C. Replace the v1 body.** Breaking; needs `contract-major` and coordinated consumer releases.
@@ -33,7 +33,9 @@ Choose A. `src/portfolio_assistant/presentation/problems.py` owns the closed `Er
 catalog (status, title, English and neutral Latin American Spanish text, retry advice). Every error path
 (application `RejectedError`, FastAPI and Starlette `HTTPException` including router 404 and 405,
 request validation, the origin guard, the body-limit timeout and size guards, and the unexpected-fault
-boundary) goes through `problems.response`. An unknown code is mapped by status to a catalogued code, so
+boundary) goes through `problems.response`. The body is the same for every client; the content type is
+negotiated: `application/problem+json` when `Accept` contains it, otherwise the v1 `application/json`,
+with `Vary: Accept`. The raised HTTP status is kept (catalog statuses match every raise site). An unknown code is mapped by status to a catalogued code, so
 it can never be echoed. `type` is `urn:portfolio-assistant:error:<code>` and `instance` is
 `urn:request:<request_id>`; neither needs hosting. `detail` and `message` carry the same English text.
 `retry_after_s` is advice and is also sent as `Retry-After`; for `rate_limited` it is the length of the
@@ -49,6 +51,7 @@ in-stream `run.failed` codes are out of scope.
 ## Consequences
 
 - Good: one source for status, retry advice and bilingual copy; the site can render `messages[locale]`.
+- Good: v1 clients see the same status and content type as before, only with more members.
 - Good: framework 404 and 405 and malformed bodies are now documented problem documents, which removes
   the Schemathesis malformed-body exception.
 - Bad: two media types per error response in OpenAPI until the contract phase drops `application/json`

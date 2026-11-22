@@ -289,12 +289,12 @@ class ErrorBody(BaseModel):
     messages: ProblemMessages
 
 
-def document(code: ErrorCode, request_id: str) -> dict[str, object]:
+def document(code: ErrorCode, request_id: str, status: int | None = None) -> dict[str, object]:
     problem = CATALOG[code]
     return {
         "type": TYPE_PREFIX + code,
         "title": problem.title,
-        "status": problem.status,
+        "status": status or problem.status,
         "detail": problem.en,
         "instance": f"urn:request:{request_id}",
         "code": code,
@@ -311,13 +311,20 @@ def headers(code: ErrorCode) -> dict[str, str]:
     return {"Retry-After": str(after)} if after is not None else {}
 
 
-def response(code: str, status: int, request_id: str) -> JSONResponse:
+def media_type(accept: str) -> str:
+    """`application/problem+json` when the client asks for it; v1 clients keep `application/json`."""
+    return PROBLEM_MEDIA_TYPE if PROBLEM_MEDIA_TYPE in accept.lower() else "application/json"
+
+
+def response(code: str, status: int, request_id: str, accept: str = "") -> JSONResponse:
+    """Render one problem document; the raised status wins, the body never echoes `code` text."""
     resolved = resolve(code, status)
+    final = status if 400 <= status <= 599 else CATALOG[resolved].status
     return JSONResponse(
-        document(resolved, request_id),
-        status_code=CATALOG[resolved].status,
-        headers=headers(resolved),
-        media_type=PROBLEM_MEDIA_TYPE,
+        document(resolved, request_id, final),
+        status_code=final,
+        headers={**headers(resolved), "Vary": "Accept"},
+        media_type=media_type(accept),
     )
 
 
