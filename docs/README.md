@@ -17,6 +17,7 @@ Task recipes for a reader who knows the goal.
 - [Disposable analytics integration demo](how-to/local-analytics-demo.md)
 - [Continuous public knowledge](how-to/maintain-knowledge.md)
 - [Release acceptance entry point](how-to/release.md)
+- [Roll back a change on develop](how-to/roll-back-a-change.md)
 
 ## reference
 
