@@ -79,11 +79,15 @@ def test_every_raised_code_is_catalogued():
 def test_catalog_entry_is_complete_and_bilingual(code):
     problem = CATALOG[code]
     assert 400 <= problem.status <= 599
-    assert problem.title and problem.en and problem.es
+    assert problem.title
+    assert problem.en
+    assert problem.es
     assert problem.en != problem.es
-    assert problem.en.endswith(".") and problem.es.endswith(".")
+    assert problem.en.endswith(".")
+    assert problem.es.endswith(".")
     if problem.retry_after_s is not None:
-        assert problem.retryable and problem.retry_after_s >= 1
+        assert problem.retryable
+        assert problem.retry_after_s >= 1
     # Neutral Latin American Spanish with "tú": no voseo or peninsular forms.
     words = set(re.findall(r"[a-záéíóúñ]+", problem.es.lower()))
     assert not words & {"vos", "probá", "intentá", "vosotros", "podéis", "tenés", "querés"}
@@ -118,10 +122,12 @@ def test_v1_clients_keep_application_json_with_the_same_body():
     legacy = TestClient(build_app()).get("/api/v1/session")
     assert legacy.status_code == 401
     assert legacy.headers["content-type"] == "application/json"
-    assert "Accept" in legacy.headers["vary"] and "Origin" in legacy.headers["vary"]
+    assert "Accept" in legacy.headers["vary"]
+    assert "Origin" in legacy.headers["vary"]
     body = legacy.json()
     error_body_validator().validate(body)
-    assert body["code"] == "session_required" and set(body) >= V1_MEMBERS
+    assert body["code"] == "session_required"
+    assert set(body) >= V1_MEMBERS
 
 
 def test_raised_status_is_preserved_and_unknown_text_dropped():
@@ -232,7 +238,8 @@ def test_body_limit_oversize_is_a_problem_document():
         return {"type": "http.request", "body": b"a" * 64, "more_body": False}
 
     status, headers, body = body_limit_call(receive)
-    assert status == 422 and body["code"] == "invalid_request"
+    assert status == 422
+    assert body["code"] == "invalid_request"
     assert headers["content-type"] == PROBLEM_MEDIA_TYPE
     assert headers["x-request-id"] == body["request_id"]
     error_body_validator().validate(body)
@@ -247,7 +254,9 @@ def test_body_limit_timeout_is_a_retryable_problem_document():
         return {"type": "http.request", "body": b"", "more_body": False}
 
     status, headers, body = body_limit_call(receive, accept="application/json", timeout=0.01)
-    assert status == 408 and body["code"] == "request_timeout" and body["retryable"] is True
+    assert status == 408
+    assert body["code"] == "request_timeout"
+    assert body["retryable"] is True
     assert headers["content-type"] == "application/json"
     assert headers["cache-control"] == "no-store"
     assert headers["x-request-id"] == body["request_id"]

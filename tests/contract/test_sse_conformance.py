@@ -184,7 +184,8 @@ def test_silence_yields_comments_that_do_not_consume_sequence_ids():
 
     frames = asyncio.run(run())
     assert frames[-1].startswith("event: ")
-    assert set(frames[:-1]) == {": keep-alive\n\n"} and len(frames) > 1
+    assert set(frames[:-1]) == {": keep-alive\n\n"}
+    assert len(frames) > 1
 
 
 def test_closing_the_stream_cancels_upstream_work():
