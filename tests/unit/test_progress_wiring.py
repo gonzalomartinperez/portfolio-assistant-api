@@ -25,7 +25,8 @@ def test_without_the_opt_in_the_stream_is_v1(monkeypatch, header):
     assert response.status_code == 200
     names = [name for name, _ in frames(response)]
     assert "run.progress" not in names
-    assert names[0] == "run.started" and names[-1] == "run.completed"
+    assert names[0] == "run.started"
+    assert names[-1] == "run.completed"
 
 
 @pytest.mark.parametrize("header", ["1", " 1 "])

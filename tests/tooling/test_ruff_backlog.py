@@ -21,3 +21,22 @@ def test_summary_lists_every_target_family_with_zero_defaults():
     assert by_family["T20"] == 2
     assert by_family["S"] == 1
     assert by_family["B"] == 0
+
+
+def test_no_family_exceeds_its_committed_ratchet():
+    """The nightly scorecard fails on a regressed family; catch it on the pull request instead."""
+    import json
+
+    from scripts.ruff_backlog import run_ruff
+    from tests.support import ROOT
+
+    metrics = json.loads((ROOT / "scorecard/ratchets/static.json").read_text())["metrics"]
+    by_family = summarize(run_ruff())["by_family"]
+    assert isinstance(by_family, dict)
+    over = {
+        name: (count, metrics[f"static.ruff_backlog.{name}"]["value"])
+        for name, count in by_family.items()
+        if f"static.ruff_backlog.{name}" in metrics
+        and count > metrics[f"static.ruff_backlog.{name}"]["value"]
+    }
+    assert not over, f"family: (current, ratchet) {over}"

@@ -284,7 +284,7 @@ class StarterPrompt(BaseModel):
                 {
                     "id": "projects",
                     "topic": "projects",
-                    "question": "Which projects best illustrate Gonzalo’s work?",
+                    "question": "Which projects best illustrate Gonzalo\u2019s work?",
                 }
             ]
         }
@@ -306,7 +306,7 @@ class SuggestionsView(BaseModel):
                         {
                             "id": "projects",
                             "topic": "projects",
-                            "question": "Which projects best illustrate Gonzalo’s work?",
+                            "question": "Which projects best illustrate Gonzalo\u2019s work?",
                         }
                     ],
                 }
