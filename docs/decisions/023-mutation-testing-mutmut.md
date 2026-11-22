@@ -139,3 +139,24 @@ conversations.py` is left out of scope until it has unit-lane tests (it is only
 exercised by the integration lane, so every mutant would count as untested). In PR
 mode one changed file stands in for its group, so the PR score is an approximation of
 the group ratchet; the weekly full run is authoritative.
+
+## Update 2026-11-22 (M6-1): full scope measured
+
+The scope now matches the [testing plan](../master-plan/testing.md): the prompt loader
+(`domain/prompts.py`), `application/conversations.py` (covered offline by the stateful
+conversation-lifecycle property test since M2-10), `ai/retrieval/rules.py` and the six
+`evals/harness/graders` modules joined the campaign. Test selection lists the 27 unit,
+property and eval files that exercise those modules; `also_copy` adds `src/app`, `evals`
+and `scripts` because some of those tests read them. The first full local campaign
+(3,206 mutants, 25 minutes with three workers, `develop` `d3bd450`) measured:
+
+| Group | Mutants | Killed | Survived | No tests / timeout | Score | Target |
+|---|---:|---:|---:|---:|---:|---:|
+| domain | 913 | 691 | 222 | 0 | 75.68% | 75 |
+| application | 695 | 474 | 192 | 26 / 3 | 68.20% | 75 |
+| ai | 840 | 686 | 154 | 0 | 81.67% | 75 |
+| graders | 758 | 570 | 188 | 0 | 75.20% | 85 |
+
+The ratchets in `tests/mutation-baseline.json` are these scores truncated to whole
+points. Application and graders are below target; surviving mutants are killed with
+tests, never by narrowing the scope or lowering a target.

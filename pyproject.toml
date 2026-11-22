@@ -170,8 +170,10 @@ paths_to_mutate = [
     "src/portfolio_assistant/domain/evidence.py",
     "src/portfolio_assistant/domain/analytics_periods.py",
     "src/portfolio_assistant/domain/web_policy.py",
+    "src/portfolio_assistant/domain/prompts.py",
     "src/portfolio_assistant/application/answer.py",
     "src/portfolio_assistant/application/runs.py",
+    "src/portfolio_assistant/application/conversations.py",
     "src/portfolio_assistant/application/contracts.py",
     "src/portfolio_assistant/ai/retrieval/__init__.py",
     "src/portfolio_assistant/ai/retrieval/candidates.py",
@@ -179,8 +181,15 @@ paths_to_mutate = [
     "src/portfolio_assistant/ai/retrieval/pipeline.py",
     "src/portfolio_assistant/ai/retrieval/query.py",
     "src/portfolio_assistant/ai/retrieval/rerank.py",
+    "src/portfolio_assistant/ai/retrieval/rules.py",
     "src/portfolio_assistant/ai/retrieval/select.py",
     "src/portfolio_assistant/ai/retrieval/source_shape.py",
+    "evals/harness/graders/_text.py",
+    "evals/harness/graders/answer.py",
+    "evals/harness/graders/budget.py",
+    "evals/harness/graders/citations.py",
+    "evals/harness/graders/numbers.py",
+    "evals/harness/graders/safety.py",
 ]
 tests_dir = [
     "tests/unit/test_operations.py",
@@ -188,13 +197,30 @@ tests_dir = [
     "tests/unit/test_quality.py",
     "tests/unit/test_analytics_periods.py",
     "tests/unit/test_web_context.py",
+    "tests/unit/test_web_search_branches.py",
     "tests/unit/test_workflow.py",
     "tests/unit/test_citation_mapping.py",
     "tests/unit/test_content_root_compatibility.py",
     "tests/unit/test_conversation_context.py",
     "tests/unit/test_presentation_context.py",
+    "tests/unit/test_private_observability.py",
+    "tests/unit/test_prompt_registry.py",
+    "tests/unit/test_clock_wiring.py",
+    "tests/unit/test_retrieval_rules.py",
+    "tests/unit/test_assistant_voice.py",
+    "tests/unit/test_runtime_compatibility.py",
+    "tests/property/test_domain_properties.py",
+    "tests/property/test_application_properties.py",
+    "tests/property/test_conversation_lifecycle.py",
+    "tests/evals/test_graders.py",
+    "tests/evals/test_items.py",
+    "tests/evals/test_runner.py",
+    "tests/evals/test_grounded_assistant.py",
+    "tests/evals/test_attack_rails.py",
+    "tests/evals/test_live_depth_regressions.py",
+    "tests/evals/test_retrieval_harness.py",
 ]
-also_copy = ["src/portfolio_assistant", "contracts"]
+also_copy = ["src/portfolio_assistant", "src/app", "contracts", "evals", "scripts"]
 process_isolation = "fork"
 pytest_add_cli_args = ["-q", "-p", "no:cacheprovider", "-m", "not integration"]
 
