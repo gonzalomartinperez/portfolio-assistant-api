@@ -19,6 +19,20 @@ gh api repos/gonzalomartinperez/portfolio-assistant-api/immutable-releases
 gh api repos/gonzalomartinperez/portfolio-assistant-api/actions/permissions
 ```
 
+## Re-read 2026-11-22 (M6)
+
+Read-only `gh api` calls on 2026-11-22. Where a value below differs from the 2026-11-14 table, the newer
+reading wins.
+
+| Setting | Live value (2026-11-22) | Status against target |
+|---|---|---|
+| Rulesets | `standard-develop` and `standard-main` (branch) and `standard-release-tags` (tag), all active; `develop` requires `ci-gate` with no bypass actors | met |
+| Secret scanning / push protection | enabled / enabled | met |
+| Secret scanning validity checks / non-provider patterns | disabled / disabled | owner toggle open |
+| CodeQL default setup | configured (`actions`, `python`, `javascript-typescript`) | met |
+| Immutable releases | disabled | owner toggle open (before M7) |
+| Require full-SHA pinning | off (`sha_pinning_required: false`; every workflow already pins) | owner toggle open |
+
 ## Live settings
 
 | Area | Setting | Live value (2026-11-14) | Target (master plan) |

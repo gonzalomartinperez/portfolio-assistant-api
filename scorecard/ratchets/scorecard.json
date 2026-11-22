@@ -3,72 +3,72 @@
   "metrics": {
     "judged.D1": {
       "direction": "higher",
-      "value": null,
+      "value": 94,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D2": {
       "direction": "higher",
-      "value": null,
+      "value": 88,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D3": {
       "direction": "higher",
-      "value": null,
+      "value": 89,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D4": {
       "direction": "higher",
-      "value": null,
+      "value": 84,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D5": {
       "direction": "higher",
-      "value": null,
+      "value": 88,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D6": {
       "direction": "higher",
-      "value": null,
+      "value": 85,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D7": {
       "direction": "higher",
-      "value": null,
+      "value": 90,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.D8": {
       "direction": "higher",
-      "value": null,
+      "value": 88,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P1": {
       "direction": "higher",
-      "value": null,
+      "value": 94,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P2": {
       "direction": "higher",
-      "value": null,
+      "value": 90,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P3": {
       "direction": "higher",
-      "value": null,
+      "value": 72,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P4": {
       "direction": "higher",
-      "value": null,
+      "value": 93,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P5": {
       "direction": "higher",
-      "value": null,
+      "value": 80,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     },
     "judged.P6": {
       "direction": "higher",
-      "value": null,
+      "value": 84,
       "source": "last accepted axis score; unseeded until the first independent evaluator score (M3), planner baselines in docs/master-plan/scorecard.md are not measurements"
     }
   }

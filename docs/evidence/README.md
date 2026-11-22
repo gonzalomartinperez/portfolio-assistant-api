@@ -6,7 +6,10 @@ instead. Living documentation is in the quadrants of [docs/](../), decisions are
 ## Current
 
 - [M6-7: copy refresh draft awaiting owner approval (2026-11-22)](copy-refresh-2026-11-22.md)
-- [Scorecard snapshot behind the README results table (2026-11-14)](scorecard-2026-11-14.json)
+- [M6-5: independent three-lens re-score (2026-11-22)](scores/2026-11-22_m6.md)
+- [Scorecard snapshot behind the README results table (2026-11-22)](scorecard-2026-11-22.json)
+- [Skill activation eval, validation split, accuracy 1.00 (2026-11-22)](skills-activation-2026-11-22.json)
+- [Scorecard snapshot (2026-11-14, superseded)](scorecard-2026-11-14.json)
 - [M1-5: API image size breakdown (2026-11-14)](image-size-spike-2026-11-14.md)
 - [M1-2: P0-2 and P0-3 reproduced in CI conditions (2026-11-14)](m1-p0-reproduction-2026-11-14.md)
 - [Security baseline, 2026-11-14](security-baseline-2026-11-14.md)

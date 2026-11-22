@@ -3,7 +3,7 @@
   "metrics": {
     "tests.unit.total": {
       "direction": "higher",
-      "value": 886,
+      "value": 2522,
       "source": "2026-11-14 uv run pytest --collect-only -q -m 'not integration': 886/934 collected",
       "required": true
     },
