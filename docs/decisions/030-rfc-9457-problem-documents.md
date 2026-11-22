@@ -46,7 +46,7 @@ documented 4xx and 5xx response keeps its `application/json` entry and gains `ap
 (`document_problem_media`). The public analytics route keeps the stale FastAPI `HTTPValidationError` JSON
 entry for 422 until a contract phase, because changing it would be breaking for oasdiff; the actual body
 is the problem document. `info.version` becomes `1.1.0`; the SSE `schema_version` stays `1` and
-in-stream `run.failed` codes are out of scope.
+in-stream `run.failed` codes are out of scope for problem documents.
 
 ## Consequences
 
@@ -66,3 +66,15 @@ committed `ErrorBody` schema, the 404, 405 (with `Allow`), 422, 403, 401 and 429
 shapes, and that every documented error offers `application/problem+json`. `contracts/problem.examples.json`
 (generated, one document per code) is validated in `tests/contract/test_schema_examples.py`. Schemathesis
 and `scripts.contract_diff` run in the contract job.
+
+## Amendment 2026-11-22: in-stream failures
+
+The `run.failed` payload gains the optional members `retryable` and `messages` (`en`, `es`), always sent
+by this server and filled from the same catalog plus three stream-only codes (`generation_failed`,
+`provider_unavailable`, `budget_exhausted`); an unlisted code gets the `generation_failed` text with
+`retryable: false`. The stream sends no `retry_after_s`, and `messages` is a closed `en`/`es` object, so a
+third locale would be a schema change. The
+event stays a stream event, not a problem document. The SSE change is additive (no removed event or
+required field), and the pinned site parser only requires `payload.code`.
+`tests/contract/test_sse_conformance.py::test_run_failed_carries_retry_advice_and_bilingual_messages`
+and `tests/resilience/test_dependency_failures.py` confirm it.

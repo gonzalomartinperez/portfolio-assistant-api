@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from portfolio_assistant.presentation.models import Citation
+from portfolio_assistant.presentation.problems import ProblemMessages
 
 
 class Payload(BaseModel):
@@ -42,6 +43,9 @@ class CompletedPayload(Payload):
 
 class FailedPayload(Payload):
     code: str
+    # Contract v1.1 (ADR 030): always sent by this server; optional for older producers.
+    retryable: bool | None = None
+    messages: ProblemMessages | None = None
 
 
 class Envelope(BaseModel):

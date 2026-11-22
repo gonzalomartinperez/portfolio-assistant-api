@@ -102,7 +102,10 @@ def test_run_failures_end_in_documented_terminal_event(app_args, code):
     assert response.status_code == 200
     names = [name for name, _ in frames(response)]
     assert names[-1] == "run.failed"
-    assert frames(response)[-1][1]["payload"] == {"code": code}
+    payload = frames(response)[-1][1]["payload"]
+    assert payload["code"] == code
+    assert payload["retryable"] is (code != "budget_exhausted")
+    assert set(payload["messages"]) == {"en", "es"}
     assert "message.completed" not in names
 
 

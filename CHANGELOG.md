@@ -18,6 +18,7 @@ All notable changes to this project are documented here. The format follows
 - Community files (support, code of conduct, issue forms), standards drift check and release automation.
 - Contract v1.1: every error is an RFC 9457 problem document (`application/problem+json`) with a closed
   `code`, `retryable`, `retry_after_s` and English and Spanish `messages`; the v1 members stay.
+- `run.failed` stream events also carry `retryable` and English and Spanish `messages`.
 - Contract v1.1: opt-in `run.progress` stream events (`retrieving`, `reading`, `writing`) with
   `X-Assistant-Progress: 1`; streams without the header are unchanged.
 - OpenAPI operation descriptions and validated schema examples; the frontend handoff documents the v1.1

@@ -216,3 +216,36 @@ def test_sse_sample_renders_v1_and_opted_in_streams(tmp_path):
     sample = json.loads(out.read_text())
     assert all("run.progress" not in text for text in sample["v1"].values())
     assert all("event: run.progress" in text for text in sample["opt_in"].values())
+
+
+@pytest.mark.parametrize(
+    ("code", "retryable"),
+    [
+        ("generation_failed", True),
+        ("provider_unavailable", True),
+        ("budget_exhausted", False),
+        ("knowledge_updating", True),
+        ("unlisted_internal_code", False),
+        ("", False),
+    ],
+)
+def test_run_failed_carries_retry_advice_and_bilingual_messages(code, retryable):
+    events = decoded(
+        collect([("run.started", {"state": "running"}), ("run.failed", {"code": code})])
+    )
+    payload = events[-1]["payload"]
+    jsonschema.Draft202012Validator(SCHEMA).validate(events[-1])
+    assert payload["code"] == code
+    assert payload["retryable"] is retryable
+    assert payload["messages"]["en"]
+    assert payload["messages"]["es"]
+    assert payload["messages"]["en"] != payload["messages"]["es"]
+
+
+def test_every_reachable_failure_code_has_its_own_entry():
+    """`_failure_event` emits the three stream codes or a RejectedError code from src."""
+    from portfolio_assistant.presentation.problems import CATALOG, STREAM_ONLY
+    from tests.contract.test_problem_documents import raised_codes
+
+    reachable = set(STREAM_ONLY) | raised_codes()
+    assert not {code for code in reachable if code not in STREAM_ONLY and code not in CATALOG}

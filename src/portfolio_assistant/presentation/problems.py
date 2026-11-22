@@ -242,6 +242,44 @@ CATALOG: dict[ErrorCode, Problem] = {
     ),
 }
 
+# In-stream `run.failed` codes that never travel as HTTP errors. Only `retryable` and the text are
+# used; the status is nominal, and `retry_after_s` is not sent in the stream.
+STREAM_ONLY: dict[str, Problem] = {
+    "generation_failed": Problem(
+        502,
+        "Answer failed",
+        "The answer could not be completed. You can ask again.",
+        "No se pudo completar la respuesta. Puedes volver a preguntar.",
+        retryable=True,
+    ),
+    "provider_unavailable": Problem(
+        503,
+        "Answer service unavailable",
+        "The answer service is temporarily unavailable. Try again shortly.",
+        "El servicio de respuestas no está disponible por el momento. Inténtalo de nuevo en breve.",
+        retryable=True,
+    ),
+    "budget_exhausted": Problem(
+        503,
+        "Monthly limit reached",
+        "The assistant reached its monthly usage limit. Try again next month.",
+        "El asistente alcanzó su límite de uso mensual. Inténtalo de nuevo el próximo mes.",
+    ),
+}
+
+
+def stream_failure(code: str) -> dict[str, object]:
+    """`retryable` and EN and ES `messages` for a `run.failed` code (contract v1.1, ADR 030).
+
+    `retryable` invites an explicit visitor retry; clients never resubmit a run automatically.
+    """
+    problem = STREAM_ONLY.get(code) or CATALOG.get(code)  # type: ignore[call-overload]
+    if problem is None:  # unlisted: generic text, and no retry invitation (the safe default)
+        fallback = STREAM_ONLY["generation_failed"]
+        return {"retryable": False, "messages": {"en": fallback.en, "es": fallback.es}}
+    return {"retryable": problem.retryable, "messages": {"en": problem.en, "es": problem.es}}
+
+
 FALLBACK_BY_STATUS: dict[int, ErrorCode] = {
     400: "malformed_body",
     401: "session_required",
