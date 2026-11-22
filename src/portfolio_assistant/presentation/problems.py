@@ -242,7 +242,8 @@ CATALOG: dict[ErrorCode, Problem] = {
     ),
 }
 
-# In-stream `run.failed` codes that never travel as HTTP errors (status is unused for them).
+# In-stream `run.failed` codes that never travel as HTTP errors. Only `retryable` and the text are
+# used; the status is nominal, and `retry_after_s` is not sent in the stream.
 STREAM_ONLY: dict[str, Problem] = {
     "generation_failed": Problem(
         502,
@@ -272,7 +273,10 @@ def stream_failure(code: str) -> dict[str, object]:
 
     `retryable` invites an explicit visitor retry; clients never resubmit a run automatically.
     """
-    problem = STREAM_ONLY.get(code) or CATALOG.get(code) or STREAM_ONLY["generation_failed"]  # type: ignore[call-overload]
+    problem = STREAM_ONLY.get(code) or CATALOG.get(code)  # type: ignore[call-overload]
+    if problem is None:  # unlisted: generic text, and no retry invitation (the safe default)
+        fallback = STREAM_ONLY["generation_failed"]
+        return {"retryable": False, "messages": {"en": fallback.en, "es": fallback.es}}
     return {"retryable": problem.retryable, "messages": {"en": problem.en, "es": problem.es}}
 
 

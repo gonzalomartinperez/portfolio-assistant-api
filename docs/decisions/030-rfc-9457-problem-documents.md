@@ -71,7 +71,9 @@ and `scripts.contract_diff` run in the contract job.
 
 The `run.failed` payload gains the optional members `retryable` and `messages` (`en`, `es`), always sent
 by this server and filled from the same catalog plus three stream-only codes (`generation_failed`,
-`provider_unavailable`, `budget_exhausted`); an unlisted code gets the `generation_failed` text. The
+`provider_unavailable`, `budget_exhausted`); an unlisted code gets the `generation_failed` text with
+`retryable: false`. The stream sends no `retry_after_s`, and `messages` is a closed `en`/`es` object, so a
+third locale would be a schema change. The
 event stays a stream event, not a problem document. The SSE change is additive (no removed event or
 required field), and the pinned site parser only requires `payload.code`.
 `tests/contract/test_sse_conformance.py::test_run_failed_carries_retry_advice_and_bilingual_messages`
