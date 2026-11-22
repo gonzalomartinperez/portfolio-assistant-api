@@ -47,11 +47,20 @@ def test_local_compose_context_resolves_to_repository_root():
 def test_workflow_builds_the_explicit_application_recipe():
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     steps = workflow["jobs"]["container"]["steps"]
-    builds = [
+    every_build = [
         step["with"]
         for step in steps
         if step.get("uses", "").startswith("docker/build-push-action@")
     ]
+    # Release candidates (M6-6) are exported as OCI archives, never loaded as the tested `:ci` tags.
+    candidates = [build for build in every_build if "outputs" in build]
+    builds = [build for build in every_build if "outputs" not in build]
+    assert sorted(build["target"] for build in candidates) == ["api", "worker"]
+    for build in candidates:
+        assert build["file"] == "infra/docker/app/Dockerfile"
+        assert build["context"] == "."
+        assert build["push"] is False
+        assert "load" not in build
     assert len(builds) == 3
     assert {build["file"] for build in builds} == {
         "infra/docker/app/Dockerfile",
