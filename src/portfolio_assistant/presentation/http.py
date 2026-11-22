@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 from contextlib import aclosing
 from dataclasses import asdict
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Literal, NoReturn
+from typing import TYPE_CHECKING, Annotated, NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
@@ -339,8 +339,11 @@ def stream_message(
     idempotency_key: Annotated[str, Header(min_length=8, max_length=128)],
     session: Annotated[Session, Depends(mutation_session)],
     x_assistant_progress: Annotated[
-        Literal["0", "1"] | None,
-        Header(description="Send `1` to receive `run.progress` events (contract v1.1, ADR 020)."),
+        str | None,
+        Header(
+            description="`1` opts in to `run.progress` events (contract v1.1, ADR 020); "
+            "any other value is ignored.",
+        ),
     ] = None,
 ) -> ClosingStreamingResponse:
     run_id = request.app.state.conversations.prepare_run(
@@ -366,7 +369,7 @@ def stream_message(
                 )
                 if body.context
                 else None,
-                progress=x_assistant_progress == "1",
+                progress=(x_assistant_progress or "").strip() == "1",
             )
         ),
         media_type="text/event-stream",

@@ -29,8 +29,9 @@ at `3785df8`) throws on any event type outside the v1 set, so a default-on event
 ## Decision
 
 Choose A. `presentation/progress.py` (`ProgressPhases.expand`) inserts the phases only when the stream
-request carries `X-Assistant-Progress: 1` (OpenAPI header parameter, values `0` and `1`; CORS allows the
-header). The SSE schema gains the `run.progress` event with a closed payload. The phases mark milestones
+request carries `X-Assistant-Progress: 1` (OpenAPI header parameter; any other value is ignored, so no
+existing client can get a new 422; CORS allows the header). `reading` follows `run.status`, that is, it
+marks that retrieval completed, also when no source was found. The SSE schema gains the `run.progress` event with a closed payload. The phases mark milestones
 the run already reports, so they never claim work that did not happen, and they never follow a terminal.
 Turning the event on by default needs the site parser to tolerate it first (portfolio lead handoff) and a
 later decision.
@@ -38,7 +39,10 @@ later decision.
 ## Consequences
 
 - Good: no application or lifecycle change; v1 clients are unaffected by construction.
-- Good: the cross-repo `site-stream` job runs the site's own parser on the committed examples.
+- Good: the cross-repo `site-stream` job runs the site's own parser on rendered and committed streams.
+- Bad: that job is nightly and manual (`cross-repo.yml` stays out of the pull request path), and its
+  opt-in detection is a source search for the header name at the pinned site commit; the guarantee that
+  v1 clients never receive the event comes from this repository's conformance and integration tests.
 - Bad: `reading` and `writing` are coarse; finer progress would need workflow events (PAA-M5-X scope).
 - Neutral: `sse.schema.json` lists the event, so schema-driven consumers learn it exists before using it.
 
@@ -48,5 +52,6 @@ later decision.
 opted-in order and contiguous sequences hold, that the terminal stays last, and that the payload is closed.
 `tests/integration/test_integration.py` checks the header end to end and the CORS preflight.
 `tests/contract/test_schema_examples.py` validates the `opt_in_progress` example.
-`.github/workflows/cross-repo.yml` job `site-stream` runs `scripts/site_stream_compat.mjs` against the
-pinned site.
+`.github/workflows/cross-repo.yml` job `site-stream` renders streams with the real `execute_run`
+(`scripts/sse_sample.py`, without and with the opt-in) and runs `scripts/site_stream_compat.mjs`, which
+feeds them and the committed examples to the pinned site's own `readSse`.

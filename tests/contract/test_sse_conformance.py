@@ -205,3 +205,13 @@ def test_closing_the_stream_cancels_upstream_work():
 
     asyncio.run(run())
     assert state == {"closed": True, "resumed": 0}
+
+
+def test_sse_sample_renders_v1_and_opted_in_streams(tmp_path):
+    from scripts.sse_sample import main
+
+    out = tmp_path / "sample.json"
+    assert main(["--out", str(out)]) == 0
+    sample = json.loads(out.read_text())
+    assert all("run.progress" not in text for text in sample["v1"].values())
+    assert all("event: run.progress" in text for text in sample["opt_in"].values())

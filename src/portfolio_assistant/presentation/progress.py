@@ -1,7 +1,8 @@
 """Opt-in `run.progress` phases derived from the v1 run events (contract v1.1, ADR 020).
 
 The phases are a presentation of milestones the run already reports: `retrieving` right after the run
-is claimed, `reading` once evidence is found, and `writing` before the first answer text. They carry
+is claimed, `reading` once retrieval completes (also when no source was found), and `writing` before
+the first answer text. They carry
 no internal state, tool names or timing, and are never produced unless the client opted in.
 """
 

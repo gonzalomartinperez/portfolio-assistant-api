@@ -386,8 +386,8 @@ outside the pull request path. It is not part of `ci-gate`. GitHub runs schedule
 from the default branch (`main`), so the nightly run starts after the M7 promotion to
 `main`; `workflow_dispatch` works earlier.
 The same workflow's `site-stream` job reads the pinned portfolio site source and feeds the committed
-`contracts/sse.examples.json` streams to the site's own `readSse` parser
-(`scripts/site_stream_compat.mjs`): every v1 stream must parse, and the site must either never send
+`contracts/sse.examples.json` streams, plus the wire text that `scripts/sse_sample.py` renders with
+the real `execute_run`, to the site's own `readSse` parser (`scripts/site_stream_compat.mjs`): every v1 stream must parse, and the site must either never send
 `X-Assistant-Progress` or accept the opted-in stream ([ADR 020](../decisions/020-opt-in-run-progress.md)).
 
 

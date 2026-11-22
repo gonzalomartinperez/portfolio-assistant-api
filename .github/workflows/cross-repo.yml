@@ -111,11 +111,23 @@ jobs:
         path: artifacts/compat-site
         sparse-checkout: src
         persist-credentials: false
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        version: 0.13.1
+        save-cache: false
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          .python-version
+    - name: Install locked dependencies
+      run: uv sync --frozen
+    - name: Render v1 and opted-in streams with the API presentation code
+      run: uv run python -m scripts.sse_sample --out artifacts/sse-sample.json
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
       with:
         node-version-file: artifacts/compat-site/.nvmrc
-    - name: Parse the committed stream examples with the site parser
-      run: node scripts/site_stream_compat.mjs artifacts/compat-site
+    - name: Parse the examples and rendered streams with the site parser
+      run: node scripts/site_stream_compat.mjs artifacts/compat-site artifacts/sse-sample.json
   contract-bytes:
     name: Backoffice private contract bytes
     if: inputs.frontend_commit != ''

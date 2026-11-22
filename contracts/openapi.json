@@ -2016,24 +2016,20 @@
             }
           },
           {
-            "description": "Send `1` to receive `run.progress` events (contract v1.1, ADR 020).",
+            "description": "`1` opts in to `run.progress` events (contract v1.1, ADR 020); any other value is ignored.",
             "in": "header",
             "name": "x-assistant-progress",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "0",
-                    "1"
-                  ],
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Send `1` to receive `run.progress` events (contract v1.1, ADR 020).",
+              "description": "`1` opts in to `run.progress` events (contract v1.1, ADR 020); any other value is ignored.",
               "title": "X-Assistant-Progress"
             }
           }
