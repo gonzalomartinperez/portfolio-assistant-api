@@ -4,11 +4,11 @@
   "break": 60,
   "groups": {
     "domain": {
-      "ratchet": 75.0,
+      "ratchet": 76.0,
       "target": 75
     },
     "application": {
-      "ratchet": 68.0,
+      "ratchet": 82.0,
       "target": 75
     },
     "ai": {
@@ -16,7 +16,7 @@
       "target": 75
     },
     "graders": {
-      "ratchet": 75.0,
+      "ratchet": 98.0,
       "target": 85
     }
   },
@@ -25,23 +25,23 @@
     "python": "3.14.8",
     "mutmut": "3.8.1",
     "scope": "pyproject.toml [tool.mutmut] paths_to_mutate (25 files: domain 6, application 4, ai 9, graders 6)",
-    "tests": "pyproject.toml [tool.mutmut] tests_dir (27 unit, property and eval test files)",
-    "wall_seconds": 1507,
+    "tests": "pyproject.toml [tool.mutmut] tests_dir (31 unit, property and eval test files)",
+    "wall_seconds": 1460,
     "max_children": 3,
     "groups": {
       "domain": {
-        "killed": 691,
-        "survived": 222,
+        "killed": 701,
+        "survived": 212,
         "total": 913,
-        "score": 75.68
+        "score": 76.78
       },
       "application": {
-        "killed": 474,
-        "survived": 192,
+        "killed": 573,
+        "survived": 118,
         "timeout": 3,
-        "no tests": 26,
+        "no tests": 1,
         "total": 695,
-        "score": 68.2
+        "score": 82.45
       },
       "ai": {
         "killed": 686,
@@ -50,13 +50,16 @@
         "score": 81.67
       },
       "graders": {
-        "killed": 570,
-        "survived": 188,
+        "killed": 746,
+        "survived": 12,
         "total": 758,
-        "score": 75.2
+        "score": 98.42
       }
     },
-    "note": "Full local campaign on develop d3bd450 after widening the scope (M6-1); ratchets are the measured scores truncated to whole points."
+    "modules": {
+      "src/portfolio_assistant/domain/budget.py": 100.0
+    },
+    "note": "Full local campaign over develop plus the M6-1 test PRs (#229, #230) and this PR; ratchets are the measured scores truncated to whole points. Every scoped module is at or above the 60 break floor (lowest: domain/evidence.py 64.4)."
   },
   "module_targets": {
     "src/portfolio_assistant/domain/budget.py": 85
