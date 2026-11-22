@@ -216,6 +216,7 @@ tests_dir = [
     "tests/property/test_application_properties.py",
     "tests/property/test_conversation_lifecycle.py",
     "tests/evals/test_graders.py",
+    "tests/evals/test_graders_mutation.py",
     "tests/evals/test_items.py",
     "tests/evals/test_runner.py",
     "tests/evals/test_grounded_assistant.py",
