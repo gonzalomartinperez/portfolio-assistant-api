@@ -34,6 +34,7 @@ Facts to look up: contracts, configuration, policies.
 - [Product analytics v1 — local, disabled by default](reference/product-analytics.md)
 - [Repository settings (live record)](reference/repo-settings.md)
 - [Runtime baseline acceptance — 2026-10-17](reference/runtime-baseline.md)
+- [Service level objectives](reference/slos.md)
 - [Scorecard tooling](reference/scorecard.md)
 - [Site experience interoperability · v1](reference/site-experience-contract.md)
 - [Supported versions and upgrade policy](reference/support-policy.md)
