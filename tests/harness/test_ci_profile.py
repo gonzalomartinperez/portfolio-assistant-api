@@ -602,6 +602,36 @@ def test_container_job_runs_every_image_check():
 
 
 @pytest.mark.parametrize(
+    ("option", "value"),
+    [
+        ("push", True),
+        ("outputs", "type=docker"),
+        ("sbom", "true"),
+        ("sbom", "generator=docker/buildkit-syft-scanner:1.9.0"),
+        ("provenance", "mode=min"),
+    ],
+)
+def test_release_candidate_cannot_push_or_weaken_attestations(option, value):
+    data = workflow()
+    for step in container_steps(data):
+        if step.get("name") == "Build the API release candidate with SBOM and provenance":
+            step["with"][option] = value
+    assert "container: api release candidate options" in profile_errors(data, profile_map())
+
+
+def test_release_candidate_verification_cannot_be_removed():
+    data = workflow()
+    data["jobs"]["container"]["steps"] = [
+        step
+        for step in container_steps(data)
+        if step.get("name") != "Verify release-candidate digests, SBOM and provenance"
+    ]
+    assert any(
+        "release-candidate digests" in error for error in profile_errors(data, profile_map())
+    )
+
+
+@pytest.mark.parametrize(
     "name",
     [
         "Lint Dockerfiles with the pinned hadolint binary",

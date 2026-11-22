@@ -77,6 +77,12 @@ IMAGE_CHECKS = {
         "python -m scripts.image_security",
         '--report artifacts/worker-vulnerabilities.json --image-id "$image_id"',
     ),
+    "Verify release-candidate digests, SBOM and provenance": (
+        "python -m scripts.release_candidate",
+        '--digest "$API_DIGEST"',
+        '--digest "$WORKER_DIGEST"',
+        '--revision "$REVISION"',
+    ),
     "Enforce the image size ratchet": (
         IMAGE_SIZE_PATH,
         ".api_max_bytes",
@@ -110,6 +116,27 @@ def gate_references(condition, key: str) -> bool:
         expected,
         "${{ " + expected + " }}",
     )
+
+
+def release_candidate_errors(candidates: dict) -> list[str]:
+    """Release candidates (M6-6): OCI archives with a pinned SBOM generator and full provenance."""
+    errors = []
+    if set(candidates) != {"api", "worker"}:
+        return ["container: api and worker release candidates must both be built"]
+    for target, build in candidates.items():
+        options = build["with"]
+        if (
+            options.get("push") is not False
+            or options.get("outputs")
+            != f"type=oci,dest=artifacts/release-candidate/{target}.oci.tar"
+            or not re.search(
+                r"^generator=[^@\s]+@sha256:[0-9a-f]{64}$", str(options.get("sbom", ""))
+            )
+            or options.get("provenance") != "mode=max"
+            or any(argument not in str(options.get("build-args", "")) for argument in BUILD_ARGS)
+        ):
+            errors.append(f"container: {target} release candidate options")
+    return errors
 
 
 def profile_map_errors(jobs: dict, profile_map: dict) -> list[str]:
@@ -328,12 +355,19 @@ def image_check_errors(steps: list) -> list[str]:
             errors.append(f"container: image check {name!r} absent or weakened")
         if any(bypass in text for bypass in IMAGE_SCAN_BYPASSES):
             errors.append(f"container: image check {name!r} filters findings")
-    builds = {
-        step["with"].get("target"): step
+    app_builds = [
+        step
         for step in steps
         if step.get("uses", "").startswith("docker/build-push-action@")
         and step.get("with", {}).get("file") == "infra/docker/app/Dockerfile"
+    ]
+    builds = {
+        step["with"].get("target"): step for step in app_builds if "outputs" not in step["with"]
     }
+    candidates = {
+        step["with"].get("target"): step for step in app_builds if "outputs" in step["with"]
+    }
+    errors += release_candidate_errors(candidates)
     expected_tags = {
         "api": "portfolio-assistant-api:ci",
         "worker": "portfolio-assistant-api-worker:ci",
