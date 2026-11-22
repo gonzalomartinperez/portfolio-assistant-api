@@ -149,6 +149,13 @@ def release_candidate_errors(candidates: list[dict], steps: list[dict]) -> list[
             or any(argument not in str(options.get("build-args", "")) for argument in BUILD_ARGS)
         ):
             errors.append(f"container: {target} release candidate options")
+    # Public-repository CI publishes no image archive (ci.md privacy boundary, DR-13).
+    if any(
+        step.get("uses", "").startswith("actions/upload-artifact@")
+        and ".oci.tar" in str(step.get("with", {}).get("path", ""))
+        for step in steps
+    ):
+        errors.append("container: release-candidate archives must not be uploaded")
     verifiers = [step for step in steps if step.get("name") == RC_VERIFY]
     expected_env = {
         "API_DIGEST": "${{ steps.rc-api.outputs.digest }}",

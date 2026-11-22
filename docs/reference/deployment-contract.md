@@ -109,21 +109,21 @@ registry before MV (DR-13). `scripts.release_candidate` then checks each archive
 - the image config carries `org.opencontainers.image.revision` equal to the tested commit;
 - the attestation manifest names the `linux/amd64` image manifest in both the SBOM and the provenance.
 
-Artifacts per run: `release-candidate-identity` (`release-candidate.json` with index, manifest and config
-digests and SBOM package counts, plus `SHA256SUMS`; 90 days) on every run, and `release-candidate-images`
-(the two `*.oci.tar` archives; 30 days) on pushes to `develop` or `main` and on manual dispatch. The archives
-are rebuilt from the same Dockerfile, commit, build arguments and BuildKit cache as the `:ci` images that the
-structure, Dockle, Trivy, size, streaming and proxy checks tested in that job, and the verifier fails unless
-each archive's layer list (`rootfs.diff_ids`) equals the tested image's layers: the filesystem that ships is the
-filesystem that was tested. Only the image config (timestamps, attestations) differs. The digest to pin is the
-one in `release-candidate.json`; the local `:ci` tags have no registry digest.
+Artifacts per run: `release-candidate-identity` only (`release-candidate.json` with index, manifest and
+config digests, SBOM package counts and provenance type, plus `SHA256SUMS` of the archives; 90 days). The
+archives themselves are built and verified in the job but not uploaded: public-repository CI publishes no
+image archive ([CI privacy boundary](runtime-baseline.md#ci-privacy-boundary)). The archives are rebuilt from
+the same Dockerfile, commit, build arguments and BuildKit cache as the `:ci` images that the structure,
+Dockle, Trivy, size, streaming and proxy checks tested in that job, and the verifier fails unless each
+archive's layer list (`rootfs.diff_ids`) equals the tested image's layers: the filesystem that ships is the
+filesystem that was tested.
 
-On day one vps-ops downloads the archives of the approved `develop` or `main` run, checks `SHA256SUMS`,
-re-runs `python -m scripts.release_candidate` with the recorded digest and commit, and only then copies the
-archive to the registry with its digest preserved (for example `skopeo copy --all --preserve-digests
-oci-archive:api.oci.tar docker://...`, so the index and its attestations travel with the image) and checks that
-the registry reports the same index digest. It pins
-the index digest from `release-candidate.json` in `releases/production.lock`.
+Publication waits for MV (DR-13). On day one the owner authorizes the private publishing path once; that
+path runs this same job on the approved commit and pushes the verified archive with its digest preserved (for
+example `skopeo copy --all --preserve-digests oci-archive:api.oci.tar docker://...`, so the index and its
+attestations travel with the image), checks that the registry reports the index digest recorded in
+`release-candidate.json`, and vps-ops pins that digest in `releases/production.lock`. Until then the
+recorded identity is the evidence; no archive leaves the runner.
 
 ## Services and migrations
 
