@@ -15,6 +15,7 @@ from portfolio_assistant.application.conversations import Conversations, digest
 from portfolio_assistant.application.presentation_context import PresentationContext
 from portfolio_assistant.domain.conversations import Conversation, Run, Session
 from portfolio_assistant.presentation.events import events
+from portfolio_assistant.presentation.middleware import trusted_peers
 from portfolio_assistant.presentation.models import (
     ConversationCreate,
     ConversationUpdate,
@@ -69,11 +70,7 @@ def mutation_session(request: Request, session: Session = Depends(current_sessio
 
 def client_ip(request: Request) -> str:
     peer = request.client.host if request.client else "unknown"
-    trusted = {
-        item.strip()
-        for item in request.app.state.config.trusted_proxy_ips.split(",")
-        if item.strip()
-    }
+    trusted = trusted_peers(request)
     if peer not in trusted:
         return peer
     forwarded = request.headers.get("x-forwarded-for", "").split(",")

@@ -13,7 +13,7 @@ frontend builds or command output. Fixture mode performs no paid model calls.
 | ALLOWED_ORIGINS | localhost:3000, localhost:3001 (HTTP) | Comma-separated exact browser origins; HTTPS only in production |
 | SECURE_COOKIES | false | true required in production; changes cookie to __Host-assistant_session |
 | RATE_HASH_KEY | local-fixture-only | Random ≥32-character value required in production |
-| TRUSTED_PROXY_IPS | empty | Exact immediate peers trusted to supply X-Forwarded-For; never trust all peers |
+| TRUSTED_PROXY_IPS | empty | Exact immediate peers trusted to supply X-Forwarded-For and a well-formed X-Request-ID; never trust all peers |
 | RETENTION_DAYS | 7 | Anonymous session lifetime, allowed 1–30; run retention CLI every minute |
 | RUN_TIMEOUT_SECONDS | 60 | Total generation deadline, greater than zero and at most 120 |
 | AI_PROVIDER | fixture | fixture or explicitly enabled openai |
