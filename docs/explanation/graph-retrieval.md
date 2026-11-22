@@ -5,10 +5,6 @@ fixture vectors and the active corpus pointer. Neo4j is a rebuildable projection
 Conversation/checkpoint tables are separate from this approved public corpus;
 chat history never becomes retrieval knowledge or long-term memory.
 
-[ADR018](../decisions/018-neo4j-graph-lane-spike.md) measured the graph lane's marginal Recall@5 per
-question kind and decided to retire Neo4j after one confirmation run on real embeddings; until then this
-projection stays as described here.
-
 ## Authorization boundary
 
 Neo4j Community does not provide role-based reader authorization: its users have

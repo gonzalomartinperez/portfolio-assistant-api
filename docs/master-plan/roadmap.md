@@ -124,7 +124,7 @@ Effort L (47 h, sum of rows).
 | # | Item | Acceptance | Effort | Status |
 |---|---|---|---|---|
 | M6-1 | Mutation thresholds at target (domain, application, ai, graders) | scores meet the targets in testing.md for two consecutive weekly runs | M, 10 h | todo |
-| M6-2 | Neo4j spike (DR-10: run in M4; numbers re-checked here) and ADR 0018, decided by the spike rule (PAA-D12) | graph marginal Recall@5 per kind measured; ADR with numbers | M, 8 h | done (ADR 018: multi-hop graph marginal -4.2 points, below the +5 keep rule; retirement gated on the M2-16 confirmation run) |
+| M6-2 | Neo4j spike (DR-10: run in M4; numbers re-checked here) and ADR 0018, decided by the spike rule (PAA-D12) | graph marginal Recall@5 per kind measured; ADR with numbers | M, 8 h | todo |
 | M6-3 | Judge calibration (deferred from M2-15): 160 labels bootstrapped by two independent agents (DR-05), owner 20% spot check (input 1), judge validated (TPR, TNR, kappa thresholds) and added as an extra net | calibration report committed; or "not validated" keeps P3 at the provisional 90 | M, 10 h | todo |
 | M6-4 | Full-set baseline run and live golden pass^3 under the DR-04 caps (pre-authorized) | full-set report committed; golden live 80/80 x 3 | S, 4 h | todo |
 | M6-5 | Independent three-lens re-score; scorecard on two consecutive nightlies | every axis at least 95, or at least 90 where stated (D7, P3) | S, 4 h | todo |
