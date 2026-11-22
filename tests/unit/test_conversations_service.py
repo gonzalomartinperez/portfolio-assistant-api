@@ -158,7 +158,7 @@ def test_rate_limited_message_does_not_prepare_a_run(conversations, session):
     store.prepare_run.assert_not_called()
 
 
-def test_inspecting_a_run_leaves_it_running(session):
+def test_inspecting_a_run_forwards_no_cancellation_to_the_store(session):
     store = FakeStore()
     _, run_id, _ = store.seed(session.id)
     service = Conversations(store, 7, "fixture-rate-key", clock=FixedClock())
@@ -169,7 +169,7 @@ def test_inspecting_a_run_leaves_it_running(session):
     assert run.state == "running"
 
 
-def test_cancelling_a_run_applies_only_to_its_owner(session):
+def test_cancelling_a_run_forwards_the_cancellation_with_the_session(session):
     store = FakeStore()
     _, run_id, _ = store.seed(session.id)
     service = Conversations(store, 7, "fixture-rate-key", clock=FixedClock())
