@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from collections.abc import Collection
 from uuid import uuid4
@@ -19,6 +20,36 @@ from portfolio_assistant.domain.errors import RejectedError
 from portfolio_assistant.presentation import problems
 
 log = logging.getLogger("portfolio_assistant")
+
+
+# A trusted proxy may hand over its request ID: 32 hex digits or a canonical UUID, normalized to the
+# public `request_id` shape (32 lowercase hex). Anything else, or any other peer, gets a fresh ID.
+INBOUND_REQUEST_ID = re.compile(
+    r"[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+)
+
+
+def inbound_request_id(request: Request) -> str | None:
+    """Return the trusted proxy's request ID in the public shape, or None."""
+    header = request.headers.get("x-request-id", "")
+    if not INBOUND_REQUEST_ID.fullmatch(header):
+        return None
+    peer = request.client.host if request.client else None
+    if peer is None or peer not in trusted_peers(request):
+        return None
+    return header.replace("-", "").lower()
+
+
+def trusted_peers(request: Request) -> set[str]:
+    """Exact immediate peers from `TRUSTED_PROXY_IPS` (comma separated)."""
+    config = getattr(request.app.state, "config", None)
+    configured = getattr(config, "trusted_proxy_ips", "") or ""
+    return {item.strip() for item in configured.split(",") if item.strip()}
+
+
+def scope_request_id(scope: Scope) -> str:
+    """The ID the outer guard assigned to this request, or a fresh one outside it."""
+    return str(scope.get("state", {}).get("request_id") or uuid4().hex)
 
 
 def error(request: Request, code: str, status: int) -> JSONResponse:
@@ -46,7 +77,7 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
 
     @app.middleware("http")
     async def guard(request: Request, call_next: RequestResponseEndpoint) -> Response:
-        request.state.request_id = uuid4().hex
+        request.state.request_id = inbound_request_id(request) or uuid4().hex
         request_id.set(request.state.request_id)
         started = time.perf_counter()
         if (
@@ -115,7 +146,7 @@ class BodyLimit:
                 async with asyncio.timeout_at(deadline):
                     message = await receive()
             except TimeoutError:
-                identifier = uuid4().hex
+                identifier = scope_request_id(scope)
                 response = problems.response("request_timeout", 408, identifier, accept(scope))
                 response.headers["X-Request-ID"] = identifier
                 response.headers["Cache-Control"] = "no-store"
@@ -125,7 +156,7 @@ class BodyLimit:
                 return
             size += len(message.get("body", b""))
             if size > maximum:
-                request_id = uuid4().hex
+                request_id = scope_request_id(scope)
                 response = problems.response("invalid_request", 422, request_id, accept(scope))
                 response.headers["X-Request-ID"] = request_id
                 await response(scope, receive, send)

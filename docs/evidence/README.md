@@ -5,6 +5,7 @@ instead. Living documentation is in the quadrants of [docs/](../), decisions are
 
 ## Current
 
+- [M6-7: copy refresh draft awaiting owner approval (2026-11-22)](copy-refresh-2026-11-22.md)
 - [Scorecard snapshot behind the README results table (2026-11-14)](scorecard-2026-11-14.json)
 - [M1-5: API image size breakdown (2026-11-14)](image-size-spike-2026-11-14.md)
 - [M1-2: P0-2 and P0-3 reproduced in CI conditions (2026-11-14)](m1-p0-reproduction-2026-11-14.md)

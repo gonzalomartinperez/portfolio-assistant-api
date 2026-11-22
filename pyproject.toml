@@ -193,6 +193,9 @@ paths_to_mutate = [
 ]
 tests_dir = [
     "tests/unit/test_operations.py",
+    "tests/unit/test_budget_policy.py",
+    "tests/unit/test_conversations_service.py",
+    "tests/unit/test_answer_policy.py",
     "tests/unit/test_visitor_privacy.py",
     "tests/unit/test_quality.py",
     "tests/unit/test_analytics_periods.py",
