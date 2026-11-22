@@ -20,6 +20,8 @@ All notable changes to this project are documented here. The format follows
   `code`, `retryable`, `retry_after_s` and English and Spanish `messages`; the v1 members stay.
 - Contract v1.1: opt-in `run.progress` stream events (`retrieving`, `reading`, `writing`) with
   `X-Assistant-Progress: 1`; streams without the header are unchanged.
+- OpenAPI operation descriptions and validated schema examples; the frontend handoff documents the v1.1
+  consumer steps.
 
 ### Deprecated
 

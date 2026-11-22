@@ -90,11 +90,13 @@ def client_ip(request: Request) -> str:
 
 @router.get("/health/live", operation_id="healthLive", response_model=None)
 def live() -> dict[str, str]:
+    """Liveness probe kept from v1; it performs no dependency I/O. Prefer `/healthz`."""
     return {"status": "ok"}
 
 
 @router.get("/health/ready", operation_id="healthReady", response_model=None)
 def ready(request: Request) -> dict[str, str]:
+    """Readiness probe kept from v1: database schema, active corpus and graph. Prefer `/readyz`."""
     try:
         request.app.state.ready()
         return {"status": "ok"}
@@ -108,6 +110,7 @@ def revision(request: Request) -> str:
 
 @router.get("/healthz", response_model=HealthView, operation_id="healthz")
 def healthz(request: Request) -> dict[str, str]:
+    """Liveness: the process answers, with the deployed source revision."""
     return {"status": "ok", "version": revision(request)}
 
 
@@ -118,6 +121,7 @@ def healthz(request: Request) -> dict[str, str]:
     operation_id="readyz",
 )
 def readyz(request: Request) -> dict[str, str]:
+    """Readiness: dependencies answer; `schema_version` is the newest applied migration prefix."""
     try:
         schema = request.app.state.ready()
     except Exception:  # noqa: BLE001 - Readiness aggregates dependencies and deliberately exposes only availability.
@@ -136,6 +140,7 @@ def create_session(
     response: Response,
     x_session_bootstrap: Annotated[str | None, Header()] = None,
 ) -> SessionView:
+    """Bootstrap an anonymous session. Requires JSON `{}`, a trusted `Origin` and `X-Session-Bootstrap: 1`; sets the HttpOnly session cookie and returns the CSRF token for later mutations."""
     if (
         x_session_bootstrap != "1"
         or request.headers.get("content-type", "").split(";")[0] != "application/json"
@@ -163,6 +168,7 @@ def create_session(
 def get_session(
     request: Request, session: Annotated[Session, Depends(current_session)]
 ) -> SessionView:
+    """Restore the CSRF token and expiry of the current cookie session after a reload."""
     return SessionView(
         csrf_token=session.csrf_token,
         expires_at=session.expires_at,
@@ -174,6 +180,7 @@ def get_session(
 def delete_session(
     request: Request, response: Response, session: Annotated[Session, Depends(mutation_session)]
 ) -> None:
+    """Delete the session with its conversations, messages and runs, and clear the cookie."""
     request.app.state.conversations.delete_session(session)
     request.app.state.cleanup()
     response.delete_cookie(request.app.state.config.cookie_name, path="/")
@@ -189,6 +196,7 @@ def create_conversation(
     body: ConversationCreate,
     session: Annotated[Session, Depends(mutation_session)],
 ) -> Conversation:
+    """Create an owned conversation (at most 100 per session)."""
     return conversations_service(request).create(session, body.title)
 
 
@@ -199,6 +207,7 @@ def list_conversations(
     cursor: datetime | None = None,
     session: Session = Depends(current_session),
 ) -> Page:
+    """List owned conversations, most recently updated first. Pass `next_cursor` back as `cursor`."""
     rows = request.app.state.conversations.list_conversations(session, limit, cursor)
     return Page(
         items=[ConversationView.model_validate(asdict(row)) for row in rows[:limit]],
@@ -217,6 +226,7 @@ def rename_conversation(
     body: ConversationUpdate,
     session: Annotated[Session, Depends(mutation_session)],
 ) -> Conversation:
+    """Rename an owned conversation. Foreign conversations answer 404."""
     return conversations_service(request).rename(session, conversation_id, body.title)
 
 
@@ -228,6 +238,7 @@ def rename_conversation(
 def delete_conversation(
     request: Request, conversation_id: UUID, session: Annotated[Session, Depends(mutation_session)]
 ) -> None:
+    """Delete an owned conversation with its messages and runs."""
     request.app.state.conversations.delete(session, conversation_id)
     request.app.state.cleanup()
 
@@ -244,6 +255,7 @@ def list_messages(
     cursor: datetime | None = None,
     session: Session = Depends(current_session),
 ) -> MessagePage:
+    """List messages newest first, with citations on assistant messages. Pass `next_cursor` back as `cursor`."""
     rows = request.app.state.conversations.messages(session, conversation_id, limit, cursor)
     return MessagePage(
         items=[MessageView.model_validate(asdict(row)) for row in rows[:limit]],
@@ -346,6 +358,7 @@ def stream_message(
         ),
     ] = None,
 ) -> ClosingStreamingResponse:
+    """Ask a question and stream the answer as Server-Sent Events (`contracts/sse.schema.json`). Requires an `Idempotency-Key`; a repeated key returns 409 and is never replayed. Keep `X-Run-ID` to read or cancel the run. Send `X-Assistant-Progress: 1` for opt-in `run.progress` events."""
     run_id = request.app.state.conversations.prepare_run(
         session,
         conversation_id,
@@ -385,6 +398,7 @@ def stream_message(
 def get_run(
     request: Request, run_id: UUID, session: Annotated[Session, Depends(current_session)]
 ) -> Run:
+    """Read the state of an owned run, for example after a disconnect."""
     return conversations_service(request).run(session, run_id)
 
 
@@ -392,6 +406,7 @@ def get_run(
 def cancel_run(
     request: Request, run_id: UUID, session: Annotated[Session, Depends(mutation_session)]
 ) -> Run:
+    """Cancel a live owned run; idempotent, and a finished run is returned unchanged."""
     return conversations_service(request).run(session, run_id, cancel=True)
 
 
@@ -406,6 +421,7 @@ def record_feedback(
     body: FeedbackCreate,
     session: Annotated[Session, Depends(mutation_session)],
 ) -> None:
+    """Record up or down feedback on an owned assistant message."""
     request.app.state.conversations.feedback(session, message_id, body.rating)
 
 
@@ -415,6 +431,7 @@ def record_feedback(
     operation_id="getKnowledgeSuggestions",
 )
 def get_knowledge_suggestions(request: Request, locale: Locale = "en") -> SuggestionsView:
+    """Starter questions from the active public corpus for the requested locale (at most six)."""
     version, commit, prompts = request.app.state.knowledge.starter_prompts(locale)
     return SuggestionsView(
         corpus_version=version,
