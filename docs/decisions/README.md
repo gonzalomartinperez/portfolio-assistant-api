@@ -33,3 +33,4 @@ this tree. The dated decision log that preceded the ADRs is archived at
 | 024 | [Load budgets and baseline ratchet](024-load-budgets-baseline.md) | Accepted |
 | 028 | [Adopt the src layout and rename the application package](028-src-layout-package-rename.md) | Accepted |
 | 029 | [Keep blocking I/O off the event loop with an async boundary ratchet](029-async-io-boundary.md) | Accepted |
+| 030 | [RFC 9457 problem documents as an additive v1.1 error contract](030-rfc-9457-problem-documents.md) | Accepted |

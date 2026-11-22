@@ -53,6 +53,7 @@ from portfolio_assistant.presentation.feedback import router as feedback_router
 from portfolio_assistant.presentation.http import router
 from portfolio_assistant.presentation.middleware import BodyLimit, install
 from portfolio_assistant.presentation.operations import router as operations_router
+from portfolio_assistant.presentation.problems import document_problem_media
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
@@ -344,7 +345,7 @@ def create_app(
 
     app = FastAPI(
         title="Portfolio Assistant API",
-        version="1.0.0",
+        version="1.1.0",
         lifespan=lifespan,
         telemetry={
             "tracing": False,
@@ -375,4 +376,11 @@ def create_app(
     app.include_router(operations_router)
     app.include_router(analytics_router)
     app.include_router(feedback_router)
+    generate = app.openapi
+
+    def openapi() -> dict[str, Any]:
+        # Idempotent, so it also covers a schema FastAPI regenerates after a late route.
+        return document_problem_media(generate())
+
+    app.openapi = openapi  # type: ignore[method-assign]  # FastAPI documents this override
     return app

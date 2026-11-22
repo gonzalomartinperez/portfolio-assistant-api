@@ -136,24 +136,107 @@
         "type": "object"
       },
       "ErrorBody": {
+        "description": "RFC 9457 problem details plus the v1 error members (`code`, `message`, `request_id`).\n\nThe component keeps its v1 name so generated consumer types stay stable.",
         "properties": {
           "code": {
+            "enum": [
+              "invalid_request",
+              "malformed_body",
+              "invalid_limit",
+              "invalid_content_type",
+              "invalid_analytics_selection",
+              "analytics_credentials_forbidden",
+              "request_timeout",
+              "session_required",
+              "operations_unauthorized",
+              "csrf_denied",
+              "origin_denied",
+              "bootstrap_denied",
+              "not_found",
+              "analytics_disabled",
+              "feedback_overview_disabled",
+              "method_not_allowed",
+              "run_already_exists",
+              "idempotency_conflict",
+              "run_in_progress",
+              "rate_limited",
+              "analytics_rate_limited",
+              "conversation_limit",
+              "history_limit",
+              "busy",
+              "knowledge_updating",
+              "dependency_unavailable",
+              "operations_unconfigured",
+              "operations_unavailable"
+            ],
             "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "instance": {
+            "pattern": "^urn:request:[0-9a-f]{32}$",
+            "title": "Instance",
             "type": "string"
           },
           "message": {
             "title": "Message",
             "type": "string"
           },
+          "messages": {
+            "$ref": "#/components/schemas/ProblemMessages"
+          },
           "request_id": {
+            "pattern": "^[0-9a-f]{32}$",
             "title": "Request Id",
+            "type": "string"
+          },
+          "retry_after_s": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry After S"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "maximum": 599.0,
+            "minimum": 400.0,
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "pattern": "^urn:portfolio-assistant:error:[a-z_]+$",
+            "title": "Type",
             "type": "string"
           }
         },
         "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
           "code",
           "message",
-          "request_id"
+          "request_id",
+          "retryable",
+          "retry_after_s",
+          "messages"
         ],
         "title": "ErrorBody",
         "type": "object"
@@ -379,6 +462,27 @@
           "items"
         ],
         "title": "Page",
+        "type": "object"
+      },
+      "ProblemMessages": {
+        "additionalProperties": false,
+        "properties": {
+          "en": {
+            "minLength": 1,
+            "title": "En",
+            "type": "string"
+          },
+          "es": {
+            "minLength": 1,
+            "title": "Es",
+            "type": "string"
+          }
+        },
+        "required": [
+          "en",
+          "es"
+        ],
+        "title": "ProblemMessages",
         "type": "object"
       },
       "ProductEventBody": {
@@ -882,7 +986,7 @@
   },
   "info": {
     "title": "Portfolio Assistant API",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -911,15 +1015,110 @@
           "204": {
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Too Many Requests"
           }
         },
         "summary": "Record"
@@ -974,6 +1173,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -981,6 +1185,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -994,6 +1203,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1004,13 +1218,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1024,6 +1263,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1034,6 +1278,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1041,6 +1290,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1080,6 +1334,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1087,6 +1346,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1100,6 +1364,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1110,13 +1379,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1130,6 +1424,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1140,6 +1439,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1147,6 +1451,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1183,6 +1492,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1190,6 +1504,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1203,6 +1522,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1213,13 +1537,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1233,6 +1582,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1243,6 +1597,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1250,6 +1609,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1301,6 +1665,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1308,6 +1677,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1321,6 +1695,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1331,13 +1710,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1351,6 +1755,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1361,6 +1770,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1368,6 +1782,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1438,6 +1857,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1445,6 +1869,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1458,6 +1887,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1468,13 +1902,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1488,6 +1947,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1498,6 +1962,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1505,6 +1974,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1572,6 +2046,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1579,6 +2058,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1592,6 +2076,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1602,13 +2091,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1622,6 +2136,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1632,6 +2151,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1639,6 +2163,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1686,6 +2215,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1693,6 +2227,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1706,6 +2245,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1716,13 +2260,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1736,6 +2305,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1746,6 +2320,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1753,6 +2332,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1799,6 +2383,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1806,6 +2395,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1819,6 +2413,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1829,13 +2428,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1849,6 +2473,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1859,6 +2488,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1866,6 +2500,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1909,6 +2548,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -1916,6 +2560,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1929,6 +2578,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -1939,13 +2593,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -1959,6 +2638,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -1969,6 +2653,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -1976,6 +2665,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2019,6 +2713,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2026,6 +2725,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2039,6 +2743,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2049,13 +2758,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2069,6 +2803,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2079,6 +2818,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2086,6 +2830,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2110,6 +2859,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2117,6 +2871,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2130,6 +2889,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2140,13 +2904,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2160,6 +2949,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2170,6 +2964,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2177,6 +2976,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2206,6 +3010,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2213,6 +3022,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2226,6 +3040,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2236,13 +3055,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2256,6 +3100,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2266,6 +3115,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2273,6 +3127,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2320,6 +3179,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2327,6 +3191,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2340,6 +3209,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2350,13 +3224,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2370,6 +3269,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2380,6 +3284,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2387,6 +3296,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2416,6 +3330,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2423,6 +3342,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2436,6 +3360,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2446,13 +3375,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2466,6 +3420,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2476,6 +3435,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2483,6 +3447,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2512,6 +3481,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2519,6 +3493,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2532,6 +3511,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2542,13 +3526,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2562,6 +3571,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2572,6 +3586,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2579,6 +3598,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2610,6 +3634,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2617,6 +3646,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2630,6 +3664,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2640,13 +3679,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2660,6 +3724,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2670,6 +3739,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2677,6 +3751,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2708,6 +3787,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Bad Request"
@@ -2715,6 +3799,11 @@
           "401": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2728,6 +3817,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Forbidden"
@@ -2738,13 +3832,38 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Not Found"
           },
+          "408": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Request Timeout"
+          },
           "409": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
@@ -2758,6 +3877,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Unprocessable Content"
@@ -2768,6 +3892,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }
+              },
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
               }
             },
             "description": "Too Many Requests"
@@ -2775,6 +3904,11 @@
           "503": {
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorBody"
                 }

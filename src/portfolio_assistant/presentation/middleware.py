@@ -7,26 +7,23 @@ import time
 from collections.abc import Collection
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from portfolio_assistant.application.request_context import request_id
 from portfolio_assistant.domain.errors import RejectedError
+from portfolio_assistant.presentation import problems
 
 log = logging.getLogger("portfolio_assistant")
 
 
-def error(request: Request, code: str, status: int, message: str | None = None) -> JSONResponse:
-    return JSONResponse(
-        status_code=status,
-        content={
-            "code": code,
-            "message": message or code.replace("_", " "),
-            "request_id": request.state.request_id,
-        },
+def error(request: Request, code: str, status: int) -> JSONResponse:
+    return problems.response(
+        code, status, request.state.request_id, request.headers.get("accept", "")
     )
 
 
@@ -35,13 +32,17 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
     async def rejected(request: Request, exc: RejectedError) -> JSONResponse:
         return error(request, exc.code, exc.status)
 
-    @app.exception_handler(HTTPException)
-    async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
-        return error(request, str(exc.detail), exc.status_code)
+    # Starlette's base class also covers router 404/405, which the FastAPI subclass misses.
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        response = error(request, str(exc.detail), exc.status_code)
+        for name, value in (exc.headers or {}).items():  # keeps Allow on 405
+            response.headers.setdefault(name, value)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-        return error(request, "invalid_request", 422, "Invalid request")
+        return error(request, "invalid_request", 422)
 
     @app.middleware("http")
     async def guard(request: Request, call_next: RequestResponseEndpoint) -> Response:
@@ -52,7 +53,7 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
             request.method in ("POST", "PATCH", "DELETE")
             and request.headers.get("origin") not in origins
         ):
-            response: Response = error(request, "origin_denied", 403, "Origin denied")
+            response: Response = error(request, "origin_denied", 403)
         else:
             try:
                 response = await call_next(request)
@@ -77,6 +78,13 @@ def install(app: FastAPI, origins: Collection[str]) -> None:
             )
         )
         return response
+
+
+def accept(scope: Scope) -> str:
+    return next(
+        (value.decode("latin-1") for name, value in scope.get("headers", []) if name == b"accept"),
+        "",
+    )
 
 
 class BodyLimit:
@@ -108,15 +116,9 @@ class BodyLimit:
                     message = await receive()
             except TimeoutError:
                 identifier = uuid4().hex
-                response = JSONResponse(
-                    {
-                        "code": "request_timeout",
-                        "message": "Request timed out",
-                        "request_id": identifier,
-                    },
-                    status_code=408,
-                    headers={"X-Request-ID": identifier, "Cache-Control": "no-store"},
-                )
+                response = problems.response("request_timeout", 408, identifier, accept(scope))
+                response.headers["X-Request-ID"] = identifier
+                response.headers["Cache-Control"] = "no-store"
                 await response(scope, receive, send)
                 return
             if message["type"] == "http.disconnect":
@@ -124,15 +126,8 @@ class BodyLimit:
             size += len(message.get("body", b""))
             if size > maximum:
                 request_id = uuid4().hex
-                response = JSONResponse(
-                    {
-                        "code": "invalid_request",
-                        "message": "Invalid request",
-                        "request_id": request_id,
-                    },
-                    status_code=422,
-                    headers={"X-Request-ID": request_id},
-                )
+                response = problems.response("invalid_request", 422, request_id, accept(scope))
+                response.headers["X-Request-ID"] = request_id
                 await response(scope, receive, send)
                 return
             chunks.append(message)

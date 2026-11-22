@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from portfolio_assistant.application.clock import Clock
 
 router = APIRouter(
-    responses={code: {"model": ErrorBody} for code in (400, 401, 403, 404, 409, 422, 429, 503)}
+    responses={code: {"model": ErrorBody} for code in (400, 401, 403, 404, 408, 409, 422, 429, 503)}
 )
 
 
