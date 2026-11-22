@@ -24,10 +24,11 @@ default mode is deterministic fixtures with no paid calls.
 ## Highlights
 
 - Grounded answers: citations are checked against retrieved public sources; unknown facts stay uncertain ([architecture](docs/explanation/architecture.md)).
-- Hybrid retrieval over a versioned public corpus: vector, lexical and a Neo4j evidence graph ([graph retrieval](docs/explanation/graph-retrieval.md)).
-- A pinned v1 wire contract (OpenAPI plus an SSE schema), drift-checked in CI ([API contract](docs/reference/api-contract.md)).
+- Hybrid retrieval over a versioned public corpus: vector, lexical and a Neo4j evidence graph, with per-rule ablation and a measured graph marginal ([retrieval](docs/explanation/retrieval.md), [ADR 018](docs/decisions/018-neo4j-graph-lane-spike.md)).
+- A versioned wire contract (OpenAPI 1.1 plus an SSE schema): RFC 9457 problem documents with English and Spanish messages and retry advice, opt-in progress events, drift-checked in CI ([API contract](docs/reference/api-contract.md)).
 - Atomic spend reservations in PostgreSQL and private, bounded operational measurements with no transcripts ([observability](docs/explanation/private-observability.md)).
-- Offline quality lanes: an 80-item bilingual golden set with a cassette replay lane, a retrieval harness and a 60-item attack pack ([evals](docs/reference/evals.md)).
+- Offline quality lanes: an 80-item bilingual golden set with a cassette replay lane, a 384-item development set, a retrieval harness and a 60-item attack pack ([evals](docs/reference/evals.md)).
+- Release candidates built in CI with an SPDX SBOM, SLSA provenance and a verified digest, bound to the tested image layers ([deployment contract](docs/reference/deployment-contract.md#release-candidate-mv-r)).
 - Measured results come from a scorecard snapshot, see [Quality](#quality).
 
 ## Architecture
@@ -109,10 +110,10 @@ The stream emits `run.started`, `message.delta`, `message.completed` and a termi
 | Gate | Tool | Threshold |
 |---|---|---|
 | `ci-gate` | GitHub Actions, shared engineering-standards action | Every job selected for the change must succeed ([CI](docs/reference/ci.md)) |
-| Static | ruff, ruff format, mypy strict on the scope in `pyproject.toml` | Zero findings and zero errors |
+| Static | ruff, ruff format, mypy strict over `src` and `evals`, import-linter, vulture | Zero findings and zero errors; ruff backlog families only shrink |
 | Offline tests | pytest `-m 'not integration'` | Zero failures; test count is a ratchet in [`scorecard/ratchets/tests.json`](scorecard/ratchets/tests.json) |
 | Coverage | coverage.py branch, both lanes combined | Per-layer floors in [`tests/coverage-floors.json`](tests/coverage-floors.json); 90% on changed lines in PRs |
-| Mutation | mutmut on changed, scoped files | Break below the score in [`tests/mutation-baseline.json`](tests/mutation-baseline.json) after its warning period |
+| Mutation | mutmut over domain, application, retrieval and eval-grader modules (changed files on PRs, everything weekly) | Break below the group ratchets in [`tests/mutation-baseline.json`](tests/mutation-baseline.json) |
 | Contract | `pytest -m contract`, Schemathesis, oasdiff | No breaking v1 change without the `contract-major` label |
 | Retrieval | `evals.harness.retrieval --compare` | Blocks a significant Recall@5 drop against [`evals/baselines/retrieval.json`](evals/baselines/retrieval.json) |
 | Golden replay | `just eval-golden` | Every active item replays from committed cassettes; local only until the owner-approved recording campaign commits them |
