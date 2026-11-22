@@ -224,7 +224,41 @@ tests_dir = [
     "tests/evals/test_live_depth_regressions.py",
     "tests/evals/test_retrieval_harness.py",
 ]
-also_copy = ["src/portfolio_assistant", "src/app", "contracts", "evals", "scripts"]
+# The sealed holdout (evals/full) is never copied into the mutants sandbox; see the gate test.
+also_copy = [
+    "src/portfolio_assistant",
+    "src/app",
+    "contracts",
+    "scripts",
+    "evals/__init__.py",
+    "evals/archive",
+    "evals/assistant-intents.json",
+    "evals/assistant.json",
+    "evals/attacks",
+    "evals/baselines",
+    "evals/calibration",
+    "evals/cassettes",
+    "evals/corpus",
+    "evals/fixture-results.json",
+    "evals/golden",
+    "evals/harness",
+    "evals/judge",
+    "evals/live-depth-2026-10-10.json",
+    "evals/live-depth-final-2026-10-10.json",
+    "evals/live-depth-revalidation-2026-10-10.json",
+    "evals/live-role-final-2026-10-10.json",
+    "evals/retrieval",
+    "evals/retrieval.json",
+    "evals/schema",
+    "evals/voice-2026-10-12.json",
+    "evals/voice-final-2026-10-12.json",
+    "evals/web-context-2026-10-13.json",
+    "evals/web-context-cache-revalidation-2026-10-13.json",
+    "evals/web-context-continuity-revalidation-2026-10-13.json",
+    "evals/web-context-final-revalidation-2026-10-13.json",
+    "evals/web-context-metrics-revalidation-2026-10-13.json",
+    "evals/web-context-revalidation-2026-10-13.json",
+]
 process_isolation = "fork"
 pytest_add_cli_args = ["-q", "-p", "no:cacheprovider", "-m", "not integration"]
 

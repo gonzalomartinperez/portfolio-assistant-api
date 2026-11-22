@@ -461,10 +461,11 @@ null means unmeasured, not zero-quality evidence. The full weekly run supplies
 the remaining measurements; ratchets may only increase.
 
 Run `uv run python -m scripts.mutation_gate --results PATH` after collecting
-results. `--warn` or `MUTATION_MODE=warn` expresses rollout intent; warning mode
-is also the default through 2026-11-28 UTC. Starting 2026-11-29 it fails below
-60% or the committed ratchet, even with `--warn`. `--enforce` activates failure
-immediately. Invalid or empty evidence always fails.
+results. Since M6-1 both workflows pass `--enforce`: the weekly full run fails below
+the committed group ratchet, and the PR run (`--changed`, only the touched scoped files)
+fails below the 60% break floor, because one touched module is not a fair sample of its
+group. `--warn` or `MUTATION_MODE=warn` only applies through 2026-11-28 UTC and cannot
+extend that grace period. Invalid or empty evidence always fails.
 
 Mutation remains outside `ci-gate` and the classifier map: the pinned shared
 action's handling of this unclassified PR-only/skipped advisory job has not been

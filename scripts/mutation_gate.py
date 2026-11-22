@@ -65,8 +65,13 @@ def evaluate(
     *,
     warn: bool = False,
     enforce: bool = False,
+    changed: bool = False,
 ) -> tuple[list[str], bool]:
-    """Warn only within the committed grace period; --enforce always wins."""
+    """Warn only within the committed grace period; --enforce always wins.
+
+    A changed-files (PR) run scores only the touched modules, which differ widely within a
+    group, so it is held to the break floor; the full weekly run is held to the group ratchets.
+    """
     deadline = date.fromisoformat(baseline["warn_until"])
     if not date(2026, 11, 14) <= deadline <= date(2026, 11, 28):
         raise ValueError("Warning deadline must be within the 14-day rollout")
@@ -78,7 +83,7 @@ def evaluate(
     for group, counts in sorted(groups.items()):
         spec = baseline["groups"][group]
         score = 100 * (counts["killed"] + counts["caught by type check"]) / sum(counts.values())
-        floor = max(60, baseline["break"], spec["ratchet"] or 0)
+        floor = max(60, baseline["break"], 0 if changed else spec["ratchet"] or 0)
         shortfall = max(0.0, floor - score)
         messages.append(
             f"{group}: {score:.2f}% ({dict(counts)}); floor {floor:.2f}, "
@@ -127,6 +132,11 @@ def main() -> int:
     parser.add_argument("--baseline", type=Path, default=Path("tests/mutation-baseline.json"))
     parser.add_argument("--warn", action="store_true", default=os.getenv("MUTATION_MODE") == "warn")
     parser.add_argument("--enforce", action="store_true")
+    parser.add_argument(
+        "--changed",
+        action="store_true",
+        help="changed-files run: hold each group to the break floor instead of its ratchet",
+    )
     parser.add_argument("--select-changed")
     args = parser.parse_args()
     if args.select_changed:
@@ -139,6 +149,7 @@ def main() -> int:
             date.today(),
             warn=args.warn,
             enforce=args.enforce,
+            changed=args.changed,
         )
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"Mutation evidence invalid: {error}")

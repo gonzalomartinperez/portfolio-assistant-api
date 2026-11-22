@@ -104,3 +104,34 @@ def test_changed_selection_excludes_tests_unscoped_and_non_python():
         ],
         ["src/portfolio_assistant/domain/budget.py"],
     ) == ["src/portfolio_assistant/domain/budget.py"]
+
+
+def test_changed_files_run_is_held_to_the_break_floor_not_the_ratchet():
+    groups = {"domain": Counter(killed=65, survived=35)}
+    _, full_failed = evaluate(groups, baseline(ratchet=75), date(2026, 11, 22), enforce=True)
+    _, pr_failed = evaluate(
+        groups, baseline(ratchet=75), date(2026, 11, 22), enforce=True, changed=True
+    )
+    assert full_failed
+    assert not pr_failed
+
+
+def test_changed_files_run_still_fails_below_the_break_floor():
+    groups = {"domain": Counter(killed=59, survived=41)}
+    _, failed = evaluate(groups, baseline(), date(2026, 11, 22), enforce=True, changed=True)
+    assert failed
+
+
+def test_mutation_sandbox_never_copies_the_sealed_holdout():
+    import tomllib
+    from pathlib import Path
+
+    copied = tomllib.loads(Path("pyproject.toml").read_text())["tool"]["mutmut"]["also_copy"]
+    assert "evals" not in copied
+    assert not [entry for entry in copied if entry.startswith("evals/full")]
+    expected = {
+        f"evals/{child.name}"
+        for child in Path("evals").iterdir()
+        if child.name not in {"full", "__pycache__"}
+    }
+    assert expected <= set(copied)
