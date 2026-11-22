@@ -602,6 +602,71 @@ def test_container_job_runs_every_image_check():
 
 
 @pytest.mark.parametrize(
+    ("option", "value"),
+    [
+        ("push", True),
+        ("outputs", "type=docker"),
+        ("sbom", "true"),
+        ("sbom", "generator=docker/buildkit-syft-scanner:1.9.0"),
+        ("provenance", "mode=min"),
+    ],
+)
+def test_release_candidate_cannot_push_or_weaken_attestations(option, value):
+    data = workflow()
+    for step in container_steps(data):
+        if step.get("name") == "Build the API release candidate with SBOM and provenance":
+            step["with"][option] = value
+    assert "container: api release candidate options" in profile_errors(data, profile_map())
+
+
+def test_release_candidate_checks_cannot_be_hidden_or_disabled():
+    import copy
+
+    def errors_after(change):
+        data = workflow()
+        change(container_steps(data))
+        return profile_errors(data, profile_map())
+
+    def duplicate_pushing_build(steps):
+        build = next(s for s in steps if s.get("id") == "rc-api")
+        extra = copy.deepcopy(build)
+        extra["with"]["push"] = True
+        steps.insert(steps.index(build), extra)
+
+    def step(steps, name):
+        return next(s for s in steps if s.get("name") == name)
+
+    verify = "Verify release-candidate digests, SBOM and provenance"
+    changes = [
+        duplicate_pushing_build,
+        lambda s: step(s, "Build the API release candidate with SBOM and provenance").update(
+            {"if": "false"}
+        ),
+        lambda s: step(s, verify).update({"if": "false"}),
+        lambda s: step(s, verify)["env"].update(
+            {"API_DIGEST": "${{ steps.rc-worker.outputs.digest }}"}
+        ),
+        lambda s: step(s, verify).update(
+            {"run": step(s, verify)["run"].replace("--tested-layers", "--ignored")}
+        ),
+    ]
+    for change in changes:
+        assert any("release" in error for error in errors_after(change)), change
+
+
+def test_release_candidate_verification_cannot_be_removed():
+    data = workflow()
+    data["jobs"]["container"]["steps"] = [
+        step
+        for step in container_steps(data)
+        if step.get("name") != "Verify release-candidate digests, SBOM and provenance"
+    ]
+    assert any(
+        "release-candidate digests" in error for error in profile_errors(data, profile_map())
+    )
+
+
+@pytest.mark.parametrize(
     "name",
     [
         "Lint Dockerfiles with the pinned hadolint binary",

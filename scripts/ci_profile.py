@@ -77,6 +77,12 @@ IMAGE_CHECKS = {
         "python -m scripts.image_security",
         '--report artifacts/worker-vulnerabilities.json --image-id "$image_id"',
     ),
+    "Verify release-candidate digests, SBOM and provenance": (
+        "python -m scripts.release_candidate",
+        '--digest "$API_DIGEST"',
+        '--digest "$WORKER_DIGEST"',
+        '--revision "$REVISION"',
+    ),
     "Enforce the image size ratchet": (
         IMAGE_SIZE_PATH,
         ".api_max_bytes",
@@ -110,6 +116,59 @@ def gate_references(condition, key: str) -> bool:
         expected,
         "${{ " + expected + " }}",
     )
+
+
+RC_VERIFY = "Verify release-candidate digests, SBOM and provenance"
+RC_STEP_IDS = {"api": "rc-api", "worker": "rc-worker"}
+
+
+def release_candidate_errors(candidates: list[dict], steps: list[dict]) -> list[str]:
+    """Check the release candidates (M6-6).
+
+    OCI archives with a pinned SBOM generator and full provenance, built once per target,
+    unconditionally, and verified against the tested image's layers.
+    """
+    errors = []
+    targets = sorted(str(step["with"].get("target")) for step in candidates)
+    if targets != ["api", "worker"]:
+        return ["container: api and worker release candidates must each be built exactly once"]
+    for build in candidates:
+        options = build["with"]
+        target = options["target"]
+        if (
+            "if" in build
+            or build.get("id") != RC_STEP_IDS[target]
+            or options.get("push") is not False
+            or "load" in options
+            or options.get("outputs")
+            != f"type=oci,dest=artifacts/release-candidate/{target}.oci.tar"
+            or not re.search(
+                r"^generator=[^@\s]+@sha256:[0-9a-f]{64}$", str(options.get("sbom", ""))
+            )
+            or options.get("provenance") != "mode=max"
+            or any(argument not in str(options.get("build-args", "")) for argument in BUILD_ARGS)
+        ):
+            errors.append(f"container: {target} release candidate options")
+    verifiers = [step for step in steps if step.get("name") == RC_VERIFY]
+    expected_env = {
+        "API_DIGEST": "${{ steps.rc-api.outputs.digest }}",
+        "WORKER_DIGEST": "${{ steps.rc-worker.outputs.digest }}",
+        "REVISION": "${{ github.sha }}",
+    }
+    if len(verifiers) != 1 or "if" in verifiers[0] or verifiers[0].get("env") != expected_env:
+        errors.append("container: release-candidate verification must run once, unconditionally")
+    else:
+        lines = [line.strip() for line in verifiers[0].get("run", "").splitlines()]
+        live = [line for line in lines if line and not line.startswith("#")]
+        script = "\n".join(live)
+        errors.extend(
+            f"container: {target} release candidate is not verified"
+            for target in ("api", "worker")
+            if f"--archive artifacts/release-candidate/{target}.oci.tar" not in script
+        )
+        if script.count("--tested-layers") != 2:
+            errors.append("container: release candidates must be bound to the tested layers")
+    return errors
 
 
 def profile_map_errors(jobs: dict, profile_map: dict) -> list[str]:
@@ -328,12 +387,17 @@ def image_check_errors(steps: list) -> list[str]:
             errors.append(f"container: image check {name!r} absent or weakened")
         if any(bypass in text for bypass in IMAGE_SCAN_BYPASSES):
             errors.append(f"container: image check {name!r} filters findings")
-    builds = {
-        step["with"].get("target"): step
+    app_builds = [
+        step
         for step in steps
         if step.get("uses", "").startswith("docker/build-push-action@")
         and step.get("with", {}).get("file") == "infra/docker/app/Dockerfile"
+    ]
+    builds = {
+        step["with"].get("target"): step for step in app_builds if "outputs" not in step["with"]
     }
+    candidates = [step for step in app_builds if "outputs" in step["with"]]
+    errors += release_candidate_errors(candidates, steps)
     expected_tags = {
         "api": "portfolio-assistant-api:ci",
         "worker": "portfolio-assistant-api-worker:ci",
