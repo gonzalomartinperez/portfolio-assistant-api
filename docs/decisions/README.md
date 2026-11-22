@@ -4,8 +4,8 @@ Architecture decision records (ADRs) for the portfolio assistant API, one file p
 Paths are stable: new ADRs are added here and existing files do not move. New records follow MADR 4 (see the
 `write-adr` repository skill). Superseding records link both ways.
 
-Numbers are never reused. Gaps: ADR 007 was never written, and numbers 018 and 025 to 027 are not present in
-this tree. The dated decision log that preceded the ADRs is archived at
+Numbers are never reused. Gaps: ADR 007 was never written, and numbers 025 to 027 are not present in this tree.
+The dated decision log that preceded the ADRs is archived at
 [decisions-log-2026-09.md](../evidence/archive/2026-10/decisions-log-2026-09.md).
 
 | No. | Title | Status |
@@ -26,6 +26,7 @@ this tree. The dated decision log that preceded the ADRs is archived at
 | 015 | [Staged retrieval with declarative rules and paired ablation](015-retrieval-pipeline-rrf-ablation.md) | Accepted |
 | 016 | [Frozen in-repo snapshot of the approved public corpus](016-frozen-public-corpus-snapshot.md) | Accepted |
 | 017 | [Canonical API image with `api` and `worker` targets](017-canonical-api-image.md) | Accepted |
+| 018 | [Neo4j graph lane fails the keep threshold; retire it after one confirmation run](018-neo4j-graph-lane-spike.md) | Accepted; execution gated on the real-embedding confirmation run |
 | 019 | [One grouped dependency PR per week, merged manually](019-weekly-dependency-pr.md) | Accepted |
 | 020 | [Opt-in `run.progress` events derived in the presentation layer](020-opt-in-run-progress.md) | Accepted |
 | 021 | [External tracing stays off; no hosted prompt or dataset registry](021-tracing-off-no-hosted-prompt-registry.md) | Accepted |
