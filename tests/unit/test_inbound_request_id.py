@@ -72,3 +72,23 @@ def test_problem_documents_carry_the_propagated_id(client_for):
     response = client_for("testclient").get("/api/v1/missing", headers={"X-Request-ID": HEX})
     assert response.status_code == 404
     assert response.json()["request_id"] == HEX
+
+
+def test_default_configuration_trusts_no_peer(client_for):
+    issued = request_id(client_for(""), HEX)
+    assert issued != HEX
+
+
+def test_trusted_list_tolerates_spacing_and_empty_items(client_for):
+    assert request_id(client_for(" , testclient ,"), HEX) == HEX
+
+
+def test_body_limit_rejections_keep_the_propagated_id_in_body_and_header(client_for):
+    response = client_for("testclient").post(
+        "/api/v1/analytics/events",
+        content=b"x" * 2048,
+        headers={"X-Request-ID": HEX, "Origin": "http://localhost:3000"},
+    )
+    assert response.status_code == 422
+    assert response.headers["x-request-id"] == HEX
+    assert response.json()["request_id"] == HEX
