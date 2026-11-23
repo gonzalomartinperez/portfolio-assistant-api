@@ -654,6 +654,21 @@ def test_release_candidate_checks_cannot_be_hidden_or_disabled():
         assert any("release" in error for error in errors_after(change)), change
 
 
+def test_release_candidate_archives_are_never_uploaded():
+    data = workflow()
+    data["jobs"]["container"]["steps"].append(
+        {
+            "name": "Retain archives",
+            "uses": "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+            "with": {"path": "artifacts/release-candidate/api.oci.tar"},
+        }
+    )
+    assert "container: release-candidate archives must not be uploaded" in profile_errors(
+        data, profile_map()
+    )
+    assert not profile_errors(workflow(), profile_map())
+
+
 def test_release_candidate_verification_cannot_be_removed():
     data = workflow()
     data["jobs"]["container"]["steps"] = [

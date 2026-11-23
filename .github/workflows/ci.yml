@@ -521,7 +521,8 @@ jobs:
         FRONTEND_IMAGE: ${{ inputs.frontend_image }}
     # Release candidate (M6-6, OD-64 MV-R): the same targets exported as OCI archives with an SPDX SBOM
     # and SLSA provenance, never pushed to a registry (DR-13). The verifier binds each archive to the
-    # digest BuildKit reported and to this commit; push builds on develop and main keep the archives.
+    # digest BuildKit reported and to this commit. Only the identity (digests, SBOM and provenance
+    # summary) is retained: public-repository CI publishes no image archive (ci.md privacy boundary).
     - name: Prepare the release-candidate directory
       run: mkdir -p artifacts/release-candidate
     - name: Build the API release candidate with SBOM and provenance
@@ -585,17 +586,6 @@ jobs:
           artifacts/release-candidate/release-candidate.json
           artifacts/release-candidate/SHA256SUMS
         retention-days: 90
-        if-no-files-found: error
-    - name: Retain the release-candidate archives
-      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-      with:
-        name: release-candidate-images
-        path: |
-          artifacts/release-candidate/api.oci.tar
-          artifacts/release-candidate/worker.oci.tar
-        retention-days: 30
-        compression-level: 0
         if-no-files-found: error
     - name: Record tested image identities
       run: |
